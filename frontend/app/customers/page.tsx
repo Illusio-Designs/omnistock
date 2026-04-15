@@ -126,7 +126,12 @@ export default function CustomersPage() {
   );
 }
 
-function StatCard({ label, value, icon: Icon, color }: any) {
+function StatCard({ label, value, icon: Icon, color }: {
+  label: string;
+  value: string | number;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  color: string;
+}) {
   const colorMap: Record<string, string> = {
     emerald: 'bg-emerald-50 text-emerald-600',
     amber:   'bg-amber-50 text-amber-600',

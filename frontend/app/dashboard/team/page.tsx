@@ -128,7 +128,12 @@ function UsersTab({ canManage }: { canManage: boolean }) {
   );
 }
 
-function UserForm({ initial, roles, onClose, onSave }: any) {
+function UserForm({ initial, roles, onClose, onSave }: {
+  initial: any;
+  roles: any[];
+  onClose: () => void;
+  onSave: (data: any) => void;
+}) {
   const [f, setF] = useState<any>(initial || {
     name: '', email: '', password: '', roleIds: [], isActive: true,
   });
@@ -266,7 +271,12 @@ function RolesTab({ canManage }: { canManage: boolean }) {
   );
 }
 
-function RoleForm({ initial, permsByModule, onClose, onSave }: any) {
+function RoleForm({ initial, permsByModule, onClose, onSave }: {
+  initial: any;
+  permsByModule: Record<string, any[]>;
+  onClose: () => void;
+  onSave: (data: any) => void;
+}) {
   const [f, setF] = useState<any>(initial || {
     code: '', name: '', description: '', permissionCodes: [],
   });

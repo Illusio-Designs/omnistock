@@ -76,7 +76,11 @@ export default function AdminBlogPage() {
   );
 }
 
-function BlogForm({ initial, onClose, onSave }: any) {
+function BlogForm({ initial, onClose, onSave }: {
+  initial: any;
+  onClose: () => void;
+  onSave: (data: any) => void;
+}) {
   const [f, setF] = useState<any>(initial || {
     slug: '', title: '', excerpt: '', content: '', authorName: '',
     status: 'DRAFT', metaTitle: '', metaDescription: '', metaKeywords: '',

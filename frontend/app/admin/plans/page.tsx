@@ -82,7 +82,11 @@ export default function AdminPlansPage() {
   );
 }
 
-function PlanForm({ initial, onClose, onSave }: any) {
+function PlanForm({ initial, onClose, onSave }: {
+  initial: any;
+  onClose: () => void;
+  onSave: (data: any) => void;
+}) {
   const [f, setF] = useState<any>(initial || {
     code: '', name: '', tagline: '', monthlyPrice: 0, yearlyPrice: 0,
     maxFacilities: 1, maxSkus: 100000, maxUserRoles: 3, maxUsers: 5, maxOrdersPerMonth: 5000,

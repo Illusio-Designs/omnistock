@@ -236,7 +236,12 @@ export default function HelpPage() {
   );
 }
 
-function ActionCard({ icon: Icon, title, description, href }: any) {
+function ActionCard({ icon: Icon, title, description, href }: {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  title: string;
+  description: string;
+  href?: string;
+}) {
   const content = (
     <Card className="p-5 hover:shadow-lg hover:border-emerald-200 transition-all cursor-pointer group">
       <div className="flex items-start justify-between">

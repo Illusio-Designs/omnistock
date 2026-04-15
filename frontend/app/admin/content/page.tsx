@@ -156,7 +156,12 @@ export default function AdminContentPage() {
   );
 }
 
-function ContentForm({ initial, type, onClose, onSave }: any) {
+function ContentForm({ initial, type, onClose, onSave }: {
+  initial: any;
+  type: string;
+  onClose: () => void;
+  onSave: (data: any) => void;
+}) {
   const [f, setF] = useState<any>(
     initial || {
       title: '',

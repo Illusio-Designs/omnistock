@@ -5,7 +5,8 @@
       "Bash(curl -s http://localhost:8081 -o /dev/null -w \"%{http_code}\\\\n\")",
       "Bash(tasklist)",
       "Bash(tasklist /FI \"IMAGENAME eq node.exe\")",
-      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")"
+      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npm install)"
     ]
   }
 }
