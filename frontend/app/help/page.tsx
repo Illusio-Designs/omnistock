@@ -4,23 +4,49 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button, Card, Input, Textarea, Select, Badge } from '@/components/ui';
-import { publicApi } from '@/lib/api';
+import { publicApi, ticketApi } from '@/lib/api';
 import { getIcon } from '@/lib/icon';
+import Link from 'next/link';
 import {
   HelpCircle, MessageCircle, Mail, BookOpen, Video, Search, Send,
-  ArrowRight, ExternalLink, Inbox,
+  ArrowRight, ExternalLink, Inbox, Loader2,
 } from 'lucide-react';
 
 export default function HelpPage() {
   const [q, setQ] = useState('');
-  const [ticket, setTicket] = useState({ subject: '', priority: 'normal', message: '' });
+  const [ticket, setTicket] = useState({ subject: '', priority: 'NORMAL', message: '' });
+  const [ticketErr, setTicketErr] = useState('');
+  const [ticketBusy, setTicketBusy] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [popular, setPopular] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<any[]>([]);
+
+  const loadTickets = () => ticketApi.list().then((r) => setTickets(r.data || [])).catch(() => {});
 
   useEffect(() => {
     publicApi.content('HELP_CATEGORY').then((r) => setCategories(r.data || []));
     publicApi.content('HELP_FAQ').then((r) => setPopular(r.data || []));
+    loadTickets();
   }, []);
+
+  const submitTicket = async () => {
+    setTicketErr('');
+    if (!ticket.subject || !ticket.message) return;
+    setTicketBusy(true);
+    try {
+      await ticketApi.create({
+        subject: ticket.subject,
+        priority: ticket.priority,
+        body: ticket.message,
+      });
+      setTicket({ subject: '', priority: 'NORMAL', message: '' });
+      loadTickets();
+    } catch (err: any) {
+      setTicketErr(err?.response?.data?.error || 'Failed to create ticket');
+    } finally {
+      setTicketBusy(false);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -104,16 +130,45 @@ export default function HelpPage() {
               )}
             </Card>
 
-            {/* Tickets — empty state. Wire to real ticket API when available. */}
+            {/* Tickets — live from /api/v1/tickets */}
             <Card className="p-6">
               <h2 className="font-bold text-lg text-slate-900 mb-4">Your tickets</h2>
-              <div className="text-center py-8">
-                <div className="inline-flex w-12 h-12 rounded-2xl bg-slate-100 items-center justify-center mb-3">
-                  <Inbox size={18} className="text-slate-400" />
+              {tickets.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="inline-flex w-12 h-12 rounded-2xl bg-slate-100 items-center justify-center mb-3">
+                    <Inbox size={18} className="text-slate-400" />
+                  </div>
+                  <p className="text-sm text-slate-500">No support tickets yet.</p>
+                  <p className="text-xs text-slate-400 mt-1">Open a new ticket using the form on the right.</p>
                 </div>
-                <p className="text-sm text-slate-500">No support tickets yet.</p>
-                <p className="text-xs text-slate-400 mt-1">Open a new ticket using the form on the right.</p>
-              </div>
+              ) : (
+                <div className="space-y-2">
+                  {tickets.map((t: any) => (
+                    <Link
+                      key={t.id}
+                      href={`/help/${t.id}`}
+                      className="flex items-center justify-between p-4 rounded-xl bg-slate-50/50 border border-slate-100 hover:bg-slate-100/50 transition-colors"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-mono font-bold text-slate-500">#{t.id.slice(0, 8)}</span>
+                          <Badge variant={t.status === 'OPEN' ? 'rose' : t.status === 'PENDING' ? 'amber' : 'emerald'}>
+                            {t.status}
+                          </Badge>
+                          <Badge variant="default">{t.priority}</Badge>
+                        </div>
+                        <div className="text-sm font-bold text-slate-900 mt-1 truncate">{t.subject}</div>
+                        {t.messages?.[0]?.body && (
+                          <div className="text-xs text-slate-500 mt-0.5 truncate">{t.messages[0].body}</div>
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-400 whitespace-nowrap ml-3">
+                        {new Date(t.updatedAt).toLocaleDateString()}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </Card>
           </div>
 
@@ -134,10 +189,10 @@ export default function HelpPage() {
                 value={ticket.priority}
                 onChange={(v) => setTicket({ ...ticket, priority: v })}
                 options={[
-                  { value: 'low',    label: '🟢 Low' },
-                  { value: 'normal', label: '🟡 Normal' },
-                  { value: 'high',   label: '🟠 High' },
-                  { value: 'urgent', label: '🔴 Urgent' },
+                  { value: 'LOW',    label: '🟢 Low' },
+                  { value: 'NORMAL', label: '🟡 Normal' },
+                  { value: 'HIGH',   label: '🟠 High' },
+                  { value: 'URGENT', label: '🔴 Urgent' },
                 ]}
                 fullWidth
               />
@@ -148,8 +203,16 @@ export default function HelpPage() {
                 placeholder="Describe the issue in detail…"
                 rows={5}
               />
-              <Button leftIcon={<Send size={14} />} fullWidth disabled={!ticket.subject || !ticket.message}>
-                Send Message
+              {ticketErr && (
+                <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2.5">{ticketErr}</div>
+              )}
+              <Button
+                leftIcon={ticketBusy ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                fullWidth
+                onClick={submitTicket}
+                disabled={!ticket.subject || !ticket.message || ticketBusy}
+              >
+                {ticketBusy ? 'Sending…' : 'Send Message'}
               </Button>
             </div>
 

@@ -4,45 +4,79 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Sparkles, Menu, X, Github, Twitter, Linkedin, ChevronDown, ArrowRight,
-  Package, ShoppingCart, Warehouse, Truck, RefreshCcw, BarChart3, Globe,
-  BookOpen, FileText, Video, HelpCircle, Users, Briefcase,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { publicApi } from '@/lib/api';
+import { getIcon } from '@/lib/icon';
 
-// ── Dropdown content definitions ────────────────────────────────────────────
-const SOLUTIONS = [
-  { label: 'Multi-channel Selling', href: '/solutions#multichannel', icon: Globe,      description: 'Sell on Amazon, Flipkart, Myntra & 50+ more' },
-  { label: 'Inventory Management',  href: '/solutions#inventory',    icon: Package,    description: 'Real-time stock across every warehouse' },
-  { label: 'Order Management',      href: '/solutions#orders',       icon: ShoppingCart, description: 'Unified inbox for every order' },
-  { label: 'Warehouse Operations',  href: '/solutions#warehouse',    icon: Warehouse,  description: 'Pick, pack, ship from any location' },
-  { label: 'Shipping & Logistics',  href: '/solutions#shipping',     icon: Truck,      description: '16+ courier partners in one API' },
-  { label: 'Returns & Refunds',     href: '/solutions#returns',      icon: RefreshCcw, description: 'Automated RMA workflows' },
-  { label: 'Reports & Analytics',   href: '/solutions#analytics',    icon: BarChart3,  description: 'AI-powered business insights' },
-];
+interface NavLink {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  href: string | null;
+  icon: string | null;
+  category: string | null;
+  sortOrder: number;
+}
 
-const RESOURCES = [
-  { label: 'Blog',        href: '/resources/blog',    icon: BookOpen,    description: 'Commerce tips & trends' },
-  { label: 'Case Studies',href: '/resources/cases',   icon: FileText,    description: 'How brands grew with OmniStock' },
-  { label: 'Help Center', href: '/resources/help',    icon: HelpCircle,  description: 'Guides & documentation' },
-  { label: 'Webinars',    href: '/resources/videos',  icon: Video,       description: 'Live product demos' },
-];
+interface NavGroups {
+  main: NavLink[];
+  solutions: NavLink[];
+  resources: NavLink[];
+  company: NavLink[];
+}
 
-const COMPANY = [
-  { label: 'About',    href: '/about',    icon: Sparkles,  description: 'Our mission & story' },
-  { label: 'Careers',  href: '/about#careers', icon: Briefcase, description: "We're hiring" },
-  { label: 'Contact',  href: '/contact',  icon: Users,      description: 'Get in touch' },
-];
+interface FooterGroups {
+  solutions: NavLink[];
+  product: NavLink[];
+  resources: NavLink[];
+  company: NavLink[];
+}
+
+function groupBy<T extends { category: string | null }>(items: T[]): Record<string, T[]> {
+  const out: Record<string, T[]> = {};
+  for (const it of items) {
+    const k = it.category || 'default';
+    (out[k] ||= []).push(it);
+  }
+  return out;
+}
+
+// Single in-flight promise so nav/footer only fetches once per page load
+let navCache: Promise<NavLink[]> | null = null;
+let footerCache: Promise<NavLink[]> | null = null;
+
+function fetchNav() {
+  if (!navCache) navCache = publicApi.content('NAV_LINK').then((r) => r.data || []).catch(() => []);
+  return navCache;
+}
+function fetchFooter() {
+  if (!footerCache) footerCache = publicApi.content('FOOTER_LINK').then((r) => r.data || []).catch(() => []);
+  return footerCache;
+}
 
 export function PublicNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [groups, setGroups] = useState<NavGroups>({ main: [], solutions: [], resources: [], company: [] });
+
+  useEffect(() => {
+    fetchNav().then((items) => {
+      const g = groupBy(items);
+      setGroups({
+        main:       g.main       || [],
+        solutions:  g.solutions  || [],
+        resources:  g.resources  || [],
+        company:    g.company    || [],
+      });
+    });
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/85 border-b border-slate-200/60">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
           <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/50 transition-shadow">
             <Sparkles size={16} className="text-white" />
@@ -50,64 +84,67 @@ export function PublicNav() {
           <span className="font-bold text-lg tracking-tight text-slate-900">OmniStock</span>
         </Link>
 
-        {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1">
-          <NavLink href="/" current={pathname}>Home</NavLink>
+          {/* Interleave: Home, [Solutions dropdown], Features, Pricing, [Resources], [Company]
+              We render main[] in order, inserting dropdowns at anchor positions. */}
+          {groups.main.map((m) => (
+            <NavLinkRow key={m.id} href={m.href || '#'} current={pathname}>{m.title}</NavLinkRow>
+          ))}
 
-          <Dropdown
-            label="Solutions"
-            items={SOLUTIONS}
-            active={activeMenu === 'solutions'}
-            onEnter={() => setActiveMenu('solutions')}
-            onLeave={() => setActiveMenu(null)}
-          />
-
-          <NavLink href="/features" current={pathname}>Features</NavLink>
-          <NavLink href="/pricing" current={pathname}>Pricing</NavLink>
-
-          <Dropdown
-            label="Resources"
-            items={RESOURCES}
-            active={activeMenu === 'resources'}
-            onEnter={() => setActiveMenu('resources')}
-            onLeave={() => setActiveMenu(null)}
-          />
-
-          <Dropdown
-            label="Company"
-            items={COMPANY}
-            active={activeMenu === 'company'}
-            onEnter={() => setActiveMenu('company')}
-            onLeave={() => setActiveMenu(null)}
-          />
+          {groups.solutions.length > 0 && (
+            <Dropdown
+              label="Solutions"
+              items={groups.solutions}
+              active={activeMenu === 'solutions'}
+              onEnter={() => setActiveMenu('solutions')}
+              onLeave={() => setActiveMenu(null)}
+            />
+          )}
+          {groups.resources.length > 0 && (
+            <Dropdown
+              label="Resources"
+              items={groups.resources}
+              active={activeMenu === 'resources'}
+              onEnter={() => setActiveMenu('resources')}
+              onLeave={() => setActiveMenu(null)}
+            />
+          )}
+          {groups.company.length > 0 && (
+            <Dropdown
+              label="Company"
+              items={groups.company}
+              active={activeMenu === 'company'}
+              onEnter={() => setActiveMenu('company')}
+              onLeave={() => setActiveMenu(null)}
+            />
+          )}
         </nav>
 
-        {/* CTAs */}
         <div className="hidden md:flex items-center gap-2">
           <Link href="/login" className="btn-ghost">Log in</Link>
-          <Link href="/dashboard" className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full shadow-md shadow-emerald-500/20 transition-colors">
+          <Link href="/onboarding" className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full shadow-md shadow-emerald-500/20 transition-colors">
             Get Started <ArrowRight size={13} />
           </Link>
         </div>
 
-        {/* Mobile toggle */}
         <button className="md:hidden p-2" onClick={() => setOpen(!open)}>
           {open ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
-      {/* Mobile menu */}
       {open && (
         <div className="md:hidden border-t border-slate-200 bg-white px-6 py-4 space-y-1 max-h-[80vh] overflow-y-auto">
-          <Link href="/" onClick={() => setOpen(false)} className="block px-3 py-2 text-sm font-semibold text-slate-700 rounded-lg hover:bg-slate-100">Home</Link>
-          <MobileGroup label="Solutions" items={SOLUTIONS} onClick={() => setOpen(false)} />
-          <Link href="/features" onClick={() => setOpen(false)} className="block px-3 py-2 text-sm font-semibold text-slate-700 rounded-lg hover:bg-slate-100">Features</Link>
-          <Link href="/pricing" onClick={() => setOpen(false)} className="block px-3 py-2 text-sm font-semibold text-slate-700 rounded-lg hover:bg-slate-100">Pricing</Link>
-          <MobileGroup label="Resources" items={RESOURCES} onClick={() => setOpen(false)} />
-          <MobileGroup label="Company" items={COMPANY} onClick={() => setOpen(false)} />
+          {groups.main.map((m) => (
+            <Link key={m.id} href={m.href || '#'} onClick={() => setOpen(false)} className="block px-3 py-2 text-sm font-semibold text-slate-700 rounded-lg hover:bg-slate-100">
+              {m.title}
+            </Link>
+          ))}
+          {groups.solutions.length > 0 && <MobileGroup label="Solutions" items={groups.solutions} onClick={() => setOpen(false)} />}
+          {groups.resources.length > 0 && <MobileGroup label="Resources" items={groups.resources} onClick={() => setOpen(false)} />}
+          {groups.company.length > 0 && <MobileGroup label="Company" items={groups.company} onClick={() => setOpen(false)} />}
           <div className="flex gap-2 pt-3 border-t border-slate-100">
             <Link href="/login" className="btn-secondary flex-1 justify-center">Log in</Link>
-            <Link href="/dashboard" className="btn-primary flex-1 justify-center">Get Started</Link>
+            <Link href="/onboarding" className="btn-primary flex-1 justify-center">Get Started</Link>
           </div>
         </div>
       )}
@@ -115,7 +152,7 @@ export function PublicNav() {
   );
 }
 
-function NavLink({ href, current, children }: { href: string; current: string; children: React.ReactNode }) {
+function NavLinkRow({ href, current, children }: { href: string; current: string; children: React.ReactNode }) {
   const active = current === href;
   return (
     <Link
@@ -134,7 +171,7 @@ function Dropdown({
   label, items, active, onEnter, onLeave,
 }: {
   label: string;
-  items: Array<{ label: string; href: string; icon: any; description: string }>;
+  items: NavLink[];
   active: boolean;
   onEnter: () => void;
   onLeave: () => void;
@@ -153,12 +190,12 @@ function Dropdown({
       {active && (
         <div className="absolute top-full left-0 pt-3 w-[420px]">
           <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl shadow-slate-900/10 p-3 animate-fade-in">
-            {items.map(item => {
-              const Icon = item.icon;
+            {items.map((item) => {
+              const Icon = getIcon(item.icon);
               return (
                 <Link
-                  key={item.href}
-                  href={item.href}
+                  key={item.id}
+                  href={item.href || '#'}
                   className="flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-50 transition-colors group"
                 >
                   <div className="w-10 h-10 rounded-lg bg-emerald-50 group-hover:bg-white flex items-center justify-center flex-shrink-0 transition-colors">
@@ -166,9 +203,11 @@ function Dropdown({
                   </div>
                   <div className="min-w-0">
                     <div className="text-sm font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                      {item.label}
+                      {item.title}
                     </div>
-                    <div className="text-xs text-slate-500 mt-0.5 line-clamp-1">{item.description}</div>
+                    {item.subtitle && (
+                      <div className="text-xs text-slate-500 mt-0.5 line-clamp-1">{item.subtitle}</div>
+                    )}
                   </div>
                 </Link>
               );
@@ -184,7 +223,7 @@ function MobileGroup({
   label, items, onClick,
 }: {
   label: string;
-  items: Array<{ label: string; href: string; icon: any }>;
+  items: NavLink[];
   onClick: () => void;
 }) {
   return (
@@ -194,14 +233,14 @@ function MobileGroup({
         <ChevronDown size={14} className="group-open:rotate-180 transition-transform" />
       </summary>
       <div className="pl-4 space-y-0.5 py-1">
-        {items.map(i => (
+        {items.map((i) => (
           <Link
-            key={i.href}
-            href={i.href}
+            key={i.id}
+            href={i.href || '#'}
             onClick={onClick}
             className="block px-3 py-2 text-xs text-slate-600 rounded-lg hover:bg-slate-100"
           >
-            {i.label}
+            {i.title}
           </Link>
         ))}
       </div>
@@ -211,6 +250,20 @@ function MobileGroup({
 
 // ── Footer ─────────────────────────────────────────────────────────────────
 export function PublicFooter() {
+  const [groups, setGroups] = useState<FooterGroups>({ solutions: [], product: [], resources: [], company: [] });
+
+  useEffect(() => {
+    fetchFooter().then((items) => {
+      const g = groupBy(items);
+      setGroups({
+        solutions: g.solutions || [],
+        product:   g.product   || [],
+        resources: g.resources || [],
+        company:   g.company   || [],
+      });
+    });
+  }, []);
+
   return (
     <footer className="border-t border-slate-200 bg-white">
       <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-2 md:grid-cols-6 gap-8">
@@ -233,34 +286,10 @@ export function PublicFooter() {
           </div>
         </div>
 
-        <FooterCol title="Solutions" links={[
-          { label: 'Multi-channel', href: '/solutions#multichannel' },
-          { label: 'Inventory',    href: '/solutions#inventory' },
-          { label: 'Orders',       href: '/solutions#orders' },
-          { label: 'Shipping',     href: '/solutions#shipping' },
-          { label: 'Analytics',    href: '/solutions#analytics' },
-        ]} />
-        <FooterCol title="Product" links={[
-          { label: 'Features',  href: '/features' },
-          { label: 'Channels',  href: '/dashboard/channels' },
-          { label: 'Pricing',   href: '/pricing' },
-          { label: 'Changelog', href: '#' },
-          { label: 'Roadmap',   href: '#' },
-        ]} />
-        <FooterCol title="Resources" links={[
-          { label: 'Blog',         href: '/resources/blog' },
-          { label: 'Case Studies', href: '/resources/cases' },
-          { label: 'Help Center',  href: '/resources/help' },
-          { label: 'API Docs',     href: '#' },
-          { label: 'Status',       href: '#' },
-        ]} />
-        <FooterCol title="Company" links={[
-          { label: 'About',    href: '/about' },
-          { label: 'Careers',  href: '/about#careers' },
-          { label: 'Contact',  href: '/contact' },
-          { label: 'Privacy',  href: '#' },
-          { label: 'Terms',    href: '#' },
-        ]} />
+        <FooterCol title="Solutions" items={groups.solutions} />
+        <FooterCol title="Product"   items={groups.product} />
+        <FooterCol title="Resources" items={groups.resources} />
+        <FooterCol title="Company"   items={groups.company} />
       </div>
       <div className="border-t border-slate-100 py-6 px-6 text-center text-xs text-slate-500">
         © {new Date().getFullYear()} OmniStock. Built for the next generation of commerce.
@@ -269,15 +298,16 @@ export function PublicFooter() {
   );
 }
 
-function FooterCol({ title, links }: { title: string; links: Array<{ label: string; href: string }> }) {
+function FooterCol({ title, items }: { title: string; items: NavLink[] }) {
+  if (!items.length) return null;
   return (
     <div>
       <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">{title}</h4>
       <ul className="space-y-2">
-        {links.map(l => (
-          <li key={l.label}>
-            <Link href={l.href} className="text-sm text-slate-500 hover:text-emerald-600 transition-colors">
-              {l.label}
+        {items.map((l) => (
+          <li key={l.id}>
+            <Link href={l.href || '#'} className="text-sm text-slate-500 hover:text-emerald-600 transition-colors">
+              {l.title}
             </Link>
           </li>
         ))}

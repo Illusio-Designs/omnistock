@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuthStore } from '@/store/auth.store';
-import { LayoutDashboard, Package2, Building2, FileText, Search, LogOut, Crown, Settings, FileEdit } from 'lucide-react';
+import { LayoutDashboard, Package2, Building2, FileText, Search, LogOut, Crown, Settings, FileEdit, LifeBuoy } from 'lucide-react';
 
 const NAV = [
   { href: '/admin',          label: 'Overview', icon: LayoutDashboard },
   { href: '/admin/plans',    label: 'Plans',    icon: Package2 },
   { href: '/admin/tenants',  label: 'Tenants',  icon: Building2 },
+  { href: '/admin/tickets',  label: 'Tickets',  icon: LifeBuoy },
   { href: '/admin/blog',     label: 'Blog',     icon: FileText },
   { href: '/admin/content',  label: 'Content',  icon: FileEdit },
   { href: '/admin/seo',      label: 'SEO',      icon: Search },

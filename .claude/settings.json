@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost:8081/status)",
+      "Bash(curl -s http://localhost:8081 -o /dev/null -w \"%{http_code}\\\\n\")",
+      "Bash(tasklist)",
+      "Bash(tasklist /FI \"IMAGENAME eq node.exe\")",
+      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")"
+    ]
+  }
+}

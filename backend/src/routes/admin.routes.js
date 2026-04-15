@@ -176,12 +176,14 @@ const SETTINGS_CATALOG = [
   { key: 'shopify.scopes',      category: 'shopify', label: 'OAuth Scopes',          isSecret: false, description: 'Comma-separated, e.g. read_products,write_products,read_orders' },
 
   // Flipkart marketplace app
-  { key: 'flipkart.appId',      category: 'flipkart', label: 'Flipkart App ID',      isSecret: false },
-  { key: 'flipkart.appSecret',  category: 'flipkart', label: 'Flipkart App Secret',  isSecret: true  },
+  { key: 'flipkart.appId',        category: 'flipkart', label: 'Flipkart App ID',      isSecret: false },
+  { key: 'flipkart.appSecret',    category: 'flipkart', label: 'Flipkart App Secret',  isSecret: true  },
+  { key: 'flipkart.redirectUri',  category: 'flipkart', label: 'OAuth Redirect URI',   isSecret: false },
 
   // Meta (Facebook/Instagram/WhatsApp)
-  { key: 'meta.appId',          category: 'meta', label: 'Meta App ID',              isSecret: false },
-  { key: 'meta.appSecret',      category: 'meta', label: 'Meta App Secret',          isSecret: true  },
+  { key: 'meta.appId',        category: 'meta', label: 'Meta App ID',          isSecret: false },
+  { key: 'meta.appSecret',    category: 'meta', label: 'Meta App Secret',      isSecret: true  },
+  { key: 'meta.redirectUri',  category: 'meta', label: 'OAuth Redirect URI',   isSecret: false },
 
   // Razorpay
   { key: 'razorpay.keyId',         category: 'razorpay', label: 'Key ID',           isSecret: false },
@@ -294,6 +296,72 @@ router.delete('/content/:id', async (req, res) => {
     await prisma.publicContent.delete({ where: { id: req.params.id } });
     res.json({ ok: true });
   } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// ── SUPPORT TICKETS (platform-wide) ─────────────────────
+router.get('/tickets', async (req, res) => {
+  const { status } = req.query;
+  const where = {};
+  if (status) where.status = String(status);
+  const tickets = await prisma.supportTicket.findMany({
+    where,
+    orderBy: { updatedAt: 'desc' },
+    include: {
+      tenant: { select: { id: true, businessName: true, slug: true } },
+      _count: { select: { messages: true } },
+      messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+    },
+    take: 200,
+  });
+  res.json(tickets);
+});
+
+router.get('/tickets/:id', async (req, res) => {
+  const ticket = await prisma.supportTicket.findUnique({
+    where: { id: req.params.id },
+    include: {
+      tenant: { select: { id: true, businessName: true, slug: true } },
+      messages: { orderBy: { createdAt: 'asc' } },
+    },
+  });
+  if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+  res.json(ticket);
+});
+
+router.post('/tickets/:id/reply', async (req, res) => {
+  const ticket = await prisma.supportTicket.findUnique({ where: { id: req.params.id } });
+  if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+
+  const { body, status } = req.body;
+  if (!body) return res.status(400).json({ error: 'body required' });
+
+  await prisma.$transaction([
+    prisma.ticketMessage.create({
+      data: {
+        ticketId: ticket.id,
+        authorId: req.user.id,
+        authorName: req.user.name || req.user.email || 'Support',
+        isStaff: true,
+        body,
+      },
+    }),
+    prisma.supportTicket.update({
+      where: { id: ticket.id },
+      data: {
+        status: status || 'PENDING',
+        updatedAt: new Date(),
+      },
+    }),
+  ]);
+  res.json({ ok: true });
+});
+
+router.put('/tickets/:id/status', async (req, res) => {
+  const t = await prisma.supportTicket.update({
+    where: { id: req.params.id },
+    data: { status: req.body.status },
+  });
+  res.json(t);
 });
 
 // ── AUDIT LOG (platform-wide) ───────────────────────────

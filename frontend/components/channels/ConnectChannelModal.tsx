@@ -63,17 +63,31 @@ export function ConnectChannelModal({
     setStatus('saving');
     setMessage('');
     try {
-      const region = values.region || 'IN';
       let url = '';
-      if (schema.oauth === 'amazon') {
-        const res = await oauthApi.amazonStart(channelId, region);
+      const provider = schema.oauth;
+      if (provider === 'amazon') {
+        const res = await oauthApi.amazonStart(channelId, values.region || 'IN');
+        url = res.data.url;
+      } else if (provider === 'shopify') {
+        if (!values.shop) {
+          setStatus('error');
+          setMessage('Enter your shop domain first (e.g. mystore.myshopify.com)');
+          return;
+        }
+        const res = await oauthApi.shopifyStart(channelId, values.shop);
+        url = res.data.url;
+      } else if (provider === 'flipkart') {
+        const res = await oauthApi.flipkartStart(channelId);
+        url = res.data.url;
+      } else if (provider === 'meta') {
+        const res = await oauthApi.metaStart(channelId);
         url = res.data.url;
       } else {
-        throw new Error(`OAuth provider ${schema.oauth} not implemented yet`);
+        throw new Error(`OAuth provider ${provider} not implemented yet`);
       }
 
       // Open consent in a popup
-      const w = 520, h = 720;
+      const w = 560, h = 760;
       const left = window.screenX + (window.innerWidth - w) / 2;
       const top  = window.screenY + (window.innerHeight - h) / 2;
       popupRef.current = window.open(
@@ -93,21 +107,19 @@ export function ConnectChannelModal({
       // Poll the channel status until credentials land or popup closes
       pollRef.current = setInterval(async () => {
         try {
-          if (schema.oauth === 'amazon') {
-            const r = await oauthApi.amazonStatus(channelId);
-            if (r.data.connected) {
-              clearInterval(pollRef.current);
-              setStatus('success');
-              setMessage('Amazon account connected');
-              setTimeout(() => onConnected(), 1200);
-              return;
-            }
-            if (r.data.error) {
-              clearInterval(pollRef.current);
-              setStatus('error');
-              setMessage(r.data.error);
-              return;
-            }
+          const r = await oauthApi.status(provider, channelId);
+          if (r.data.connected) {
+            clearInterval(pollRef.current);
+            setStatus('success');
+            setMessage(`${schema.name} connected`);
+            setTimeout(() => onConnected(), 1200);
+            return;
+          }
+          if (r.data.error) {
+            clearInterval(pollRef.current);
+            setStatus('error');
+            setMessage(r.data.error);
+            return;
           }
           if (popupRef.current?.closed) {
             clearInterval(pollRef.current);

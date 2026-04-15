@@ -88,14 +88,14 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     name: 'Flipkart Seller Hub',
     docsUrl: 'https://seller.flipkart.com/api-docs',
     description: 'Flipkart Marketplace API for inventory, listings and orders.',
+    oauth: 'flipkart',
     steps: [
-      'Flipkart Seller Hub → My Account → API Credentials',
-      'Generate an App ID + App Secret pair',
+      'Click "Authorize with Flipkart" below',
+      'Sign in to Flipkart Seller Hub',
+      'Grant OmniStock access to your seller data',
+      'You\'ll be redirected back automatically',
     ],
-    fields: [
-      { key: 'appId',     label: 'App ID',     kind: 'text',     required: true },
-      { key: 'appSecret', label: 'App Secret', kind: 'password', required: true, secret: true },
-    ],
+    fields: [],
   },
 
   MEESHO: {
@@ -251,16 +251,17 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
   SHOPIFY: {
     type: 'SHOPIFY',
     name: 'Shopify',
-    docsUrl: 'https://shopify.dev/docs/apps/auth/admin-app-access-tokens',
-    description: 'Custom app / admin API access token for your Shopify store.',
+    docsUrl: 'https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens/authorization-code-grant',
+    description: 'OAuth into your Shopify store. OmniStock has a public Partner app — every store installs it.',
+    oauth: 'shopify',
     steps: [
-      'Shopify admin → Settings → Apps and sales channels → Develop apps',
-      'Create an app → Configure Admin API scopes → read/write products, orders, inventory',
-      'Install app → reveal Admin API access token',
+      'Enter your store domain (e.g. mystore.myshopify.com)',
+      'Click "Authorize with Shopify"',
+      'Approve the requested scopes in Shopify admin',
+      'You\'ll be redirected back automatically',
     ],
     fields: [
-      { key: 'shopUrl',     label: 'Store URL',      kind: 'url',      required: true, placeholder: 'https://yourstore.myshopify.com' },
-      { key: 'accessToken', label: 'Admin API Access Token', kind: 'password', required: true, secret: true, placeholder: 'shpat_xxxxxxxxxxxxxxxx' },
+      { key: 'shop', label: 'Shop domain', kind: 'text', required: true, placeholder: 'mystore.myshopify.com', help: 'The myshopify.com subdomain — no https://, no trailing slash.' },
     ],
   },
 
@@ -562,28 +563,33 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
   INSTAGRAM: {
     type: 'INSTAGRAM',
     name: 'Instagram Shopping',
-    fields: [
-      { key: 'businessAccountId', label: 'Instagram Business ID', kind: 'text',     required: true },
-      { key: 'accessToken',       label: 'Page Access Token',     kind: 'password', required: true, secret: true },
+    docsUrl: 'https://developers.facebook.com/docs/instagram-platform',
+    description: 'Connect your Instagram Business account via the Meta public app.',
+    oauth: 'meta',
+    steps: [
+      'Click "Authorize with Meta" below',
+      'Sign in with Facebook and approve the scopes',
+      'You\'ll be redirected back. After connecting, pick the Instagram Business account.',
     ],
+    fields: [],
   },
 
   FACEBOOK: {
     type: 'FACEBOOK',
     name: 'Facebook Shop',
-    fields: [
-      { key: 'pageId',      label: 'Page ID',            kind: 'text',     required: true },
-      { key: 'accessToken', label: 'Page Access Token',  kind: 'password', required: true, secret: true },
-    ],
+    docsUrl: 'https://developers.facebook.com/docs/commerce-platform',
+    description: 'Connect your Facebook Page + Commerce catalog via the Meta public app.',
+    oauth: 'meta',
+    fields: [],
   },
 
   WHATSAPP_BUSINESS: {
     type: 'WHATSAPP_BUSINESS',
     name: 'WhatsApp Business',
-    fields: [
-      { key: 'phoneNumberId', label: 'Phone Number ID', kind: 'text',     required: true },
-      { key: 'accessToken',   label: 'System Access Token', kind: 'password', required: true, secret: true },
-    ],
+    docsUrl: 'https://developers.facebook.com/docs/whatsapp',
+    description: 'Connect your WhatsApp Business phone number via the Meta public app.',
+    oauth: 'meta',
+    fields: [],
   },
 
   CUSTOM_WEBHOOK: {

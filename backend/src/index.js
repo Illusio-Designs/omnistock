@@ -28,6 +28,8 @@ const webhookRoutes = require('./routes/webhook.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const usersRoutes = require('./routes/users.routes');
 const oauthRoutes = require('./routes/oauth.routes');
+const ticketsRoutes = require('./routes/tickets.routes');
+const { autoAudit } = require('./services/audit.service');
 
 const { initDb } = require('./bootstrap/initDb');
 
@@ -49,6 +51,9 @@ app.use(limiter);
 
 // ── Health Check ──────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date() }));
+
+// ── Auto audit: logs every successful authenticated mutation ──
+app.use(autoAudit);
 
 // ── API Routes ────────────────────────────────────────
 const api = '/api/v1';
@@ -74,6 +79,7 @@ app.use(`${api}/webhooks`,   webhookRoutes);
 app.use(`${api}/payments`,   paymentRoutes);
 app.use(`${api}/users`,      usersRoutes);
 app.use(`${api}/oauth`,      oauthRoutes);
+app.use(`${api}/tickets`,    ticketsRoutes);
 
 // ── 404 Handler ───────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));

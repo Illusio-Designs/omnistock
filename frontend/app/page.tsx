@@ -30,14 +30,20 @@ export default function LandingPage() {
   const [featureTools, setFeatureTools] = useState<ContentRow[]>([]);
   const [testimonials, setTestimonials] = useState<ContentRow[]>([]);
   const [faqs, setFaqs] = useState<ContentRow[]>([]);
+  const [hero, setHero] = useState<ContentRow | null>(null);
 
   useEffect(() => {
     publicApi.stats().then((r) => setStats(r.data)).catch(() => {});
+    publicApi.content('HERO').then((r) => setHero((r.data || [])[0] || null)).catch(() => {});
     publicApi.content('LANDING_CHALLENGE').then((r) => setChallenges(r.data)).catch(() => {});
     publicApi.content('LANDING_FEATURE_TOOL').then((r) => setFeatureTools(r.data)).catch(() => {});
     publicApi.content('TESTIMONIAL').then((r) => setTestimonials(r.data)).catch(() => {});
     publicApi.content('LANDING_FAQ').then((r) => setFaqs(r.data)).catch(() => {});
   }, []);
+
+  const ctaPrimary = hero?.data?.ctaPrimary || { label: 'Try for Free', href: '/onboarding' };
+  const ctaSecondary = hero?.data?.ctaSecondary || { label: 'Schedule a Demo', href: '/contact' };
+  const heroBadge = hero?.data?.badge || 'Now connecting 50+ channels';
 
   return (
     <PublicLayout>
@@ -60,29 +66,32 @@ export default function LandingPage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
             </span>
-            Now connecting 50+ channels
+            {heroBadge}
           </div>
 
           <h1 className="mt-6 text-5xl md:text-7xl font-bold tracking-tight text-slate-900 leading-[1.1] max-w-4xl mx-auto animate-slide-up">
-            Data-Driven Commerce<br />
-            <span className="gradient-text">Powered by AI</span>
+            {hero?.title || 'Data-Driven Commerce'}<br />
+            <span className="gradient-text">{hero?.subtitle || 'Powered by AI'}</span>
           </h1>
 
           <p className="mt-6 max-w-xl mx-auto text-base md:text-lg text-slate-600 leading-relaxed animate-slide-up">
-            Effortlessly manage every channel, uncover trends, and make smarter decisions in minutes — not weeks.
+            {hero?.body || 'Effortlessly manage every channel, uncover trends, and make smarter decisions in minutes — not weeks.'}
           </p>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3 animate-slide-up">
             <Link
-              href="/dashboard"
+              href={ctaPrimary.href}
               className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:-translate-y-0.5 transition-all group"
             >
-              Try for Free
+              {ctaPrimary.label}
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </Link>
-            <button className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-full transition-all group">
-              <Play size={12} fill="white" className="group-hover:scale-125 transition-transform" /> Schedule a Demo
-            </button>
+            <Link
+              href={ctaSecondary.href}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-full transition-all group"
+            >
+              <Play size={12} fill="white" className="group-hover:scale-125 transition-transform" /> {ctaSecondary.label}
+            </Link>
           </div>
         </div>
 

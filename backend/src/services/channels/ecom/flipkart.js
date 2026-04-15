@@ -1,26 +1,43 @@
 const axios = require('axios');
+const settings = require('../../settings.service');
 
-// Credentials shape: { appId: "xxx", appSecret: "xxx" }
-// Requires Flipkart Seller API access: https://seller.flipkart.com/api-docs/
-// Access is granted only to approved Flipkart sellers.
+// Per-tenant credentials shape (set by /oauth/flipkart/callback):
+//   { accessToken, refreshToken, expiresAt }
+// Legacy per-tenant shape (for back-compat): { appId, appSecret }
+// Global OAuth app creds come from Admin → Settings → Flipkart:
+//   flipkart.appId, flipkart.appSecret
 
 const BASE_URL = 'https://api.flipkart.net/sellers';
 
 class FlipkartAdapter {
   constructor(credentials) {
-    this.appId = credentials.appId;
-    this.appSecret = credentials.appSecret;
-    this._accessToken = null;
-    this._tokenExpiry = null;
+    this.creds = credentials || {};
+    this._accessToken = credentials?.accessToken || null;
+    this._tokenExpiry = credentials?.expiresAt ? Date.parse(credentials.expiresAt) : null;
+  }
+
+  async _getAppCreds() {
+    const appId     = this.creds.appId     || (await settings.get('flipkart.appId'));
+    const appSecret = this.creds.appSecret || (await settings.get('flipkart.appSecret'));
+    if (!appId || !appSecret) throw new Error('Flipkart app credentials not configured. Set flipkart.appId + flipkart.appSecret in Admin → Settings.');
+    return { appId, appSecret };
   }
 
   async _getAccessToken() {
-    if (this._accessToken && this._tokenExpiry > Date.now()) {
+    if (this._accessToken && this._tokenExpiry && this._tokenExpiry > Date.now()) {
       return this._accessToken;
     }
+    const { appId, appSecret } = await this._getAppCreds();
+
+    // If the tenant authorised via OAuth we have a refreshToken — use it.
+    // Otherwise fall back to client_credentials (legacy private-app flow).
+    const grant = this.creds.refreshToken
+      ? { grant_type: 'refresh_token', refresh_token: this.creds.refreshToken }
+      : { grant_type: 'client_credentials', scope: 'Seller_Api' };
+
     const { data } = await axios.post('https://api.flipkart.net/oauth-service/oauth/token', null, {
-      params: { grant_type: 'client_credentials', scope: 'Seller_Api' },
-      auth: { username: this.appId, password: this.appSecret },
+      params: grant,
+      auth: { username: appId, password: appSecret },
     });
     this._accessToken = data.access_token;
     this._tokenExpiry = Date.now() + (data.expires_in - 60) * 1000;

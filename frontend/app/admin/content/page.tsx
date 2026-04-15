@@ -19,6 +19,9 @@ const TYPES = [
   { value: 'VIDEO',                label: 'Videos' },
   { value: 'CASE_STUDY',           label: 'Case Studies' },
   { value: 'TESTIMONIAL',          label: 'Testimonials' },
+  { value: 'HERO',                 label: 'Landing — Hero' },
+  { value: 'NAV_LINK',             label: 'Navigation links' },
+  { value: 'FOOTER_LINK',          label: 'Footer links' },
 ];
 
 export default function AdminContentPage() {

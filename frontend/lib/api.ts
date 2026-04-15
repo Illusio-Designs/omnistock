@@ -60,8 +60,27 @@ export const billingApi = {
 export const oauthApi = {
   amazonStart:  (channelId: string, region: string) =>
     api.get('/oauth/amazon/start', { params: { channelId, region } }),
+  shopifyStart: (channelId: string, shop: string) =>
+    api.get('/oauth/shopify/start', { params: { channelId, shop } }),
+  flipkartStart: (channelId: string) =>
+    api.get('/oauth/flipkart/start', { params: { channelId } }),
+  metaStart: (channelId: string) =>
+    api.get('/oauth/meta/start', { params: { channelId } }),
+  // Generic poll endpoint — works for every provider
+  status: (provider: string, channelId: string) =>
+    api.get(`/oauth/${provider}/status`, { params: { channelId } }),
   amazonStatus: (channelId: string) =>
     api.get('/oauth/amazon/status', { params: { channelId } }),
+};
+
+// ── Support tickets ────────────────────────────────────────────────
+export const ticketApi = {
+  list: () => api.get('/tickets'),
+  get: (id: string) => api.get(`/tickets/${id}`),
+  create: (data: { subject: string; body: string; priority?: string; category?: string }) =>
+    api.post('/tickets', data),
+  reply: (id: string, body: string) => api.post(`/tickets/${id}/reply`, { body }),
+  close: (id: string) => api.post(`/tickets/${id}/close`, {}),
 };
 
 // ── SaaS: tenant users ─────────────────────────────────────────────
@@ -123,6 +142,13 @@ export const adminApi = {
   createContent: (data: any) => api.post('/admin/content', data),
   updateContent: (id: string, data: any) => api.put(`/admin/content/${id}`, data),
   deleteContent: (id: string) => api.delete(`/admin/content/${id}`),
+  // tickets
+  tickets: (params?: any) => api.get('/admin/tickets', { params }),
+  ticket: (id: string) => api.get(`/admin/tickets/${id}`),
+  replyTicket: (id: string, body: string, status?: string) =>
+    api.post(`/admin/tickets/${id}/reply`, { body, status }),
+  setTicketStatus: (id: string, status: string) =>
+    api.put(`/admin/tickets/${id}/status`, { status }),
   // platform settings
   settings: () => api.get('/admin/settings'),
   updateSetting: (key: string, value: string) => api.put(`/admin/settings/${encodeURIComponent(key)}`, { value }),

@@ -348,6 +348,72 @@ const CONTENT = [
     data: { industry: 'Grocery', region: 'India', metric: '3 channels in 3 weeks' },
   },
 
+  // ─── Landing hero ────────────────────────────────────────────────
+  {
+    type: 'HERO',
+    title: 'Data-Driven Commerce',
+    subtitle: 'Powered by AI',
+    body: 'Effortlessly manage every channel, uncover trends, and make smarter decisions in minutes — not weeks.',
+    data: {
+      badge: 'Now connecting 50+ channels',
+      ctaPrimary:   { label: 'Try for Free',    href: '/onboarding' },
+      ctaSecondary: { label: 'Schedule a Demo', href: '/contact' },
+    },
+  },
+
+  // ─── Main nav top-level links ───────────────────────────────────
+  { type: 'NAV_LINK', category: 'main', title: 'Home',     href: '/' },
+  { type: 'NAV_LINK', category: 'main', title: 'Features', href: '/features' },
+  { type: 'NAV_LINK', category: 'main', title: 'Pricing',  href: '/pricing' },
+
+  // ─── Nav dropdown: Solutions ─────────────────────────────────────
+  { type: 'NAV_LINK', category: 'solutions', title: 'Multi-channel Selling', href: '/solutions#multichannel', icon: 'Globe',       subtitle: 'Sell on Amazon, Flipkart, Myntra & 50+ more' },
+  { type: 'NAV_LINK', category: 'solutions', title: 'Inventory Management',  href: '/solutions#inventory',    icon: 'Package',     subtitle: 'Real-time stock across every warehouse' },
+  { type: 'NAV_LINK', category: 'solutions', title: 'Order Management',      href: '/solutions#orders',       icon: 'ShoppingCart', subtitle: 'Unified inbox for every order' },
+  { type: 'NAV_LINK', category: 'solutions', title: 'Warehouse Operations',  href: '/solutions#warehouse',    icon: 'Warehouse',   subtitle: 'Pick, pack, ship from any location' },
+  { type: 'NAV_LINK', category: 'solutions', title: 'Shipping & Logistics',  href: '/solutions#shipping',     icon: 'Truck',       subtitle: '16+ courier partners in one API' },
+  { type: 'NAV_LINK', category: 'solutions', title: 'Returns & Refunds',     href: '/solutions#returns',      icon: 'RotateCcw',   subtitle: 'Automated RMA workflows' },
+  { type: 'NAV_LINK', category: 'solutions', title: 'Reports & Analytics',   href: '/solutions#analytics',    icon: 'BarChart3',   subtitle: 'AI-powered business insights' },
+
+  // ─── Nav dropdown: Resources ─────────────────────────────────────
+  { type: 'NAV_LINK', category: 'resources', title: 'Blog',         href: '/resources/blog',   icon: 'BookOpen',   subtitle: 'Commerce tips & trends' },
+  { type: 'NAV_LINK', category: 'resources', title: 'Case Studies', href: '/resources/cases',  icon: 'FileText',   subtitle: 'How brands grew with OmniStock' },
+  { type: 'NAV_LINK', category: 'resources', title: 'Help Center',  href: '/resources/help',   icon: 'HelpCircle', subtitle: 'Guides & documentation' },
+  { type: 'NAV_LINK', category: 'resources', title: 'Webinars',     href: '/resources/videos', icon: 'Video',      subtitle: 'Live product demos' },
+
+  // ─── Nav dropdown: Company ───────────────────────────────────────
+  { type: 'NAV_LINK', category: 'company', title: 'About',   href: '/about',          icon: 'Sparkles',   subtitle: 'Our mission & story' },
+  { type: 'NAV_LINK', category: 'company', title: 'Careers', href: '/about#careers',  icon: 'Briefcase',  subtitle: "We're hiring" },
+  { type: 'NAV_LINK', category: 'company', title: 'Contact', href: '/contact',        icon: 'Users',      subtitle: 'Get in touch' },
+
+  // ─── Footer — Solutions column ───────────────────────────────────
+  { type: 'FOOTER_LINK', category: 'solutions', title: 'Multi-channel', href: '/solutions#multichannel' },
+  { type: 'FOOTER_LINK', category: 'solutions', title: 'Inventory',     href: '/solutions#inventory' },
+  { type: 'FOOTER_LINK', category: 'solutions', title: 'Orders',        href: '/solutions#orders' },
+  { type: 'FOOTER_LINK', category: 'solutions', title: 'Shipping',      href: '/solutions#shipping' },
+  { type: 'FOOTER_LINK', category: 'solutions', title: 'Analytics',     href: '/solutions#analytics' },
+
+  // ─── Footer — Product column ─────────────────────────────────────
+  { type: 'FOOTER_LINK', category: 'product', title: 'Features',  href: '/features' },
+  { type: 'FOOTER_LINK', category: 'product', title: 'Channels',  href: '/dashboard/channels' },
+  { type: 'FOOTER_LINK', category: 'product', title: 'Pricing',   href: '/pricing' },
+  { type: 'FOOTER_LINK', category: 'product', title: 'Changelog', href: '/resources/blog' },
+  { type: 'FOOTER_LINK', category: 'product', title: 'Roadmap',   href: '#' },
+
+  // ─── Footer — Resources column ───────────────────────────────────
+  { type: 'FOOTER_LINK', category: 'resources', title: 'Blog',         href: '/resources/blog' },
+  { type: 'FOOTER_LINK', category: 'resources', title: 'Case Studies', href: '/resources/cases' },
+  { type: 'FOOTER_LINK', category: 'resources', title: 'Help Center',  href: '/resources/help' },
+  { type: 'FOOTER_LINK', category: 'resources', title: 'API Docs',     href: '/resources/help?topic=api' },
+  { type: 'FOOTER_LINK', category: 'resources', title: 'Status',       href: '#' },
+
+  // ─── Footer — Company column ─────────────────────────────────────
+  { type: 'FOOTER_LINK', category: 'company', title: 'About',   href: '/about' },
+  { type: 'FOOTER_LINK', category: 'company', title: 'Careers', href: '/about#careers' },
+  { type: 'FOOTER_LINK', category: 'company', title: 'Contact', href: '/contact' },
+  { type: 'FOOTER_LINK', category: 'company', title: 'Privacy', href: '#' },
+  { type: 'FOOTER_LINK', category: 'company', title: 'Terms',   href: '#' },
+
   // ─── Testimonials (landing page) ────────────────────────────────
   {
     type: 'TESTIMONIAL',
