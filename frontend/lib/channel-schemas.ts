@@ -20,7 +20,7 @@ export interface ChannelSchema {
   type: string;
   name: string;
   docsUrl?: string;
-  description: string;
+  description?: string;
   steps?: string[];
   fields: ChannelField[];
   // OAuth flow — tenant clicks "Authorize" instead of pasting credentials.
