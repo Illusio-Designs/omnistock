@@ -10,6 +10,7 @@ import {
   HelpCircle, MessageCircle, Mail, BookOpen, Video, Search, Send,
   ArrowRight, ExternalLink, Inbox, Loader2,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 export default function HelpPage() {
   const [q, setQ] = useState('');
@@ -237,7 +238,7 @@ export default function HelpPage() {
 }
 
 function ActionCard({ icon: Icon, title, description, href }: {
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: LucideIcon;
   title: string;
   description: string;
   href?: string;

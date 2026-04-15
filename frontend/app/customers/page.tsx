@@ -10,6 +10,7 @@ import {
 import {
   Plus, Users, Mail, Phone, UserPlus, TrendingUp, Crown,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 export default function CustomersPage() {
   const [page, setPage] = useState(1);
@@ -129,7 +130,7 @@ export default function CustomersPage() {
 function StatCard({ label, value, icon: Icon, color }: {
   label: string;
   value: string | number;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: LucideIcon;
   color: string;
 }) {
   const colorMap: Record<string, string> = {

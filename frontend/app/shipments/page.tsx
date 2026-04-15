@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import api from '@/lib/api';
 import { Button, Badge, Card, Pagination, Select, Tooltip, Input, Modal } from '@/components/ui';
 import { Truck, Package, MapPin, Calendar, Eye, ExternalLink, Search, Plus } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 const STATUS_FILTERS = [
   { value: '',                 label: 'All Statuses' },
@@ -153,7 +154,7 @@ export default function ShipmentsPage() {
 function StatCard({ label, value, icon: Icon, color }: {
   label: string;
   value: string | number;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: LucideIcon;
   color: string;
 }) {
   const colorMap: Record<string, string> = {
