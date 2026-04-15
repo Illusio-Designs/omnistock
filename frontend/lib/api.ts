@@ -1,0 +1,268 @@
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1',
+  headers: { 'Content-Type': 'application/json' },
+});
+
+// Attach JWT token + impersonation tenant id to every request
+api.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('token');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    const impersonate = localStorage.getItem('impersonate-tenant');
+    if (impersonate) config.headers['x-tenant-id'] = impersonate;
+  }
+  return config;
+});
+
+// Handle 401 globally
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(err);
+  }
+);
+
+export default api;
+
+// ── API helpers ──────────────────────────────────────────────────────────
+export const authApi = {
+  login: (email: string, password: string) => api.post('/auth/login', { email, password }),
+  register: (data: any) => api.post('/auth/register', data),
+  google: (credential: string) => api.post('/auth/google', { credential }),
+  me: () => api.get('/auth/me'),
+  onboard: (data: any) => api.post('/auth/onboard', data),
+};
+
+// ── SaaS: plans (public) ───────────────────────────────────────────
+export const planApi = {
+  list: () => api.get('/plans'),
+  get: (code: string) => api.get(`/plans/${code}`),
+};
+
+// ── SaaS: tenant-side billing ──────────────────────────────────────
+export const billingApi = {
+  subscription: () => api.get('/billing/subscription'),
+  usage: () => api.get('/billing/usage'),
+  changePlan: (data: { planCode: string; billingCycle?: string; payAsYouGo?: boolean }) =>
+    api.post('/billing/subscription/change', data),
+  togglePayg: (enabled: boolean) => api.post('/billing/subscription/payg', { enabled }),
+  cancel: () => api.post('/billing/subscription/cancel', {}),
+  invoices: () => api.get('/billing/invoices'),
+};
+
+// ── OAuth (per-seller channel authorization) ──────────────────────
+export const oauthApi = {
+  amazonStart:  (channelId: string, region: string) =>
+    api.get('/oauth/amazon/start', { params: { channelId, region } }),
+  amazonStatus: (channelId: string) =>
+    api.get('/oauth/amazon/status', { params: { channelId } }),
+};
+
+// ── SaaS: tenant users ─────────────────────────────────────────────
+export const userApi = {
+  list: () => api.get('/users'),
+  create: (data: any) => api.post('/users', data),
+  update: (id: string, data: any) => api.put(`/users/${id}`, data),
+  delete: (id: string) => api.delete(`/users/${id}`),
+  permissionCatalog: () => api.get('/users/_permissions/catalog'),
+};
+
+// ── SaaS: payments (Razorpay) ──────────────────────────────────────
+export const paymentApi = {
+  checkout: (data: { planCode: string; billingCycle?: string }) =>
+    api.post('/payments/checkout', data),
+  verify: (data: any) => api.post('/payments/verify', data),
+};
+
+// ── SaaS: tenant roles & RBAC ──────────────────────────────────────
+export const roleApi = {
+  list: () => api.get('/roles'),
+  create: (data: any) => api.post('/roles', data),
+  update: (id: string, data: any) => api.put(`/roles/${id}`, data),
+  delete: (id: string) => api.delete(`/roles/${id}`),
+  assign: (userId: string, roleId: string) => api.post('/roles/assign', { userId, roleId }),
+  unassign: (userId: string, roleId: string) => api.post('/roles/unassign', { userId, roleId }),
+};
+
+// ── Platform admin (SaaS founder) ──────────────────────────────────
+export const adminApi = {
+  stats: () => api.get('/admin/stats'),
+  // plans
+  plans: () => api.get('/admin/plans'),
+  createPlan: (data: any) => api.post('/admin/plans', data),
+  updatePlan: (id: string, data: any) => api.put(`/admin/plans/${id}`, data),
+  deletePlan: (id: string) => api.delete(`/admin/plans/${id}`),
+  // tenants
+  tenants: (params?: any) => api.get('/admin/tenants', { params }),
+  tenant: (id: string) => api.get(`/admin/tenants/${id}`),
+  updateTenant: (id: string, data: any) => api.put(`/admin/tenants/${id}`, data),
+  suspendTenant: (id: string) => api.post(`/admin/tenants/${id}/suspend`, {}),
+  activateTenant: (id: string) => api.post(`/admin/tenants/${id}/activate`, {}),
+  assignPlan: (id: string, data: any) => api.post(`/admin/tenants/${id}/assign-plan`, data),
+  // subscriptions
+  subscriptions: () => api.get('/admin/subscriptions'),
+  // blog
+  blog: () => api.get('/admin/blog'),
+  createBlog: (data: any) => api.post('/admin/blog', data),
+  updateBlog: (id: string, data: any) => api.put(`/admin/blog/${id}`, data),
+  deleteBlog: (id: string) => api.delete(`/admin/blog/${id}`),
+  // seo
+  seo: () => api.get('/admin/seo'),
+  upsertSeo: (data: any) => api.put('/admin/seo', data),
+  deleteSeo: (id: string) => api.delete(`/admin/seo/${id}`),
+  // permissions catalog
+  permissions: () => api.get('/admin/permissions'),
+  // public content (CMS)
+  content: (type?: string) => api.get('/admin/content', { params: type ? { type } : {} }),
+  createContent: (data: any) => api.post('/admin/content', data),
+  updateContent: (id: string, data: any) => api.put(`/admin/content/${id}`, data),
+  deleteContent: (id: string) => api.delete(`/admin/content/${id}`),
+  // platform settings
+  settings: () => api.get('/admin/settings'),
+  updateSetting: (key: string, value: string) => api.put(`/admin/settings/${encodeURIComponent(key)}`, { value }),
+  updateSettings: (items: { key: string; value: string }[]) => api.put('/admin/settings', items),
+  deleteSetting: (key: string) => api.delete(`/admin/settings/${encodeURIComponent(key)}`),
+};
+
+// ── Public CMS (blog, seo, sitemap, stats, content) ────────────────
+export const publicApi = {
+  blog: () => api.get('/public/blog'),
+  blogPost: (slug: string) => api.get(`/public/blog/${slug}`),
+  seo: (path: string) => api.get('/public/seo', { params: { path } }),
+  sitemap: () => api.get('/public/sitemap'),
+  stats: () => api.get('/public/stats'),
+  content: (type: string) => api.get('/public/content', { params: { type } }),
+};
+
+export const dashboardApi = {
+  get: () => api.get('/dashboard'),
+};
+
+export const productApi = {
+  list: (params?: any) => api.get('/products', { params }),
+  get: (id: string) => api.get(`/products/${id}`),
+  create: (data: any) => api.post('/products', data),
+  update: (id: string, data: any) => api.put(`/products/${id}`, data),
+  delete: (id: string) => api.delete(`/products/${id}`),
+  addVariant: (id: string, data: any) => api.post(`/products/${id}/variants`, data),
+  categories: () => api.get('/products/categories'),
+  brands: () => api.get('/products/brands'),
+  // Push product changes (title, price, stock, images) to every channel it's listed on
+  syncChannels: (id: string, channelIds?: string[]) =>
+    api.post(`/products/${id}/sync-channels`, { channelIds }),
+};
+
+export const inventoryApi = {
+  list: (params?: any) => api.get('/inventory', { params }),
+  lowStock: () => api.get('/inventory/low-stock'),
+  movements: (params?: any) => api.get('/inventory/movements', { params }),
+  adjust: (data: any) => api.post('/inventory/adjust', data),
+};
+
+export const orderApi = {
+  list: (params?: any) => api.get('/orders', { params }),
+  get: (id: string) => api.get(`/orders/${id}`),
+  create: (data: any) => api.post('/orders', data),
+  updateStatus: (id: string, data: any) => api.patch(`/orders/${id}/status`, data),
+  cancel: (id: string) => api.patch(`/orders/${id}/cancel`, {}),
+  // Review requests — triggered N hours after delivery
+  requestReview: (id: string) => api.post(`/orders/${id}/request-review`, {}),
+  processReviewQueue: (body?: { delayHours?: number; limit?: number }) =>
+    api.post('/orders/process-review-queue', body || {}),
+};
+
+export const purchaseApi = {
+  list: (params?: any) => api.get('/purchases', { params }),
+  get: (id: string) => api.get(`/purchases/${id}`),
+  create: (data: any) => api.post('/purchases', data),
+  updateStatus: (id: string, status: string) => api.patch(`/purchases/${id}/status`, { status }),
+};
+
+export const vendorApi = {
+  list: () => api.get('/vendors'),
+  get: (id: string) => api.get(`/vendors/${id}`),
+  create: (data: any) => api.post('/vendors', data),
+  update: (id: string, data: any) => api.put(`/vendors/${id}`, data),
+};
+
+export const warehouseApi = {
+  list: () => api.get('/warehouses'),
+  get: (id: string) => api.get(`/warehouses/${id}`),
+  create: (data: any) => api.post('/warehouses', data),
+};
+
+// ─── Channels ──────────────────────────────────────────────────────────────
+// Covers: CRUD, global catalog browser, integration requests, connect/test,
+// order/inventory sync, listings (SKU mappings), shipping operations.
+export const channelApi = {
+  // Connected channels CRUD
+  list: (params?: { category?: string }) => api.get('/channels', { params }),
+  get: (id: string) => api.get(`/channels/${id}`),
+  create: (data: { name: string; type: string; category?: string }) =>
+    api.post('/channels', data),
+  update: (id: string, data: any) => api.put(`/channels/${id}`, data),
+  delete: (id: string) => api.delete(`/channels/${id}`),
+
+  // Global catalog — all channels in the market + connection status
+  catalog: (params?: { category?: string }) => api.get('/channels/catalog', { params }),
+  catalogEntry: (type: string) => api.get(`/channels/catalog/${type}`),
+  requestIntegration: (type: string, data?: { notes?: string; name?: string }) =>
+    api.post(`/channels/catalog/${type}/request`, data || {}),
+
+  // Integration requests (admin/user workflow)
+  listRequests: (params?: { status?: string; type?: string; category?: string }) =>
+    api.get('/channels/requests', { params }),
+  getRequest: (id: string) => api.get(`/channels/requests/${id}`),
+  updateRequest: (id: string, data: { status?: string; adminNotes?: string }) =>
+    api.patch(`/channels/requests/${id}`, data),
+  deleteRequest: (id: string) => api.delete(`/channels/requests/${id}`),
+
+  // Credentials & connection
+  connect: (id: string, credentials: Record<string, any>) =>
+    api.post(`/channels/${id}/connect`, credentials),
+  test: (id: string) => api.get(`/channels/${id}/test`),
+
+  // Order & inventory sync
+  syncOrders: (id: string, body?: { since?: string }) =>
+    api.post(`/channels/${id}/sync/orders`, body || {}),
+  syncInventory: (id: string) => api.post(`/channels/${id}/sync/inventory`, {}),
+
+  // SKU mappings (ChannelListing)
+  listListings: (id: string) => api.get(`/channels/${id}/listings`),
+  createListing: (id: string, data: any) => api.post(`/channels/${id}/listings`, data),
+
+  // Shipping channels
+  shippingRates: (id: string, data: any) => api.post(`/channels/${id}/shipping/rates`, data),
+  createShipment: (id: string, data: { orderId: string; warehouseId?: string }) =>
+    api.post(`/channels/${id}/shipping/create`, data),
+  trackShipment: (id: string, awb: string) => api.get(`/channels/${id}/shipping/track/${awb}`),
+  cancelShipment: (id: string, data: { awb?: string; awbs?: string[] }) =>
+    api.post(`/channels/${id}/shipping/cancel`, data),
+  pickupLocations: (id: string) => api.get(`/channels/${id}/shipping/pickups`),
+
+  // Amazon MCF (Smart Biz)
+  mcfFulfill: (id: string, orderId: string) =>
+    api.post(`/channels/${id}/mcf/fulfill`, { orderId }),
+  mcfTrack: (id: string, orderNumber: string) => api.get(`/channels/${id}/mcf/track/${orderNumber}`),
+  mcfCancel: (id: string, orderNumber: string) =>
+    api.post(`/channels/${id}/mcf/cancel`, { orderNumber }),
+  mcfInventory: (id: string) => api.get(`/channels/${id}/mcf/inventory`),
+};
+
+export const customerApi = {
+  list: (params?: any) => api.get('/customers', { params }),
+  get: (id: string) => api.get(`/customers/${id}`),
+  create: (data: any) => api.post('/customers', data),
+};
+
+export const reportApi = {
+  sales: (params?: any) => api.get('/reports/sales', { params }),
+  inventoryValuation: () => api.get('/reports/inventory-valuation'),
+  topProducts: (params?: any) => api.get('/reports/top-products', { params }),
+};

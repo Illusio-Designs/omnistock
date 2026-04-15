@@ -1,0 +1,99 @@
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
+const morgan = require('morgan');
+const dotenv = require('dotenv');
+const rateLimit = require('express-rate-limit');
+
+const authRoutes = require('./routes/auth.routes');
+const productRoutes = require('./routes/product.routes');
+const inventoryRoutes = require('./routes/inventory.routes');
+const orderRoutes = require('./routes/order.routes');
+const purchaseRoutes = require('./routes/purchase.routes');
+const vendorRoutes = require('./routes/vendor.routes');
+const warehouseRoutes = require('./routes/warehouse.routes');
+const channelRoutes = require('./routes/channel.routes');
+const customerRoutes = require('./routes/customer.routes');
+const invoiceRoutes = require('./routes/invoice.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
+const reportRoutes = require('./routes/report.routes');
+const shipmentRoutes = require('./routes/shipment.routes');
+const planRoutes = require('./routes/plan.routes');
+const billingRoutes = require('./routes/billing.routes');
+const adminRoutes = require('./routes/admin.routes');
+const roleRoutes = require('./routes/role.routes');
+const publicRoutes = require('./routes/public.routes');
+const webhookRoutes = require('./routes/webhook.routes');
+const paymentRoutes = require('./routes/payment.routes');
+const usersRoutes = require('./routes/users.routes');
+const oauthRoutes = require('./routes/oauth.routes');
+
+const { initDb } = require('./bootstrap/initDb');
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// ── Security & Middleware ──────────────────────────────
+app.use(helmet());
+app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
+app.use(compression());
+app.use(morgan('dev'));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 500 });
+app.use(limiter);
+
+// ── Health Check ──────────────────────────────────────
+app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date() }));
+
+// ── API Routes ────────────────────────────────────────
+const api = '/api/v1';
+app.use(`${api}/auth`,       authRoutes);
+app.use(`${api}/products`,   productRoutes);
+app.use(`${api}/inventory`,  inventoryRoutes);
+app.use(`${api}/orders`,     orderRoutes);
+app.use(`${api}/purchases`,  purchaseRoutes);
+app.use(`${api}/vendors`,    vendorRoutes);
+app.use(`${api}/warehouses`, warehouseRoutes);
+app.use(`${api}/channels`,   channelRoutes);
+app.use(`${api}/customers`,  customerRoutes);
+app.use(`${api}/invoices`,   invoiceRoutes);
+app.use(`${api}/dashboard`,  dashboardRoutes);
+app.use(`${api}/reports`,    reportRoutes);
+app.use(`${api}/shipments`,  shipmentRoutes);
+app.use(`${api}/plans`,      planRoutes);
+app.use(`${api}/billing`,    billingRoutes);
+app.use(`${api}/admin`,      adminRoutes);
+app.use(`${api}/roles`,      roleRoutes);
+app.use(`${api}/public`,     publicRoutes);
+app.use(`${api}/webhooks`,   webhookRoutes);
+app.use(`${api}/payments`,   paymentRoutes);
+app.use(`${api}/users`,      usersRoutes);
+app.use(`${api}/oauth`,      oauthRoutes);
+
+// ── 404 Handler ───────────────────────────────────────
+app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));
+
+// ── Global Error Handler ──────────────────────────────
+app.use((err, _req, res, _next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Internal server error', message: err.message });
+});
+
+(async () => {
+  try {
+    await initDb();
+  } catch (err) {
+    console.error('[initDb] failed:', err.message);
+    process.exit(1);
+  }
+  app.listen(PORT, () => {
+    console.log(`OmniStock API running on http://localhost:${PORT}`);
+  });
+})();
+
+module.exports = app;

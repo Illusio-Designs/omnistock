@@ -1,0 +1,250 @@
+'use client';
+
+import { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { channelApi } from '@/lib/api';
+import {
+  ArrowLeft, CheckCircle2, XCircle, RefreshCw, Download, Upload,
+  Plug, AlertCircle, Trash2, ExternalLink, KeyRound,
+} from 'lucide-react';
+import Link from 'next/link';
+import { ConnectChannelModal } from '@/components/channels/ConnectChannelModal';
+
+export default function ChannelDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const id = params.id as string;
+  const qc = useQueryClient();
+  const [result, setResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [connectOpen, setConnectOpen] = useState(false);
+
+  const { data: channel, isLoading } = useQuery({
+    queryKey: ['channel', id],
+    queryFn: () => channelApi.get(id).then(r => r.data),
+  });
+
+  const { data: listings } = useQuery({
+    queryKey: ['channel-listings', id],
+    queryFn: () => channelApi.listListings(id).then(r => r.data),
+    enabled: !!channel,
+  });
+
+  const testMutation = useMutation({
+    mutationFn: () => channelApi.test(id),
+    onSuccess: (res) => setResult({ type: 'success', message: `Connected: ${JSON.stringify(res.data)}` }),
+    onError: (err: any) => setResult({ type: 'error', message: err.response?.data?.error || err.message }),
+  });
+
+  const syncOrdersMutation = useMutation({
+    mutationFn: () => channelApi.syncOrders(id),
+    onSuccess: (res) => {
+      setResult({ type: 'success', message: `Synced: ${res.data.imported} imported, ${res.data.skipped} skipped, ${res.data.failed} failed` });
+      qc.invalidateQueries({ queryKey: ['channel', id] });
+    },
+    onError: (err: any) => setResult({ type: 'error', message: err.response?.data?.details || err.response?.data?.error || err.message }),
+  });
+
+  const syncInventoryMutation = useMutation({
+    mutationFn: () => channelApi.syncInventory(id),
+    onSuccess: (res) => setResult({ type: 'success', message: `Inventory pushed: ${res.data.updated} updated, ${res.data.failed} failed` }),
+    onError: (err: any) => setResult({ type: 'error', message: err.response?.data?.details || err.response?.data?.error || err.message }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => channelApi.delete(id),
+    onSuccess: () => router.push('/channels'),
+  });
+
+  if (isLoading || !channel) {
+    return (
+      <DashboardLayout>
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-100 rounded w-1/3" />
+          <div className="h-32 bg-gray-100 rounded" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const hasCredentials = !!channel.credentials;
+  const lastSync = channel.lastSyncAt ? new Date(channel.lastSyncAt).toLocaleString() : 'never';
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-5">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/channels" className="p-1.5 hover:bg-gray-100 rounded-lg">
+              <ArrowLeft size={18} />
+            </Link>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{channel.name}</h1>
+              <p className="text-sm text-gray-500">
+                {channel.type} · {channel.category} · Last sync: {lastSync}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setConnectOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-lg"
+            >
+              <KeyRound size={14} /> {hasCredentials ? 'Update credentials' : 'Connect'}
+            </button>
+            <button
+              onClick={() => {
+                if (confirm('Deactivate this channel? You can reconnect it later.')) deleteMutation.mutate();
+              }}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
+            >
+              <Trash2 size={14} /> Deactivate
+            </button>
+          </div>
+        </div>
+
+        {/* Status banner */}
+        {channel.syncError && (
+          <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg p-3">
+            <AlertCircle size={16} className="mt-0.5" />
+            <div>
+              <p className="font-medium">Last sync error</p>
+              <p className="text-xs mt-0.5">{channel.syncError}</p>
+            </div>
+          </div>
+        )}
+
+        {!hasCredentials && (
+          <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg p-3">
+            <Plug size={16} className="mt-0.5" />
+            <div className="flex-1">
+              <p className="font-medium">Not connected yet</p>
+              <p className="text-xs mt-0.5">
+                Enter your {channel.type} credentials to enable order sync, inventory push and webhooks.
+              </p>
+            </div>
+            <button
+              onClick={() => setConnectOpen(true)}
+              className="px-3 py-1.5 bg-amber-500 text-white text-xs font-bold rounded-lg hover:bg-amber-600"
+            >
+              Connect now
+            </button>
+          </div>
+        )}
+
+        {connectOpen && (
+          <ConnectChannelModal
+            channelId={id}
+            channelType={channel.type}
+            channelName={channel.name}
+            onClose={() => setConnectOpen(false)}
+            onConnected={() => {
+              setConnectOpen(false);
+              qc.invalidateQueries({ queryKey: ['channel', id] });
+              setResult({ type: 'success', message: 'Channel connected successfully' });
+            }}
+          />
+        )}
+
+        {/* Action cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <ActionCard
+            icon={RefreshCw}
+            title="Test Connection"
+            description="Ping the channel API to verify credentials."
+            onClick={() => testMutation.mutate()}
+            loading={testMutation.isPending}
+            disabled={!hasCredentials}
+          />
+          <ActionCard
+            icon={Download}
+            title="Sync Orders"
+            description="Pull the latest orders from this channel."
+            onClick={() => syncOrdersMutation.mutate()}
+            loading={syncOrdersMutation.isPending}
+            disabled={!hasCredentials}
+          />
+          <ActionCard
+            icon={Upload}
+            title="Push Inventory"
+            description="Push current stock levels to this channel."
+            onClick={() => syncInventoryMutation.mutate()}
+            loading={syncInventoryMutation.isPending}
+            disabled={!hasCredentials}
+          />
+        </div>
+
+        {/* Result */}
+        {result && (
+          <div className={`flex items-start gap-2 rounded-lg p-3 text-sm border ${
+            result.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            {result.type === 'success' ? <CheckCircle2 size={16} className="mt-0.5" /> : <XCircle size={16} className="mt-0.5" />}
+            <div className="flex-1 break-all">{result.message}</div>
+            <button onClick={() => setResult(null)} className="text-xs underline">Dismiss</button>
+          </div>
+        )}
+
+        {/* SKU Mappings */}
+        <div className="bg-white rounded-xl border">
+          <div className="flex items-center justify-between px-5 py-4 border-b">
+            <div>
+              <h3 className="font-semibold text-gray-900">SKU Mappings</h3>
+              <p className="text-xs text-gray-500">Link channel SKUs to OmniStock products</p>
+            </div>
+            <span className="text-sm text-gray-500">{listings?.length || 0} mapped</span>
+          </div>
+          {listings && listings.length > 0 ? (
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b text-left text-gray-500">
+                <tr>
+                  <th className="px-5 py-2 font-medium">Channel SKU</th>
+                  <th className="px-5 py-2 font-medium">Product</th>
+                  <th className="px-5 py-2 font-medium">Variant</th>
+                  <th className="px-5 py-2 font-medium">Channel Price</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {listings.map((l: any) => (
+                  <tr key={l.id}>
+                    <td className="px-5 py-3 font-mono text-xs">{l.channelSku}</td>
+                    <td className="px-5 py-3">{l.product?.name}</td>
+                    <td className="px-5 py-3 text-gray-500">{l.variant?.name || '—'}</td>
+                    <td className="px-5 py-3">₹{l.channelPrice}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="p-8 text-center text-sm text-gray-400">
+              No SKUs mapped yet. Map SKUs via POST /channels/{id}/listings.
+            </div>
+          )}
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}
+
+function ActionCard({
+  icon: Icon, title, description, onClick, loading, disabled,
+}: {
+  icon: any; title: string; description: string;
+  onClick: () => void; loading?: boolean; disabled?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled || loading}
+      className="bg-white rounded-xl border p-5 text-left hover:shadow-md hover:border-emerald-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+        <Icon size={18} className={loading ? 'animate-spin' : ''} />
+      </div>
+      <h4 className="font-semibold text-sm text-gray-900">{title}</h4>
+      <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+    </button>
+  );
+}

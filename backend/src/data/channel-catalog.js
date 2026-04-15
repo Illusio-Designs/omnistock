@@ -1,0 +1,734 @@
+// Master catalog of every channel OmniStock supports.
+// `integrated`  → adapter is built and working
+// `comingSoon`  → planned, adapter not yet built
+// `requiresApproval` → needs seller/partner approval from the platform
+// `credentialsSchema` → fields the frontend shows in the "Connect" form
+
+const CATALOG = [
+
+  // ═══════════════════════════════════════════════════════════════
+  // ECOM — Indian Marketplaces
+  // ═══════════════════════════════════════════════════════════════
+  {
+    type: 'AMAZON',
+    category: 'ECOM',
+    name: 'Amazon India',
+    tagline: "India's largest e-commerce marketplace",
+    integrated: true,
+    requiresApproval: true,
+    features: ['orders', 'inventory', 'tracking'],
+    credentialsSchema: [
+      { key: 'sellerId',     label: 'Seller ID',          type: 'text',     required: true  },
+      { key: 'clientId',     label: 'LWA Client ID',      type: 'text',     required: true  },
+      { key: 'clientSecret', label: 'LWA Client Secret',  type: 'password', required: true  },
+      { key: 'refreshToken', label: 'Refresh Token',      type: 'password', required: true  },
+      { key: 'region',       label: 'Region',             type: 'select',   required: true, options: ['IN','US','EU'], default: 'IN' },
+    ],
+    applyUrl: 'https://sellercentral.amazon.in',
+    docsUrl:  'https://developer-docs.amazon.com/sp-api/',
+  },
+  {
+    type: 'FLIPKART',
+    category: 'ECOM',
+    name: 'Flipkart',
+    tagline: "India's second largest marketplace",
+    integrated: true,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'appId',     label: 'App ID',     type: 'text',     required: true },
+      { key: 'appSecret', label: 'App Secret', type: 'password', required: true },
+    ],
+    applyUrl: 'https://seller.flipkart.com',
+    docsUrl:  'https://seller.flipkart.com/api-docs/',
+  },
+  {
+    type: 'MYNTRA',
+    category: 'ECOM',
+    name: 'Myntra',
+    tagline: "India's leading fashion marketplace",
+    integrated: true,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'supplierId', label: 'Supplier ID', type: 'text',     required: true },
+      { key: 'apiKey',     label: 'API Key',     type: 'text',     required: true },
+      { key: 'secretKey',  label: 'Secret Key',  type: 'password', required: true },
+    ],
+    applyUrl: 'https://vendorhub.myntra.com',
+  },
+  {
+    type: 'MEESHO',
+    category: 'ECOM',
+    name: 'Meesho',
+    tagline: 'Social commerce platform for resellers',
+    integrated: true,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'apiKey', label: 'API Key', type: 'text', required: true },
+    ],
+    applyUrl: 'https://supplier.meesho.com',
+    docsUrl:  'https://supplier.meesho.com/api',
+  },
+  {
+    type: 'NYKAA',
+    category: 'ECOM',
+    name: 'Nykaa',
+    tagline: 'Beauty & lifestyle marketplace',
+    integrated: true,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'sellerId', label: 'Seller ID', type: 'text',     required: true },
+      { key: 'apiKey',   label: 'API Key',   type: 'password', required: true },
+    ],
+    applyUrl: 'https://seller.nykaa.com',
+  },
+  {
+    type: 'AJIO',
+    category: 'ECOM',
+    name: 'Ajio',
+    tagline: 'Reliance fashion & lifestyle marketplace',
+    integrated: true,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'supplierId', label: 'Supplier ID', type: 'text',     required: true },
+      { key: 'apiKey',     label: 'API Key',     type: 'password', required: true },
+    ],
+    applyUrl: 'https://www.ajio.com/seller',
+  },
+  {
+    type: 'TATA_CLIQ',
+    category: 'ECOM',
+    name: 'Tata Cliq',
+    tagline: 'Tata Group premium marketplace',
+    integrated: true,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'sellerId', label: 'Seller ID', type: 'text',     required: true },
+      { key: 'apiKey',   label: 'API Key',   type: 'password', required: true },
+    ],
+    applyUrl: 'https://seller.tatacliq.com',
+  },
+  {
+    type: 'SNAPDEAL',
+    category: 'ECOM',
+    name: 'Snapdeal',
+    tagline: 'Value e-commerce marketplace',
+    integrated: true,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'username', label: 'Username', type: 'text',     required: true },
+      { key: 'apiKey',   label: 'API Key',  type: 'password', required: true },
+    ],
+    applyUrl: 'https://seller.snapdeal.com',
+  },
+  {
+    type: 'GLOWROAD',
+    category: 'ECOM',
+    name: 'GlowRoad',
+    tagline: 'Reseller marketplace (Amazon-owned)',
+    integrated: true,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+    ],
+    applyUrl: 'https://supplier.glowroad.com',
+  },
+  {
+    type: 'JIOMART',
+    category: 'ECOM',
+    name: 'JioMart',
+    tagline: "Reliance's grocery & general merchandise marketplace",
+    integrated: true,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'sellerId', label: 'Seller ID', type: 'text',     required: true },
+      { key: 'apiKey',   label: 'API Key',   type: 'password', required: true },
+    ],
+    applyUrl: 'https://www.jiomart.com/seller',
+  },
+  {
+    type: 'PAYTM_MALL',
+    category: 'ECOM',
+    name: 'Paytm Mall',
+    tagline: 'Paytm commerce marketplace',
+    integrated: true,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'sellerId', label: 'Seller ID', type: 'text',     required: true },
+      { key: 'apiKey',   label: 'API Key',   type: 'password', required: true },
+    ],
+    applyUrl: 'https://seller.paytmmall.com',
+  },
+  {
+    type: 'LIMEROAD',
+    category: 'ECOM',
+    name: 'LimeRoad',
+    tagline: 'Fashion & lifestyle marketplace',
+    integrated: true,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+    ],
+    applyUrl: 'https://www.limeroad.com/seller',
+  },
+  {
+    type: 'EBAY',
+    category: 'ECOM',
+    name: 'eBay',
+    tagline: 'Global auction & fixed-price marketplace',
+    integrated: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'clientId',     label: 'Client ID',     type: 'text',     required: true },
+      { key: 'clientSecret', label: 'Client Secret', type: 'password', required: true },
+      { key: 'refreshToken', label: 'Refresh Token', type: 'password', required: true },
+    ],
+    applyUrl: 'https://developer.ebay.com',
+    docsUrl:  'https://developer.ebay.com/docs',
+  },
+  {
+    type: 'ETSY',
+    category: 'ECOM',
+    name: 'Etsy',
+    tagline: 'Global marketplace for handmade & vintage items',
+    integrated: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'apiKey',       label: 'API Key',      type: 'text',     required: true },
+      { key: 'accessToken',  label: 'Access Token', type: 'password', required: true },
+      { key: 'shopId',       label: 'Shop ID',      type: 'text',     required: true },
+    ],
+    applyUrl: 'https://www.etsy.com/developers',
+    docsUrl:  'https://developers.etsy.com/documentation',
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // QUICKCOM — Quick Commerce
+  // ═══════════════════════════════════════════════════════════════
+  {
+    type: 'BLINKIT',
+    category: 'QUICKCOM',
+    name: 'Blinkit',
+    tagline: '10-minute delivery, formerly Grofers',
+    integrated: true,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'apiKey',   label: 'API Key',   type: 'text',     required: true },
+      { key: 'sellerId', label: 'Seller ID', type: 'text',     required: true },
+    ],
+    applyUrl: 'https://partners.blinkit.com',
+  },
+  {
+    type: 'ZEPTO',
+    category: 'QUICKCOM',
+    name: 'Zepto',
+    tagline: '10-minute grocery delivery',
+    integrated: true,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'apiKey',   label: 'API Key',   type: 'password', required: true },
+      { key: 'sellerId', label: 'Seller ID', type: 'text',     required: true },
+    ],
+    applyUrl: 'https://sell.zeptonow.com',
+  },
+  {
+    type: 'SWIGGY_INSTAMART',
+    category: 'QUICKCOM',
+    name: 'Swiggy Instamart',
+    tagline: '10–30 minute grocery delivery by Swiggy',
+    integrated: true,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'clientId',     label: 'Client ID',     type: 'text',     required: true },
+      { key: 'clientSecret', label: 'Client Secret', type: 'password', required: true },
+      { key: 'sellerId',     label: 'Seller ID',     type: 'text',     required: true },
+    ],
+    applyUrl: 'https://partner.swiggy.com',
+  },
+  {
+    type: 'BB_NOW',
+    category: 'QUICKCOM',
+    name: 'BB Now',
+    tagline: 'Instant delivery by BigBasket (Tata)',
+    integrated: true,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'apiKey',    label: 'API Key',    type: 'password', required: true },
+      { key: 'vendorId',  label: 'Vendor ID',  type: 'text',     required: true },
+    ],
+    applyUrl: 'https://www.bigbasket.com/sell/',
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // LOGISTICS — Shipping & Couriers
+  // ═══════════════════════════════════════════════════════════════
+  {
+    type: 'SHIPROCKET',
+    category: 'LOGISTICS',
+    name: 'Shiprocket',
+    tagline: '17+ couriers in one API — most popular aggregator',
+    integrated: true,
+    features: ['rates', 'shipment', 'tracking', 'pickup', 'cancel'],
+    credentialsSchema: [
+      { key: 'email',    label: 'Shiprocket Email',    type: 'email',    required: true },
+      { key: 'password', label: 'Shiprocket Password', type: 'password', required: true },
+    ],
+    applyUrl: 'https://app.shiprocket.in/register',
+    docsUrl:  'https://apidocs.shiprocket.in/',
+  },
+  {
+    type: 'DELHIVERY',
+    category: 'LOGISTICS',
+    name: 'Delhivery',
+    tagline: "India's largest logistics network",
+    integrated: true,
+    features: ['rates', 'shipment', 'tracking', 'pickup', 'cancel'],
+    credentialsSchema: [
+      { key: 'token', label: 'API Token', type: 'password', required: true },
+      { key: 'mode',  label: 'Mode',      type: 'select',   required: true, options: ['test','production'], default: 'production' },
+    ],
+    applyUrl: 'https://app.delhivery.com',
+    docsUrl:  'https://dev.delhivery.com/docs',
+  },
+  {
+    type: 'FSHIP',
+    category: 'LOGISTICS',
+    name: 'Fship',
+    tagline: 'Multi-carrier shipping aggregator',
+    integrated: true,
+    features: ['rates', 'shipment', 'tracking', 'pickup', 'cancel'],
+    credentialsSchema: [
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+    ],
+    applyUrl: 'https://fship.in',
+  },
+  {
+    type: 'PICKRR',
+    category: 'LOGISTICS',
+    name: 'Pickrr',
+    tagline: 'Multi-carrier shipping aggregator (Shiprocket group)',
+    integrated: true,
+    features: ['rates', 'shipment', 'tracking', 'pickup', 'cancel'],
+    credentialsSchema: [
+      { key: 'authToken', label: 'Auth Token', type: 'password', required: true },
+    ],
+    applyUrl: 'https://www.pickrr.com',
+  },
+  {
+    type: 'SHIPWAY',
+    category: 'LOGISTICS',
+    name: 'Shipway',
+    tagline: 'Shipping + post-ship customer experience platform',
+    integrated: true,
+    features: ['rates', 'shipment', 'tracking', 'pickup', 'cancel'],
+    credentialsSchema: [
+      { key: 'username',   label: 'Username',    type: 'text',     required: true },
+      { key: 'licenseKey', label: 'License Key', type: 'password', required: true },
+    ],
+    applyUrl: 'https://shipway.com',
+  },
+  {
+    type: 'NIMBUSPOST',
+    category: 'LOGISTICS',
+    name: 'NimbusPost',
+    tagline: 'Shipping aggregator for D2C brands',
+    integrated: true,
+    features: ['rates', 'shipment', 'tracking', 'pickup', 'cancel'],
+    credentialsSchema: [
+      { key: 'email',    label: 'Email',    type: 'email',    required: true },
+      { key: 'password', label: 'Password', type: 'password', required: true },
+    ],
+    applyUrl: 'https://nimbuspost.com',
+  },
+  {
+    type: 'CLICKPOST',
+    category: 'LOGISTICS',
+    name: 'ClickPost',
+    tagline: 'Multi-carrier shipping & post-ship tracking',
+    integrated: true,
+    features: ['rates', 'shipment', 'tracking', 'cancel'],
+    credentialsSchema: [
+      { key: 'username', label: 'Username', type: 'text',     required: true },
+      { key: 'apiKey',   label: 'API Key',  type: 'password', required: true },
+    ],
+    applyUrl: 'https://www.clickpost.ai',
+  },
+  {
+    type: 'ITHINK',
+    category: 'LOGISTICS',
+    name: 'iThink Logistics',
+    tagline: 'Multi-courier shipping aggregator — 20+ couriers in one API',
+    integrated: true,
+    features: ['rates', 'shipment', 'tracking', 'pickup', 'cancel'],
+    credentialsSchema: [
+      { key: 'accessToken', label: 'Access Token', type: 'password', required: true },
+      { key: 'secretKey',   label: 'Secret Key',   type: 'password', required: true },
+    ],
+    applyUrl: 'https://www.ithinklogistics.com',
+    docsUrl:  'https://www.ithinklogistics.com/developer',
+  },
+  {
+    type: 'ECOMEXPRESS',
+    category: 'LOGISTICS',
+    name: 'Ecom Express',
+    tagline: 'End-to-end logistics for e-commerce',
+    integrated: true,
+    features: ['shipment', 'tracking'],
+    credentialsSchema: [
+      { key: 'username', label: 'Username', type: 'text',     required: true },
+      { key: 'password', label: 'Password', type: 'password', required: true },
+    ],
+    applyUrl: 'https://ecomexpress.in',
+    note: 'Also accessible via Shiprocket aggregator.',
+  },
+  {
+    type: 'XPRESSBEES',
+    category: 'LOGISTICS',
+    name: 'Xpressbees',
+    tagline: 'Tech-first logistics for D2C brands',
+    integrated: true,
+    features: ['shipment', 'tracking'],
+    credentialsSchema: [
+      { key: 'email',    label: 'Email',    type: 'email',    required: true },
+      { key: 'password', label: 'Password', type: 'password', required: true },
+    ],
+    applyUrl: 'https://www.xpressbees.com',
+    note: 'Also accessible via Shiprocket aggregator.',
+  },
+  {
+    type: 'SHADOWFAX',
+    category: 'LOGISTICS',
+    name: 'Shadowfax',
+    tagline: 'Last-mile & hyperlocal delivery',
+    integrated: true,
+    features: ['shipment', 'tracking'],
+    credentialsSchema: [
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+    ],
+    applyUrl: 'https://shadowfax.in/business',
+    note: 'Also accessible via Shiprocket aggregator.',
+  },
+  {
+    type: 'BLUEDART',
+    category: 'LOGISTICS',
+    name: 'BlueDart',
+    tagline: 'DHL Group — premium express delivery',
+    integrated: true,
+    features: ['shipment', 'tracking'],
+    credentialsSchema: [
+      { key: 'loginId',  label: 'Login ID',  type: 'text',     required: true },
+      { key: 'password', label: 'Password',  type: 'password', required: true },
+      { key: 'licenseKey', label: 'License Key', type: 'password', required: true },
+    ],
+    applyUrl: 'https://www.bluedart.com/api',
+    note: 'Also accessible via Shiprocket & Delhivery aggregators.',
+  },
+  {
+    type: 'DTDC',
+    category: 'LOGISTICS',
+    name: 'DTDC',
+    tagline: 'Pan-India courier & cargo network',
+    integrated: true,
+    features: ['shipment', 'tracking'],
+    credentialsSchema: [
+      { key: 'apiKey',     label: 'API Key',     type: 'text',     required: true },
+      { key: 'customerId', label: 'Customer ID', type: 'text',     required: true },
+    ],
+    applyUrl: 'https://www.dtdc.in/dtdc-api',
+    note: 'Also accessible via Shiprocket & Delhivery aggregators.',
+  },
+  {
+    type: 'FEDEX',
+    category: 'LOGISTICS',
+    name: 'FedEx',
+    tagline: 'Global express delivery',
+    integrated: true,
+    features: ['shipment', 'tracking', 'rates'],
+    credentialsSchema: [
+      { key: 'apiKey',    label: 'API Key',    type: 'text',     required: true },
+      { key: 'secretKey', label: 'Secret Key', type: 'password', required: true },
+      { key: 'accountNo', label: 'Account No', type: 'text',     required: true },
+    ],
+    applyUrl: 'https://developer.fedex.com',
+    docsUrl:  'https://developer.fedex.com/api/en-in/catalog.html',
+  },
+  {
+    type: 'DHL',
+    category: 'LOGISTICS',
+    name: 'DHL',
+    tagline: 'International express & logistics',
+    integrated: true,
+    features: ['shipment', 'tracking', 'rates'],
+    credentialsSchema: [
+      { key: 'apiKey',    label: 'API Key',    type: 'password', required: true },
+      { key: 'accountNo', label: 'Account No', type: 'text',     required: true },
+    ],
+    applyUrl: 'https://developer.dhl.com',
+    docsUrl:  'https://developer.dhl.com/api-reference',
+  },
+  {
+    type: 'UPS',
+    category: 'LOGISTICS',
+    name: 'UPS',
+    tagline: 'Global package delivery',
+    integrated: true,
+    features: ['shipment', 'tracking', 'rates'],
+    credentialsSchema: [
+      { key: 'clientId',     label: 'Client ID',     type: 'text',     required: true },
+      { key: 'clientSecret', label: 'Client Secret', type: 'password', required: true },
+      { key: 'accountNo',    label: 'Account No',    type: 'text',     required: true },
+    ],
+    applyUrl: 'https://developer.ups.com',
+    docsUrl:  'https://developer.ups.com/api/reference',
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // OWNSTORE — Own Website / Store Platforms
+  // ═══════════════════════════════════════════════════════════════
+  {
+    type: 'AMAZON_SMARTBIZ',
+    category: 'OWNSTORE',
+    name: 'Amazon Smart Biz',
+    tagline: 'D2C website builder powered by Amazon MCF',
+    integrated: true,
+    features: ['orders', 'webhook', 'mcf_fulfillment', 'mcf_tracking', 'fba_inventory'],
+    credentialsSchema: [
+      { key: 'clientId',     label: 'LWA Client ID',     type: 'text',     required: true  },
+      { key: 'clientSecret', label: 'LWA Client Secret', type: 'password', required: true  },
+      { key: 'refreshToken', label: 'Refresh Token',     type: 'password', required: true  },
+      { key: 'sellerId',     label: 'Seller ID',         type: 'text',     required: true  },
+      { key: 'webhookSecret',label: 'Webhook Secret',    type: 'password', required: false },
+    ],
+    applyUrl: 'https://smartcommerce.amazon.in/smartbiz',
+    docsUrl:  'https://developer-docs.amazon.com/sp-api/',
+  },
+  {
+    type: 'SHOPIFY',
+    category: 'OWNSTORE',
+    name: 'Shopify',
+    tagline: 'World\'s leading e-commerce platform',
+    integrated: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'shopUrl',     label: 'Shop URL (e.g. mystore.myshopify.com)', type: 'text',     required: true },
+      { key: 'accessToken', label: 'Admin API Access Token',                type: 'password', required: true },
+    ],
+    applyUrl: 'https://www.shopify.com/partners',
+    docsUrl:  'https://shopify.dev/docs/api/admin-rest',
+  },
+  {
+    type: 'WOOCOMMERCE',
+    category: 'OWNSTORE',
+    name: 'WooCommerce',
+    tagline: 'WordPress-based e-commerce store',
+    integrated: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'siteUrl',        label: 'Store URL (e.g. https://mystore.com)', type: 'text',     required: true },
+      { key: 'consumerKey',    label: 'Consumer Key',                         type: 'text',     required: true },
+      { key: 'consumerSecret', label: 'Consumer Secret',                      type: 'password', required: true },
+    ],
+    docsUrl: 'https://woocommerce.github.io/woocommerce-rest-api-docs/',
+  },
+  {
+    type: 'MAGENTO',
+    category: 'OWNSTORE',
+    name: 'Magento / Adobe Commerce',
+    tagline: 'Enterprise open-source commerce platform',
+    integrated: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'baseUrl',     label: 'Store Base URL',   type: 'text',     required: true },
+      { key: 'accessToken', label: 'REST Access Token', type: 'password', required: true },
+    ],
+    docsUrl: 'https://developer.adobe.com/commerce/webapi/rest/',
+  },
+  {
+    type: 'BIGCOMMERCE',
+    category: 'OWNSTORE',
+    name: 'BigCommerce',
+    tagline: 'Cloud-based e-commerce platform',
+    integrated: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'storeHash',   label: 'Store Hash',   type: 'text',     required: true },
+      { key: 'accessToken', label: 'Access Token', type: 'password', required: true },
+    ],
+    docsUrl: 'https://developer.bigcommerce.com/docs/rest-management',
+  },
+  {
+    type: 'OPENCART',
+    category: 'OWNSTORE',
+    name: 'OpenCart',
+    tagline: 'Free open-source e-commerce platform',
+    integrated: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'storeUrl',  label: 'Store URL',  type: 'text',     required: true },
+      { key: 'username',  label: 'Username',   type: 'text',     required: true },
+      { key: 'apiKey',    label: 'API Key',    type: 'password', required: true },
+    ],
+  },
+  {
+    type: 'WEBSITE',
+    category: 'OWNSTORE',
+    name: 'Custom Website',
+    tagline: 'Your own website via HMAC-signed webhook',
+    integrated: true,
+    features: ['webhook', 'hmac_validation', 'field_mapping'],
+    credentialsSchema: [
+      { key: 'webhookSecret', label: 'Webhook Secret (HMAC-SHA256)', type: 'password', required: false },
+      { key: 'fieldMap',      label: 'Field Map (JSON)',              type: 'textarea', required: false },
+    ],
+    note: 'Uses the same universal webhook adapter as CUSTOM_WEBHOOK. POST orders to /api/v1/channels/:id/webhook.',
+  },
+  {
+    type: 'OFFLINE',
+    category: 'OWNSTORE',
+    name: 'Offline / Retail Store',
+    tagline: 'Walk-in customers, manual order entry',
+    integrated: false,
+    features: ['manual'],
+    credentialsSchema: [],
+    note: 'No API connection needed. Orders are entered manually.',
+  },
+  {
+    type: 'POS',
+    category: 'OWNSTORE',
+    name: 'POS System',
+    tagline: 'Point of sale — physical billing counter',
+    integrated: false,
+    features: ['manual'],
+    credentialsSchema: [],
+    note: 'No API connection needed. Sync orders manually or via CSV.',
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // SOCIAL — Social Commerce
+  // ═══════════════════════════════════════════════════════════════
+  {
+    type: 'INSTAGRAM',
+    category: 'SOCIAL',
+    name: 'Instagram Shopping',
+    tagline: 'Sell via Instagram posts & stories',
+    integrated: true,
+    features: ['orders'],
+    credentialsSchema: [
+      { key: 'accessToken', label: 'Access Token', type: 'password', required: true },
+      { key: 'pageId',      label: 'Page ID',      type: 'text',     required: true },
+    ],
+    applyUrl: 'https://developers.facebook.com/docs/commerce-platform',
+  },
+  {
+    type: 'FACEBOOK',
+    category: 'SOCIAL',
+    name: 'Facebook Shop',
+    tagline: 'Sell via Facebook Marketplace & Shops',
+    integrated: true,
+    features: ['orders'],
+    credentialsSchema: [
+      { key: 'accessToken', label: 'Access Token', type: 'password', required: true },
+      { key: 'pageId',      label: 'Page ID',      type: 'text',     required: true },
+    ],
+    applyUrl: 'https://developers.facebook.com/docs/commerce-platform',
+  },
+  {
+    type: 'WHATSAPP_BUSINESS',
+    category: 'SOCIAL',
+    name: 'WhatsApp Business',
+    tagline: 'Conversational commerce via WhatsApp',
+    integrated: true,
+    features: ['orders', 'webhook'],
+    credentialsSchema: [
+      { key: 'phoneNumberId', label: 'Phone Number ID', type: 'text',     required: true },
+      { key: 'accessToken',   label: 'Access Token',    type: 'password', required: true },
+    ],
+    applyUrl: 'https://developers.facebook.com/docs/whatsapp',
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // B2B
+  // ═══════════════════════════════════════════════════════════════
+  {
+    type: 'B2B_PORTAL',
+    category: 'B2B',
+    name: 'B2B Portal',
+    tagline: 'Custom B2B ordering portal',
+    integrated: false,
+    features: ['webhook', 'manual'],
+    credentialsSchema: [
+      { key: 'webhookSecret', label: 'Webhook Secret', type: 'password', required: false },
+    ],
+  },
+  {
+    type: 'WHOLESALE',
+    category: 'B2B',
+    name: 'Wholesale Channel',
+    tagline: 'Bulk orders from wholesale buyers',
+    integrated: false,
+    features: ['manual'],
+    credentialsSchema: [],
+  },
+  {
+    type: 'DISTRIBUTOR',
+    category: 'B2B',
+    name: 'Distributor',
+    tagline: 'Orders from distributors and stockists',
+    integrated: false,
+    features: ['manual'],
+    credentialsSchema: [],
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // CUSTOM
+  // ═══════════════════════════════════════════════════════════════
+  {
+    type: 'CUSTOM_WEBHOOK',
+    category: 'CUSTOM',
+    name: 'Custom Webhook',
+    tagline: 'Receive orders from any system via HMAC-signed webhook',
+    integrated: true,
+    features: ['webhook', 'hmac_validation', 'field_mapping'],
+    credentialsSchema: [
+      { key: 'webhookSecret', label: 'Webhook Secret (HMAC-SHA256)', type: 'password', required: false },
+      { key: 'fieldMap',      label: 'Field Map (JSON)',              type: 'textarea', required: false },
+    ],
+    note: 'Point your system to POST /api/v1/channels/:id/webhook. If a secret is set, send x-omnistock-signature header with hex HMAC-SHA256 of the raw body.',
+  },
+  {
+    type: 'OTHER',
+    category: 'CUSTOM',
+    name: 'Other',
+    tagline: 'Manual or unsupported channel',
+    integrated: false,
+    features: ['manual'],
+    credentialsSchema: [],
+  },
+];
+
+// Quick lookup by type
+const CATALOG_MAP = Object.fromEntries(CATALOG.map(c => [c.type, c]));
+
+function getCatalogEntry(type) {
+  return CATALOG_MAP[type] || null;
+}
+
+function getCatalogByCategory(category) {
+  return CATALOG.filter(c => !category || c.category === category);
+}
+
+module.exports = { CATALOG, CATALOG_MAP, getCatalogEntry, getCatalogByCategory };

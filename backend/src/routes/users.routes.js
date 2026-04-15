@@ -1,0 +1,112 @@
+const { Router } = require('express');
+const bcrypt = require('bcryptjs');
+const prisma = require('../utils/prisma');
+const {
+  authenticate, requireTenant, requirePermission, enforceLimit, invalidateUserCache,
+} = require('../middleware/auth.middleware');
+const { audit } = require('../services/audit.service');
+
+const router = Router();
+router.use(authenticate, requireTenant);
+
+// List users in the tenant
+router.get('/', requirePermission('users.read'), async (req, res) => {
+  const users = await prisma.user.findMany({
+    where: { tenantId: req.tenant.id },
+    select: {
+      id: true, name: true, email: true, role: true, isActive: true, createdAt: true,
+      roles: { include: { role: { select: { id: true, code: true, name: true } } } },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+  res.json(users);
+});
+
+// Invite / create a user
+router.post('/',
+  requirePermission('users.create'),
+  enforceLimit('users'),
+  async (req, res) => {
+    try {
+      const { name, email, password, roleIds = [] } = req.body;
+      const existing = await prisma.user.findUnique({ where: { email } });
+      if (existing) return res.status(409).json({ error: 'Email already in use' });
+
+      const user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: password ? await bcrypt.hash(password, 12) : null,
+          tenantId: req.tenant.id,
+          role: 'STAFF',
+          emailVerified: false,
+          provider: 'LOCAL',
+        },
+        select: { id: true, name: true, email: true, createdAt: true },
+      });
+      if (roleIds.length) {
+        await prisma.userRole.createMany({
+          data: roleIds.map((rid) => ({ userId: user.id, roleId: rid })),
+          skipDuplicates: true,
+        });
+      }
+      audit({ req, action: 'users.create', resource: 'user', resourceId: user.id });
+      res.status(201).json(user);
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+);
+
+// Update user (name, active, roles)
+router.put('/:id', requirePermission('users.update'), async (req, res) => {
+  const existing = await prisma.user.findFirst({
+    where: { id: req.params.id, tenantId: req.tenant.id },
+  });
+  if (!existing) return res.status(404).json({ error: 'User not found' });
+
+  const { name, isActive, roleIds } = req.body;
+  const user = await prisma.user.update({
+    where: { id: req.params.id },
+    data: {
+      ...(name !== undefined && { name }),
+      ...(isActive !== undefined && { isActive }),
+    },
+  });
+  if (Array.isArray(roleIds)) {
+    await prisma.userRole.deleteMany({ where: { userId: user.id } });
+    if (roleIds.length) {
+      await prisma.userRole.createMany({
+        data: roleIds.map((rid) => ({ userId: user.id, roleId: rid })),
+        skipDuplicates: true,
+      });
+    }
+  }
+  invalidateUserCache(user.id);
+  audit({ req, action: 'users.update', resource: 'user', resourceId: user.id });
+  res.json({ id: user.id, name: user.name, email: user.email, isActive: user.isActive });
+});
+
+// Deactivate
+router.delete('/:id', requirePermission('users.delete'), async (req, res) => {
+  const existing = await prisma.user.findFirst({
+    where: { id: req.params.id, tenantId: req.tenant.id },
+  });
+  if (!existing) return res.status(404).json({ error: 'User not found' });
+  if (existing.id === req.user.id) return res.status(400).json({ error: "You can't delete yourself" });
+
+  await prisma.user.update({ where: { id: req.params.id }, data: { isActive: false } });
+  invalidateUserCache(req.params.id);
+  audit({ req, action: 'users.delete', resource: 'user', resourceId: req.params.id });
+  res.json({ message: 'User deactivated' });
+});
+
+// List all permissions available for role assignment
+router.get('/_permissions/catalog', requirePermission('roles.read'), async (_req, res) => {
+  const perms = await prisma.permission.findMany({
+    orderBy: [{ module: 'asc' }, { code: 'asc' }],
+  });
+  res.json(perms);
+});
+
+module.exports = router;

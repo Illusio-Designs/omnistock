@@ -1,0 +1,16 @@
+module.exports = {
+  AmazonAdapter:    require('./amazon'),
+  FlipkartAdapter:  require('./flipkart'),
+  MeeshoAdapter:    require('./meesho'),
+  MyntraAdapter:    require('./myntra'),
+  NykaaAdapter:     require('./nykaa'),
+  AjioAdapter:      require('./ajio'),
+  TataCliqAdapter:  require('./tata-cliq'),
+  SnapdealAdapter:  require('./snapdeal'),
+  GlowRoadAdapter:  require('./glowroad'),
+  JioMartAdapter:   require('./jiomart'),
+  PaytmMallAdapter: require('./paytm-mall'),
+  LimeRoadAdapter:  require('./limeroad'),
+  EbayAdapter:      require('./ebay'),
+  EtsyAdapter:      require('./etsy'),
+};

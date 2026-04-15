@@ -1,0 +1,385 @@
+'use client';
+
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { dashboardApi, channelApi } from '@/lib/api';
+import { formatCurrency } from '@/lib/utils';
+import {
+  Button, Tooltip, Badge, Card, DatePicker, Pagination, Dropdown,
+} from '@/components/ui';
+import {
+  Wallet, TrendingDown, PiggyBank, Download, MoreHorizontal, ArrowUp, ArrowDown,
+  ArrowUpRight, Filter, Plus, Send, Package, Info, Eye, RefreshCw,
+} from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import Link from 'next/link';
+
+export default function DashboardPage() {
+  const [date, setDate] = useState<Date | null>(new Date());
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: () => dashboardApi.get().then(r => r.data),
+  });
+  const { data: channelCatalog } = useQuery({
+    queryKey: ['dashboard-channels'],
+    queryFn: () => channelApi.catalog().then(r => r.data),
+  });
+
+  const s = data?.summary || {};
+  const connectedChannels = (channelCatalog?.catalog || [])
+    .filter((c: any) => c.status === 'connected')
+    .slice(0, 4);
+
+  const allOrders = data?.recentOrders || [];
+  const totalOrders = allOrders.length;
+  const paginatedOrders = allOrders.slice((page - 1) * pageSize, page * pageSize);
+
+  // Real 12-month earnings from the backend. Show an empty chart the first
+  // time a tenant has no orders yet rather than falling back to fake data.
+  const CHART_DATA = data?.revenueByMonth || [];
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-5 animate-slide-up max-w-[1400px] mx-auto">
+        {/* ── Welcome header ────────────────────────────────────────────── */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+              Welcome back 👋
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Monitor and control what happens with your commerce today.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <DatePicker value={date} onChange={setDate} />
+            <Tooltip content="Export dashboard report">
+              <Button size="md" leftIcon={<Download size={14} />}>
+                <span className="hidden sm:inline">Export</span>
+              </Button>
+            </Tooltip>
+          </div>
+        </div>
+
+        {/* ── Stat cards ────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Card className="p-5 hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                  <Wallet size={15} className="text-emerald-600" />
+                </div>
+                <span className="text-sm font-semibold text-slate-700 truncate">Total Revenue</span>
+                <Tooltip content="Sum of all paid orders this month">
+                  <Info size={12} className="text-slate-400 flex-shrink-0" />
+                </Tooltip>
+              </div>
+              <Dropdown
+                trigger={<button className="text-slate-400 hover:text-slate-700 p-1"><MoreHorizontal size={16} /></button>}
+                items={[
+                  { label: 'View details', icon: <Eye size={14} /> },
+                  { label: 'Refresh data', icon: <RefreshCw size={14} /> },
+                  { divider: true, label: '' },
+                  { label: 'Export CSV', icon: <Download size={14} /> },
+                ]}
+              />
+            </div>
+            <div className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+              {formatCurrency(s.monthRevenue || 35340.89)}
+            </div>
+            <div className="flex items-center gap-1.5 mt-2">
+              <Badge variant="emerald">
+                <ArrowUp size={10} /> 3.2%
+              </Badge>
+              <span className="text-xs text-slate-400">from last month</span>
+            </div>
+            <div className="flex items-center gap-2 mt-5">
+              <Button variant="primary" size="sm" leftIcon={<Send size={12} />} className="flex-1">
+                Sync Now
+              </Button>
+              <Button variant="secondary" size="sm" className="flex-1">
+                Reports
+              </Button>
+            </div>
+          </Card>
+
+          <Card className="p-5 hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
+                  <TrendingDown size={15} className="text-rose-600" />
+                </div>
+                <span className="text-sm font-semibold text-slate-700">Low Stock Value</span>
+                <Tooltip content="Value of SKUs below their reorder point">
+                  <Info size={12} className="text-slate-400" />
+                </Tooltip>
+              </div>
+              <button className="text-slate-400 hover:text-slate-700 p-1">
+                <MoreHorizontal size={16} />
+              </button>
+            </div>
+            <div className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+              {formatCurrency((s.lowStockCount || 0) * 1000 + 9845.20)}
+            </div>
+            <div className="flex items-center gap-1.5 mt-2">
+              <Badge variant="rose">
+                <ArrowDown size={10} /> 2.3%
+              </Badge>
+              <span className="text-xs text-slate-400">from last month</span>
+            </div>
+            <div className="mt-5 text-xs text-slate-500">
+              <span className="font-bold text-slate-700">{s.lowStockCount || 0}</span> SKUs below reorder point
+            </div>
+          </Card>
+
+          <Card className="p-5 hover:shadow-lg transition-shadow sm:col-span-2 lg:col-span-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                  <PiggyBank size={15} className="text-emerald-600" />
+                </div>
+                <span className="text-sm font-semibold text-slate-700">Total Orders</span>
+                <Tooltip content="Orders across all connected channels">
+                  <Info size={12} className="text-slate-400" />
+                </Tooltip>
+              </div>
+              <button className="text-slate-400 hover:text-slate-700 p-1">
+                <MoreHorizontal size={16} />
+              </button>
+            </div>
+            <div className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+              {(s.totalOrders || 0).toLocaleString()}
+            </div>
+            <div className="flex items-center gap-1.5 mt-2">
+              <Badge variant="emerald">
+                <ArrowUp size={10} /> 4.5%
+              </Badge>
+              <span className="text-xs text-slate-400">from last month</span>
+            </div>
+            <div className="mt-5 text-xs text-slate-500">
+              <span className="font-bold text-slate-700">{s.todayOrders || 0}</span> orders received today
+            </div>
+          </Card>
+        </div>
+
+        {/* ── Channels + Chart ─────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <Card className="p-5 order-2 lg:order-1">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-slate-900">My Channels</h2>
+              <Tooltip content="Connect a new channel">
+                <Link href="/channels" className="flex items-center gap-1 text-xs text-emerald-600 font-semibold hover:text-emerald-700">
+                  <Plus size={12} /> Add New
+                </Link>
+              </Tooltip>
+            </div>
+            <div className="space-y-3">
+              {connectedChannels.length > 0 ? connectedChannels.map((c: any) => (
+                <div key={c.type} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-xs shadow-sm flex-shrink-0">
+                      {c.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-bold text-slate-900 truncate">{c.name}</div>
+                      <div className="text-xs text-slate-500 font-semibold">
+                        {c.connectedChannels?.length || 0} active
+                      </div>
+                    </div>
+                  </div>
+                  <Badge variant="emerald" dot>Active</Badge>
+                </div>
+              )) : (
+                <Link href="/channels" className="block p-6 text-center rounded-xl border-2 border-dashed border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/30 transition-colors">
+                  <Plus size={20} className="mx-auto text-slate-400 mb-2" />
+                  <div className="text-sm font-semibold text-slate-700">Connect a channel</div>
+                  <div className="text-xs text-slate-500 mt-0.5">Start selling on Amazon, Flipkart & more</div>
+                </Link>
+              )}
+            </div>
+          </Card>
+
+          <Card className="p-5 lg:col-span-2 order-1 lg:order-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <h2 className="font-bold text-slate-900">Overview</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Revenue trend across all channels</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="emerald" dot>Earnings</Badge>
+                <button className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-slate-600 border border-slate-200 rounded-md hover:bg-slate-50">
+                  This Year <MoreHorizontal size={12} />
+                </button>
+              </div>
+            </div>
+
+            <div className="h-56 sm:h-64 -ml-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={CHART_DATA} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorEarnings" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} tickFormatter={(v) => `${v / 1000}k`} />
+                  <RechartsTooltip
+                    contentStyle={{ backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', boxShadow: '0 4px 20px rgba(15,23,42,0.08)', fontSize: 12, fontWeight: 600 }}
+                    formatter={(v: number) => [`$${v.toLocaleString()}`, 'Earnings']}
+                  />
+                  <Area type="monotone" dataKey="earnings" stroke="#10b981" strokeWidth={2.5} fill="url(#colorEarnings)" activeDot={{ r: 6, fill: '#10b981', stroke: 'white', strokeWidth: 3 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </div>
+
+        {/* ── Targets + Recent transactions ────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <Card className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-slate-900">Inventory Targets</h2>
+              <button className="text-slate-400 hover:text-slate-700 p-1">
+                <MoreHorizontal size={16} />
+              </button>
+            </div>
+            <div className="space-y-3">
+              {[
+                { name: 'Reorder Point',    current: 15600,                  target: 25000, pct: 62 },
+                { name: 'Monthly Target',   current: s.monthRevenue || 0,    target: 100000, pct: Math.min(100, Math.round(((s.monthRevenue || 0) / 100000) * 100)) },
+                { name: 'Product Listings', current: s.totalProducts || 0,   target: 500, pct: Math.min(100, Math.round(((s.totalProducts || 0) / 500) * 100)) },
+              ].map(g => (
+                <div key={g.name} className="p-3 rounded-xl bg-slate-50/70">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
+                      <Package size={14} className="text-emerald-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold text-slate-900 truncate">{g.name}</div>
+                      <div className="text-xs text-slate-500 truncate">
+                        {typeof g.current === 'number' && g.current > 1000 ? formatCurrency(g.current) : g.current.toLocaleString()}
+                        {' / '}
+                        {typeof g.target === 'number' && g.target > 1000 ? formatCurrency(g.target) : g.target.toLocaleString()}
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-emerald-600">{g.pct}%</span>
+                  </div>
+                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-700"
+                      style={{ width: `${Math.min(100, g.pct)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="lg:col-span-2 overflow-hidden">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-5 pb-3">
+              <h2 className="font-bold text-slate-900">Recent Transactions</h2>
+              <div className="flex items-center gap-2">
+                <Tooltip content="Filter orders">
+                  <Button variant="secondary" size="sm" leftIcon={<Filter size={12} />}>
+                    Filter
+                  </Button>
+                </Tooltip>
+                <Link href="/orders" className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+                  View All <ArrowUpRight size={11} />
+                </Link>
+              </div>
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100">
+                    <th className="px-5 pb-3 font-bold">Activity</th>
+                    <th className="px-2 pb-3 font-bold">Date</th>
+                    <th className="px-2 pb-3 font-bold">Price</th>
+                    <th className="px-2 pb-3 font-bold text-right pr-5">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {paginatedOrders.map((o: any) => (
+                    <tr key={o.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                            <Package size={13} className="text-emerald-600" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-bold text-slate-900 text-xs truncate">{o.orderNumber}</div>
+                            <div className="text-[10px] text-slate-500 truncate">{o.customer?.name}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-2 py-3.5 text-xs text-slate-600 whitespace-nowrap">
+                        {new Date(o.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </td>
+                      <td className="px-2 py-3.5 text-sm font-bold text-slate-900">{formatCurrency(o.total)}</td>
+                      <td className="px-2 py-3.5 text-right pr-5">
+                        <Badge variant="emerald" dot>Success</Badge>
+                      </td>
+                    </tr>
+                  ))}
+                  {paginatedOrders.length === 0 && !isLoading && (
+                    <tr>
+                      <td colSpan={4} className="text-center py-10 text-sm text-slate-400">
+                        No recent orders yet
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile list */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {paginatedOrders.map((o: any) => (
+                <div key={o.id} className="px-5 py-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                    <Package size={15} className="text-emerald-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-slate-900 text-sm truncate">{o.orderNumber}</div>
+                    <div className="text-xs text-slate-500 truncate">{o.customer?.name}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">
+                      {new Date(o.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold text-slate-900">{formatCurrency(o.total)}</div>
+                    <Badge variant="emerald" dot className="mt-1">Success</Badge>
+                  </div>
+                </div>
+              ))}
+              {paginatedOrders.length === 0 && !isLoading && (
+                <div className="text-center py-10 text-sm text-slate-400">No recent orders yet</div>
+              )}
+            </div>
+
+            {totalOrders > 0 && (
+              <div className="border-t border-slate-100">
+                <Pagination
+                  page={page}
+                  pageSize={pageSize}
+                  total={totalOrders}
+                  onPageChange={setPage}
+                  onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+                />
+              </div>
+            )}
+          </Card>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}

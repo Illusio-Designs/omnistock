@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:smartcommerce.amazon.in)",
+      "Bash(mkdir -p ecom quickcom logistics ownstore)",
+      "Bash(mv amazon.js flipkart.js meesho.js myntra.js ecom/)",
+      "Bash(mv shiprocket.js delhivery.js fship.js logistics/)",
+      "Bash(mv shopify.js woocommerce.js amazon-smartbiz.js ownstore/)",
+      "Bash(cat e:/omnistock/frontend/components/layout/*.tsx)",
+      "Bash(ls e:/omnistock/frontend/postcss.config.*)",
+      "Bash(cat e:/omnistock/frontend/postcss.config.*)",
+      "Bash(grep -v '\\\\.tsx\\\\|globals\\\\|layout\\\\|page.tsx$')",
+      "Bash(ls e:/omnistock/frontend/.env*)",
+      "Bash(npm run:*)",
+      "Bash(npx prisma:*)",
+      "Bash(wc -l e:/omnistock/backend/src/controllers/*.js e:/omnistock/backend/src/routes/*.js)",
+      "Bash(wc -l e:/omnistock/backend/src/services/*.js)",
+      "Bash(node prisma/seed.js)",
+      "Bash(npm install:*)",
+      "Bash(node -e \"console.log\\('next:', require\\('next/package.json'\\).version\\); console.log\\('eslint-config-next:', require\\('eslint-config-next/package.json'\\).version\\)\")",
+      "Bash(wc -l e:/omnistock/frontend/app/channels/page.tsx e:/omnistock/frontend/app/channels/[id]/page.tsx)",
+      "WebFetch(domain:developer.amazonservices.com)",
+      "WebFetch(domain:sellercentral.amazon.in)",
+      "WebFetch(domain:developer-docs.amazon.com)",
+      "WebFetch(domain:partners.shopify.com)",
+      "WebFetch(domain:shopify.dev)",
+      "WebFetch(domain:seller.flipkart.com)",
+      "WebFetch(domain:developers.facebook.com)",
+      "WebFetch(domain:console.cloud.google.com)",
+      "WebFetch(domain:dashboard.razorpay.com)",
+      "WebFetch(domain:razorpay.com)",
+      "WebFetch(domain:supplier.meesho.com)",
+      "WebFetch(domain:partners.myntra.com)",
+      "WebFetch(domain:partner.nykaa.com)",
+      "WebFetch(domain:partners.ajio.com)",
+      "WebFetch(domain:sellerzone.snapdeal.com)",
+      "WebFetch(domain:seller.jiomart.com)",
+      "WebFetch(domain:seller.paytmmall.com)",
+      "WebFetch(domain:developer.ebay.com)"
+    ]
+  }
+}

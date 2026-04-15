@@ -1,0 +1,18 @@
+module.exports = {
+  ShiprocketAdapter:   require('./shiprocket'),
+  DelhiveryAdapter:    require('./delhivery'),
+  FshipAdapter:        require('./fship'),
+  EcomExpressAdapter:  require('./ecomexpress'),
+  XpressbeesAdapter:   require('./xpressbees'),
+  ShadowfaxAdapter:    require('./shadowfax'),
+  BlueDartAdapter:     require('./bluedart'),
+  DTDCAdapter:         require('./dtdc'),
+  FedExAdapter:        require('./fedex'),
+  DHLAdapter:          require('./dhl'),
+  UPSAdapter:          require('./ups'),
+  IThinkAdapter:       require('./ithink'),
+  PickrrAdapter:       require('./pickrr'),
+  ShipwayAdapter:      require('./shipway'),
+  NimbusPostAdapter:   require('./nimbuspost'),
+  ClickPostAdapter:    require('./clickpost'),
+};
