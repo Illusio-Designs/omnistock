@@ -132,7 +132,17 @@ const FAQ = [
 
 export default function PricingPage() {
   const [yearly, setYearly] = useState(true);
-  const [plans, setPlans] = useState<any[]>(FALLBACK_PLANS);
+  interface PlanView {
+    code?: string;
+    name: string;
+    tagline?: string;
+    price: { monthly: number; yearly: number };
+    cta: string;
+    highlight: boolean;
+    features: string[];
+    excluded: string[];
+  }
+  const [plans, setPlans] = useState<PlanView[]>(FALLBACK_PLANS as PlanView[]);
 
   useEffect(() => {
     planApi.list()
