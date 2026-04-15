@@ -12,7 +12,19 @@ import { useUIStore } from '@/store/ui.store';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { cn } from '@/lib/utils';
 
-const navGroups = [
+export interface SidebarNavItem {
+  label: string;
+  href: string;
+  icon: any;
+  badge?: number;
+}
+
+export interface SidebarNavGroup {
+  label: string;
+  items: SidebarNavItem[];
+}
+
+const DEFAULT_NAV_GROUPS: SidebarNavGroup[] = [
   {
     label: 'Main Menu',
     items: [
@@ -44,7 +56,20 @@ const navGroups = [
   },
 ];
 
-export function Sidebar() {
+export interface SidebarProps {
+  groups?: SidebarNavGroup[];
+  brandName?: string;
+  brandSubtitle?: string;
+  showUpgradeCard?: boolean;
+}
+
+export function Sidebar({
+  groups,
+  brandName = 'OmniStock',
+  brandSubtitle,
+  showUpgradeCard = true,
+}: SidebarProps = {}) {
+  const navGroups = groups || DEFAULT_NAV_GROUPS;
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useAuthStore();
@@ -82,7 +107,7 @@ export function Sidebar() {
         <div className="flex items-center h-[68px] px-4">
           {/* Logo */}
           <Link
-            href="/dashboard"
+            href={navGroups[0]?.items[0]?.href || '/dashboard'}
             className={cn(
               'flex items-center gap-2.5 min-w-0',
               c && 'lg:justify-center lg:flex-1'
@@ -91,9 +116,16 @@ export function Sidebar() {
             <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 flex items-center justify-center shadow-md shadow-emerald-500/30 flex-shrink-0">
               <Sparkles size={16} className="text-white" />
             </div>
-            <span className={cn('font-bold text-lg tracking-tight text-slate-900 truncate', c && 'lg:hidden')}>
-              OmniStock
-            </span>
+            <div className={cn('min-w-0 truncate', c && 'lg:hidden')}>
+              <div className="font-bold text-lg tracking-tight text-slate-900 leading-none">
+                {brandName}
+              </div>
+              {brandSubtitle && (
+                <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-0.5">
+                  {brandSubtitle}
+                </div>
+              )}
+            </div>
           </Link>
 
           {/* Desktop collapse toggle */}
@@ -215,22 +247,24 @@ export function Sidebar() {
         </nav>
 
         {/* ── Upgrade card ────────────────────────────────────── */}
-        <div className={cn('px-3 mb-3', c && 'lg:hidden')}>
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 p-4 text-white shadow-lg shadow-emerald-500/30">
-            <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 blur-xl" />
-            <div className="relative">
-              <div className="flex items-center gap-1.5 text-sm font-bold">
-                Upgrade Pro! <span>✨</span>
+        {showUpgradeCard && (
+          <div className={cn('px-3 mb-3', c && 'lg:hidden')}>
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 p-4 text-white shadow-lg shadow-emerald-500/30">
+              <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 blur-xl" />
+              <div className="relative">
+                <div className="flex items-center gap-1.5 text-sm font-bold">
+                  Upgrade Pro! <span>✨</span>
+                </div>
+                <p className="text-xs text-white/80 mt-1 leading-snug">
+                  Higher productivity with better features
+                </p>
+                <button className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-white text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-50 transition-colors">
+                  <Sparkles size={12} /> Upgrade
+                </button>
               </div>
-              <p className="text-xs text-white/80 mt-1 leading-snug">
-                Higher productivity with better features
-              </p>
-              <button className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-white text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-50 transition-colors">
-                <Sparkles size={12} /> Upgrade
-              </button>
             </div>
           </div>
-        </div>
+        )}
 
         {/* ── Log out ────────────────────────────────────── */}
         <div className="px-3 py-3 border-t border-slate-100">

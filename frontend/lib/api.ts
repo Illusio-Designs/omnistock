@@ -142,6 +142,8 @@ export const adminApi = {
   createContent: (data: any) => api.post('/admin/content', data),
   updateContent: (id: string, data: any) => api.put(`/admin/content/${id}`, data),
   deleteContent: (id: string) => api.delete(`/admin/content/${id}`),
+  // audit
+  audit: (params?: any) => api.get('/admin/audit', { params }),
   // tickets
   tickets: (params?: any) => api.get('/admin/tickets', { params }),
   ticket: (id: string) => api.get(`/admin/tickets/${id}`),
