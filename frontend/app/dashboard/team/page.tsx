@@ -335,7 +335,14 @@ function RoleForm({ initial, permsByModule, onClose, onSave }: any) {
   );
 }
 
-function Input({ label, value, onChange, className = '', disabled = false, type = 'text' }: any) {
+function Input({ label, value, onChange, className = '', disabled = false, type = 'text' }: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+  disabled?: boolean;
+  type?: string;
+}) {
   return (
     <div className={className}>
       <label className="block text-xs font-semibold text-slate-600 mb-1">{label}</label>

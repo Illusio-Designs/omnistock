@@ -121,7 +121,12 @@ function BlogForm({ initial, onClose, onSave }: any) {
   );
 }
 
-function Input({ label, value, onChange, className = '' }: any) {
+function Input({ label, value, onChange, className = '' }: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+}) {
   return (
     <div className={className}>
       <label className="block text-xs font-semibold text-slate-600 mb-1">{label}</label>

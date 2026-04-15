@@ -139,7 +139,13 @@ function PlanForm({ initial, onClose, onSave }: any) {
   );
 }
 
-function Input({ label, value, onChange, type = 'text', className = '' }: any) {
+function Input({ label, value, onChange, type = 'text', className = '' }: {
+  label: string;
+  value: string | number;
+  onChange: (v: string) => void;
+  type?: string;
+  className?: string;
+}) {
   return (
     <div className={className}>
       <label className="block text-xs font-semibold text-slate-600 mb-1">{label}</label>

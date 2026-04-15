@@ -227,7 +227,14 @@ function ContentForm({ initial, type, onClose, onSave }: any) {
   );
 }
 
-function Input({ label, value, onChange, type = 'text', className = '', placeholder }: any) {
+function Input({ label, value, onChange, type = 'text', className = '', placeholder }: {
+  label: string;
+  value: string | number;
+  onChange: (v: string) => void;
+  type?: string;
+  className?: string;
+  placeholder?: string;
+}) {
   return (
     <div className={className}>
       <label className="block text-xs font-semibold text-slate-600 mb-1">{label}</label>
@@ -242,7 +249,13 @@ function Input({ label, value, onChange, type = 'text', className = '', placehol
   );
 }
 
-function Textarea({ label, value, onChange, className = '', rows = 4 }: any) {
+function Textarea({ label, value, onChange, className = '', rows = 4 }: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+  rows?: number;
+}) {
   return (
     <div className={className}>
       <label className="block text-xs font-semibold text-slate-600 mb-1">{label}</label>
