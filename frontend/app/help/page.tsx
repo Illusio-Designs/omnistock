@@ -6,7 +6,6 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button, Card, Input, Textarea, Select, Badge } from '@/components/ui';
 import { publicApi, ticketApi } from '@/lib/api';
 import { getIcon } from '@/lib/icon';
-import Link from 'next/link';
 import {
   HelpCircle, MessageCircle, Mail, BookOpen, Video, Search, Send,
   ArrowRight, ExternalLink, Inbox, Loader2,
