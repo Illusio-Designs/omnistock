@@ -384,15 +384,15 @@ model AuditLog {
 
 model PublicContent {
   id          String   @id @default(uuid())
-  type        ContentType
+  type        String   // LANDING_CHALLENGE / FEATURE / TESTIMONIAL / etc. — free-form so new types need no migration
   slug        String?  @unique
   title       String
   subtitle    String?  @db.Text
   body        String?  @db.LongText
   image       String?  @db.Text
-  icon        String?  // lucide icon name, e.g. "Sparkles"
-  category    String?  // grouping within a type (e.g. "ECOM", "GENERAL")
-  href        String?  // click-through URL for card types
+  icon        String?
+  category    String?
+  href        String?
   sortOrder   Int      @default(0)
   data        Json     @default("{}")
   isActive    Boolean  @default(true)
@@ -401,22 +401,6 @@ model PublicContent {
 
   @@index([type, isActive, sortOrder])
   @@map("public_content")
-}
-
-enum ContentType {
-  LANDING_CHALLENGE
-  LANDING_FEATURE_TOOL
-  LANDING_FAQ
-  FEATURE
-  SOLUTION
-  ABOUT_SECTION
-  ABOUT_VALUE
-  ABOUT_TIMELINE
-  HELP_CATEGORY
-  HELP_FAQ
-  RESOURCE_TILE
-  VIDEO
-  CASE_STUDY
 }
 
 model SeoSetting {

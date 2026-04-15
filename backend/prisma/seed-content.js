@@ -347,6 +347,29 @@ const CONTENT = [
     body: 'GreenLeaf Organics used OmniStock\'s quick-commerce integrations to launch on Blinkit, Zepto and Swiggy Instamart simultaneously, syncing inventory across all three without manual intervention.',
     data: { industry: 'Grocery', region: 'India', metric: '3 channels in 3 weeks' },
   },
+
+  // ─── Testimonials (landing page) ────────────────────────────────
+  {
+    type: 'TESTIMONIAL',
+    title: 'Priya Mehta',
+    subtitle: 'Founder, Bloom & Bee',
+    body: 'We went from juggling 6 seller panels to one dashboard. Order processing time dropped 70%.',
+    data: { avatar: 'PM', rating: 5 },
+  },
+  {
+    type: 'TESTIMONIAL',
+    title: 'Arjun Kapoor',
+    subtitle: 'Ops Head, Urbanly',
+    body: 'Finally, an ERP that feels like a modern SaaS — not a 2005 spreadsheet. The team loves it.',
+    data: { avatar: 'AK', rating: 5 },
+  },
+  {
+    type: 'TESTIMONIAL',
+    title: 'Rhea Shah',
+    subtitle: 'CEO, Kale Kitchen',
+    body: 'Connected to Blinkit, Zepto and Shopify in one afternoon. Sales pipeline visible end-to-end.',
+    data: { avatar: 'RS', rating: 5 },
+  },
 ];
 
 async function main() {

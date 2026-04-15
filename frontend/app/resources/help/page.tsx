@@ -1,98 +1,131 @@
 'use client';
 
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useState } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import {
-  Sparkles, Search, ArrowRight, Rocket, Plug, Package, ShoppingCart, Truck,
-  Settings, CreditCard,
-} from 'lucide-react';
+import { publicApi } from '@/lib/api';
+import { getIcon } from '@/lib/icon';
+import { HelpCircle, Search, ArrowRight } from 'lucide-react';
 
-const CATEGORIES = [
-  { icon: Rocket,      title: 'Getting Started', count: 12, color: 'emerald' },
-  { icon: Plug,        title: 'Integrations',    count: 24 },
-  { icon: Package,     title: 'Products',        count: 18 },
-  { icon: ShoppingCart,title: 'Orders',          count: 22 },
-  { icon: Truck,       title: 'Shipping',        count: 16 },
-  { icon: CreditCard,  title: 'Billing',         count: 8  },
-  { icon: Settings,    title: 'Settings',        count: 10 },
-];
+interface Row {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  body: string | null;
+  icon: string | null;
+  category: string | null;
+  href: string | null;
+}
 
-const POPULAR = [
-  'How do I connect Amazon Seller Central?',
-  'How do I map SKUs between channels?',
-  'How do I push inventory to all channels at once?',
-  'How does auto review request work?',
-  'Can I use OmniStock with my existing Shopify store?',
-  'How do I cancel a shipment?',
-];
+function HelpCenterInner() {
+  const params = useSearchParams();
+  const topic = params.get('topic') || '';
+  const [query, setQuery] = useState('');
+  const [categories, setCategories] = useState<Row[]>([]);
+  const [faqs, setFaqs] = useState<Row[]>([]);
 
-export default function HelpPage() {
-  const [q, setQ] = useState('');
+  useEffect(() => {
+    publicApi.content('HELP_CATEGORY').then((r) => setCategories(r.data || []));
+    publicApi.content('HELP_FAQ').then((r) => setFaqs(r.data || []));
+  }, []);
+
+  const filteredFaqs = faqs
+    .filter((f) => (topic ? f.category === topic : true))
+    .filter((f) => {
+      if (!query) return true;
+      const q = query.toLowerCase();
+      return (
+        f.title.toLowerCase().includes(q) ||
+        (f.body || '').toLowerCase().includes(q)
+      );
+    });
 
   return (
     <PublicLayout>
-      <section className="relative overflow-hidden pt-20 pb-16">
+      <section className="relative overflow-hidden pt-20 pb-12">
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-emerald-50 via-white to-white" />
-        <div className="absolute top-20 left-1/3 w-96 h-96 rounded-full bg-emerald-200/40 blur-[120px] -z-10" />
-
-        <div className="max-w-3xl mx-auto px-6 text-center">
+        <div className="max-w-4xl mx-auto px-6 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 uppercase tracking-wider mb-4">
-            <Sparkles size={12} /> Help Center
+            <HelpCircle size={12} /> Help center
           </div>
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-slate-900 leading-tight">
             How can we <span className="gradient-text">help?</span>
           </h1>
-
-          <div className="mt-8 relative max-w-xl mx-auto">
-            <Search size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <div className="relative max-w-xl mx-auto mt-8">
+            <Search size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
-              value={q}
-              onChange={e => setQ(e.target.value)}
-              placeholder="Search articles, guides, tutorials…"
-              className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl shadow-lg text-sm focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400 placeholder:text-slate-400"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search articles…"
+              className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl shadow-lg text-sm focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400"
             />
           </div>
         </div>
       </section>
 
-      <section className="pb-20">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">Browse by category</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {CATEGORIES.map(c => {
-              const Icon = c.icon;
-              return (
-                <div key={c.title} className="p-5 bg-white border border-slate-200 rounded-2xl hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer group">
-                  <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center mb-3 group-hover:bg-emerald-100 transition-colors">
-                    <Icon size={18} className="text-emerald-600" />
-                  </div>
-                  <div className="font-bold text-slate-900 text-sm">{c.title}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">{c.count} articles</div>
-                </div>
-              );
-            })}
+      {/* Categories */}
+      {!topic && !query && categories.length > 0 && (
+        <section className="pb-12">
+          <div className="max-w-6xl mx-auto px-6">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Browse by topic</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {categories.map((c) => {
+                const Icon = getIcon(c.icon);
+                return (
+                  <Link
+                    key={c.id}
+                    href={c.href || '#'}
+                    className="p-5 bg-white border border-slate-200 rounded-2xl hover:border-emerald-300 hover:shadow-lg transition-all"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center mb-3">
+                      <Icon size={18} className="text-emerald-600" />
+                    </div>
+                    <h3 className="font-bold text-slate-900">{c.title}</h3>
+                    <p className="text-sm text-slate-600 mt-1 line-clamp-2">{c.subtitle}</p>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
+      {/* FAQs */}
       <section className="pb-24">
         <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">Popular articles</h2>
-          <div className="bg-white border border-slate-200 rounded-2xl divide-y divide-slate-100">
-            {POPULAR.map(p => (
-              <a key={p} href="#" className="flex items-center justify-between p-5 hover:bg-emerald-50/30 transition-colors group">
-                <span className="text-sm font-semibold text-slate-700 group-hover:text-emerald-700">{p}</span>
-                <ArrowRight size={14} className="text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />
-              </a>
-            ))}
-          </div>
-          <div className="text-center mt-10">
-            <p className="text-slate-600 mb-4">Can't find what you're looking for?</p>
-            <Link href="/contact" className="btn-primary">Contact Support <ArrowRight size={14} /></Link>
-          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">
+            {topic ? `Articles: ${topic}` : query ? `Results for "${query}"` : 'Frequently asked'}
+          </h2>
+          {filteredFaqs.length === 0 ? (
+            <p className="text-slate-500">No articles match your search.</p>
+          ) : (
+            <div className="space-y-2">
+              {filteredFaqs.map((f) => (
+                <details key={f.id} className="group bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-emerald-200 transition-colors">
+                  <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none">
+                    <span className="text-sm font-bold text-slate-900 pr-4">{f.title}</span>
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 group-open:bg-emerald-100 flex items-center justify-center text-lg leading-none text-slate-600 group-open:text-emerald-700 group-open:rotate-45 transition-all">
+                      +
+                    </span>
+                  </summary>
+                  <div className="px-5 pb-4 -mt-1 text-sm text-slate-600 leading-relaxed">
+                    {f.body}
+                  </div>
+                </details>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </PublicLayout>
+  );
+}
+
+export default function HelpCenterPage() {
+  return (
+    <Suspense fallback={null}>
+      <HelpCenterInner />
+    </Suspense>
   );
 }

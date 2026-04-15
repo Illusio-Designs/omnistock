@@ -6,77 +6,18 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import { ChannelMarquee, ALL_CHANNELS } from '@/components/ChannelMarquee';
 import { CountUp } from '@/components/CountUp';
 import { publicApi } from '@/lib/api';
-import {
-  Sparkles, ArrowRight, Play, Users, Globe, Clock, Eye, AlertTriangle,
-  Star,
-} from 'lucide-react';
+import { getIcon } from '@/lib/icon';
+import { Sparkles, ArrowRight, Play, Users, Globe, Star } from 'lucide-react';
 
-const BUSINESS_CHALLENGES = [
-  {
-    icon: Eye,
-    title: 'Scattered Data',
-    description: 'Managing massive amounts of data is overwhelming — disconnected sources and complex systems slow you down.',
-    accent: false,
-  },
-  {
-    icon: Clock,
-    title: 'Manual Workflows',
-    description: 'Teams spend hours on manual order processing, inventory updates, and reconciliation — time that should be spent scaling.',
-    accent: true,
-  },
-  {
-    icon: AlertTriangle,
-    title: 'Missed Opportunities',
-    description: 'Without the right tools, trends and insights get missed. Platforms like ours turn data into action.',
-    accent: false,
-  },
-];
-
-const FEATURE_TOOLS = [
-  {
-    title: 'AI-Powered Insights',
-    description: 'Leverage cutting-edge AI to uncover hidden patterns and trends in your data, helping you make smarter, data-driven decisions with ease.',
-    visual: 'chart',
-  },
-  {
-    title: 'Real-Time Visibility',
-    description: 'Interact with dynamic charts, graphs, and dashboards that update in real-time, offering instant clarity and actionable insights.',
-    visual: 'bar',
-    highlight: true,
-  },
-  {
-    title: 'Easy Integration',
-    description: "Seamlessly connect with 50+ tools like Amazon, Flipkart, Shopify and more — smooth data flow across all your favorite platforms.",
-    visual: 'network',
-  },
-];
-
-const FAQS = [
-  {
-    q: 'What types of channels can I connect?',
-    a: 'Over 50+ channels including Amazon, Flipkart, Myntra, Meesho, Nykaa, Blinkit, Zepto, Swiggy Instamart, BB Now, Shopify, WooCommerce, Magento, and 16+ logistics providers like Shiprocket, Delhivery, iThink, Pickrr, NimbusPost, and ClickPost.',
-  },
-  {
-    q: 'How secure is my data?',
-    a: 'All credentials are encrypted at rest using AES-256-GCM encryption. Every request uses JWT authentication and HTTPS. You own your data — we never share it with third parties.',
-  },
-  {
-    q: "What's the difference between Starter and Enterprise plans?",
-    a: 'Starter is free forever with 3 channels and 500 orders/month. Growth (₹2,499/mo) unlocks unlimited channels and 10,000 orders/month. Scale (₹7,999/mo) adds AI forecasting and dedicated support.',
-  },
-  {
-    q: 'How easy is it to get started?',
-    a: 'Connect your first channel in under 5 minutes — no developers needed. Our setup wizard walks you through authentication, SKU mapping, and initial sync.',
-  },
-  {
-    q: 'Can I integrate with my existing team tools?',
-    a: 'Yes. OmniStock offers a REST API, webhooks, and native integrations with Slack, Gmail, and popular accounting platforms.',
-  },
-  {
-    q: 'What support options are available?',
-    a: 'Email support on all plans, priority support on Growth, and 24/7 dedicated account manager on Scale. Plus a full help center and community.',
-  },
-];
+interface ContentRow {
+  id: string;
+  type: string;
+  title: string;
+  subtitle: string | null;
+  body: string | null;
+  icon: string | null;
+  data: any;
+}
 
 export default function LandingPage() {
   const [stats, setStats] = useState<{
@@ -85,9 +26,17 @@ export default function LandingPage() {
     totalOrders: number;
     totalTenants: number;
   } | null>(null);
+  const [challenges, setChallenges] = useState<ContentRow[]>([]);
+  const [featureTools, setFeatureTools] = useState<ContentRow[]>([]);
+  const [testimonials, setTestimonials] = useState<ContentRow[]>([]);
+  const [faqs, setFaqs] = useState<ContentRow[]>([]);
 
   useEffect(() => {
     publicApi.stats().then((r) => setStats(r.data)).catch(() => {});
+    publicApi.content('LANDING_CHALLENGE').then((r) => setChallenges(r.data)).catch(() => {});
+    publicApi.content('LANDING_FEATURE_TOOL').then((r) => setFeatureTools(r.data)).catch(() => {});
+    publicApi.content('TESTIMONIAL').then((r) => setTestimonials(r.data)).catch(() => {});
+    publicApi.content('LANDING_FAQ').then((r) => setFaqs(r.data)).catch(() => {});
   }, []);
 
   return (
@@ -238,31 +187,32 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5" data-stagger>
-            {BUSINESS_CHALLENGES.map(c => {
-              const Icon = c.icon;
+            {challenges.map(c => {
+              const Icon = getIcon(c.icon);
+              const accent = !!c.data?.accent;
               return (
                 <div
-                  key={c.title}
+                  key={c.id}
                   data-reveal
                   className={`rounded-2xl p-6 border hover-lift transition-all ${
-                    c.accent
+                    accent
                       ? 'bg-emerald-600 border-emerald-600 text-white shadow-xl shadow-emerald-500/30'
                       : 'bg-white border-slate-200 text-slate-900 shadow-sm hover:shadow-xl'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform hover:rotate-6 ${
-                      c.accent ? 'bg-white/15' : 'bg-emerald-50'
+                      accent ? 'bg-white/15' : 'bg-emerald-50'
                     }`}>
-                      <Icon size={18} className={c.accent ? 'text-white' : 'text-emerald-600'} />
+                      <Icon size={18} className={accent ? 'text-white' : 'text-emerald-600'} />
                     </div>
-                    <ArrowRight size={16} className={c.accent ? 'text-white/70' : 'text-slate-400'} />
+                    <ArrowRight size={16} className={accent ? 'text-white/70' : 'text-slate-400'} />
                   </div>
-                  <h3 className={`font-bold text-lg ${c.accent ? 'text-white' : 'text-slate-900'}`}>
+                  <h3 className={`font-bold text-lg ${accent ? 'text-white' : 'text-slate-900'}`}>
                     {c.title}
                   </h3>
-                  <p className={`text-sm mt-2 leading-relaxed ${c.accent ? 'text-white/80' : 'text-slate-600'}`}>
-                    {c.description}
+                  <p className={`text-sm mt-2 leading-relaxed ${accent ? 'text-white/80' : 'text-slate-600'}`}>
+                    {c.subtitle}
                   </p>
                   {/* Animated mini chart */}
                   <div className="mt-6 flex items-end gap-1 h-16">
@@ -270,7 +220,7 @@ export default function LandingPage() {
                       <div
                         key={i}
                         className={`flex-1 rounded-t origin-bottom transition-transform duration-500 ${
-                          c.accent ? 'bg-white/40' : 'bg-gradient-to-t from-emerald-200 to-emerald-400'
+                          accent ? 'bg-white/40' : 'bg-gradient-to-t from-emerald-200 to-emerald-400'
                         }`}
                         style={{ height: `${h}%`, transitionDelay: `${i * 50}ms` }}
                       />
@@ -297,50 +247,54 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5" data-stagger>
-            {FEATURE_TOOLS.map((t) => (
-              <div
-                key={t.title}
-                data-reveal
-                className={`rounded-2xl p-6 border hover-lift ${
-                  t.highlight
-                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-xl shadow-emerald-500/25'
-                    : 'bg-white border-slate-200 shadow-sm'
-                }`}
-              >
-                {/* Animated visual */}
-                <div className={`h-36 rounded-xl mb-5 p-4 ${
-                  t.highlight ? 'bg-white/10' : 'bg-slate-50'
-                } flex items-end justify-around gap-2 group/bars`}>
-                  {(t.visual === 'chart' ? [30, 55, 45, 70, 60, 85, 50] :
-                    t.visual === 'bar'   ? [60, 80, 45, 90, 70, 50, 85] :
-                                          [50, 40, 65, 55, 75, 60, 45]).map((h, j) => (
-                    <div
-                      key={j}
-                      className={`flex-1 rounded-t-md origin-bottom transition-all duration-500 group-hover/bars:scale-y-110 ${
-                        t.highlight ? 'bg-white/80' : 'bg-gradient-to-t from-emerald-300 to-emerald-500'
-                      }`}
-                      style={{ height: `${h}%`, transitionDelay: `${j * 40}ms` }}
-                    />
-                  ))}
-                </div>
-                <h3 className={`font-bold text-lg ${t.highlight ? 'text-white' : 'text-slate-900'}`}>
-                  {t.title}
-                </h3>
-                <p className={`text-sm mt-2 leading-relaxed ${t.highlight ? 'text-white/80' : 'text-slate-600'}`}>
-                  {t.description}
-                </p>
-                <Link
-                  href="/dashboard"
-                  className={`mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all hover:-translate-y-0.5 ${
-                    t.highlight
-                      ? 'bg-white text-emerald-700 hover:bg-emerald-50'
-                      : 'bg-slate-900 text-white hover:bg-slate-800'
+            {featureTools.map((t) => {
+              const highlight = !!t.data?.highlight;
+              const visual = t.data?.visual || 'chart';
+              return (
+                <div
+                  key={t.id}
+                  data-reveal
+                  className={`rounded-2xl p-6 border hover-lift ${
+                    highlight
+                      ? 'bg-emerald-600 border-emerald-600 text-white shadow-xl shadow-emerald-500/25'
+                      : 'bg-white border-slate-200 shadow-sm'
                   }`}
                 >
-                  Get Started <ArrowRight size={12} />
-                </Link>
-              </div>
-            ))}
+                  {/* Animated visual */}
+                  <div className={`h-36 rounded-xl mb-5 p-4 ${
+                    highlight ? 'bg-white/10' : 'bg-slate-50'
+                  } flex items-end justify-around gap-2 group/bars`}>
+                    {(visual === 'chart' ? [30, 55, 45, 70, 60, 85, 50] :
+                      visual === 'bar'   ? [60, 80, 45, 90, 70, 50, 85] :
+                                            [50, 40, 65, 55, 75, 60, 45]).map((h, j) => (
+                      <div
+                        key={j}
+                        className={`flex-1 rounded-t-md origin-bottom transition-all duration-500 group-hover/bars:scale-y-110 ${
+                          highlight ? 'bg-white/80' : 'bg-gradient-to-t from-emerald-300 to-emerald-500'
+                        }`}
+                        style={{ height: `${h}%`, transitionDelay: `${j * 40}ms` }}
+                      />
+                    ))}
+                  </div>
+                  <h3 className={`font-bold text-lg ${highlight ? 'text-white' : 'text-slate-900'}`}>
+                    {t.title}
+                  </h3>
+                  <p className={`text-sm mt-2 leading-relaxed ${highlight ? 'text-white/80' : 'text-slate-600'}`}>
+                    {t.subtitle}
+                  </p>
+                  <Link
+                    href="/dashboard"
+                    className={`mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all hover:-translate-y-0.5 ${
+                      highlight
+                        ? 'bg-white text-emerald-700 hover:bg-emerald-50'
+                        : 'bg-slate-900 text-white hover:bg-slate-800'
+                    }`}
+                  >
+                    Get Started <ArrowRight size={12} />
+                  </Link>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -359,29 +313,29 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5" data-stagger>
-            {[
-              { quote: "We went from juggling 6 seller panels to one dashboard. Order processing time dropped 70%.", author: 'Priya Mehta', role: 'Founder, Bloom & Bee', avatar: 'PM' },
-              { quote: "Finally, an ERP that feels like a modern SaaS — not a 2005 spreadsheet. The team loves it.", author: 'Arjun Kapoor', role: 'Ops Head, Urbanly',  avatar: 'AK' },
-              { quote: "Connected to Blinkit, Zepto and Shopify in one afternoon. Sales pipeline visible end-to-end.", author: 'Rhea Shah', role: 'CEO, Kale Kitchen', avatar: 'RS' },
-            ].map((t, i) => (
-              <div key={i} data-reveal className="bg-white rounded-2xl border border-slate-200 p-6 hover-lift hover:shadow-xl transition-all">
-                <div className="flex gap-0.5 mb-4">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
-                  ))}
-                </div>
-                <p className="text-slate-700 text-sm leading-relaxed font-medium">"{t.quote}"</p>
-                <div className="flex items-center gap-3 mt-5 pt-5 border-t border-slate-100">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
-                    {t.avatar}
+            {testimonials.map((t) => {
+              const rating = Number(t.data?.rating ?? 5);
+              const avatar = t.data?.avatar || t.title.split(' ').map((s: string) => s[0]).slice(0, 2).join('');
+              return (
+                <div key={t.id} data-reveal className="bg-white rounded-2xl border border-slate-200 p-6 hover-lift hover:shadow-xl transition-all">
+                  <div className="flex gap-0.5 mb-4">
+                    {Array.from({ length: rating }).map((_, i) => (
+                      <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
+                    ))}
                   </div>
-                  <div>
-                    <div className="font-bold text-sm text-slate-900">{t.author}</div>
-                    <div className="text-xs text-slate-500">{t.role}</div>
+                  <p className="text-slate-700 text-sm leading-relaxed font-medium">"{t.body}"</p>
+                  <div className="flex items-center gap-3 mt-5 pt-5 border-t border-slate-100">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                      {avatar}
+                    </div>
+                    <div>
+                      <div className="font-bold text-sm text-slate-900">{t.title}</div>
+                      <div className="text-xs text-slate-500">{t.subtitle}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -420,16 +374,16 @@ export default function LandingPage() {
           </div>
 
           <div className="lg:col-span-3 space-y-2" data-reveal="right">
-            {FAQS.map((item, i) => (
-              <details key={i} className="group bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-emerald-200 transition-colors">
+            {faqs.map((item) => (
+              <details key={item.id} className="group bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-emerald-200 transition-colors">
                 <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none">
-                  <span className="text-sm font-bold text-slate-900 pr-4">{item.q}</span>
+                  <span className="text-sm font-bold text-slate-900 pr-4">{item.title}</span>
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 group-open:bg-emerald-100 flex items-center justify-center text-lg leading-none text-slate-600 group-open:text-emerald-700 group-open:rotate-45 transition-all">
                     +
                   </span>
                 </summary>
                 <div className="px-5 pb-4 -mt-1 text-sm text-slate-600 leading-relaxed">
-                  {item.a}
+                  {item.body}
                 </div>
               </details>
             ))}

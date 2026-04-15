@@ -1,47 +1,32 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import { BookOpen, FileText, Video, HelpCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { publicApi } from '@/lib/api';
+import { getIcon } from '@/lib/icon';
+import { Sparkles, ArrowRight } from 'lucide-react';
 
-const RESOURCES = [
-  {
-    icon: BookOpen,
-    title: 'Blog',
-    description: 'Commerce tips, growth playbooks, product updates and industry insights.',
-    href: '/resources/blog',
-    count: '42 articles',
-  },
-  {
-    icon: FileText,
-    title: 'Case Studies',
-    description: 'How real brands built their omnichannel empires with OmniStock.',
-    href: '/resources/cases',
-    count: '12 stories',
-  },
-  {
-    icon: HelpCircle,
-    title: 'Help Center',
-    description: 'Step-by-step guides, setup tutorials, and troubleshooting.',
-    href: '/resources/help',
-    count: '200+ articles',
-  },
-  {
-    icon: Video,
-    title: 'Videos & Webinars',
-    description: 'Watch live product demos, walkthroughs, and recorded sessions.',
-    href: '/resources/videos',
-    count: '30+ videos',
-  },
-];
+interface Tile {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  icon: string | null;
+  href: string | null;
+  data: any;
+}
 
 export default function ResourcesPage() {
+  const [tiles, setTiles] = useState<Tile[]>([]);
+
+  useEffect(() => {
+    publicApi.content('RESOURCE_TILE').then((r) => setTiles(r.data || []));
+  }, []);
+
   return (
     <PublicLayout>
-      <section className="relative overflow-hidden pt-20 pb-16">
+      <section className="relative overflow-hidden pt-20 pb-12">
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-emerald-50 via-white to-white" />
-        <div className="absolute top-20 left-1/3 w-96 h-96 rounded-full bg-emerald-200/40 blur-[120px] -z-10" />
-
         <div className="max-w-4xl mx-auto px-6 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 uppercase tracking-wider mb-4">
             <Sparkles size={12} /> Resources
@@ -49,39 +34,48 @@ export default function ResourcesPage() {
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-slate-900 leading-tight">
             Learn. Build. <span className="gradient-text">Scale.</span>
           </h1>
-          <p className="mt-5 text-lg text-slate-600 max-w-xl mx-auto">
-            Everything you need to master omnichannel commerce — articles, guides, case studies, and videos.
+          <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto">
+            Guides, tutorials, case studies, and product updates — everything you need to succeed with OmniStock.
           </p>
         </div>
       </section>
 
       <section className="pb-24">
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-          {RESOURCES.map(r => {
-            const Icon = r.icon;
-            return (
-              <Link
-                key={r.title}
-                href={r.href}
-                className="group relative overflow-hidden rounded-3xl bg-white border border-slate-200 p-7 hover:border-emerald-300 hover:shadow-xl transition-all"
-              >
-                <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-emerald-50 blur-3xl opacity-0 group-hover:opacity-100 -translate-y-1/2 translate-x-1/2 transition-opacity" />
-                <div className="relative">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center mb-5 group-hover:bg-emerald-100 transition-colors">
-                    <Icon size={20} className="text-emerald-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-900">{r.title}</h3>
-                  <p className="text-sm text-slate-600 mt-2 leading-relaxed">{r.description}</p>
-                  <div className="flex items-center justify-between mt-6 pt-6 border-t border-slate-100">
-                    <span className="text-xs font-bold text-slate-500">{r.count}</span>
-                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 group-hover:translate-x-1 transition-transform">
-                      Browse <ArrowRight size={12} />
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+        <div className="max-w-6xl mx-auto px-6">
+          {tiles.length === 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-52 bg-slate-100 rounded-3xl animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+              {tiles.map((t) => {
+                const Icon = getIcon(t.icon);
+                const gradient = t.data?.gradient || 'from-emerald-400 to-teal-600';
+                return (
+                  <Link
+                    key={t.id}
+                    href={t.href || '#'}
+                    className="group bg-white rounded-3xl border border-slate-200 overflow-hidden hover:border-emerald-300 hover:shadow-xl transition-all"
+                  >
+                    <div className={`h-32 bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+                      <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+                        <Icon size={24} className="text-white" />
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      <h3 className="font-bold text-lg text-slate-900 group-hover:text-emerald-700 transition-colors">{t.title}</h3>
+                      <p className="text-sm text-slate-600 mt-2 leading-relaxed line-clamp-2">{t.subtitle}</p>
+                      <div className="inline-flex items-center gap-1.5 mt-4 text-xs font-bold text-emerald-600 group-hover:translate-x-1 transition-transform">
+                        Explore <ArrowRight size={12} />
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
     </PublicLayout>

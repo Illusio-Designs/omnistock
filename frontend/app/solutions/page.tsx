@@ -1,156 +1,90 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import {
-  Globe, Package, ShoppingCart, Warehouse, Truck, RefreshCcw, BarChart3,
-  ArrowRight, CheckCircle2, Sparkles,
-} from 'lucide-react';
+import { publicApi } from '@/lib/api';
+import { getIcon } from '@/lib/icon';
+import { Sparkles, ArrowRight } from 'lucide-react';
 
-const SOLUTIONS = [
-  {
-    id: 'multichannel',
-    icon: Globe,
-    title: 'Multi-channel Selling',
-    tagline: 'List on 50+ marketplaces from one dashboard',
-    description: 'Connect Amazon, Flipkart, Myntra, Meesho, Nykaa, Blinkit, Zepto, Shopify and more. Edit a product once — push to every channel.',
-    bullets: ['50+ channels pre-integrated', 'Unified product catalog', 'Per-channel pricing', 'One-click bulk push'],
-  },
-  {
-    id: 'inventory',
-    icon: Package,
-    title: 'Inventory Management',
-    tagline: 'Real-time stock across every warehouse',
-    description: 'Aggregate inventory across multiple warehouses. Auto-sync stock to every channel. Never oversell again.',
-    bullets: ['Multi-warehouse aggregation', 'Real-time channel sync', 'Low-stock alerts', 'Automatic reorder points'],
-  },
-  {
-    id: 'orders',
-    icon: ShoppingCart,
-    title: 'Order Management',
-    tagline: 'All channel orders in one unified inbox',
-    description: 'Every order from every channel lands in one inbox. Accept, route, ship, and track from a single dashboard.',
-    bullets: ['Unified order inbox', 'Auto-routing to warehouses', 'SLA tracking per channel', 'Webhook-based ingestion'],
-  },
-  {
-    id: 'warehouse',
-    icon: Warehouse,
-    title: 'Warehouse Operations',
-    tagline: 'Pick, pack, ship from any location',
-    description: 'Manage multiple fulfillment centers with location-aware inventory, pick-lists, barcode scanning, and stock movements.',
-    bullets: ['Multi-location support', 'Barcode scanning', 'Stock movement logs', 'Batch fulfillment'],
-  },
-  {
-    id: 'shipping',
-    icon: Truck,
-    title: 'Shipping & Logistics',
-    tagline: '16+ courier partners in one API',
-    description: 'Compare rates, book AWBs, schedule pickups, and track shipments across Shiprocket, Delhivery, iThink, Pickrr, and 12+ more.',
-    bullets: ['Rate comparison', 'One-click AWB', 'Automated pickups', 'End-to-end tracking'],
-  },
-  {
-    id: 'returns',
-    icon: RefreshCcw,
-    title: 'Returns & Refunds',
-    tagline: 'Automated RMA workflows',
-    description: 'Process returns across all channels from one screen. Auto-issue refunds, restock inventory, track QC.',
-    bullets: ['Unified RMA inbox', 'Auto-refund workflow', 'Return reason analytics', 'Restock on approval'],
-  },
-  {
-    id: 'analytics',
-    icon: BarChart3,
-    title: 'Reports & Analytics',
-    tagline: 'AI-powered business insights',
-    description: 'Sales by channel, SKU velocity, P&L per listing, demand forecasts, anomaly alerts — all in beautiful dashboards.',
-    bullets: ['P&L per channel', 'SKU velocity reports', 'AI demand forecasts', 'GST-ready exports'],
-  },
-];
+interface Solution {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  icon: string | null;
+  href: string | null;
+  data: any;
+}
 
 export default function SolutionsPage() {
+  const [items, setItems] = useState<Solution[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    publicApi.content('SOLUTION')
+      .then((r) => setItems(r.data || []))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <PublicLayout>
-      {/* Hero */}
-      <section className="relative overflow-hidden pt-20 pb-16">
+      <section className="relative overflow-hidden pt-20 pb-12">
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-emerald-50 via-white to-white" />
-        <div className="absolute top-20 left-1/4 w-96 h-96 rounded-full bg-emerald-200/40 blur-[120px] -z-10" />
-
         <div className="max-w-4xl mx-auto px-6 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 uppercase tracking-wider mb-4">
             <Sparkles size={12} /> Solutions
           </div>
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-slate-900 leading-tight">
-            Everything you need to <span className="gradient-text">run commerce.</span>
+            Built for your<br />
+            <span className="gradient-text">business model.</span>
           </h1>
-          <p className="mt-5 text-lg text-slate-600 max-w-2xl mx-auto">
-            From product listings to shipping labels — every workflow covered by one beautiful platform.
+          <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto">
+            D2C, marketplaces, quick commerce, 3PL — one platform, every commerce playbook.
           </p>
         </div>
       </section>
 
-      {/* Solutions grid */}
       <section className="pb-24">
-        <div className="max-w-6xl mx-auto px-6 space-y-6">
-          {SOLUTIONS.map((s, i) => {
-            const Icon = s.icon;
-            const flip = i % 2 === 1;
-            return (
-              <div
-                id={s.id}
-                key={s.id}
-                className={`scroll-mt-24 grid grid-cols-1 md:grid-cols-5 gap-6 bg-white rounded-3xl border border-slate-200 p-8 md:p-10 shadow-sm hover:shadow-lg transition-shadow ${
-                  flip ? 'md:[&>:first-child]:order-2' : ''
-                }`}
-              >
-                {/* Visual */}
-                <div className="md:col-span-2 relative rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 p-10 md:p-12 overflow-hidden flex items-center justify-center min-h-[220px]">
-                  <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-white/10 blur-2xl -translate-y-1/4 translate-x-1/4" />
-                  <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-white/5 blur-2xl translate-y-1/4 -translate-x-1/4" />
-                  <div className="relative w-24 h-24 rounded-3xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white shadow-2xl animate-float">
-                    <Icon size={44} strokeWidth={1.5} />
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="md:col-span-3 flex flex-col justify-center">
-                  <div className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2">
-                    {s.tagline}
-                  </div>
-                  <h2 className="text-3xl font-bold text-slate-900 tracking-tight">{s.title}</h2>
-                  <p className="mt-3 text-slate-600 leading-relaxed">{s.description}</p>
-                  <ul className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {s.bullets.map(b => (
-                      <li key={b} className="flex items-start gap-2 text-sm text-slate-700">
-                        <CheckCircle2 size={15} className="text-emerald-500 mt-0.5 flex-shrink-0" />
-                        <span className="font-medium">{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-6">
-                    <Link href="/dashboard" className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full shadow-md transition-colors">
-                      Try it free <ArrowRight size={13} />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="pb-24">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900">
-            Ready to <span className="gradient-text">scale fearlessly?</span>
-          </h2>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link href="/dashboard" className="btn-primary text-base px-6 py-3">
-              Start Free <ArrowRight size={16} />
-            </Link>
-            <Link href="/pricing" className="btn-secondary text-base px-6 py-3">
-              See Pricing
-            </Link>
-          </div>
+        <div className="max-w-6xl mx-auto px-6">
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-56 bg-slate-100 rounded-3xl animate-pulse" />
+              ))}
+            </div>
+          ) : items.length === 0 ? (
+            <div className="text-center py-24 text-slate-500">
+              <h2 className="text-xl font-bold text-slate-900 mb-2">No solutions listed yet</h2>
+              A platform admin can add them at /admin/content.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {items.map((s) => {
+                const Icon = getIcon(s.icon);
+                const gradient = s.data?.gradient || 'from-emerald-400 to-teal-600';
+                return (
+                  <Link
+                    key={s.id}
+                    href={s.href || '#'}
+                    className="group bg-white rounded-3xl border border-slate-200 overflow-hidden hover:border-emerald-300 hover:shadow-xl transition-all"
+                  >
+                    <div className={`relative h-32 bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+                      <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+                        <Icon size={24} className="text-white" />
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      <h3 className="font-bold text-lg text-slate-900 group-hover:text-emerald-700 transition-colors">{s.title}</h3>
+                      <p className="text-sm text-slate-600 mt-2 leading-relaxed">{s.subtitle}</p>
+                      <div className="inline-flex items-center gap-1.5 mt-4 text-xs font-bold text-emerald-600 group-hover:translate-x-1 transition-transform">
+                        Learn more <ArrowRight size={12} />
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
     </PublicLayout>

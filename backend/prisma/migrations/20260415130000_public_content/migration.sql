@@ -1,21 +1,7 @@
 -- CreateTable
 CREATE TABLE `public_content` (
     `id` VARCHAR(191) NOT NULL,
-    `type` ENUM(
-      'LANDING_CHALLENGE',
-      'LANDING_FEATURE_TOOL',
-      'LANDING_FAQ',
-      'FEATURE',
-      'SOLUTION',
-      'ABOUT_SECTION',
-      'ABOUT_VALUE',
-      'ABOUT_TIMELINE',
-      'HELP_CATEGORY',
-      'HELP_FAQ',
-      'RESOURCE_TILE',
-      'VIDEO',
-      'CASE_STUDY'
-    ) NOT NULL,
+    `type` VARCHAR(191) NOT NULL,
     `slug` VARCHAR(191) NULL,
     `title` VARCHAR(191) NOT NULL,
     `subtitle` TEXT NULL,
