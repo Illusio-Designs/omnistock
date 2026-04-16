@@ -1,22 +1,7 @@
 // Bootstrap — creates tables + seeds on startup.
-// Re-runs only when DB_VERSION (passed from index.js) changes.
+// Seed runs ONCE. After all data exists, it never runs again.
 
-const fs = require('fs');
-const path = require('path');
-
-const BACKEND_DIR = path.resolve(__dirname, '..', '..');
-const STATE_FILE = path.join(BACKEND_DIR, '.seed-state.json');
-
-function readState() {
-  try { return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')); }
-  catch { return {}; }
-}
-
-function writeState(state) {
-  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
-}
-
-async function initDb(version) {
+async function initDb() {
   const db = require('../utils/db');
   const SCHEMA_SQL = require('../config/schema.sql.js');
 
@@ -30,26 +15,23 @@ async function initDb(version) {
   await db.raw('SET FOREIGN_KEY_CHECKS = 1');
   console.log(`[initDb] ${statements.length} tables ready.`);
 
-  // 2. Check version — only seed when version changes or tables are empty
-  const state = readState();
+  // 2. Check if seed already ran — if all key tables have data, skip
+  const [planRows] = await db.raw("SELECT COUNT(*) as cnt FROM `plans`").catch(() => [{ cnt: 0 }]);
+  const [contentRows] = await db.raw("SELECT COUNT(*) as cnt FROM `public_content`").catch(() => [{ cnt: 0 }]);
+  const [userRows] = await db.raw("SELECT COUNT(*) as cnt FROM `users`").catch(() => [{ cnt: 0 }]);
+  const planCount = Number(planRows?.[0]?.cnt ?? planRows?.cnt ?? 0);
+  const contentCount = Number(contentRows?.[0]?.cnt ?? contentRows?.cnt ?? 0);
+  const userCount = Number(userRows?.[0]?.cnt ?? userRows?.cnt ?? 0);
 
-  if (state.version === version) {
-    const [rows] = await db.raw("SELECT COUNT(*) as cnt FROM `plans`").catch(() => [{ cnt: 0 }]);
-    const count = Number(rows?.[0]?.cnt ?? rows?.cnt ?? 0);
-    if (count > 0) {
-      console.log(`[initDb] v${version} already seeded — skipping.`);
-      return;
-    }
-    console.log(`[initDb] v${version} state exists but tables are empty �� re-seeding...`);
-  } else {
-    console.log(`[initDb] version changed (${state.version || 'none'} -> ${version}) — running seeds...`);
+  if (planCount > 0 && contentCount > 0 && userCount > 0) {
+    console.log('[initDb] data exists -- skipping seed.');
+    return;
   }
 
-  // 3. Run seed
+  // 3. First run — seed everything
+  console.log('[initDb] first run -- seeding...');
   const { run: seed } = require('../scripts/seed');
   await seed();
-
-  writeState({ version, seededAt: new Date().toISOString() });
   console.log('[initDb] seed complete.');
 }
 

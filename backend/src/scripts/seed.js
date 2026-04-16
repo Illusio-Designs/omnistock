@@ -337,6 +337,7 @@ async function run() {
       excerpt: 'A quick tour of what OmniStock can do for your ecommerce operations.',
       content: '# Welcome\n\nOmniStock helps you run inventory, orders and returns across every channel.',
       authorName: 'OmniStock Team',
+      tags: [],
       status: 'PUBLISHED',
       publishedAt: new Date(),
       metaTitle: 'Welcome to OmniStock',

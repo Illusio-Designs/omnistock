@@ -35,10 +35,6 @@ const { initDb } = require('./bootstrap/initDb');
 
 dotenv.config();
 
-// ── Database seed version ────────────────────────────────
-// Bump this when you want seeds to re-run on next restart.
-const DB_VERSION = '1.0.0';
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -100,7 +96,7 @@ app.use((err, _req, res, _next) => {
 
 (async () => {
   try {
-    await initDb(DB_VERSION);
+    await initDb();
   } catch (err) {
     console.error('[initDb] failed:', err.message);
     process.exit(1);
