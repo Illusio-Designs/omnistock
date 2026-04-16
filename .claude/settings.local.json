@@ -36,7 +36,9 @@
       "WebFetch(domain:sellerzone.snapdeal.com)",
       "WebFetch(domain:seller.jiomart.com)",
       "WebFetch(domain:seller.paytmmall.com)",
-      "WebFetch(domain:developer.ebay.com)"
+      "WebFetch(domain:developer.ebay.com)",
+      "Bash(node -e \"console.log\\(process.version\\)\")",
+      "Bash(npm ls *)"
     ]
   }
 }

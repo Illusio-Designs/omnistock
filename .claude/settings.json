@@ -6,7 +6,16 @@
       "Bash(tasklist)",
       "Bash(tasklist /FI \"IMAGENAME eq node.exe\")",
       "Bash(tasklist //FI \"IMAGENAME eq node.exe\")",
-      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npm install)"
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npm install)",
+      "Bash(findstr /i \"node\")",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(powershell -Command \"Stop-Process -Name node -Force -ErrorAction SilentlyContinue; Write-Host 'killed'\")",
+      "Bash(node src/index.js)",
+      "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host 'killed'\")",
+      "Bash(npx nodemon *)",
+      "Bash(node -e ' *)",
+      "Bash(node --max-old-space-size=512 -e ' *)"
     ]
   }
 }

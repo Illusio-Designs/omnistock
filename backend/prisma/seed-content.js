@@ -2,8 +2,8 @@
 // copy that used to live hardcoded in frontend/app/*.tsx.
 // Safe to re-run: uses upsert on a synthetic slug = `${type}:${sortOrder}:${title}`.
 
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+require('dotenv').config();
+const prisma = require('../src/utils/prisma');
 
 function mkSlug(type, idx, title) {
   return `${type}-${idx}-${title}`
@@ -458,4 +458,4 @@ async function main() {
 
 main()
   .catch((e) => { console.error(e); process.exit(1); })
-  .finally(() => prisma.$disconnect());
+  .finally(() => { prisma.$disconnect(); });

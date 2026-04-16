@@ -1,20 +1,12 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { PrismaClient } = require('@prisma/client');
 
 const BACKEND_DIR = path.resolve(__dirname, '..', '..');
 const STATE_FILE = path.join(BACKEND_DIR, '.seed-state.json');
 
 function run(cmd) {
   execSync(cmd, { cwd: BACKEND_DIR, stdio: 'inherit' });
-}
-
-async function latestMigrationId(prisma) {
-  const rows = await prisma.$queryRawUnsafe(
-    'SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NOT NULL ORDER BY finished_at DESC LIMIT 1'
-  );
-  return rows?.[0]?.migration_name || null;
 }
 
 function readState() {
@@ -27,32 +19,36 @@ function writeState(state) {
 }
 
 async function initDb() {
-  console.log('[initDb] applying migrations…');
-  run('npx prisma migrate deploy');
+  const db = require('../utils/db');
 
-  const prisma = new PrismaClient();
-  try {
-    const current = await latestMigrationId(prisma);
-    const state = readState();
-
-    if (!current) {
-      console.log('[initDb] no migrations found — skipping seed check.');
-      return;
-    }
-
-    if (state.lastSeededMigration === current) {
-      console.log(`[initDb] seed up-to-date (${current}).`);
-      return;
-    }
-
-    console.log(`[initDb] schema changed (${state.lastSeededMigration || 'none'} → ${current}), running seed…`);
-    await prisma.$disconnect();
-    run('node prisma/seed.js');
-    writeState({ lastSeededMigration: current, seededAt: new Date().toISOString() });
-    console.log('[initDb] seed complete.');
-  } finally {
-    await prisma.$disconnect().catch(() => {});
+  console.log('[initDb] running knex migrations…');
+  const [batchNo, applied] = await db.migrate.latest();
+  if (applied.length > 0) {
+    console.log(`[initDb] applied batch ${batchNo}: ${applied.join(', ')}`);
+  } else {
+    console.log('[initDb] no pending migrations.');
   }
+
+  // Check if we need to re-seed
+  const state = readState();
+  const migrationDir = path.join(BACKEND_DIR, 'migrations');
+  const files = fs.readdirSync(migrationDir).filter(f => f.endsWith('.js')).sort();
+  const latestFile = files[files.length - 1] || null;
+
+  if (!latestFile) {
+    console.log('[initDb] no migration files found.');
+    return;
+  }
+
+  if (state.lastSeededMigration === latestFile) {
+    console.log(`[initDb] seed up-to-date (${latestFile}).`);
+    return;
+  }
+
+  console.log(`[initDb] schema changed (${state.lastSeededMigration || 'none'} → ${latestFile}), running seed…`);
+  run('node prisma/seed.js');
+  writeState({ lastSeededMigration: latestFile, seededAt: new Date().toISOString() });
+  console.log('[initDb] seed complete.');
 }
 
 module.exports = { initDb };

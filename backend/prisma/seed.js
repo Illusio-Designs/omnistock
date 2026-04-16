@@ -1,8 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-const prisma = new PrismaClient();
+const prisma = require('../src/utils/prisma');
 
 // ── Seed accounts (overridable via .env) ───────────────────────────
 const PLATFORM_ADMIN_EMAIL    = process.env.PLATFORM_ADMIN_EMAIL    || 'founder@omnistock.com';
@@ -471,4 +470,4 @@ async function main() {
   console.log('Seed completed!');
 }
 
-main().catch(e => { console.error(e); process.exit(1); }).finally(() => prisma.$disconnect());
+main().catch(e => { console.error(e); process.exit(1); }).finally(() => { prisma.$disconnect(); });

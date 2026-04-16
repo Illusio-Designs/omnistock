@@ -6,7 +6,7 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": { "supportsTablet": true, "bundleIdentifier": "com.omnistock.app" },
     "android": { "package": "com.omnistock.app" },
     "web": { "bundler": "metro" },
