@@ -25,14 +25,19 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const handleAuthSuccess = (data: any) => {
-    setContext({
-      tenant: data.tenant ?? null,
-      plan: data.plan ?? null,
-      subscription: data.subscription ?? null,
-      permissions: data.permissions ?? [],
-    });
-    if (data.user?.tenantId || data.user?.isPlatformAdmin) {
+  const fetchContextAndNavigate = async (user: any) => {
+    try {
+      const { data: me } = await authApi.me();
+      setContext({
+        tenant: me.tenant ?? null,
+        plan: me.plan ?? null,
+        subscription: me.subscription ?? null,
+        permissions: me.permissions ?? [],
+      });
+    } catch {
+      // /auth/me may fail if user has no tenant yet — that's ok
+    }
+    if (user?.tenantId || user?.isPlatformAdmin) {
       router.replace('/dashboard');
     } else {
       router.replace('/onboarding');
@@ -48,9 +53,12 @@ export default function LoginScreen() {
     try {
       const { data } = await authApi.login(email.trim(), password);
       await setAuth(data.user, data.token);
-      handleAuthSuccess(data);
+      await fetchContextAndNavigate(data.user);
     } catch (err: any) {
-      Alert.alert('Login failed', err?.response?.data?.message || 'Invalid credentials');
+      Alert.alert(
+        'Login failed',
+        err?.response?.data?.error || err?.response?.data?.message || 'Invalid credentials'
+      );
     } finally {
       setLoading(false);
     }

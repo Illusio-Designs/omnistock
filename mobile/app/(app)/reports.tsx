@@ -3,6 +3,7 @@ import { BarChart3, Package, TrendingUp, Wallet } from 'lucide-react-native';
 import { Text, View } from 'react-native';
 import Card from '../../components/ui/Card';
 import PageShell from '../../components/ui/PageShell';
+import { MetricCardSkeleton, ListSkeleton } from '../../components/ui/Shimmer';
 import { reportApi } from '../../lib/api';
 import { formatCurrency } from '../../lib/utils';
 
@@ -69,6 +70,17 @@ export default function ReportsScreen() {
       title="Reports"
       subtitle="Sales and inventory analytics"
       loading={sales.isLoading || valuation.isLoading || topProducts.isLoading}
+      skeleton={
+        <View>
+          <View className="flex-row flex-wrap gap-4 mb-5">
+            <View className="w-[47%]"><MetricCardSkeleton /></View>
+            <View className="w-[47%]"><MetricCardSkeleton /></View>
+            <View className="w-[47%]"><MetricCardSkeleton /></View>
+            <View className="w-[47%]"><MetricCardSkeleton /></View>
+          </View>
+          <ListSkeleton rows={5} />
+        </View>
+      }
       error={sales.error || valuation.error || topProducts.error}
       refreshing={sales.isRefetching || valuation.isRefetching || topProducts.isRefetching}
       onRefresh={refreshAll}

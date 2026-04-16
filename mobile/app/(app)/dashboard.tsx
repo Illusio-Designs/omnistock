@@ -12,7 +12,6 @@ import {
   Wallet,
 } from 'lucide-react-native';
 import {
-  ActivityIndicator,
   Dimensions,
   Pressable,
   RefreshControl,
@@ -25,6 +24,7 @@ import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
+import { DashboardHeaderSkeleton, DashboardSkeleton } from '../../components/ui/Shimmer';
 import { channelApi, dashboardApi } from '../../lib/api';
 import { formatCurrency, formatShortDate } from '../../lib/utils';
 import { useAuthStore } from '../../store/auth.store';
@@ -154,7 +154,7 @@ export default function DashboardScreen() {
           </View>
 
           {/* Revenue hero */}
-          <View className="bg-slate-800/60 rounded-3xl p-5 border border-slate-700/50">
+          {isLoading ? <DashboardHeaderSkeleton /> : <View className="bg-slate-800/60 rounded-3xl p-5 border border-slate-700/50">
             <View className="flex-row items-center justify-between mb-1">
               <View className="flex-row items-center">
                 <View className="w-8 h-8 rounded-xl bg-emerald-500/20 items-center justify-center mr-2.5">
@@ -185,18 +185,13 @@ export default function DashboardScreen() {
                 </Button>
               </View>
             </View>
-          </View>
+          </View>}
         </View>
 
+        {isLoading ? (
+          <DashboardSkeleton />
+        ) : (
         <View className="px-5 pt-6">
-          {isLoading ? (
-            <View className="py-12 items-center">
-              <View className="w-14 h-14 rounded-3xl bg-emerald-50 items-center justify-center">
-                <ActivityIndicator color="#10b981" />
-              </View>
-            </View>
-          ) : null}
-
           {/* ── Quick stats (2-up grid) ───────────────────── */}
           <View className="flex-row gap-4 mb-5">
             <View className="flex-1">
@@ -440,6 +435,7 @@ export default function DashboardScreen() {
             </View>
           </Card>
         </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

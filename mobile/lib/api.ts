@@ -23,7 +23,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   async (err) => {
-    if (err.response?.status === 401) {
+    const url = err.config?.url || '';
+    const isAuthRoute = url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/google') || url.includes('/auth/onboard');
+    if (err.response?.status === 401 && !isAuthRoute && tokenCache.get()) {
       tokenCache.set(null);
       await tokenStorage.remove('token');
       router.replace('/login');

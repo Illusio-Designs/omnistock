@@ -1,11 +1,11 @@
 import {
-  ActivityIndicator,
   RefreshControl,
   ScrollView,
   Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ListSkeleton } from './Shimmer';
 
 type Props = {
   title: string;
@@ -15,6 +15,7 @@ type Props = {
   error?: unknown;
   refreshing?: boolean;
   onRefresh?: () => void;
+  skeleton?: React.ReactNode;
   children?: React.ReactNode;
 };
 
@@ -26,6 +27,7 @@ export default function PageShell({
   error,
   refreshing,
   onRefresh,
+  skeleton,
   children,
 }: Props) {
   return (
@@ -56,25 +58,18 @@ export default function PageShell({
           {action}
         </View>
 
-        {loading ? (
-          <View className="py-12 items-center">
-            <View className="w-12 h-12 rounded-2xl bg-emerald-50 items-center justify-center">
-              <ActivityIndicator color="#10b981" size="small" />
-            </View>
-          </View>
-        ) : null}
-
         {error ? (
           <View className="bg-rose-50 border border-rose-100 rounded-2xl p-4 mb-5">
             <Text className="text-rose-600 text-sm font-semibold">
-              {(error as any)?.response?.data?.message ||
+              {(error as any)?.response?.data?.error ||
+                (error as any)?.response?.data?.message ||
                 (error as any)?.message ||
                 'Failed to load'}
             </Text>
           </View>
         ) : null}
 
-        {children}
+        {loading ? (skeleton ?? <ListSkeleton rows={5} />) : children}
       </ScrollView>
     </SafeAreaView>
   );

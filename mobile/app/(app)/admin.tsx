@@ -4,6 +4,7 @@ import { Building2, CreditCard, TrendingUp, Users } from 'lucide-react-native';
 import { Text, View } from 'react-native';
 import Card from '../../components/ui/Card';
 import PageShell from '../../components/ui/PageShell';
+import { MetricCardSkeleton } from '../../components/ui/Shimmer';
 import { adminApi } from '../../lib/api';
 import { formatCurrency } from '../../lib/utils';
 import { useAuthStore } from '../../store/auth.store';
@@ -57,6 +58,14 @@ export default function AdminScreen() {
       title="Platform Admin"
       subtitle="Global SaaS overview"
       loading={isLoading}
+      skeleton={
+        <View className="flex-row flex-wrap gap-4">
+          <View className="w-[47%]"><MetricCardSkeleton /></View>
+          <View className="w-[47%]"><MetricCardSkeleton /></View>
+          <View className="w-[47%]"><MetricCardSkeleton /></View>
+          <View className="w-[47%]"><MetricCardSkeleton /></View>
+        </View>
+      }
       error={error}
       refreshing={isRefetching}
       onRefresh={refetch}

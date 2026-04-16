@@ -40,27 +40,36 @@ export default function RegisterScreen() {
     }
     setLoading(true);
     try {
-      const { data } = await authApi.register({
+      // Step 1: Register the user
+      await authApi.register({
         name: name.trim(),
         email: email.trim(),
         password,
       });
-      await setAuth(data.user, data.token);
-      setContext({
-        tenant: data.tenant ?? null,
-        plan: data.plan ?? null,
-        subscription: data.subscription ?? null,
-        permissions: data.permissions ?? [],
-      });
-      if (data.user?.tenantId) {
-        router.replace('/dashboard');
-      } else {
-        router.replace('/onboarding');
+
+      // Step 2: Auto-login since register doesn't return a token
+      const { data: loginData } = await authApi.login(email.trim(), password);
+      await setAuth(loginData.user, loginData.token);
+
+      // Step 3: Fetch full context
+      try {
+        const { data: me } = await authApi.me();
+        setContext({
+          tenant: me.tenant ?? null,
+          plan: me.plan ?? null,
+          subscription: me.subscription ?? null,
+          permissions: me.permissions ?? [],
+        });
+      } catch {
+        // New user won't have a tenant yet — that's expected
       }
+
+      // New users go to onboarding to create their workspace
+      router.replace('/onboarding');
     } catch (err: any) {
       Alert.alert(
         'Registration failed',
-        err?.response?.data?.message || 'Something went wrong. Try again.'
+        err?.response?.data?.error || err?.response?.data?.message || 'Something went wrong. Try again.'
       );
     } finally {
       setLoading(false);
