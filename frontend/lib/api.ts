@@ -204,6 +204,17 @@ export const orderApi = {
   requestReview: (id: string) => api.post(`/orders/${id}/request-review`, {}),
   processReviewQueue: (body?: { delayHours?: number; limit?: number }) =>
     api.post('/orders/process-review-queue', body || {}),
+  // Warehouse routing
+  routingSuggestion: (id: string) => api.get(`/orders/${id}/routing`),
+  assignWarehouse: (id: string, body: { warehouseId?: string; auto?: boolean }) =>
+    api.patch(`/orders/${id}/warehouse`, body),
+  // RTO risk scoring + approval
+  scoreRto: (id: string) => api.post(`/orders/${id}/rto/score`, {}),
+  approve: (id: string) => api.post(`/orders/${id}/approve`, {}),
+  reject: (id: string, reason?: string) => api.post(`/orders/${id}/reject`, { reason }),
+  enrich: (id: string, body: any) => api.patch(`/orders/${id}/enrich`, body),
+  setFulfillment: (id: string, body: { fulfillmentType: 'SELF' | 'CHANNEL' | 'DROPSHIP'; channelFulfillmentCenter?: string }) =>
+    api.patch(`/orders/${id}/fulfillment`, body),
 };
 
 export const purchaseApi = {

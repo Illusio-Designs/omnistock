@@ -133,6 +133,9 @@ export const orderApi = {
   scoreRto: (id: string) => api.post(`/orders/${id}/rto/score`, {}),
   approve: (id: string) => api.post(`/orders/${id}/approve`, {}),
   reject: (id: string, reason?: string) => api.post(`/orders/${id}/reject`, { reason }),
+  enrich: (id: string, body: any) => api.patch(`/orders/${id}/enrich`, body),
+  setFulfillment: (id: string, body: { fulfillmentType: 'SELF' | 'CHANNEL' | 'DROPSHIP'; channelFulfillmentCenter?: string }) =>
+    api.patch(`/orders/${id}/fulfillment`, body),
 };
 
 export const purchaseApi = {

@@ -2,6 +2,7 @@ const prisma = require('../utils/prisma');
 const { decryptCredentials } = require('../utils/crypto');
 const { pickBestWarehouse } = require('./routing.service');
 const { scoreOrder } = require('./rto.service');
+const { resolveFulfillmentType, assessCompleteness } = require('./fulfillment.service');
 
 // ── Adapters grouped by category ────────────────────────────────────────────
 
@@ -249,39 +250,57 @@ async function importOrders(channelId, rawOrders, { tenantId } = {}) {
 
       const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-      // Smart routing: pick the best warehouse for this order
+      // Load the channel record once to know its type + default fulfillment
+      const channelRecord = await prisma.channel.findUnique({
+        where: { id: channelId },
+        select: { type: true, defaultFulfillmentType: true },
+      });
+
+      // 1. Resolve fulfillment model (SELF / CHANNEL / DROPSHIP)
+      const fulfillmentType = resolveFulfillmentType(raw, channelRecord);
+      const channelFulfillmentCenter =
+        raw.fulfillmentCenter || raw.warehouseCode || raw.fcCode || null;
+
+      // 2. Assess data completeness
+      const completeness = assessCompleteness(raw, { fulfillmentType });
+
+      // 3. Smart routing — ONLY for orders we ship ourselves (SELF)
       let routing = null;
-      try {
-        routing = await pickBestWarehouse({
-          tenantId,
-          items: resolvedItems,
-          shippingAddress: raw.shippingAddress,
-        });
-      } catch (e) {
-        // Routing failure is non-fatal; order will be created without warehouse assignment
-        console.warn(`[import] routing failed for order ${raw.channelOrderId}: ${e.message}`);
+      if (fulfillmentType === 'SELF' && resolvedItems.length > 0) {
+        try {
+          routing = await pickBestWarehouse({
+            tenantId,
+            items: resolvedItems,
+            shippingAddress: raw.shippingAddress,
+          });
+        } catch (e) {
+          console.warn(`[import] routing failed for order ${raw.channelOrderId}: ${e.message}`);
+        }
       }
 
-      // Calculate RTO risk score
+      // 4. RTO risk score — skip for CHANNEL-fulfilled (channel handles fraud/RTO)
       let rto = null;
-      try {
-        const channelRecord = await prisma.channel.findUnique({
-          where: { id: channelId },
-          select: { type: true },
-        });
-        rto = await scoreOrder({
-          tenantId,
-          paymentMethod: raw.paymentMethod,
-          total: raw.total,
-          customerId: customer.id,
-          customer,
-          shippingAddress: raw.shippingAddress,
-          orderedAt: raw.orderedAt,
-          channelType: channelRecord?.type,
-        });
-      } catch (e) {
-        console.warn(`[import] RTO scoring failed for order ${raw.channelOrderId}: ${e.message}`);
+      if (fulfillmentType === 'SELF') {
+        try {
+          rto = await scoreOrder({
+            tenantId,
+            paymentMethod: raw.paymentMethod,
+            total: raw.total,
+            customerId: customer.id,
+            customer,
+            shippingAddress: raw.shippingAddress,
+            orderedAt: raw.orderedAt,
+            channelType: channelRecord?.type,
+          });
+        } catch (e) {
+          console.warn(`[import] RTO scoring failed for order ${raw.channelOrderId}: ${e.message}`);
+        }
       }
+
+      // 5. Initial status — CHANNEL-fulfilled orders start already confirmed
+      const initialStatus =
+        raw.status ||
+        (fulfillmentType === 'CHANNEL' ? 'PROCESSING' : 'PENDING');
 
       await prisma.$transaction(async (tx) => {
         await tx.order.create({
@@ -300,12 +319,18 @@ async function importOrders(channelId, rawOrders, { tenantId } = {}) {
             total: raw.total,
             paymentMethod: raw.paymentMethod,
             paymentStatus: raw.paymentStatus || 'PENDING',
-            status: raw.status || 'PENDING',
+            status: initialStatus,
             orderedAt: raw.orderedAt || new Date(),
             rtoScore: rto?.score ?? null,
             rtoRiskLevel: rto?.level ?? null,
             rtoFactors: rto?.factors ?? null,
             needsApproval: rto?.needsApproval ?? false,
+            fulfillmentType,
+            channelFulfillmentCenter,
+            awb: raw.awb || null,
+            courierTrackingUrl: raw.trackingUrl || raw.courierTrackingUrl || null,
+            dataCompleteness: completeness.level,
+            missingFields: completeness.missing,
             ...(resolvedItems.length > 0 && {
               items: {
                 create: resolvedItems.map((i) => ({

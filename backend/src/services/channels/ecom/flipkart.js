@@ -130,6 +130,9 @@ class FlipkartAdapter {
       paymentStatus: 'PAID',
       status: 'PENDING',
       orderedAt: new Date(o.created_on || Date.now()),
+      // Flipkart fulfillment: FLIPKART (Smart Fulfillment) = CHANNEL, SELLER = SELF
+      fulfillmentType: o.fulfilment_source === 'FLIPKART' ? 'CHANNEL' : 'SELF',
+      fulfillmentCenter: o.warehouse_id || null,
     };
   }
 }

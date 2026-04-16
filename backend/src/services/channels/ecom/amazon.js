@@ -170,6 +170,14 @@ class AmazonAdapter {
       paymentStatus: o.PaymentExecutionDetail ? 'PAID' : 'PENDING',
       status: o.OrderStatus === 'Shipped' ? 'SHIPPED' : 'PENDING',
       orderedAt: new Date(o.PurchaseDate),
+      // Fulfillment model: AFN = Amazon FBA, MFN = Merchant Fulfilled
+      fulfillment_channel: o.FulfillmentChannel,
+      fulfillmentCenter: o.ShippingAddress?.CountryCode
+        ? `${o.FulfillmentChannel}-${o.ShippingAddress?.StateOrRegion || ''}`
+        : null,
+      // FBA orders ship with AWB already assigned
+      awb: o.ShipmentServiceLevelCategory || null,
+      trackingUrl: o.AmazonOrderId ? `https://www.amazon.in/gp/your-account/order-details?orderID=${o.AmazonOrderId}` : null,
     };
   }
 }

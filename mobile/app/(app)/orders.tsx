@@ -177,12 +177,23 @@ export default function OrdersScreen() {
   };
 
   const onOrderPress = (o: any) => {
-    const { id, status, warehouseId, needsApproval, rtoScore, rtoRiskLevel, rtoFactors } = o;
+    const { id, status, warehouseId, needsApproval, rtoScore, rtoRiskLevel, rtoFactors, fulfillmentType, channelFulfillmentCenter, dataCompleteness } = o;
+    const isChannelFulfilled = fulfillmentType === 'CHANNEL';
     const riskSummary = rtoScore != null
       ? `RTO score: ${rtoScore}/100 (${rtoRiskLevel || 'N/A'})`
-      : 'No RTO score yet';
+      : isChannelFulfilled ? 'Channel-fulfilled (no RTO scoring)' : 'No RTO score yet';
 
-    // High-risk flagged orders: approve / reject first
+    // Channel-fulfilled orders: tenant has no control over shipping, just visibility
+    if (isChannelFulfilled) {
+      Alert.alert(
+        'Channel-fulfilled',
+        `This order is being shipped by the channel${channelFulfillmentCenter ? ` from ${channelFulfillmentCenter}` : ''}.\nStatus: ${status}\n\nTenant does not need to take action.`,
+        [{ text: 'OK', style: 'cancel' }]
+      );
+      return;
+    }
+
+    // High-risk SELF-fulfilled orders: approve / reject first
     if (needsApproval) {
       const topFactors = Array.isArray(rtoFactors)
         ? rtoFactors.slice(0, 3).map((f: any) => `\u2022 ${f.detail}`).join('\n')
@@ -205,6 +216,12 @@ export default function OrdersScreen() {
 
     const next = getNextStatus(status);
     const actions: any[] = [{ text: 'Close', style: 'cancel' }];
+    if (dataCompleteness === 'MINIMAL') {
+      actions.push({
+        text: 'Enrich data (manual)',
+        onPress: () => Alert.alert('Enrich', 'Use the web dashboard to fill in missing fields.'),
+      });
+    }
     if (!warehouseId && status !== 'DELIVERED' && status !== 'CANCELLED') {
       actions.push({ text: 'Auto-route warehouse', onPress: () => autoRouteMutation.mutate(id) });
     }
@@ -241,6 +258,35 @@ export default function OrdersScreen() {
     >
       <StatusFilter options={STATUSES} value={filter} onChange={setFilter} />
 
+      {/* RTO Risk filter */}
+      <View className="flex-row items-center mb-2 mt-1">
+        <AlertTriangle size={14} color="#94a3b8" />
+        <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1.5">
+          RTO Risk
+        </Text>
+      </View>
+      <StatusFilter options={RISK_FILTERS} value={riskFilter} onChange={setRiskFilter} />
+
+      {/* Quick "review needed" shortcut */}
+      {items.some((o: any) => o.needsApproval) && riskFilter !== 'NEEDS_APPROVAL' ? (
+        <Pressable
+          onPress={() => setRiskFilter('NEEDS_APPROVAL')}
+          className="flex-row items-center bg-rose-50 border border-rose-100 rounded-2xl p-3 mb-3 active:bg-rose-100"
+        >
+          <View className="w-9 h-9 rounded-xl bg-rose-100 items-center justify-center mr-3">
+            <AlertTriangle size={16} color="#e11d48" />
+          </View>
+          <View className="flex-1">
+            <Text className="text-[13px] font-extrabold text-rose-700">
+              {items.filter((o: any) => o.needsApproval).length} order(s) need your review
+            </Text>
+            <Text className="text-[11px] text-rose-600 font-medium">
+              High RTO risk \u00B7 Tap to review
+            </Text>
+          </View>
+        </Pressable>
+      ) : null}
+
       <Card className="overflow-hidden">
         {items.length > 0 ? (
           items.map((o, idx) => (
@@ -250,17 +296,33 @@ export default function OrdersScreen() {
               icon={<Package size={15} color="#059669" />}
               title={`#${o.orderNumber ?? o.id?.slice(0, 8)}`}
               subtitle={o.customer?.name ?? o.customerName ?? '\u2014'}
-              meta={
-                o.warehouseId
-                  ? `${o.createdAt ? formatShortDate(o.createdAt) + ' \u00B7 ' : ''}Routed`
-                  : o.createdAt ? formatShortDate(o.createdAt) + ' \u00B7 Unrouted' : 'Unrouted'
-              }
-              onPress={() => onStatusAction(o.id, o.status, !!o.warehouseId)}
+              meta={(() => {
+                const parts: string[] = [];
+                if (o.createdAt) parts.push(formatShortDate(o.createdAt));
+                if (o.fulfillmentType === 'CHANNEL') parts.push('Ch-fulfilled');
+                else if (o.fulfillmentType === 'DROPSHIP') parts.push('Dropship');
+                else parts.push(o.warehouseId ? 'Routed' : 'Unrouted');
+                if (o.dataCompleteness === 'PARTIAL') parts.push('Partial data');
+                else if (o.dataCompleteness === 'MINIMAL') parts.push('Needs enrichment');
+                return parts.join(' \u00B7 ');
+              })()}
+              onPress={() => onOrderPress(o)}
               right={
                 <View className="items-end gap-1">
-                  <Badge variant={orderStatusVariant(o.status)} dot>
-                    {o.status ?? 'PENDING'}
-                  </Badge>
+                  {o.needsApproval ? (
+                    <Badge variant="rose" dot>
+                      REVIEW
+                    </Badge>
+                  ) : (
+                    <Badge variant={orderStatusVariant(o.status)} dot>
+                      {o.status ?? 'PENDING'}
+                    </Badge>
+                  )}
+                  {o.rtoRiskLevel ? (
+                    <Badge variant={riskVariant(o.rtoRiskLevel)}>
+                      RTO {o.rtoScore ?? 0}
+                    </Badge>
+                  ) : null}
                   {o.total != null ? (
                     <Text className="text-[13px] font-bold text-slate-900">
                       {formatCurrency(o.total)}

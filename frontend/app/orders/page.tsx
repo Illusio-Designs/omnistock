@@ -8,7 +8,7 @@ import { formatCurrency, formatDateTime, ORDER_STATUS_COLORS } from '@/lib/utils
 import {
   Button, Badge, Card, Modal, Input, Textarea, Select, Pagination, Tooltip,
 } from '@/components/ui';
-import { Plus, Star, CheckCircle2, XCircle, Package, Trash2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Package, Plus, Star, Trash2, XCircle } from 'lucide-react';
 import Link from 'next/link';
 
 const STATUSES = [
@@ -21,16 +21,48 @@ const STATUSES = [
   { value: 'CANCELLED',  label: 'Cancelled' },
 ];
 
+const RISK_FILTERS = [
+  { value: '',        label: 'All Risk' },
+  { value: 'LOW',     label: 'Low' },
+  { value: 'MEDIUM',  label: 'Medium' },
+  { value: 'HIGH',    label: 'High' },
+  { value: 'APPROVAL',label: 'Needs approval' },
+];
+
+const riskVariant = (l?: string) => {
+  if (l === 'HIGH') return 'rose' as const;
+  if (l === 'MEDIUM') return 'amber' as const;
+  if (l === 'LOW') return 'emerald' as const;
+  return 'slate' as const;
+};
+
 export default function OrdersPage() {
+  const qc = useQueryClient();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [status, setStatus] = useState('');
+  const [risk, setRisk] = useState('');
   const [reviewResult, setReviewResult] = useState<{ id: string; type: 'success' | 'error'; message: string } | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['orders', page, pageSize, status],
-    queryFn: () => orderApi.list({ page, limit: pageSize, status: status || undefined }).then(r => r.data),
+    queryKey: ['orders', page, pageSize, status, risk],
+    queryFn: () => orderApi.list({
+      page,
+      limit: pageSize,
+      status: status || undefined,
+      risk: risk && risk !== 'APPROVAL' ? risk : undefined,
+      needsApproval: risk === 'APPROVAL' ? 'true' : undefined,
+    }).then(r => r.data),
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => orderApi.approve(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
+  });
+  const rejectMutation = useMutation({
+    mutationFn: (id: string) => orderApi.reject(id, 'High RTO risk'),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
   });
 
   const reviewMutation = useMutation({
@@ -60,13 +92,29 @@ export default function OrdersPage() {
 
         {/* Filters */}
         <div className="flex gap-3 flex-wrap">
-          <Select
-            value={status}
-            onChange={setStatus}
-            options={STATUSES}
-            placeholder="All Statuses"
-          />
+          <Select value={status} onChange={setStatus} options={STATUSES} placeholder="All Statuses" />
+          <Select value={risk} onChange={setRisk} options={RISK_FILTERS} placeholder="All Risk" />
         </div>
+
+        {/* Needs-approval banner */}
+        {(data?.orders || []).some((o: any) => o.needsApproval) && risk !== 'APPROVAL' && (
+          <button
+            onClick={() => setRisk('APPROVAL')}
+            className="w-full flex items-center gap-3 bg-rose-50 border border-rose-200 rounded-xl p-4 hover:bg-rose-100 transition-colors text-left"
+          >
+            <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center">
+              <AlertTriangle size={18} className="text-rose-600" />
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-extrabold text-rose-700">
+                {(data?.orders || []).filter((o: any) => o.needsApproval).length} order(s) need your review
+              </div>
+              <div className="text-xs text-rose-600 font-medium">
+                High RTO risk — click to review and approve or reject
+              </div>
+            </div>
+          </button>
+        )}
 
         {reviewResult && (
           <div className={`flex items-start gap-2 rounded-xl p-3 text-sm border ${
@@ -83,7 +131,7 @@ export default function OrdersPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50/50 border-b border-slate-100">
                 <tr className="text-left text-[10px] uppercase tracking-widest text-slate-400">
-                  {['Order #', 'Customer', 'Channel', 'Items', 'Total', 'Payment', 'Status', 'Date', ''].map(h => (
+                  {['Order #', 'Customer', 'Channel', 'Fulfillment', 'Total', 'RTO', 'Status', 'Date', ''].map(h => (
                     <th key={h} className="px-4 py-3 font-bold">{h}</th>
                   ))}
                 </tr>
@@ -98,21 +146,67 @@ export default function OrdersPage() {
                     </td>
                     <td className="px-4 py-3 text-slate-700">{o.customer?.name}</td>
                     <td className="px-4 py-3 text-slate-500">{o.channel?.name}</td>
-                    <td className="px-4 py-3 text-slate-500">{o.items?.length}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant={
+                          o.fulfillmentType === 'CHANNEL' ? 'sky' :
+                          o.fulfillmentType === 'DROPSHIP' ? 'violet' : 'slate'
+                        } dot>
+                          {o.fulfillmentType === 'CHANNEL' ? 'Channel' :
+                           o.fulfillmentType === 'DROPSHIP' ? 'Dropship' : 'Self'}
+                        </Badge>
+                        {o.dataCompleteness && o.dataCompleteness !== 'COMPLETE' ? (
+                          <Tooltip content={`Missing: ${(o.missingFields || []).join(', ') || 'data'}`}>
+                            <span>
+                              <Badge variant={o.dataCompleteness === 'MINIMAL' ? 'rose' : 'amber'}>
+                                {o.dataCompleteness}
+                              </Badge>
+                            </span>
+                          </Tooltip>
+                        ) : null}
+                      </div>
+                    </td>
                     <td className="px-4 py-3 font-bold text-slate-900">{formatCurrency(o.total)}</td>
                     <td className="px-4 py-3">
-                      <Badge variant={o.paymentStatus === 'PAID' ? 'emerald' : 'amber'} dot>
-                        {o.paymentStatus}
-                      </Badge>
+                      {o.rtoRiskLevel ? (
+                        <Tooltip content={`RTO Score: ${o.rtoScore}/100 \u00B7 ${o.rtoRiskLevel}`}>
+                          <span>
+                            <Badge variant={riskVariant(o.rtoRiskLevel)} dot>
+                              {o.rtoScore ?? 0} {o.rtoRiskLevel}
+                            </Badge>
+                          </span>
+                        </Tooltip>
+                      ) : <span className="text-slate-400 text-xs">—</span>}
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant={o.status === 'DELIVERED' ? 'emerald' : o.status === 'CANCELLED' ? 'rose' : 'slate'}>
-                        {o.status}
-                      </Badge>
+                      {o.needsApproval ? (
+                        <Badge variant="rose" dot>NEEDS REVIEW</Badge>
+                      ) : (
+                        <Badge variant={o.status === 'DELIVERED' ? 'emerald' : o.status === 'CANCELLED' ? 'rose' : 'slate'}>
+                          {o.status}
+                        </Badge>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">{formatDateTime(o.createdAt)}</td>
                     <td className="px-4 py-3">
-                      {o.status === 'DELIVERED' && (
+                      {o.needsApproval ? (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => approveMutation.mutate(o.id)}
+                            disabled={approveMutation.isPending}
+                            className="flex items-center gap-1 px-2 py-1 text-xs font-bold border border-emerald-200 text-emerald-700 rounded-md hover:bg-emerald-50 disabled:opacity-40 transition-colors"
+                          >
+                            <CheckCircle2 size={11} /> Approve
+                          </button>
+                          <button
+                            onClick={() => rejectMutation.mutate(o.id)}
+                            disabled={rejectMutation.isPending}
+                            className="flex items-center gap-1 px-2 py-1 text-xs font-bold border border-rose-200 text-rose-700 rounded-md hover:bg-rose-50 disabled:opacity-40 transition-colors"
+                          >
+                            <XCircle size={11} /> Reject
+                          </button>
+                        </div>
+                      ) : o.status === 'DELIVERED' ? (
                         <Tooltip content={o.reviewRequestedAt ? `Requested on ${new Date(o.reviewRequestedAt).toLocaleDateString()}` : 'Request product review'}>
                           <button
                             onClick={() => reviewMutation.mutate(o.id)}
@@ -123,7 +217,7 @@ export default function OrdersPage() {
                             {o.reviewRequestedAt ? 'Requested' : 'Review'}
                           </button>
                         </Tooltip>
-                      )}
+                      ) : null}
                     </td>
                   </tr>
                 )) : (

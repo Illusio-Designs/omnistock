@@ -25,6 +25,21 @@ async function initDb() {
     { table: 'orders', column: 'approvedById',    ddl: 'VARCHAR(191) DEFAULT NULL' },
     { table: 'orders', column: 'rejectedAt',      ddl: 'DATETIME(3) DEFAULT NULL' },
     { table: 'orders', column: 'rejectionReason', ddl: 'TEXT DEFAULT NULL' },
+
+    // Fulfillment model — who physically ships the order
+    { table: 'orders', column: 'fulfillmentType',        ddl: "VARCHAR(16) NOT NULL DEFAULT 'SELF'" },
+    { table: 'orders', column: 'channelFulfillmentCenter', ddl: 'VARCHAR(191) DEFAULT NULL' },
+    { table: 'orders', column: 'awb',                    ddl: 'VARCHAR(191) DEFAULT NULL' },
+    { table: 'orders', column: 'courierTrackingUrl',     ddl: 'TEXT DEFAULT NULL' },
+
+    // Data-quality flagging for channels that give incomplete orders
+    { table: 'orders', column: 'dataCompleteness', ddl: "VARCHAR(16) DEFAULT 'COMPLETE'" },
+    { table: 'orders', column: 'missingFields',    ddl: 'LONGTEXT DEFAULT NULL' },
+    { table: 'orders', column: 'enrichedAt',       ddl: 'DATETIME(3) DEFAULT NULL' },
+    { table: 'orders', column: 'enrichedById',     ddl: 'VARCHAR(191) DEFAULT NULL' },
+
+    // Per-channel default fulfillment (SELF | CHANNEL | BOTH)
+    { table: 'channels', column: 'defaultFulfillmentType', ddl: "VARCHAR(16) NOT NULL DEFAULT 'SELF'" },
   ];
   for (const m of migrations) {
     try {

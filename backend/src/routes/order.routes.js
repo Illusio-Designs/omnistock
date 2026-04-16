@@ -68,6 +68,86 @@ router.get('/:id/routing', requirePermission('orders.read'), async (req, res) =>
   }
 });
 
+// ── Enrich an order with missing data (CHANNEL-sourced orders often have gaps) ─
+router.patch('/:id/enrich', requirePermission('orders.update'), async (req, res) => {
+  try {
+    const { customer, shippingAddress, billingAddress, items } = req.body || {};
+    const order = await prisma.order.findFirst({
+      where: { id: req.params.id, tenantId: req.tenant.id },
+      include: { customer: true },
+    });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    // Update embedded shipping/billing address if provided
+    const orderUpdate = { enrichedAt: new Date(), enrichedById: req.user.id };
+    if (shippingAddress) orderUpdate.shippingAddress = { ...order.shippingAddress, ...shippingAddress };
+    if (billingAddress)  orderUpdate.billingAddress  = billingAddress;
+
+    // Update customer record if customer-level fields were passed
+    if (customer && order.customerId) {
+      await prisma.customer.update({
+        where: { id: order.customerId },
+        data: {
+          ...(customer.name  !== undefined && { name:  customer.name }),
+          ...(customer.email !== undefined && { email: customer.email }),
+          ...(customer.phone !== undefined && { phone: customer.phone }),
+        },
+      });
+    }
+
+    // Re-assess completeness after enrichment
+    const { assessCompleteness } = require('../services/fulfillment.service');
+    const refreshed = await prisma.order.findFirst({
+      where: { id: order.id },
+      include: { customer: true, items: true },
+    });
+    const recheck = assessCompleteness(
+      {
+        customer: refreshed.customer,
+        shippingAddress: orderUpdate.shippingAddress || refreshed.shippingAddress,
+        items: refreshed.items,
+      },
+      { fulfillmentType: refreshed.fulfillmentType }
+    );
+    orderUpdate.dataCompleteness = recheck.level;
+    orderUpdate.missingFields = recheck.missing;
+
+    const updated = await prisma.order.update({
+      where: { id: order.id },
+      data: orderUpdate,
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Override fulfillment type (e.g. switch a BOTH-mode channel order) ──────
+router.patch('/:id/fulfillment', requirePermission('orders.update'), async (req, res) => {
+  try {
+    const { fulfillmentType, channelFulfillmentCenter } = req.body || {};
+    if (!['SELF', 'CHANNEL', 'DROPSHIP'].includes(fulfillmentType)) {
+      return res.status(400).json({ error: 'fulfillmentType must be SELF, CHANNEL, or DROPSHIP' });
+    }
+    const order = await prisma.order.findFirst({
+      where: { id: req.params.id, tenantId: req.tenant.id },
+    });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    // Switching to SELF after CHANNEL means we now need a warehouse
+    const update = { fulfillmentType };
+    if (channelFulfillmentCenter !== undefined) update.channelFulfillmentCenter = channelFulfillmentCenter;
+
+    const updated = await prisma.order.update({
+      where: { id: order.id },
+      data: update,
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── RTO (Return to Origin) risk scoring + approval ─────────────────────────
 // Tenants review flagged orders and decide: approve (ship it) or reject (cancel).
 router.post('/:id/rto/score', requirePermission('orders.read'), async (req, res) => {
