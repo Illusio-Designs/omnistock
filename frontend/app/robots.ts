@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://omnistock.vercel.app';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -8,9 +8,14 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/dashboard', '/admin', '/api', '/onboarding'],
+        disallow: ['/dashboard', '/admin', '/api', '/onboarding', '/login'],
+      },
+      {
+        userAgent: 'GPTBot',
+        disallow: ['/'],
       },
     ],
     sitemap: `${SITE}/sitemap.xml`,
+    host: SITE,
   };
 }

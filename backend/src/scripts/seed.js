@@ -251,8 +251,8 @@ const CONTENT = [
   { type: 'FOOTER_LINK', category: 'company', title: 'About', href: '/about' },
   { type: 'FOOTER_LINK', category: 'company', title: 'Careers', href: '/about#careers' },
   { type: 'FOOTER_LINK', category: 'company', title: 'Contact', href: '/contact' },
-  { type: 'FOOTER_LINK', category: 'company', title: 'Privacy', href: '#' },
-  { type: 'FOOTER_LINK', category: 'company', title: 'Terms', href: '#' },
+  { type: 'FOOTER_LINK', category: 'company', title: 'Privacy', href: '/privacy' },
+  { type: 'FOOTER_LINK', category: 'company', title: 'Terms', href: '/terms' },
 
   // ─── Testimonials ────────────────────────────────────────────────
   { type: 'TESTIMONIAL', title: 'Priya Mehta', subtitle: 'Founder, Bloom & Bee', body: 'We went from juggling 6 seller panels to one dashboard. Order processing time dropped 70%.', data: { avatar: 'PM', rating: 5 } },

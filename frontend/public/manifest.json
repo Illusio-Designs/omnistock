@@ -1,0 +1,19 @@
+{
+  "name": "OmniStock — Multi-channel Commerce Platform",
+  "short_name": "OmniStock",
+  "description": "Manage inventory, orders, returns and reconciliation across 50+ channels.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#059669",
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
