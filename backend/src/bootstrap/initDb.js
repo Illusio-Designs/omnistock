@@ -1,13 +1,11 @@
-const { execSync } = require('child_process');
+// Bootstrap — creates tables + seeds on startup.
+// Re-runs only when DB_VERSION (passed from index.js) changes.
+
 const fs = require('fs');
 const path = require('path');
 
 const BACKEND_DIR = path.resolve(__dirname, '..', '..');
 const STATE_FILE = path.join(BACKEND_DIR, '.seed-state.json');
-
-function run(cmd) {
-  execSync(cmd, { cwd: BACKEND_DIR, stdio: 'inherit' });
-}
 
 function readState() {
   try { return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')); }
@@ -18,43 +16,40 @@ function writeState(state) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
-async function initDb() {
+async function initDb(version) {
   const db = require('../utils/db');
+  const SCHEMA_SQL = require('../config/schema.sql.js');
 
-  console.log('[initDb] running knex migrations…');
-  const [batchNo, applied] = await db.migrate.latest();
-  if (applied.length > 0) {
-    console.log(`[initDb] applied batch ${batchNo}: ${applied.join(', ')}`);
-  } else {
-    console.log('[initDb] no pending migrations.');
+  // 1. Create tables (IF NOT EXISTS — safe to re-run)
+  console.log('[initDb] ensuring tables exist...');
+  await db.raw('SET FOREIGN_KEY_CHECKS = 0');
+  const statements = SCHEMA_SQL.split(';').map(s => s.trim()).filter(Boolean);
+  for (const sql of statements) {
+    await db.raw(sql);
   }
+  await db.raw('SET FOREIGN_KEY_CHECKS = 1');
+  console.log(`[initDb] ${statements.length} tables ready.`);
 
-  // Check if we need to re-seed
+  // 2. Check version — only seed when version changes or tables are empty
   const state = readState();
-  const migrationDir = path.join(BACKEND_DIR, 'migrations');
-  const files = fs.readdirSync(migrationDir).filter(f => f.endsWith('.js')).sort();
-  const latestFile = files[files.length - 1] || null;
 
-  if (!latestFile) {
-    console.log('[initDb] no migration files found.');
-    return;
-  }
-
-  // Even if state file says we seeded, verify data actually exists
-  if (state.lastSeededMigration === latestFile) {
+  if (state.version === version) {
     const [rows] = await db.raw("SELECT COUNT(*) as cnt FROM `plans`").catch(() => [{ cnt: 0 }]);
-    const count = rows?.[0]?.cnt ?? rows?.cnt ?? 0;
-    if (Number(count) > 0) {
-      console.log(`[initDb] seed up-to-date (${latestFile}).`);
+    const count = Number(rows?.[0]?.cnt ?? rows?.cnt ?? 0);
+    if (count > 0) {
+      console.log(`[initDb] v${version} already seeded — skipping.`);
       return;
     }
-    console.log('[initDb] state file exists but tables are empty — re-seeding…');
+    console.log(`[initDb] v${version} state exists but tables are empty �� re-seeding...`);
+  } else {
+    console.log(`[initDb] version changed (${state.version || 'none'} -> ${version}) — running seeds...`);
   }
 
-  console.log(`[initDb] schema changed (${state.lastSeededMigration || 'none'} → ${latestFile}), running seed…`);
-  run('node prisma/seed.js');
-  run('node prisma/seed-content.js');
-  writeState({ lastSeededMigration: latestFile, seededAt: new Date().toISOString() });
+  // 3. Run seed
+  const { run: seed } = require('../scripts/seed');
+  await seed();
+
+  writeState({ version, seededAt: new Date().toISOString() });
   console.log('[initDb] seed complete.');
 }
 

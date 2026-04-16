@@ -35,6 +35,10 @@ const { initDb } = require('./bootstrap/initDb');
 
 dotenv.config();
 
+// ── Database seed version ────────────────────────────────
+// Bump this when you want seeds to re-run on next restart.
+const DB_VERSION = '1.0.0';
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -43,7 +47,8 @@ app.set('trust proxy', 1);
 
 // ── Security & Middleware ──────────────────────────────
 app.use(helmet());
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
+const corsConfig = require('./config/cors.config');
+app.use(cors(corsConfig));
 app.use(compression());
 app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
@@ -95,7 +100,7 @@ app.use((err, _req, res, _next) => {
 
 (async () => {
   try {
-    await initDb();
+    await initDb(DB_VERSION);
   } catch (err) {
     console.error('[initDb] failed:', err.message);
     process.exit(1);

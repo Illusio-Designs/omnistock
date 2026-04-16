@@ -6,12 +6,6 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-    "db:migrate": "npx knex migrate:latest",
-    "db:migrate:make": "npx knex migrate:make",
-    "db:migrate:rollback": "npx knex migrate:rollback",
-    "db:migrate:status": "npx knex migrate:status",
-    "db:seed": "node prisma/seed.js && node prisma/seed-content.js",
-    "db:seed-content": "node prisma/seed-content.js",
     "billing:run": "node src/jobs/billing.job.js"
   },
   "dependencies": {

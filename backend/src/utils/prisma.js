@@ -403,6 +403,7 @@ const NO_UPDATED_AT = new Set([
 ]);
 const NO_CREATED_AT = new Set([
   'role_permissions', 'user_roles', 'order_items', 'purchase_order_items', 'payments', 'usage_meters',
+  'seo_settings',
 ]);
 
 // ── Model proxy factory ─────────────────────────────────────────────

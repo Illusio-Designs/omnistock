@@ -1,3 +1,4 @@
+// Database configuration — single source of truth for all DB connections.
 require('dotenv').config();
 
 module.exports = {
@@ -10,11 +11,4 @@ module.exports = {
     database: process.env.DB_NAME || 'omnistock',
   },
   pool: { min: 2, max: 10 },
-  migrations: {
-    tableName: '_knex_migrations',
-    directory: './migrations',
-  },
-  seeds: {
-    directory: './seeds',
-  },
 };
