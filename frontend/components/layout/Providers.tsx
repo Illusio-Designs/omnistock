@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ScrollRevealProvider } from '@/components/ScrollRevealProvider';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -10,9 +11,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }));
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ScrollRevealProvider />
-      {children}
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ScrollRevealProvider />
+        {children}
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

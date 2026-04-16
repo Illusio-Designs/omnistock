@@ -2,14 +2,30 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { useAuthStore } from '@/store/auth.store';
+import { MaintenancePage } from '@/components/MaintenancePage';
 import { Eye, X, ArrowLeft } from 'lucide-react';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { impersonatingTenant, stopImpersonation, isPlatformAdmin } = useAuthStore();
+  const [maintenance, setMaintenance] = useState<{ enabled: boolean; message: string; eta: string } | null>(null);
+
+  useEffect(() => {
+    const api = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    fetch(`${api}/public/maintenance`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setMaintenance(data); })
+      .catch(() => {});
+  }, []);
+
+  // Show maintenance page for non-admin users
+  if (maintenance?.enabled && !isPlatformAdmin()) {
+    return <MaintenancePage message={maintenance.message} eta={maintenance.eta} />;
+  }
 
   const exitImpersonation = () => {
     stopImpersonation();
@@ -41,6 +57,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <Link href="/admin" className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 font-bold">
               Back to Admin
             </Link>
+          </div>
+        )}
+        {maintenance?.enabled && isPlatformAdmin() && (
+          <div className="bg-amber-500 text-white px-4 py-2 flex items-center justify-center gap-2 text-xs font-bold">
+            <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+            Maintenance mode is ON — only admins can access the dashboard
           </div>
         )}
         <Topbar />

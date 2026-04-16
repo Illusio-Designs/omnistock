@@ -76,4 +76,43 @@ router.get('/sitemap', async (_req, res) => {
   });
 });
 
+// Maintenance mode status
+router.get('/maintenance', async (_req, res) => {
+  try {
+    const keys = ['maintenance.enabled', 'maintenance.message', 'maintenance.eta'];
+    const rows = await prisma.platformSetting.findMany({ where: { key: { in: keys } } });
+    const map = {};
+    for (const r of rows) map[r.key] = r.value || '';
+    const enabled = map['maintenance.enabled'] === 'true';
+    res.set('Cache-Control', 'public, max-age=30');
+    res.json({
+      enabled,
+      message: map['maintenance.message'] || 'We are performing scheduled maintenance. We will be back shortly.',
+      eta: map['maintenance.eta'] || '',
+    });
+  } catch {
+    res.json({ enabled: false, message: '', eta: '' });
+  }
+});
+
+// Tracking script IDs — served to frontend, cached heavily
+router.get('/tracking', async (_req, res) => {
+  try {
+    const keys = ['tracking.gaId', 'tracking.fbPixelId', 'tracking.clarityId'];
+    const rows = await prisma.platformSetting.findMany({
+      where: { key: { in: keys } },
+    });
+    const map = {};
+    for (const r of rows) map[r.key] = r.value || '';
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json({
+      gaId: map['tracking.gaId'] || '',
+      fbPixelId: map['tracking.fbPixelId'] || '',
+      clarityId: map['tracking.clarityId'] || '',
+    });
+  } catch {
+    res.json({ gaId: '', fbPixelId: '', clarityId: '' });
+  }
+});
+
 module.exports = router;

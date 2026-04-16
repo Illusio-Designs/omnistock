@@ -206,6 +206,16 @@ const SETTINGS_CATALOG = [
 
   // Review automation
   { key: 'reviews.delayHours', category: 'reviews', label: 'Review request delay (hours)', isSecret: false },
+
+  // Analytics & Tracking
+  { key: 'tracking.gaId',       category: 'tracking', label: 'Google Analytics ID',       isSecret: false, description: 'Measurement ID, e.g. G-XXXXXXXXXX' },
+  { key: 'tracking.fbPixelId',  category: 'tracking', label: 'Facebook Pixel ID',         isSecret: false, description: 'From Meta Events Manager' },
+  { key: 'tracking.clarityId',  category: 'tracking', label: 'Microsoft Clarity ID',      isSecret: false, description: 'From clarity.microsoft.com' },
+
+  // Maintenance mode
+  { key: 'maintenance.enabled', category: 'maintenance', label: 'Enable Maintenance Mode', isSecret: false, description: 'Set to "true" to show maintenance page on dashboard. Public pages stay live.' },
+  { key: 'maintenance.message', category: 'maintenance', label: 'Maintenance Message',     isSecret: false, description: 'Message shown to users during maintenance.' },
+  { key: 'maintenance.eta',     category: 'maintenance', label: 'Estimated Time',          isSecret: false, description: 'e.g. "30 minutes", "2 hours"' },
 ];
 
 // Group catalog + merge in stored values for the admin UI

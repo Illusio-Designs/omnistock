@@ -166,6 +166,7 @@ export const publicApi = {
   sitemap: () => api.get('/public/sitemap'),
   stats: () => api.get('/public/stats'),
   content: (type: string) => api.get('/public/content', { params: { type } }),
+  tracking: () => api.get('/public/tracking'),
 };
 
 export const dashboardApi = {

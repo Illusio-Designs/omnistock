@@ -1,19 +1,44 @@
 'use client';
 
 import Script from 'next/script';
+import { useEffect, useState } from 'react';
 
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
-const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FB_PIXEL_ID;
-const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID;
+interface TrackingIds {
+  gaId: string;
+  fbPixelId: string;
+  clarityId: string;
+}
 
 export function Analytics() {
+  const [ids, setIds] = useState<TrackingIds>({
+    gaId: process.env.NEXT_PUBLIC_GA_ID || '',
+    fbPixelId: process.env.NEXT_PUBLIC_FB_PIXEL_ID || '',
+    clarityId: process.env.NEXT_PUBLIC_CLARITY_ID || '',
+  });
+
+  useEffect(() => {
+    const api = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    fetch(`${api}/public/tracking`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          setIds(prev => ({
+            gaId: data.gaId || prev.gaId,
+            fbPixelId: data.fbPixelId || prev.fbPixelId,
+            clarityId: data.clarityId || prev.clarityId,
+          }));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <>
       {/* ── Google Analytics (gtag.js) ── */}
-      {GA_ID && (
+      {ids.gaId && (
         <>
           <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+            src={`https://www.googletagmanager.com/gtag/js?id=${ids.gaId}`}
             strategy="afterInteractive"
           />
           <Script id="ga-init" strategy="afterInteractive">
@@ -21,7 +46,7 @@ export function Analytics() {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', '${GA_ID}', {
+              gtag('config', '${ids.gaId}', {
                 page_path: window.location.pathname,
                 anonymize_ip: true,
               });
@@ -31,7 +56,7 @@ export function Analytics() {
       )}
 
       {/* ── Facebook Pixel ── */}
-      {FB_PIXEL_ID && (
+      {ids.fbPixelId && (
         <Script id="fb-pixel" strategy="afterInteractive">
           {`
             !function(f,b,e,v,n,t,s)
@@ -42,24 +67,36 @@ export function Analytics() {
             t.src=v;s=b.getElementsByTagName(e)[0];
             s.parentNode.insertBefore(t,s)}(window, document,'script',
             'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '${FB_PIXEL_ID}');
+            fbq('init', '${ids.fbPixelId}');
             fbq('track', 'PageView');
           `}
         </Script>
       )}
 
       {/* ── Microsoft Clarity ── */}
-      {CLARITY_ID && (
+      {ids.clarityId && (
         <Script id="ms-clarity" strategy="afterInteractive">
           {`
             (function(c,l,a,r,i,t,y){
               c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
               t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
               y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-            })(window, document, "clarity", "script", "${CLARITY_ID}");
+            })(window, document, "clarity", "script", "${ids.clarityId}");
           `}
         </Script>
       )}
+
+      {/* ── Global error logger ── */}
+      <Script id="error-logger" strategy="afterInteractive">
+        {`
+          window.addEventListener('error', function(e) {
+            console.error('[Runtime Error]', e.message, e.filename, e.lineno, e.colno);
+          });
+          window.addEventListener('unhandledrejection', function(e) {
+            console.error('[Unhandled Promise]', e.reason);
+          });
+        `}
+      </Script>
     </>
   );
 }
