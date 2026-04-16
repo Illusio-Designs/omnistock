@@ -1,10 +1,16 @@
-// CORS configuration
+// CORS configuration — environment-aware
 require('dotenv').config();
 
+const isProd = process.env.NODE_ENV === 'production';
+
+const origins = isProd
+  ? ['https://omnistock.vercel.app']
+  : ['http://localhost:3000', 'http://localhost:3001'];
+
 module.exports = {
-  origin: [
-    'http://localhost:3000',
-    'https://omnistock.vercel.app',
-  ],
+  origin: origins,
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id'],
+  maxAge: 86400,
 };

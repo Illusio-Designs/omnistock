@@ -11,7 +11,7 @@ import { useAuthStore } from '../../store/auth.store';
 type Metric = { label: string; value: string; icon: React.ReactNode };
 
 export default function AdminScreen() {
-  const isAdmin = useAuthStore((s) => s.isPlatformAdmin)();
+  const isAdmin = useAuthStore((s) => s.isPlatformAdmin());
 
   const { data, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ['admin', 'stats'],

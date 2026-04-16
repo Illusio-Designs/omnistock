@@ -38,7 +38,13 @@
       "WebFetch(domain:seller.paytmmall.com)",
       "WebFetch(domain:developer.ebay.com)",
       "Bash(node -e \"console.log\\(process.version\\)\")",
-      "Bash(npm ls *)"
+      "Bash(npm ls *)",
+      "Bash(ls -1 /e/omnistock/backend/src/services/*.js)",
+      "Bash(chmod +x /tmp/check_logos.sh)",
+      "Bash(/tmp/check_logos.sh)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
     ]
   }
 }

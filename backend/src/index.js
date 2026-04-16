@@ -50,8 +50,19 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 500 });
-app.use(limiter);
+// Global rate limit
+const globalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
+app.use(globalLimiter);
+
+// Strict rate limit for auth (5 attempts per 15 min)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  skipSuccessfulRequests: true,
+  message: { error: 'Too many login attempts. Please try again after 15 minutes.' },
+});
+app.use('/api/v1/auth/login', authLimiter);
+app.use('/api/v1/auth/register', authLimiter);
 
 // ── Health Check ──────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date() }));
@@ -90,8 +101,12 @@ app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));
 
 // ── Global Error Handler ──────────────────────────────
 app.use((err, _req, res, _next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Internal server error', message: err.message });
+  console.error('[ERROR]', err.stack);
+  const isDev = process.env.NODE_ENV !== 'production';
+  res.status(500).json({
+    error: 'Internal server error',
+    ...(isDev && { message: err.message }),
+  });
 });
 
 (async () => {

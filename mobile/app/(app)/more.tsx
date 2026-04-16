@@ -1,9 +1,11 @@
 import { Link, router } from 'expo-router';
+import Constants from 'expo-constants';
 import {
   Boxes,
   ChevronRight,
   CreditCard,
   FileText,
+  Info,
   LogOut,
   Plug,
   Settings as SettingsIcon,
@@ -42,11 +44,13 @@ const ITEMS: Item[] = [
   },
 ];
 
+const APP_VERSION = Constants.expoConfig?.version || '0.1.0';
+
 export default function MoreScreen() {
   const user = useAuthStore((s) => s.user);
   const tenant = useAuthStore((s) => s.tenant);
   const logout = useAuthStore((s) => s.logout);
-  const isPlatformAdmin = useAuthStore((s) => s.isPlatformAdmin)();
+  const isPlatformAdmin = useAuthStore((s) => s.isPlatformAdmin());
 
   const onLogout = () => {
     Alert.alert('Sign out?', 'You will need to sign in again.', [
@@ -71,6 +75,7 @@ export default function MoreScreen() {
 
   return (
     <PageShell title="More" subtitle="Account and navigation">
+      {/* User card */}
       <Card className="p-5 mb-4">
         <View className="flex-row items-center">
           <View className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center mr-3">
@@ -87,9 +92,15 @@ export default function MoreScreen() {
               </Text>
             ) : null}
           </View>
+          <View className="bg-emerald-50 rounded-lg px-2 py-1">
+            <Text className="text-[10px] font-bold text-emerald-700">
+              {user?.role?.replace('_', ' ')}
+            </Text>
+          </View>
         </View>
       </Card>
 
+      {/* Navigation menu */}
       <Card className="overflow-hidden mb-4">
         {ITEMS.filter((i) => !i.adminOnly || isPlatformAdmin).map((item, idx, arr) => (
           <Link key={item.href} href={item.href as any} asChild>
@@ -108,13 +119,25 @@ export default function MoreScreen() {
         ))}
       </Card>
 
+      {/* Sign out */}
       <Pressable
         onPress={onLogout}
-        className="flex-row items-center justify-center bg-white border border-rose-200 rounded-2xl py-3 active:opacity-80"
+        className="flex-row items-center justify-center bg-white border border-rose-200 rounded-2xl py-3 active:opacity-80 mb-4"
       >
         <LogOut size={16} color="#e11d48" />
         <Text className="text-rose-600 font-bold ml-2 text-sm">Sign out</Text>
       </Pressable>
+
+      {/* App info */}
+      <View className="items-center py-4">
+        <View className="flex-row items-center mb-1">
+          <Info size={12} color="#94a3b8" />
+          <Text className="text-[11px] text-slate-400 ml-1">OmniStock v{APP_VERSION}</Text>
+        </View>
+        <Text className="text-[10px] text-slate-300">
+          Multi-channel Commerce Platform
+        </Text>
+      </View>
     </PageShell>
   );
 }

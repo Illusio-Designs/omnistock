@@ -1,4 +1,5 @@
 import { Redirect, Tabs } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   BarChart3,
   Home,
@@ -7,10 +8,41 @@ import {
   ShoppingCart,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../store/auth.store';
+import MaintenanceScreen from '../../components/MaintenanceScreen';
+import axios from 'axios';
+import Constants from 'expo-constants';
+
+const API =
+  (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl ||
+  'http://localhost:5000/api/v1';
 
 export default function AppLayout() {
   const token = useAuthStore((s) => s.token);
+  const isPlatformAdmin = useAuthStore((s) => s.isPlatformAdmin());
+  const [maintenance, setMaintenance] = useState<{
+    enabled: boolean;
+    message: string;
+    eta: string;
+  } | null>(null);
+
+  useEffect(() => {
+    axios
+      .get(`${API}/public/maintenance`)
+      .then((r) => setMaintenance(r.data))
+      .catch(() => {});
+  }, []);
+
   if (!token) return <Redirect href="/login" />;
+
+  // Show maintenance for non-admin users
+  if (maintenance?.enabled && !isPlatformAdmin) {
+    return (
+      <MaintenanceScreen
+        message={maintenance.message}
+        eta={maintenance.eta}
+      />
+    );
+  }
 
   return (
     <Tabs

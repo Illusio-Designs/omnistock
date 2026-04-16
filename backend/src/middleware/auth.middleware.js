@@ -96,7 +96,8 @@ async function applyImpersonation(req) {
 }
 
 // ── Authenticate: verify JWT, load tenant + permissions
-const DEV_AUTH_ENABLED = process.env.DEV_AUTH_BYPASS !== 'false' && process.env.NODE_ENV !== 'production';
+// Dev auth bypass — ONLY when explicitly enabled AND not production
+const DEV_AUTH_ENABLED = process.env.DEV_AUTH_BYPASS === 'true' && process.env.NODE_ENV !== 'production';
 
 const authenticate = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
