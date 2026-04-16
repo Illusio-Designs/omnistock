@@ -207,7 +207,7 @@ const requirePlatformAdmin = (req, res, next) => {
 };
 
 // ── Plan-limit enforcer for create operations
-// Usage: enforceLimit('warehouses' | 'skus' | 'users' | 'roles' | 'orders')
+// Usage: enforceLimit('warehouses' | 'skus' | 'users' | 'roles' | 'orders' | 'channels')
 const enforceLimit = (resource) => async (req, res, next) => {
   if (req.user?.isPlatformAdmin) return next();
   const plan = req.plan;
@@ -248,6 +248,14 @@ const enforceLimit = (resource) => async (req, res, next) => {
         });
         used = meter?.count || 0;
         metric = 'orders';
+        break;
+      }
+      case 'channels': {
+        // Channel limit is stored in plan.features.maxChannels (null = unlimited)
+        const maxChannels = plan.features?.maxChannels;
+        limit = typeof maxChannels === 'number' ? maxChannels : null;
+        used = await prisma.channel.count({ where: { tenantId, isActive: true } });
+        metric = 'channels';
         break;
       }
       default:

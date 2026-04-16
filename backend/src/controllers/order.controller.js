@@ -29,12 +29,15 @@ const generateOrderNumber = () => `ORD-${Date.now()}-${Math.floor(Math.random() 
 
 const getOrders = async (req, res) => {
   try {
-    const { page = '1', limit = '20', status, channelId, search } = req.query;
+    const { page = '1', limit = '20', status, channelId, search, risk, needsApproval } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
     const where = { tenantId: tid(req) };
     if (status) where.status = String(status);
     if (channelId) where.channelId = String(channelId);
     if (search) where.orderNumber = { contains: String(search) };
+    if (risk) where.rtoRiskLevel = String(risk).toUpperCase();
+    if (needsApproval === 'true') where.needsApproval = true;
+    else if (needsApproval === 'false') where.needsApproval = false;
 
     const [orders, total] = await Promise.all([
       prisma.order.findMany({

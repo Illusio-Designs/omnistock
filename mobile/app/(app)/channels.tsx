@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plug, Plus } from 'lucide-react-native';
+import { Lock, Plug, Plus } from 'lucide-react-native';
 import { useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import Badge from '../../components/ui/Badge';
@@ -13,38 +13,52 @@ import SelectField from '../../components/ui/SelectField';
 import { ShimmerBox } from '../../components/ui/Shimmer';
 import { channelApi } from '../../lib/api';
 
-const CHANNEL_TYPES = [
-  { label: 'Amazon', value: 'AMAZON' },
-  { label: 'Flipkart', value: 'FLIPKART' },
-  { label: 'Shopify', value: 'SHOPIFY' },
-  { label: 'WooCommerce', value: 'WOOCOMMERCE' },
-  { label: 'Custom Website', value: 'WEBSITE' },
-  { label: 'Offline / POS', value: 'OFFLINE' },
-];
-
 export default function ChannelsScreen() {
   const qc = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [chName, setChName] = useState('');
   const [chType, setChType] = useState('');
-  const [chCategory, setChCategory] = useState('');
 
   const { data, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ['channels'],
     queryFn: async () => (await channelApi.list()).data,
   });
 
+  // Fetch the full catalog of channels supported by the backend
+  const { data: catalogData } = useQuery({
+    queryKey: ['channel-catalog'],
+    queryFn: async () => (await channelApi.catalog()).data,
+  });
+
   const createMutation = useMutation({
     mutationFn: (body: any) => channelApi.create(body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['channels'] });
+      qc.invalidateQueries({ queryKey: ['channel-catalog'] });
       qc.invalidateQueries({ queryKey: ['dashboard-channels'] });
       setShowCreate(false);
-      setChName(''); setChType(''); setChCategory('');
+      setChName(''); setChType('');
       Alert.alert('Success', 'Channel connected');
     },
     onError: (err: any) => {
-      Alert.alert('Error', err?.response?.data?.error || 'Failed to connect channel');
+      if (err?.response?.status === 402) {
+        const { requiredPlan, currentPlan, metric, limit } = err.response.data || {};
+        if (metric === 'channels') {
+          Alert.alert(
+            'Channel limit reached',
+            `You've reached your plan's limit of ${limit} channels. Upgrade to add more.`
+          );
+        } else if (requiredPlan) {
+          Alert.alert(
+            'Upgrade needed',
+            `This channel requires the ${requiredPlan} plan. You're on ${currentPlan}. Upgrade to unlock.`
+          );
+        } else {
+          Alert.alert('Plan limit reached', err.response.data?.error || 'Please upgrade your plan.');
+        }
+      } else {
+        Alert.alert('Error', err?.response?.data?.error || 'Failed to connect channel');
+      }
     },
   });
 
@@ -59,13 +73,52 @@ export default function ChannelsScreen() {
     },
   });
 
+  // Build dropdown options from the real catalog — show all entries, annotate status
+  const catalog: any[] = catalogData?.catalog ?? [];
+  const currentPlan: string = catalogData?.summary?.currentPlan ?? 'STANDARD';
+  const maxChannels: number | null = catalogData?.summary?.maxChannels ?? null;
+  const usedChannels: number = catalogData?.summary?.usedChannels ?? 0;
+  const atChannelLimit = maxChannels != null && usedChannels >= maxChannels;
+  const channelOptions = catalog.map((c) => {
+    let suffix = '';
+    if (c.status === 'connected') suffix = ' \u00B7 connected';
+    else if (c.status === 'plan_locked') suffix = ` \u00B7 ${c.requiredPlan} plan`;
+    else if (c.status === 'not_available') suffix = ' \u00B7 coming soon';
+    return {
+      label: `${c.name}${suffix}`,
+      value: c.type,
+    };
+  });
+
+  const selectedEntry = catalog.find((c) => c.type === chType);
+
+  const onTypeChange = (value: string) => {
+    const entry = catalog.find((c) => c.type === value);
+    // Prevent selecting plan-locked or not-yet-available channels
+    if (entry?.status === 'plan_locked') {
+      Alert.alert(
+        'Upgrade needed',
+        `${entry.name} requires the ${entry.requiredPlan} plan. You're currently on ${currentPlan}.`
+      );
+      return;
+    }
+    if (entry?.status === 'not_available') {
+      Alert.alert('Coming soon', `${entry.name} integration isn't ready yet.`);
+      return;
+    }
+    setChType(value);
+    if (entry && !chName.trim()) {
+      setChName(entry.name);
+    }
+  };
+
   const onSubmit = () => {
     if (!chName.trim()) { Alert.alert('Required', 'Channel name is required'); return; }
     if (!chType) { Alert.alert('Required', 'Select a channel type'); return; }
     createMutation.mutate({
       name: chName.trim(),
       type: chType,
-      category: chCategory || undefined,
+      category: selectedEntry?.category,
     });
   };
 
@@ -124,14 +177,33 @@ export default function ChannelsScreen() {
                   {c.name}
                 </Text>
                 <Text className="text-[13px] text-slate-500 font-medium mt-0.5">
-                  {c.type} {c.category ? `\u00B7 ${c.category}` : ''}
+                  {c.type}{c.category ? ` \u00B7 ${c.category}` : ''}
                 </Text>
               </View>
-              <Badge variant={c.status === 'connected' ? 'emerald' : 'slate'} dot>
-                {c.status ?? 'disconnected'}
+              <Badge variant={c.status === 'connected' ? 'emerald' : c.isActive === false ? 'slate' : 'emerald'} dot>
+                {c.isActive === false ? 'disabled' : 'active'}
               </Badge>
             </View>
-            <View className="flex-row gap-2">
+
+            {/* Last sync + error info */}
+            {c.lastSyncAt || c.lastSyncError ? (
+              <View className="bg-slate-50 rounded-xl p-3 mb-3">
+                {c.lastSyncAt ? (
+                  <Text className="text-[12px] text-slate-500 font-medium">
+                    Last sync: {new Date(c.lastSyncAt).toLocaleString()}
+                  </Text>
+                ) : (
+                  <Text className="text-[12px] text-slate-400 font-medium">Never synced yet</Text>
+                )}
+                {c.lastSyncError ? (
+                  <Text className="text-[12px] text-rose-600 font-bold mt-1" numberOfLines={2}>
+                    Error: {c.lastSyncError}
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
+
+            <View className="flex-row gap-2 mb-2">
               <View className="flex-1">
                 <Button
                   variant="ghost"
@@ -152,6 +224,23 @@ export default function ChannelsScreen() {
                 </Button>
               </View>
             </View>
+            <Button
+              variant="ghost"
+              size="sm"
+              onPress={async () => {
+                try {
+                  const { data } = await channelApi.get(c.id);
+                  Alert.alert(
+                    'Webhook URL',
+                    `Paste this in your ${c.type} seller/developer portal:\n\n${data.webhookUrl}`
+                  );
+                } catch (err: any) {
+                  Alert.alert('Error', err?.response?.data?.error || 'Failed to fetch');
+                }
+              }}
+            >
+              Webhook URL
+            </Button>
           </Card>
         ))
       ) : (
@@ -165,17 +254,70 @@ export default function ChannelsScreen() {
       )}
 
       <BottomSheet visible={showCreate} onClose={() => setShowCreate(false)} title="Connect Channel">
-        <FormInput label="Channel Name" value={chName} onChangeText={setChName} placeholder="e.g. My Amazon Store" />
+        {/* Current plan indicator */}
+        <View className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-4">
+          <View className="flex-row items-center mb-2">
+            <View className="w-8 h-8 rounded-xl bg-emerald-50 items-center justify-center mr-3">
+              <Lock size={14} color="#059669" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">
+                Your plan
+              </Text>
+              <Text className="text-[14px] font-extrabold text-slate-900">
+                {currentPlan}
+              </Text>
+            </View>
+            <Text className="text-[17px] font-extrabold text-slate-900">
+              {usedChannels}
+              {maxChannels != null ? (
+                <Text className="text-slate-400 font-bold"> / {maxChannels}</Text>
+              ) : null}
+            </Text>
+          </View>
+          {maxChannels != null ? (
+            <View className="h-2 bg-slate-200 rounded-full overflow-hidden">
+              <View
+                className={`h-full rounded-full ${atChannelLimit ? 'bg-rose-500' : 'bg-emerald-500'}`}
+                style={{ width: `${Math.min(100, (usedChannels / maxChannels) * 100)}%` }}
+              />
+            </View>
+          ) : null}
+          {atChannelLimit ? (
+            <Text className="text-[11px] text-rose-600 font-bold mt-2">
+              Channel limit reached — upgrade to connect more
+            </Text>
+          ) : null}
+        </View>
+
         <SelectField
           label="Channel Type"
           value={chType}
-          onChange={setChType}
-          placeholder="Select type"
-          options={CHANNEL_TYPES}
+          onChange={onTypeChange}
+          placeholder={channelOptions.length ? 'Select from supported channels' : 'Loading...'}
+          options={channelOptions}
         />
-        <FormInput label="Category" value={chCategory} onChangeText={setChCategory} placeholder="e.g. marketplace, D2C (optional)" />
+        <FormInput label="Channel Name" value={chName} onChangeText={setChName} placeholder="e.g. My Amazon Store" />
 
-        <Button onPress={onSubmit} loading={createMutation.isPending} className="mt-2">
+        {selectedEntry ? (
+          <View className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-4">
+            <Text className="text-[12px] font-bold text-emerald-700">
+              {selectedEntry.tagline || 'Channel integration'}
+            </Text>
+            {selectedEntry.features?.length ? (
+              <Text className="text-[11px] text-emerald-600 font-medium mt-1">
+                Features: {selectedEntry.features.join(', ')}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
+
+        <Button
+          onPress={onSubmit}
+          loading={createMutation.isPending}
+          disabled={!chType || selectedEntry?.status === 'plan_locked' || selectedEntry?.status === 'not_available'}
+          className="mt-2"
+        >
           Connect Channel
         </Button>
       </BottomSheet>

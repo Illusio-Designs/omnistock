@@ -127,6 +127,12 @@ export const orderApi = {
   updateStatus: (id: string, data: any) => api.patch(`/orders/${id}/status`, data),
   cancel: (id: string) => api.patch(`/orders/${id}/cancel`, {}),
   requestReview: (id: string) => api.post(`/orders/${id}/request-review`, {}),
+  routingSuggestion: (id: string) => api.get(`/orders/${id}/routing`),
+  assignWarehouse: (id: string, body: { warehouseId?: string; auto?: boolean }) =>
+    api.patch(`/orders/${id}/warehouse`, body),
+  scoreRto: (id: string) => api.post(`/orders/${id}/rto/score`, {}),
+  approve: (id: string) => api.post(`/orders/${id}/approve`, {}),
+  reject: (id: string, reason?: string) => api.post(`/orders/${id}/reject`, { reason }),
 };
 
 export const purchaseApi = {

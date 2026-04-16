@@ -12,6 +12,7 @@ import {
   Shield,
   Truck,
   User,
+  Users,
   Warehouse,
 } from 'lucide-react-native';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
@@ -37,6 +38,8 @@ const ITEMS: Item[] = [
   { href: '/channels', label: 'Channels', icon: <Plug size={18} color="#10b981" />, iconBg: 'bg-emerald-50' },
   { href: '/shipments', label: 'Shipments', icon: <Truck size={18} color="#0ea5e9" />, iconBg: 'bg-sky-50' },
   { href: '/invoices', label: 'Invoices', icon: <CreditCard size={18} color="#8b5cf6" />, iconBg: 'bg-violet-50' },
+  { href: '/team', label: 'Team', icon: <Users size={18} color="#059669" />, iconBg: 'bg-emerald-50' },
+  { href: '/billing', label: 'Billing & Usage', icon: <CreditCard size={18} color="#f59e0b" />, iconBg: 'bg-amber-50' },
   { href: '/settings', label: 'Settings', icon: <SettingsIcon size={18} color="#64748b" />, iconBg: 'bg-slate-100' },
   {
     href: '/admin',
@@ -77,7 +80,7 @@ export default function MoreScreen() {
     .toUpperCase();
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-900">
+    <SafeAreaView className="flex-1 bg-slate-900" edges={['top']}>
       <StatusBar style="light" />
       <ScrollView
         contentContainerStyle={{ paddingBottom: 40 }}

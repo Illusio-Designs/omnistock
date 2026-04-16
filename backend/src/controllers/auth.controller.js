@@ -203,7 +203,7 @@ const onboardSchema = z.object({
   industry: z.string().optional(),
   companySize: z.string().optional(),
   country: z.string().optional(),
-  planCode: z.enum(['STANDARD', 'PROFESSIONAL', 'ENTERPRISE']).optional(),
+  planCode: z.enum(['STANDARD', 'PROFESSIONAL', 'BUSINESS', 'ENTERPRISE']).optional(),
 });
 
 function slugify(s) {

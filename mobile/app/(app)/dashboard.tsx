@@ -121,7 +121,7 @@ export default function DashboardScreen() {
   const revenueUp = revenueGrowth >= 0;
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-900">
+    <SafeAreaView className="flex-1 bg-slate-900" edges={['top']}>
       <StatusBar style="light" />
       <ScrollView
         contentContainerStyle={{ paddingBottom: 40 }}
@@ -319,17 +319,15 @@ export default function DashboardScreen() {
                 </View>
               ))
             ) : (
-              <View className="py-8 items-center rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200">
-                <View className="w-12 h-12 rounded-2xl bg-white items-center justify-center mb-3"
-                  style={{ shadowColor: '#0f172a', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}
-                >
-                  <Plus size={20} color="#10b981" />
-                </View>
-                <Text className="text-[15px] font-bold text-slate-700">Connect a channel</Text>
-                <Text className="text-[13px] text-slate-400 mt-1 font-medium">
-                  Amazon, Flipkart, Shopify & more
+              <Pressable
+                onPress={() => router.push('/channels')}
+                className="py-6 items-center rounded-2xl bg-slate-50 border border-dashed border-slate-200 active:bg-slate-100"
+              >
+                <Text className="text-[14px] font-bold text-slate-700">No channels connected yet</Text>
+                <Text className="text-[12px] text-slate-400 mt-1 font-medium">
+                  Tap to connect Amazon, Flipkart, Shopify & more
                 </Text>
-              </View>
+              </Pressable>
             )}
           </Card>
 

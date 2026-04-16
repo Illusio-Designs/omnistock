@@ -43,7 +43,8 @@
       "Bash(chmod +x /tmp/check_logos.sh)",
       "Bash(/tmp/check_logos.sh)",
       "Bash(npm info *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(node src/scripts/seed.js)"
     ],
     "additionalDirectories": [
       "\\tmp"

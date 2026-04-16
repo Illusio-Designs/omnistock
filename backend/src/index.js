@@ -122,6 +122,13 @@ app.use((err, _req, res, _next) => {
       console.log(`OmniStock API running on http://localhost:${PORT}`);
     });
   }
+
+  // Start background jobs (channel sync, inventory push, tracking, review queue)
+  try {
+    require('./jobs/cron.job').start();
+  } catch (err) {
+    console.error('[cron] failed to start:', err.message);
+  }
 })();
 
 module.exports = app;

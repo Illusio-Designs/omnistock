@@ -17,31 +17,74 @@ router.get('/subscription', async (req, res) => {
   res.json(sub);
 });
 
-// Usage snapshot for current period
+// Usage snapshot for current period — includes overage + PAYG charges
 router.get('/usage', async (req, res) => {
   const tenantId = req.tenant.id;
   const period = new Date().toISOString().slice(0, 7);
 
-  const [warehouses, products, users, roles, ordersMeter] = await Promise.all([
+  const [warehouses, products, users, roles, channels, ordersMeter] = await Promise.all([
     prisma.warehouse.count({ where: { tenantId } }),
     prisma.product.count({ where: { tenantId } }),
     prisma.user.count({ where: { tenantId } }),
     prisma.tenantRole.count({ where: { tenantId, isSystem: false } }),
+    prisma.channel.count({ where: { tenantId, isActive: true } }),
     prisma.usageMeter.findUnique({
       where: { tenantId_metric_period: { tenantId, metric: 'orders', period } },
     }),
   ]);
 
+  const plan = req.plan || {};
+  const subscription = req.subscription || {};
+  const ordersThisPeriod = ordersMeter?.count || 0;
+  const maxOrders = plan.maxOrdersPerMonth;
+  const maxSkus = plan.maxSkus;
+  const maxUsers = plan.maxUsers;
+  const maxFacilities = plan.maxFacilities;
+  const maxChannels = plan.features?.maxChannels ?? null;
+
+  // Calculate overage — each metric over limit, priced per the plan's meteredRates
+  const rates = plan.meteredRates || {};
+  const overage = {
+    orders: maxOrders != null && ordersThisPeriod > maxOrders ? ordersThisPeriod - maxOrders : 0,
+    skus:   maxSkus != null && products > maxSkus ? products - maxSkus : 0,
+    users:  maxUsers != null && users > maxUsers ? users - maxUsers : 0,
+    channels: maxChannels != null && channels > maxChannels ? channels - maxChannels : 0,
+  };
+  const overageCharges = {
+    orders:   overage.orders * Number(rates.extraOrders || 0),
+    skus:     overage.skus * Number(rates.extraSkus || 0),
+    users:    overage.users * Number(rates.extraUsers || 0),
+    channels: overage.channels * Number(rates.extraChannels || 0),
+  };
+  const totalOverageCost = Object.values(overageCharges).reduce((a, b) => a + b, 0);
+
   res.json({
     period,
-    plan: req.plan,
+    plan,
+    subscription: {
+      status: subscription.status,
+      payAsYouGo: !!subscription.payAsYouGo,
+      currentPeriodEnd: subscription.currentPeriodEnd,
+    },
     used: {
       facilities: warehouses,
       skus: products,
       users,
       roles,
-      ordersThisPeriod: ordersMeter?.count || 0,
+      channels,
+      ordersThisPeriod,
     },
+    limits: {
+      facilities: maxFacilities,
+      skus: maxSkus,
+      users: maxUsers,
+      ordersPerMonth: maxOrders,
+      channels: maxChannels,
+    },
+    overage,
+    overageCharges,
+    totalOverageCost,
+    rates,
   });
 });
 

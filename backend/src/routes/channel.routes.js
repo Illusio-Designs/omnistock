@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const {
-  authenticate, requireTenant, requirePermission,
+  authenticate, requireTenant, requirePermission, enforceLimit,
 } = require('../middleware/auth.middleware');
 const prisma = require('../utils/prisma');
 const { encryptCredentials, maskCredentials } = require('../utils/crypto');
@@ -9,6 +9,36 @@ const { CATALOG, getCatalogEntry, getCatalogByCategory } = require('../data/chan
 
 const router = Router();
 router.use(authenticate, requireTenant);
+
+// ── Plan-based channel access ───────────────────────────────────────────
+// The plan's features.channelCategories array lists which categories are unlocked.
+// A null/undefined value means "all categories allowed" (ENTERPRISE).
+// The plan's features.maxChannels is the hard count limit (null = unlimited).
+const CATEGORY_PLAN_HINT = {
+  // Minimum plan tier commonly needed for each category — used for user messaging
+  ECOM: 'STANDARD',
+  OWNSTORE: 'STANDARD',
+  CUSTOM: 'STANDARD',
+  LOGISTICS: 'STANDARD',
+  QUICKCOM: 'PROFESSIONAL',
+  SOCIAL: 'PROFESSIONAL',
+  B2B: 'BUSINESS',
+};
+
+function getTenantPlanCode(req) {
+  return req.plan?.code || 'STANDARD';
+}
+
+function getAllowedCategories(req) {
+  const list = req.plan?.features?.channelCategories;
+  return Array.isArray(list) ? list : null; // null = all allowed
+}
+
+function isCategoryAllowed(req, category) {
+  const allowed = getAllowedCategories(req);
+  if (allowed === null) return true; // unlimited / enterprise
+  return allowed.includes(category);
+}
 
 // Strip encrypted creds from channel objects before sending to client
 function safeChannel(ch) {
@@ -49,15 +79,27 @@ router.get('/catalog', requirePermission('channels.read'), async (req, res) => {
     }
     const requestByType = Object.fromEntries(userRequests.map((r) => [r.type, r]));
 
+    const planCode = getTenantPlanCode(req);
+    const isPlatformAdmin = !!req.user?.isPlatformAdmin;
+    const maxChannels = req.plan?.features?.maxChannels;
+    const usedChannels = userChannels.length;
+
     const entries = getCatalogByCategory(category).map((entry) => {
       const connected = channelsByType[entry.type] || [];
+      const allowedByPlan = isPlatformAdmin || isCategoryAllowed(req, entry.category);
+      const requiredPlan = CATEGORY_PLAN_HINT[entry.category] || 'STANDARD';
+
       let status;
       if (connected.length > 0) status = 'connected';
+      else if (!allowedByPlan) status = 'plan_locked';
       else if (entry.integrated) status = 'available';
       else status = 'not_available';
+
       return {
         ...entry,
         status,
+        allowedByPlan,
+        requiredPlan,
         connectedChannels: connected,
         pendingRequest: requestByType[entry.type] || null,
       };
@@ -67,7 +109,11 @@ router.get('/catalog', requirePermission('channels.read'), async (req, res) => {
       total: entries.length,
       connected: entries.filter((e) => e.status === 'connected').length,
       available: entries.filter((e) => e.status === 'available').length,
+      plan_locked: entries.filter((e) => e.status === 'plan_locked').length,
       not_available: entries.filter((e) => e.status === 'not_available').length,
+      currentPlan: planCode,
+      maxChannels: maxChannels ?? null,
+      usedChannels,
     };
 
     res.json({ summary, catalog: entries });
@@ -252,28 +298,53 @@ router.get('/:id', requirePermission('channels.read'), async (req, res) => {
   try {
     const ch = await loadTenantChannel(req);
     if (!ch) return res.status(404).json({ error: 'Channel not found' });
-    res.json(safeChannel(ch));
+
+    // Expose webhook URL + verify token helper for this channel (for UI setup)
+    const base = process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}/api/v1`;
+    res.json({
+      ...safeChannel(ch),
+      webhookUrl: `${base}/webhooks/channels/${ch.id}`,
+      webhookTypedUrl: `${base}/webhooks/${ch.type.toLowerCase()}/${ch.id}`,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.post('/', requirePermission('channels.create'), async (req, res) => {
-  try {
-    const { name, type, category } = req.body;
-    const ch = await prisma.channel.create({
-      data: {
-        tenantId: req.tenant.id,
-        name,
-        type,
-        category: category || getCategoryForType(type),
-      },
-    });
-    res.status(201).json(safeChannel(ch));
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+router.post('/',
+  requirePermission('channels.create'),
+  enforceLimit('channels'),
+  async (req, res) => {
+    try {
+      const { name, type, category } = req.body;
+      const resolvedCategory = category || getCategoryForType(type);
+
+      // Category-based gate: plan must include this category
+      const isPlatformAdmin = !!req.user?.isPlatformAdmin;
+      if (!isPlatformAdmin && !isCategoryAllowed(req, resolvedCategory)) {
+        const requiredPlan = CATEGORY_PLAN_HINT[resolvedCategory] || 'STANDARD';
+        return res.status(402).json({
+          error: `This channel requires the ${requiredPlan} plan or higher`,
+          requiredPlan,
+          currentPlan: getTenantPlanCode(req),
+          upgradeUrl: '/dashboard/billing',
+        });
+      }
+
+      const ch = await prisma.channel.create({
+        data: {
+          tenantId: req.tenant.id,
+          name,
+          type,
+          category: resolvedCategory,
+        },
+      });
+      res.status(201).json(safeChannel(ch));
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
   }
-});
+);
 
 router.put('/:id', requirePermission('channels.update'), async (req, res) => {
   try {

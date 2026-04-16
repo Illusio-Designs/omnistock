@@ -1,5 +1,7 @@
 const prisma = require('../utils/prisma');
 const { decryptCredentials } = require('../utils/crypto');
+const { pickBestWarehouse } = require('./routing.service');
+const { scoreOrder } = require('./rto.service');
 
 // ── Adapters grouped by category ────────────────────────────────────────────
 
@@ -247,6 +249,40 @@ async function importOrders(channelId, rawOrders, { tenantId } = {}) {
 
       const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
+      // Smart routing: pick the best warehouse for this order
+      let routing = null;
+      try {
+        routing = await pickBestWarehouse({
+          tenantId,
+          items: resolvedItems,
+          shippingAddress: raw.shippingAddress,
+        });
+      } catch (e) {
+        // Routing failure is non-fatal; order will be created without warehouse assignment
+        console.warn(`[import] routing failed for order ${raw.channelOrderId}: ${e.message}`);
+      }
+
+      // Calculate RTO risk score
+      let rto = null;
+      try {
+        const channelRecord = await prisma.channel.findUnique({
+          where: { id: channelId },
+          select: { type: true },
+        });
+        rto = await scoreOrder({
+          tenantId,
+          paymentMethod: raw.paymentMethod,
+          total: raw.total,
+          customerId: customer.id,
+          customer,
+          shippingAddress: raw.shippingAddress,
+          orderedAt: raw.orderedAt,
+          channelType: channelRecord?.type,
+        });
+      } catch (e) {
+        console.warn(`[import] RTO scoring failed for order ${raw.channelOrderId}: ${e.message}`);
+      }
+
       await prisma.$transaction(async (tx) => {
         await tx.order.create({
           data: {
@@ -255,6 +291,7 @@ async function importOrders(channelId, rawOrders, { tenantId } = {}) {
             channelId,
             channelOrderId: raw.channelOrderId,
             customerId: customer.id,
+            warehouseId: routing?.warehouseId || null,
             shippingAddress: raw.shippingAddress,
             subtotal: raw.subtotal,
             shippingCharge: raw.shippingCharge || 0,
@@ -265,6 +302,10 @@ async function importOrders(channelId, rawOrders, { tenantId } = {}) {
             paymentStatus: raw.paymentStatus || 'PENDING',
             status: raw.status || 'PENDING',
             orderedAt: raw.orderedAt || new Date(),
+            rtoScore: rto?.score ?? null,
+            rtoRiskLevel: rto?.level ?? null,
+            rtoFactors: rto?.factors ?? null,
+            needsApproval: rto?.needsApproval ?? false,
             ...(resolvedItems.length > 0 && {
               items: {
                 create: resolvedItems.map((i) => ({

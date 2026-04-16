@@ -2,9 +2,28 @@ const { Router } = require('express');
 const prisma = require('../utils/prisma');
 const { authenticate, requirePlatformAdmin } = require('../middleware/auth.middleware');
 const settingsService = require('../services/settings.service');
+const cronJob = require('../jobs/cron.job');
 
 const router = Router();
 router.use(authenticate, requirePlatformAdmin);
+
+// ── CRON TRIGGERS (manual runs for debugging) ──────────────────────────
+router.post('/cron/run', async (_req, res) => {
+  try { res.json(await cronJob.runAllJobs()); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+router.post('/cron/sync-orders', async (_req, res) => {
+  try { res.json(await cronJob.syncChannelOrders()); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+router.post('/cron/push-inventory', async (_req, res) => {
+  try { res.json(await cronJob.pushInventoryToAll()); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+router.post('/cron/track-shipments', async (_req, res) => {
+  try { res.json(await cronJob.pollShipmentStatus()); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
 
 // ── PLANS ───────────────────────────────────────────────
 router.get('/plans', async (_req, res) => {

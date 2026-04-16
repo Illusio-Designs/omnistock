@@ -15,6 +15,33 @@ async function initDb() {
   await db.raw('SET FOREIGN_KEY_CHECKS = 1');
   console.log(`[initDb] ${statements.length} tables ready.`);
 
+  // Lightweight migrations — add columns that are newer than the base schema.sql
+  const migrations = [
+    { table: 'orders', column: 'rtoScore',        ddl: 'INT DEFAULT NULL' },
+    { table: 'orders', column: 'rtoRiskLevel',    ddl: "VARCHAR(16) DEFAULT NULL" },
+    { table: 'orders', column: 'rtoFactors',      ddl: 'LONGTEXT DEFAULT NULL' },
+    { table: 'orders', column: 'needsApproval',   ddl: 'TINYINT(1) NOT NULL DEFAULT 0' },
+    { table: 'orders', column: 'approvedAt',      ddl: 'DATETIME(3) DEFAULT NULL' },
+    { table: 'orders', column: 'approvedById',    ddl: 'VARCHAR(191) DEFAULT NULL' },
+    { table: 'orders', column: 'rejectedAt',      ddl: 'DATETIME(3) DEFAULT NULL' },
+    { table: 'orders', column: 'rejectionReason', ddl: 'TEXT DEFAULT NULL' },
+  ];
+  for (const m of migrations) {
+    try {
+      const [cols] = await db.raw(
+        "SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?",
+        [m.table, m.column]
+      );
+      const exists = Array.isArray(cols) ? cols.length > 0 : !!cols;
+      if (!exists) {
+        await db.raw(`ALTER TABLE \`${m.table}\` ADD COLUMN \`${m.column}\` ${m.ddl}`);
+        console.log(`[initDb] migrated: ${m.table}.${m.column}`);
+      }
+    } catch (e) {
+      console.warn(`[initDb] migration ${m.table}.${m.column} skipped:`, e.message);
+    }
+  }
+
   // 2. Check if seed already ran — if all key tables have data, skip
   const [planRows] = await db.raw("SELECT COUNT(*) as cnt FROM `plans`").catch(() => [{ cnt: 0 }]);
   const [contentRows] = await db.raw("SELECT COUNT(*) as cnt FROM `public_content`").catch(() => [{ cnt: 0 }]);

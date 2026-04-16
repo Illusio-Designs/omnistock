@@ -4,6 +4,9 @@ const {
   authenticate, requireTenant, requirePermission, enforceLimit,
 } = require('../middleware/auth.middleware');
 const { requestReviewForOrder, processReviewQueue, REVIEW_DELAY_HOURS } = require('../services/review.service');
+const { rankWarehouses, pickBestWarehouse } = require('../services/routing.service');
+const { scoreAndPersist } = require('../services/rto.service');
+const prisma = require('../utils/prisma');
 
 const router = Router();
 router.use(authenticate, requireTenant);
@@ -31,6 +34,132 @@ router.post('/:id/request-review', requirePermission('orders.update'), async (re
     res.json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// ── Warehouse routing endpoints ─────────────────────────────────────────────
+// Suggest best warehouse for an order (no DB write)
+router.get('/:id/routing', requirePermission('orders.read'), async (req, res) => {
+  try {
+    const order = await prisma.order.findFirst({
+      where: { id: req.params.id, tenantId: req.tenant.id },
+      include: { items: true },
+    });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    const ranked = await rankWarehouses({
+      tenantId: req.tenant.id,
+      items: order.items.map((i) => ({ variantId: i.variantId, qty: i.qty })),
+      shippingAddress: order.shippingAddress,
+    });
+    res.json({
+      currentWarehouseId: order.warehouseId,
+      suggestions: ranked.slice(0, 5).map((r) => ({
+        warehouseId: r.warehouse.id,
+        warehouseName: r.warehouse.name,
+        stockScore: r.stockScore,
+        pincodeMatch: !!r.pincodeMatch,
+        cityMatch: !!r.cityMatch,
+        priority: r.priority,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── RTO (Return to Origin) risk scoring + approval ─────────────────────────
+// Tenants review flagged orders and decide: approve (ship it) or reject (cancel).
+router.post('/:id/rto/score', requirePermission('orders.read'), async (req, res) => {
+  try {
+    const order = await prisma.order.findFirst({
+      where: { id: req.params.id, tenantId: req.tenant.id },
+    });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    const result = await scoreAndPersist(order.id);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/:id/approve', requirePermission('orders.update'), async (req, res) => {
+  try {
+    const order = await prisma.order.findFirst({
+      where: { id: req.params.id, tenantId: req.tenant.id },
+    });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (!order.needsApproval) {
+      return res.status(400).json({ error: 'Order does not need approval' });
+    }
+    const updated = await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        needsApproval: false,
+        approvedAt: new Date(),
+        approvedById: req.user.id,
+        status: 'CONFIRMED',
+      },
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/:id/reject', requirePermission('orders.cancel'), async (req, res) => {
+  try {
+    const { reason } = req.body || {};
+    const order = await prisma.order.findFirst({
+      where: { id: req.params.id, tenantId: req.tenant.id },
+    });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    const updated = await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        needsApproval: false,
+        rejectedAt: new Date(),
+        rejectionReason: reason || 'Rejected by tenant (RTO risk)',
+        status: 'CANCELLED',
+      },
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Assign (or re-assign) a warehouse to an order — manual override
+router.patch('/:id/warehouse', requirePermission('orders.update'), async (req, res) => {
+  try {
+    const { warehouseId, auto } = req.body;
+    const order = await prisma.order.findFirst({
+      where: { id: req.params.id, tenantId: req.tenant.id },
+      include: { items: true },
+    });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    let targetId = warehouseId;
+    let reason = 'manual assignment';
+    if (auto) {
+      const best = await pickBestWarehouse({
+        tenantId: req.tenant.id,
+        items: order.items.map((i) => ({ variantId: i.variantId, qty: i.qty })),
+        shippingAddress: order.shippingAddress,
+      });
+      if (!best) return res.status(400).json({ error: 'No eligible warehouse' });
+      targetId = best.warehouseId;
+      reason = `auto \u00B7 ${best.reason}`;
+    }
+    if (!targetId) return res.status(400).json({ error: 'warehouseId is required' });
+
+    const updated = await prisma.order.update({
+      where: { id: order.id },
+      data: { warehouseId: targetId },
+    });
+    res.json({ order: updated, reason });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { GoogleIcon } from '../../components/GoogleIcon';
 import { authApi } from '../../lib/api';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -159,8 +160,8 @@ export default function LoginScreen() {
                 <ActivityIndicator color="#0f172a" size="small" />
               ) : (
                 <>
-                  <View className="w-5 h-5 mr-3 items-center justify-center">
-                    <Text className="text-lg font-bold">G</Text>
+                  <View className="mr-3">
+                    <GoogleIcon size={20} />
                   </View>
                   <Text className="text-[15px] font-bold text-slate-700">
                     Continue with Google

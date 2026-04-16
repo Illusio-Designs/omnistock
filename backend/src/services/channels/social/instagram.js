@@ -37,6 +37,28 @@ class InstagramAdapter {
     return { updated: true, sku: catalogItemId, quantity };
   }
 
+  // Handle incoming Meta Graph webhook for commerce_orders
+  parseWebhook(body) {
+    const change = body?.entry?.[0]?.changes?.[0];
+    if (!change || change.field !== 'commerce_orders') {
+      throw new Error('Instagram webhook: not a commerce_orders event');
+    }
+    const v = change.value || {};
+    return this._transformOrder({
+      id: v.order_id,
+      order_id: v.order_id,
+      buyer_details: v.buyer_details,
+      shipping_address: v.shipping_address,
+      items: { data: v.items || [] },
+      estimated_payment_details: v.estimated_payment_details,
+      created: v.created_at || Math.floor(Date.now() / 1000),
+    });
+  }
+
+  async requestReview(channelOrderId) {
+    return { skipped: true, reason: 'Instagram review requests handled by Meta automatically' };
+  }
+
   _transformOrder(o) {
     return {
       channelOrderId: String(o.id),

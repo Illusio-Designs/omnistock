@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react-native';
+import { Building2, Eye, EyeOff, Lock, Mail, User } from 'lucide-react-native';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { GoogleIcon } from '../../components/GoogleIcon';
 import { authApi } from '../../lib/api';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -22,6 +23,7 @@ export default function RegisterScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [businessName, setBusinessName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -38,37 +40,45 @@ export default function RegisterScreen() {
       Alert.alert('Weak password', 'Password must be at least 6 characters.');
       return;
     }
+    if (!businessName.trim()) {
+      Alert.alert('Missing fields', 'Business name is required.');
+      return;
+    }
     setLoading(true);
     try {
-      // Step 1: Register the user
-      await authApi.register({
-        name: name.trim(),
+      // Create tenant + user as ADMIN (business owner) in one transaction
+      const { data } = await authApi.onboard({
+        ownerName: name.trim(),
         email: email.trim(),
         password,
+        businessName: businessName.trim(),
       });
 
-      // Step 2: Auto-login since register doesn't return a token
-      const { data: loginData } = await authApi.login(email.trim(), password);
-      await setAuth(loginData.user, loginData.token);
+      // onboard returns { token, user, tenant }
+      await setAuth(data.user, data.token);
 
-      // Step 3: Fetch full context
+      // Fetch full context (plan, subscription, permissions)
       try {
         const { data: me } = await authApi.me();
         setContext({
-          tenant: me.tenant ?? null,
+          tenant: me.tenant ?? data.tenant ?? null,
           plan: me.plan ?? null,
           subscription: me.subscription ?? null,
           permissions: me.permissions ?? [],
         });
       } catch {
-        // New user won't have a tenant yet — that's expected
+        setContext({
+          tenant: data.tenant ?? null,
+          plan: null,
+          subscription: null,
+          permissions: [],
+        });
       }
 
-      // New users go to onboarding to create their workspace
-      router.replace('/onboarding');
+      router.replace('/dashboard');
     } catch (err: any) {
       Alert.alert(
-        'Registration failed',
+        'Signup failed',
         err?.response?.data?.error || err?.response?.data?.message || 'Something went wrong. Try again.'
       );
     } finally {
@@ -113,10 +123,10 @@ export default function RegisterScreen() {
               <Text className="text-white text-xl font-extrabold">O</Text>
             </View>
             <Text className="text-3xl font-extrabold text-white tracking-tight">
-              Create account
+              Create your workspace
             </Text>
             <Text className="text-slate-400 text-base mt-2 font-medium">
-              Start managing your commerce today
+              Start your 14-day free trial, no card required
             </Text>
           </View>
 
@@ -136,8 +146,8 @@ export default function RegisterScreen() {
                 elevation: 1,
               }}
             >
-              <View className="w-5 h-5 mr-3 items-center justify-center">
-                <Text className="text-lg font-bold">G</Text>
+              <View className="mr-3">
+                <GoogleIcon size={20} />
               </View>
               <Text className="text-[15px] font-bold text-slate-700">
                 Sign up with Google
@@ -153,9 +163,9 @@ export default function RegisterScreen() {
               <View className="flex-1 h-px bg-slate-200" />
             </View>
 
-            {/* Name */}
+            {/* Full name */}
             <Text className="text-[13px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-              Full name
+              Your Name
             </Text>
             <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 mb-4">
               <User size={18} color="#94a3b8" />
@@ -163,6 +173,21 @@ export default function RegisterScreen() {
                 value={name}
                 onChangeText={setName}
                 placeholder="John Doe"
+                placeholderTextColor="#94a3b8"
+                className="flex-1 py-3.5 px-3 text-slate-900 text-[15px]"
+              />
+            </View>
+
+            {/* Business name */}
+            <Text className="text-[13px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+              Business Name
+            </Text>
+            <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 mb-4">
+              <Building2 size={18} color="#94a3b8" />
+              <TextInput
+                value={businessName}
+                onChangeText={setBusinessName}
+                placeholder="Acme Retail"
                 placeholderTextColor="#94a3b8"
                 className="flex-1 py-3.5 px-3 text-slate-900 text-[15px]"
               />

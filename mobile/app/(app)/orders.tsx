@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Package, Plus, ShoppingCart } from 'lucide-react-native';
+import { AlertTriangle, Package, Plus, ShoppingCart } from 'lucide-react-native';
 import { useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 import Badge from '../../components/ui/Badge';
 import BottomSheet from '../../components/ui/BottomSheet';
 import Button from '../../components/ui/Button';
@@ -17,10 +17,19 @@ import { formatCurrency, formatShortDate } from '../../lib/utils';
 import SelectField from '../../components/ui/SelectField';
 
 const STATUSES = ['ALL', 'PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+const RISK_FILTERS = ['ALL', 'LOW', 'MEDIUM', 'HIGH', 'NEEDS_APPROVAL'];
+
+const riskVariant = (level?: string) => {
+  if (level === 'HIGH') return 'rose' as const;
+  if (level === 'MEDIUM') return 'amber' as const;
+  if (level === 'LOW') return 'emerald' as const;
+  return 'slate' as const;
+};
 
 export default function OrdersScreen() {
   const qc = useQueryClient();
   const [filter, setFilter] = useState('ALL');
+  const [riskFilter, setRiskFilter] = useState('ALL');
   const [showCreate, setShowCreate] = useState(false);
 
   // Form state
@@ -33,10 +42,12 @@ export default function OrdersScreen() {
   const [notes, setNotes] = useState('');
 
   const { data, isLoading, error, refetch, isRefetching } = useQuery({
-    queryKey: ['orders', filter],
+    queryKey: ['orders', filter, riskFilter],
     queryFn: async () => {
       const params: any = {};
       if (filter !== 'ALL') params.status = filter;
+      if (riskFilter === 'NEEDS_APPROVAL') params.needsApproval = 'true';
+      else if (riskFilter !== 'ALL') params.risk = riskFilter;
       return (await orderApi.list(params)).data;
     },
   });
@@ -63,7 +74,19 @@ export default function OrdersScreen() {
       Alert.alert('Success', 'Order created');
     },
     onError: (err: any) => {
-      Alert.alert('Error', err?.response?.data?.error || 'Failed to create order');
+      if (err?.response?.status === 402) {
+        const d = err.response.data || {};
+        if (d.metric === 'orders') {
+          Alert.alert(
+            'Order limit reached',
+            `You've reached your plan's monthly limit of ${d.limit} orders. Enable Pay-As-You-Go from Billing to continue, or upgrade your plan.`
+          );
+        } else {
+          Alert.alert('Plan limit reached', d.error || 'Upgrade your plan to continue');
+        }
+      } else {
+        Alert.alert('Error', err?.response?.data?.error || 'Failed to create order');
+      }
     },
   });
 
@@ -76,6 +99,40 @@ export default function OrdersScreen() {
     },
     onError: (err: any) => {
       Alert.alert('Error', err?.response?.data?.error || 'Failed to update status');
+    },
+  });
+
+  const autoRouteMutation = useMutation({
+    mutationFn: (id: string) => orderApi.assignWarehouse(id, { auto: true }),
+    onSuccess: (res: any) => {
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      Alert.alert('Routed', `Assigned warehouse \u00B7 ${res.data?.reason || 'done'}`);
+    },
+    onError: (err: any) => {
+      Alert.alert('Error', err?.response?.data?.error || 'Failed to auto-route');
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => orderApi.approve(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+    onError: (err: any) => {
+      Alert.alert('Error', err?.response?.data?.error || 'Failed to approve');
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      orderApi.reject(id, reason),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+    onError: (err: any) => {
+      Alert.alert('Error', err?.response?.data?.error || 'Failed to reject');
     },
   });
 
@@ -119,20 +176,49 @@ export default function OrdersScreen() {
     return flow[current];
   };
 
-  const onStatusAction = (id: string, current: string) => {
-    const next = getNextStatus(current);
-    if (!next) return;
-    Alert.alert(
-      'Update Status',
-      `Move this order to ${next}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: next, onPress: () => statusMutation.mutate({ id, status: next }) },
-        ...(current !== 'DELIVERED' && current !== 'CANCELLED'
-          ? [{ text: 'Cancel Order', style: 'destructive' as const, onPress: () => statusMutation.mutate({ id, status: 'CANCELLED' }) }]
-          : []),
-      ]
-    );
+  const onOrderPress = (o: any) => {
+    const { id, status, warehouseId, needsApproval, rtoScore, rtoRiskLevel, rtoFactors } = o;
+    const riskSummary = rtoScore != null
+      ? `RTO score: ${rtoScore}/100 (${rtoRiskLevel || 'N/A'})`
+      : 'No RTO score yet';
+
+    // High-risk flagged orders: approve / reject first
+    if (needsApproval) {
+      const topFactors = Array.isArray(rtoFactors)
+        ? rtoFactors.slice(0, 3).map((f: any) => `\u2022 ${f.detail}`).join('\n')
+        : '';
+      Alert.alert(
+        'Review Required',
+        `${riskSummary}\n\n${topFactors}\n\nApprove to ship, or reject to cancel.`,
+        [
+          { text: 'Back', style: 'cancel' },
+          {
+            text: 'Reject (Cancel)',
+            style: 'destructive',
+            onPress: () => rejectMutation.mutate({ id, reason: 'High RTO risk' }),
+          },
+          { text: 'Approve & Ship', onPress: () => approveMutation.mutate(id) },
+        ]
+      );
+      return;
+    }
+
+    const next = getNextStatus(status);
+    const actions: any[] = [{ text: 'Close', style: 'cancel' }];
+    if (!warehouseId && status !== 'DELIVERED' && status !== 'CANCELLED') {
+      actions.push({ text: 'Auto-route warehouse', onPress: () => autoRouteMutation.mutate(id) });
+    }
+    if (next) {
+      actions.push({ text: `Mark ${next}`, onPress: () => statusMutation.mutate({ id, status: next }) });
+    }
+    if (status !== 'DELIVERED' && status !== 'CANCELLED') {
+      actions.push({
+        text: 'Cancel Order',
+        style: 'destructive' as const,
+        onPress: () => statusMutation.mutate({ id, status: 'CANCELLED' }),
+      });
+    }
+    Alert.alert('Order Actions', `Status: ${status}\n${riskSummary}`, actions);
   };
 
   const items: any[] = data?.items ?? data ?? [];
@@ -164,8 +250,12 @@ export default function OrdersScreen() {
               icon={<Package size={15} color="#059669" />}
               title={`#${o.orderNumber ?? o.id?.slice(0, 8)}`}
               subtitle={o.customer?.name ?? o.customerName ?? '\u2014'}
-              meta={o.createdAt ? formatShortDate(o.createdAt) : undefined}
-              onPress={() => onStatusAction(o.id, o.status)}
+              meta={
+                o.warehouseId
+                  ? `${o.createdAt ? formatShortDate(o.createdAt) + ' \u00B7 ' : ''}Routed`
+                  : o.createdAt ? formatShortDate(o.createdAt) + ' \u00B7 Unrouted' : 'Unrouted'
+              }
+              onPress={() => onStatusAction(o.id, o.status, !!o.warehouseId)}
               right={
                 <View className="items-end gap-1">
                   <Badge variant={orderStatusVariant(o.status)} dot>
