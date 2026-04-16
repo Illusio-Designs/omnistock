@@ -146,37 +146,72 @@
     animation-play-state: paused;
   }
 
-  /* Scroll reveal — progressive enhancement.
+  /* ── Scroll reveal — modern section-by-section animations ──
      Content is fully visible by default. Only when JS adds .js-ready to <html>
-     do elements get hidden and then revealed on scroll. This guarantees
-     content is never stuck invisible if the observer fails. */
+     do elements get hidden and then revealed on scroll. */
   [data-reveal] {
-    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  html.js-ready [data-reveal]:not(.is-visible) {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  html.js-ready [data-reveal="left"]:not(.is-visible) {
-    transform: translateX(-32px);
-  }
-  html.js-ready [data-reveal="right"]:not(.is-visible) {
-    transform: translateX(32px);
-  }
-  html.js-ready [data-reveal="zoom"]:not(.is-visible) {
-    transform: scale(0.94);
+    transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+                filter 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
   }
 
-  /* Stagger delays (apply to children with data-reveal) */
+  /* Default: slide up */
+  html.js-ready [data-reveal]:not(.is-visible) {
+    opacity: 0;
+    transform: translateY(48px);
+    filter: blur(4px);
+  }
+  html.js-ready [data-reveal].is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+
+  /* Slide from left */
+  html.js-ready [data-reveal="left"]:not(.is-visible) {
+    opacity: 0;
+    transform: translateX(-60px);
+    filter: blur(4px);
+  }
+
+  /* Slide from right */
+  html.js-ready [data-reveal="right"]:not(.is-visible) {
+    opacity: 0;
+    transform: translateX(60px);
+    filter: blur(4px);
+  }
+
+  /* Zoom in */
+  html.js-ready [data-reveal="zoom"]:not(.is-visible) {
+    opacity: 0;
+    transform: scale(0.88);
+    filter: blur(6px);
+  }
+
+  /* Fade only (no movement) */
+  html.js-ready [data-reveal="fade"]:not(.is-visible) {
+    opacity: 0;
+    transform: none;
+    filter: blur(3px);
+  }
+
+  /* Rise up with slight rotation */
+  html.js-ready [data-reveal="rise"]:not(.is-visible) {
+    opacity: 0;
+    transform: translateY(60px) rotate(2deg);
+    filter: blur(4px);
+  }
+
+  /* Stagger delays — children animate one after another */
   [data-stagger] > [data-reveal]:nth-child(1) { transition-delay: 0ms; }
-  [data-stagger] > [data-reveal]:nth-child(2) { transition-delay: 80ms; }
-  [data-stagger] > [data-reveal]:nth-child(3) { transition-delay: 160ms; }
-  [data-stagger] > [data-reveal]:nth-child(4) { transition-delay: 240ms; }
-  [data-stagger] > [data-reveal]:nth-child(5) { transition-delay: 320ms; }
-  [data-stagger] > [data-reveal]:nth-child(6) { transition-delay: 400ms; }
-  [data-stagger] > [data-reveal]:nth-child(7) { transition-delay: 480ms; }
-  [data-stagger] > [data-reveal]:nth-child(8) { transition-delay: 560ms; }
+  [data-stagger] > [data-reveal]:nth-child(2) { transition-delay: 120ms; }
+  [data-stagger] > [data-reveal]:nth-child(3) { transition-delay: 240ms; }
+  [data-stagger] > [data-reveal]:nth-child(4) { transition-delay: 360ms; }
+  [data-stagger] > [data-reveal]:nth-child(5) { transition-delay: 480ms; }
+  [data-stagger] > [data-reveal]:nth-child(6) { transition-delay: 600ms; }
+  [data-stagger] > [data-reveal]:nth-child(7) { transition-delay: 720ms; }
+  [data-stagger] > [data-reveal]:nth-child(8) { transition-delay: 840ms; }
 
   /* Hover effects */
   .hover-lift {
@@ -237,4 +272,17 @@
     0%   { transform: translateX(0); }
     100% { transform: translateX(-50%); }
   }
+
+  /* Page loader animations */
+  @keyframes orbit {
+    0%   { transform: translateX(-50%) rotate(0deg) translateY(-32px) rotate(0deg); }
+    100% { transform: translateX(-50%) rotate(360deg) translateY(-32px) rotate(-360deg); }
+  }
+  @keyframes loading-bar {
+    0%   { width: 0%; transform: translateX(0); }
+    50%  { width: 100%; transform: translateX(0); }
+    100% { width: 100%; transform: translateX(0); }
+  }
+  .animate-orbit      { animation: orbit 2s linear infinite; }
+  .animate-loading-bar { animation: loading-bar 1s ease-in-out infinite; }
 }

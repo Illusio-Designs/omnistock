@@ -31,7 +31,7 @@ export function useScrollReveal() {
           }
         });
       },
-      { threshold: 0, rootMargin: '0px 0px -10% 0px' }
+      { threshold: 0.08, rootMargin: '0px 0px -60px 0px' }
     );
 
     const scan = () => {
@@ -51,7 +51,7 @@ export function useScrollReveal() {
       document.querySelectorAll('[data-reveal]:not(.is-visible)').forEach((el) => {
         el.classList.add('is-visible');
       });
-    }, 1500);
+    }, 3000);
 
     return () => {
       observer.disconnect();

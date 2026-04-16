@@ -7,7 +7,10 @@ import { ChannelMarquee, ALL_CHANNELS } from '@/components/ChannelMarquee';
 import { CountUp } from '@/components/CountUp';
 import { publicApi } from '@/lib/api';
 import { getIcon } from '@/lib/icon';
-import { Sparkles, ArrowRight, Play, Users, Globe, Star } from 'lucide-react';
+import { Sparkles, ArrowRight, Play, Users, Globe, Star, ChevronDown } from 'lucide-react';
+import { CardSkeleton, ShimmerTheme } from '@/components/Shimmer';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 interface ContentRow {
   id: string;
@@ -124,7 +127,7 @@ export default function LandingPage() {
 
       {/* ═══ LIVE STATS COUNTERS ═════════════════════════════════════ */}
       <section className="py-12 bg-gradient-to-b from-white via-emerald-50/30 to-white border-y border-slate-100">
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6" data-stagger>
+        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6" data-stagger data-reveal="fade">
           {[
             { value: stats?.channelsCount  ?? ALL_CHANNELS.length, suffix: '+', label: 'Channels integrated' },
             { value: stats?.logisticsCount ?? 16,                  suffix: '+', label: 'Logistics partners' },
@@ -148,7 +151,7 @@ export default function LandingPage() {
 
       {/* ═══ CHANNEL MARQUEE ═══════════════════════════════════════════ */}
       <section className="py-20 relative overflow-hidden">
-        <div className="max-w-4xl mx-auto px-6 text-center mb-10" data-reveal>
+        <div className="max-w-4xl mx-auto px-6 text-center mb-10" data-reveal="rise">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 uppercase tracking-wider mb-4">
             <Sparkles size={12} /> Integrations
           </div>
@@ -161,11 +164,11 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div data-reveal>
+        <div data-reveal="fade">
           <ChannelMarquee />
         </div>
 
-        <div className="max-w-4xl mx-auto px-6 text-center mt-10" data-reveal>
+        <div className="max-w-4xl mx-auto px-6 text-center mt-10" data-reveal="zoom">
           <Link
             href="/dashboard/channels"
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full shadow-md shadow-emerald-500/20 hover:shadow-lg hover:-translate-y-0.5 transition-all"
@@ -196,6 +199,7 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5" data-stagger>
+            {challenges.length === 0 && <CardSkeleton count={3} />}
             {challenges.map(c => {
               const Icon = getIcon(c.icon);
               const accent = !!c.data?.accent;
@@ -245,7 +249,7 @@ export default function LandingPage() {
       {/* ═══ TOOLS ═══════════════════════════════════════════════════ */}
       <section className="py-24">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-14" data-reveal>
+          <div className="text-center max-w-2xl mx-auto mb-14" data-reveal="rise">
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 leading-tight">
               All the Tools You Need for<br />
               Powerful <span className="gradient-text">Commerce.</span>
@@ -256,6 +260,7 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5" data-stagger>
+            {featureTools.length === 0 && <CardSkeleton count={3} />}
             {featureTools.map((t) => {
               const highlight = !!t.data?.highlight;
               const visual = t.data?.visual || 'chart';
@@ -311,7 +316,7 @@ export default function LandingPage() {
       {/* ═══ TESTIMONIALS STRIP ══════════════════════════════════════ */}
       <section className="py-24 bg-gradient-to-b from-white to-emerald-50/30">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-12" data-reveal>
+          <div className="text-center max-w-2xl mx-auto mb-12" data-reveal="rise">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 uppercase tracking-wider mb-4">
               <Star size={12} /> Loved by founders
             </div>
@@ -322,6 +327,7 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5" data-stagger>
+            {testimonials.length === 0 && <CardSkeleton count={3} />}
             {testimonials.map((t) => {
               const rating = Number(t.data?.rating ?? 5);
               const avatar = t.data?.avatar || t.title.split(' ').map((s: string) => s[0]).slice(0, 2).join('');
@@ -383,15 +389,26 @@ export default function LandingPage() {
           </div>
 
           <div className="lg:col-span-3 space-y-2" data-reveal="right">
+            {faqs.length === 0 && (
+              <ShimmerTheme>
+                <div className="space-y-2">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="bg-white border border-slate-200 rounded-xl px-5 py-4">
+                      <Skeleton height={14} borderRadius={6} width="80%" />
+                    </div>
+                  ))}
+                </div>
+              </ShimmerTheme>
+            )}
             {faqs.map((item) => (
-              <details key={item.id} className="group bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-emerald-200 transition-colors">
-                <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none">
-                  <span className="text-sm font-bold text-slate-900 pr-4">{item.title}</span>
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 group-open:bg-emerald-100 flex items-center justify-center text-lg leading-none text-slate-600 group-open:text-emerald-700 group-open:rotate-45 transition-all">
-                    +
+              <details key={item.id} className="group bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-emerald-200 hover:shadow-md transition-all duration-300">
+                <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none select-none">
+                  <span className="text-sm font-bold text-slate-900 group-open:text-emerald-700 pr-4 transition-colors">{item.title}</span>
+                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 group-open:bg-emerald-600 flex items-center justify-center transition-all duration-300">
+                    <ChevronDown size={16} className="text-slate-500 group-open:text-white group-open:rotate-180 transition-transform duration-300" />
                   </span>
                 </summary>
-                <div className="px-5 pb-4 -mt-1 text-sm text-slate-600 leading-relaxed">
+                <div className="px-5 pb-5 text-sm text-slate-600 leading-relaxed animate-fade-in">
                   {item.body}
                 </div>
               </details>
