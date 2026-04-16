@@ -1,14 +1,17 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import {
   ArrowDown,
   ArrowUp,
   ArrowUpRight,
   Bell,
+  Clock,
   Package,
-  PiggyBank,
   Plus,
   Send,
+  ShoppingCart,
   TrendingDown,
+  Users,
   Wallet,
 } from 'lucide-react-native';
 import {
@@ -19,6 +22,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import Badge from '../../components/ui/Badge';
@@ -86,6 +90,7 @@ function RevenueChart({ data }: { data: MonthPoint[] }) {
 }
 
 export default function DashboardScreen() {
+  const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
@@ -108,8 +113,16 @@ export default function DashboardScreen() {
 
   const firstName = user?.name?.split(' ')[0] ?? '';
 
+  // Compute real revenue growth from API data
+  const currentRev = Number(s.monthRevenue) || 0;
+  const lastRev = Number(s.lastMonthRevenue) || 0;
+  const revenueGrowth = lastRev > 0 ? ((currentRev - lastRev) / lastRev) * 100 : 0;
+  const revenueGrowthAbs = Math.abs(revenueGrowth).toFixed(1);
+  const revenueUp = revenueGrowth >= 0;
+
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
+    <SafeAreaView className="flex-1 bg-slate-900">
+      <StatusBar style="light" />
       <ScrollView
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
@@ -162,25 +175,34 @@ export default function DashboardScreen() {
                 </View>
                 <Text className="text-slate-400 text-sm font-bold">Total Revenue</Text>
               </View>
-              <Badge variant="emerald">
-                <ArrowUp size={10} color="#047857" /> 3.2%
-              </Badge>
+              {lastRev > 0 ? (
+                <Badge variant={revenueUp ? 'emerald' : 'rose'}>
+                  {revenueUp ? <ArrowUp size={10} color="#047857" /> : <ArrowDown size={10} color="#be123c" />}
+                  {' '}{revenueGrowthAbs}%
+                </Badge>
+              ) : null}
             </View>
             <Text className="text-4xl font-extrabold text-white tracking-tight mt-2">
-              {formatCurrency(s.monthRevenue || 0)}
+              {formatCurrency(currentRev)}
             </Text>
             <Text className="text-slate-500 text-[13px] font-medium mt-1">
-              This month vs last month
+              {lastRev > 0
+                ? `vs ${formatCurrency(lastRev)} last month`
+                : 'This month'}
             </Text>
 
             <View className="flex-row mt-5 gap-3">
               <View className="flex-1">
-                <Button size="sm" leftIcon={<Send size={14} color="#fff" />}>
+                <Button size="sm" leftIcon={<Send size={14} color="#fff" />} onPress={() => {
+                  qc.invalidateQueries({ queryKey: ['dashboard'] });
+                  qc.invalidateQueries({ queryKey: ['dashboard-channels'] });
+                  refetch();
+                }}>
                   Sync Now
                 </Button>
               </View>
               <View className="flex-1">
-                <Button variant="ghost" size="sm" className="border-slate-600 bg-slate-800">
+                <Button variant="ghost" size="sm" className="border-slate-600 bg-slate-800" onPress={() => router.push('/reports')}>
                   <Text className="text-white text-xs font-bold">Reports</Text>
                 </Button>
               </View>
@@ -211,11 +233,7 @@ export default function DashboardScreen() {
                   {s.lowStockCount || 0}
                 </Text>
                 <Text className="text-[13px] text-slate-500 font-medium mt-0.5">Low Stock</Text>
-                <View className="mt-3">
-                  <Badge variant="rose" dot>
-                    <ArrowDown size={9} color="#be123c" /> 2.3%
-                  </Badge>
-                </View>
+                <Text className="text-[11px] text-slate-400 font-medium mt-2">SKUs below threshold</Text>
               </Card>
             </View>
             <View className="flex-1">
@@ -229,17 +247,13 @@ export default function DashboardScreen() {
                     elevation: 2,
                   }}
                 >
-                  <PiggyBank size={18} color="#059669" />
+                  <ShoppingCart size={18} color="#059669" />
                 </View>
                 <Text className="text-2xl font-extrabold text-slate-900 tracking-tight">
                   {(s.totalOrders || 0).toLocaleString()}
                 </Text>
                 <Text className="text-[13px] text-slate-500 font-medium mt-0.5">Total Orders</Text>
-                <View className="mt-3">
-                  <Badge variant="emerald" dot>
-                    <ArrowUp size={9} color="#047857" /> 4.5%
-                  </Badge>
-                </View>
+                <Text className="text-[11px] text-slate-400 font-medium mt-2">{s.todayOrders || 0} today</Text>
               </Card>
             </View>
           </View>
@@ -262,7 +276,7 @@ export default function DashboardScreen() {
           <Card className="p-5 mb-5">
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-lg font-extrabold text-slate-900 tracking-tight">My Channels</Text>
-              <Pressable className="flex-row items-center bg-emerald-50 px-3 py-1.5 rounded-xl active:bg-emerald-100">
+              <Pressable className="flex-row items-center bg-emerald-50 px-3 py-1.5 rounded-xl active:bg-emerald-100" onPress={() => router.push('/channels')}>
                 <Plus size={14} color="#059669" />
                 <Text className="text-xs font-bold text-emerald-700 ml-1">Add</Text>
               </Pressable>
@@ -319,57 +333,33 @@ export default function DashboardScreen() {
             )}
           </Card>
 
-          {/* ── Inventory Targets ───────────────────────────── */}
+          {/* ── Quick Metrics ───────────────────────────── */}
           <Card className="p-5 mb-5">
             <Text className="text-lg font-extrabold text-slate-900 tracking-tight mb-4">
-              Inventory Targets
+              At a Glance
             </Text>
             {[
-              { name: 'Reorder Point', current: 15600, target: 25000, pct: 62, color: '#10b981' },
-              {
-                name: 'Monthly Target',
-                current: s.monthRevenue || 0,
-                target: 100000,
-                pct: Math.min(100, Math.round(((s.monthRevenue || 0) / 100000) * 100)),
-                color: '#0ea5e9',
-              },
-              {
-                name: 'Product Listings',
-                current: s.totalProducts || 0,
-                target: 500,
-                pct: Math.min(100, Math.round(((s.totalProducts || 0) / 500) * 100)),
-                color: '#8b5cf6',
-              },
-            ].map((g, idx) => (
+              { label: 'Pending Orders', value: s.pendingOrders || 0, icon: <Clock size={16} color="#f59e0b" />, color: '#f59e0b' },
+              { label: 'Processing', value: s.processingOrders || 0, icon: <Package size={16} color="#0ea5e9" />, color: '#0ea5e9' },
+              { label: 'Products Listed', value: s.totalProducts || 0, icon: <Package size={16} color="#8b5cf6" />, color: '#8b5cf6' },
+              { label: 'Customers', value: s.totalCustomers || 0, icon: <Users size={16} color="#10b981" />, color: '#10b981' },
+            ].map((item, idx) => (
               <View
-                key={g.name}
-                className={`py-4 ${idx > 0 ? 'border-t border-slate-100' : ''}`}
+                key={item.label}
+                className={`flex-row items-center py-3.5 ${idx > 0 ? 'border-t border-slate-100' : ''}`}
               >
-                <View className="flex-row items-center mb-3">
-                  <View
-                    className="w-10 h-10 rounded-2xl items-center justify-center mr-3"
-                    style={{ backgroundColor: g.color + '15' }}
-                  >
-                    <Package size={16} color={g.color} />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-[15px] font-bold text-slate-900 tracking-tight">{g.name}</Text>
-                    <Text className="text-[13px] text-slate-500 font-medium">
-                      {g.current > 1000 ? formatCurrency(g.current) : g.current.toLocaleString()}
-                      {' / '}
-                      {g.target > 1000 ? formatCurrency(g.target) : g.target.toLocaleString()}
-                    </Text>
-                  </View>
-                  <Text className="text-sm font-extrabold" style={{ color: g.color }}>
-                    {g.pct}%
-                  </Text>
+                <View
+                  className="w-10 h-10 rounded-2xl items-center justify-center mr-3"
+                  style={{ backgroundColor: item.color + '15' }}
+                >
+                  {item.icon}
                 </View>
-                <View className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <View
-                    className="h-full rounded-full"
-                    style={{ width: `${Math.min(100, g.pct)}%`, backgroundColor: g.color }}
-                  />
-                </View>
+                <Text className="flex-1 text-[15px] font-bold text-slate-900 tracking-tight">
+                  {item.label}
+                </Text>
+                <Text className="text-[17px] font-extrabold text-slate-900 tracking-tight">
+                  {item.value.toLocaleString()}
+                </Text>
               </View>
             ))}
           </Card>
@@ -378,7 +368,7 @@ export default function DashboardScreen() {
           <Card className="overflow-hidden mb-2">
             <View className="flex-row items-center justify-between p-5 pb-2">
               <Text className="text-lg font-extrabold text-slate-900 tracking-tight">Recent Orders</Text>
-              <Pressable className="flex-row items-center active:opacity-70">
+              <Pressable className="flex-row items-center active:opacity-70" onPress={() => router.push('/orders')}>
                 <Text className="text-[13px] font-bold text-emerald-600 mr-1">View All</Text>
                 <ArrowUpRight size={14} color="#059669" />
               </Pressable>

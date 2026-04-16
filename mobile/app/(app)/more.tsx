@@ -15,6 +15,7 @@ import {
   Warehouse,
 } from 'lucide-react-native';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Card from '../../components/ui/Card';
 import { useAuthStore } from '../../store/auth.store';
@@ -76,7 +77,8 @@ export default function MoreScreen() {
     .toUpperCase();
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
+    <SafeAreaView className="flex-1 bg-slate-900">
+      <StatusBar style="light" />
       <ScrollView
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}

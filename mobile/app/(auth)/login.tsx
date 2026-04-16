@@ -25,22 +25,40 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const fetchContextAndNavigate = async (user: any) => {
+  const fetchContextAndNavigate = async (loginUser: any, token: string) => {
     try {
       const { data: me } = await authApi.me();
+      // Refresh user from /me (has latest tenantId, role, etc.)
+      await setAuth(
+        {
+          id: me.id,
+          name: me.name,
+          email: me.email,
+          role: me.role,
+          tenantId: me.tenantId ?? null,
+          isPlatformAdmin: !!me.isPlatformAdmin,
+          avatar: me.avatar ?? null,
+        },
+        token
+      );
       setContext({
         tenant: me.tenant ?? null,
         plan: me.plan ?? null,
         subscription: me.subscription ?? null,
         permissions: me.permissions ?? [],
       });
+      if (me.tenantId || me.isPlatformAdmin) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/onboarding');
+      }
     } catch {
-      // /auth/me may fail if user has no tenant yet — that's ok
-    }
-    if (user?.tenantId || user?.isPlatformAdmin) {
-      router.replace('/dashboard');
-    } else {
-      router.replace('/onboarding');
+      // /auth/me may fail if user has no tenant yet
+      if (loginUser?.tenantId || loginUser?.isPlatformAdmin) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/onboarding');
+      }
     }
   };
 
@@ -53,7 +71,7 @@ export default function LoginScreen() {
     try {
       const { data } = await authApi.login(email.trim(), password);
       await setAuth(data.user, data.token);
-      await fetchContextAndNavigate(data.user);
+      await fetchContextAndNavigate(data.user, data.token);
     } catch (err: any) {
       Alert.alert(
         'Login failed',
@@ -80,13 +98,15 @@ export default function LoginScreen() {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          bounces={false}
         >
           {/* Top branding area */}
           <View

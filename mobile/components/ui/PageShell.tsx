@@ -4,6 +4,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ListSkeleton } from './Shimmer';
 
@@ -31,9 +32,10 @@ export default function PageShell({
   children,
 }: Props) {
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['bottom']}>
+    <SafeAreaView className="flex-1 bg-slate-50" edges={['top', 'bottom']}>
+      <StatusBar style="dark" />
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           onRefresh ? (

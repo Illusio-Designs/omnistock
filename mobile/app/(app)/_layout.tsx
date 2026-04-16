@@ -58,20 +58,12 @@ export default function AppLayout() {
         tabBarStyle: {
           backgroundColor: '#ffffff',
           borderTopWidth: 0,
-          height: Platform.OS === 'ios' ? 88 : 68,
-          paddingTop: 8,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
-          ...Platform.select({
-            ios: {
-              shadowColor: '#0f172a',
-              shadowOpacity: 0.08,
-              shadowRadius: 16,
-              shadowOffset: { width: 0, height: -4 },
-            },
-            android: {
-              elevation: 12,
-            },
-          }),
+          borderTopColor: 'transparent',
+          height: Platform.OS === 'ios' ? 88 : 64,
+          paddingTop: 6,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+          elevation: 0,
+          shadowOpacity: 0,
         },
       }}
     >
