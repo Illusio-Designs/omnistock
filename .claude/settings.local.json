@@ -41,7 +41,8 @@
       "Bash(npm ls *)",
       "Bash(ls -1 /e/omnistock/backend/src/services/*.js)",
       "Bash(chmod +x /tmp/check_logos.sh)",
-      "Bash(/tmp/check_logos.sh)"
+      "Bash(/tmp/check_logos.sh)",
+      "Bash(npm info *)"
     ],
     "additionalDirectories": [
       "\\tmp"

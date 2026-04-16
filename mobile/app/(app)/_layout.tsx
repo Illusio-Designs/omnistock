@@ -7,6 +7,7 @@ import {
   Package,
   ShoppingCart,
 } from 'lucide-react-native';
+import { Platform, View } from 'react-native';
 import { useAuthStore } from '../../store/auth.store';
 import MaintenanceScreen from '../../components/MaintenanceScreen';
 import axios from 'axios';
@@ -14,7 +15,7 @@ import Constants from 'expo-constants';
 
 const API =
   (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl ||
-  'http://localhost:5000/api/v1';
+  'https://api.finvera.solutions/api/v1';
 
 export default function AppLayout() {
   const token = useAuthStore((s) => s.token);
@@ -34,7 +35,6 @@ export default function AppLayout() {
 
   if (!token) return <Redirect href="/login" />;
 
-  // Show maintenance for non-admin users
   if (maintenance?.enabled && !isPlatformAdmin) {
     return (
       <MaintenanceScreen
@@ -47,47 +47,90 @@ export default function AppLayout() {
   return (
     <Tabs
       screenOptions={{
+        headerShown: false,
         tabBarActiveTintColor: '#10b981',
-        headerStyle: { backgroundColor: '#ffffff' },
-        headerTitleStyle: { color: '#0f172a' },
+        tabBarInactiveTintColor: '#94a3b8',
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '700',
+          letterSpacing: 0.2,
+        },
+        tabBarStyle: {
+          backgroundColor: '#ffffff',
+          borderTopWidth: 0,
+          height: Platform.OS === 'ios' ? 88 : 68,
+          paddingTop: 8,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
+          ...Platform.select({
+            ios: {
+              shadowColor: '#0f172a',
+              shadowOpacity: 0.08,
+              shadowRadius: 16,
+              shadowOffset: { width: 0, height: -4 },
+            },
+            android: {
+              elevation: 12,
+            },
+          }),
+        },
       }}
     >
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+          title: 'Home',
+          tabBarIcon: ({ color, focused }) => (
+            <View className={`p-1.5 rounded-xl ${focused ? 'bg-emerald-50' : ''}`}>
+              <Home color={color} size={22} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="orders"
         options={{
           title: 'Orders',
-          tabBarIcon: ({ color, size }) => <ShoppingCart color={color} size={size} />,
+          tabBarIcon: ({ color, focused }) => (
+            <View className={`p-1.5 rounded-xl ${focused ? 'bg-emerald-50' : ''}`}>
+              <ShoppingCart color={color} size={22} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="products"
         options={{
           title: 'Products',
-          tabBarIcon: ({ color, size }) => <Package color={color} size={size} />,
+          tabBarIcon: ({ color, focused }) => (
+            <View className={`p-1.5 rounded-xl ${focused ? 'bg-emerald-50' : ''}`}>
+              <Package color={color} size={22} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="reports"
         options={{
           title: 'Reports',
-          tabBarIcon: ({ color, size }) => <BarChart3 color={color} size={size} />,
+          tabBarIcon: ({ color, focused }) => (
+            <View className={`p-1.5 rounded-xl ${focused ? 'bg-emerald-50' : ''}`}>
+              <BarChart3 color={color} size={22} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="more"
         options={{
           title: 'More',
-          tabBarIcon: ({ color, size }) => <Menu color={color} size={size} />,
+          tabBarIcon: ({ color, focused }) => (
+            <View className={`p-1.5 rounded-xl ${focused ? 'bg-emerald-50' : ''}`}>
+              <Menu color={color} size={22} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          ),
         }}
       />
-      {/* Hidden from tab bar — navigated to from "More" menu */}
+      {/* Hidden from tab bar */}
       <Tabs.Screen name="inventory" options={{ href: null, title: 'Inventory' }} />
       <Tabs.Screen name="purchases" options={{ href: null, title: 'Purchases' }} />
       <Tabs.Screen name="vendors" options={{ href: null, title: 'Vendors' }} />

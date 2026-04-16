@@ -20,7 +20,7 @@ export default function ChannelsScreen() {
       title="Channels"
       subtitle={`${items.length} connected`}
       action={
-        <Button size="sm" leftIcon={<Plus size={12} color="#fff" />}>
+        <Button size="sm" leftIcon={<Plus size={14} color="#fff" />}>
           Connect
         </Button>
       }
@@ -31,18 +31,27 @@ export default function ChannelsScreen() {
     >
       {items.length > 0 ? (
         items.map((c) => (
-          <Card key={c.id} className="p-4 mb-3">
+          <Card key={c.id} className="p-5 mb-4">
             <View className="flex-row items-center">
-              <View className="w-11 h-11 rounded-xl bg-emerald-500 items-center justify-center mr-3">
-                <Text className="text-white font-bold text-sm">
+              <View
+                className="w-12 h-12 rounded-2xl bg-slate-900 items-center justify-center mr-4"
+                style={{
+                  shadowColor: '#0f172a',
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  shadowOffset: { width: 0, height: 2 },
+                  elevation: 2,
+                }}
+              >
+                <Text className="text-white font-extrabold text-sm">
                   {String(c.name || '').slice(0, 2).toUpperCase()}
                 </Text>
               </View>
               <View className="flex-1">
-                <Text className="font-bold text-slate-900" numberOfLines={1}>
+                <Text className="text-[15px] font-bold text-slate-900 tracking-tight" numberOfLines={1}>
                   {c.name}
                 </Text>
-                <Text className="text-xs text-slate-500 mt-0.5">
+                <Text className="text-[13px] text-slate-500 font-medium mt-0.5">
                   {c.type} · {c.category ?? 'marketplace'}
                 </Text>
               </View>
@@ -55,7 +64,7 @@ export default function ChannelsScreen() {
       ) : (
         <Card className="overflow-hidden">
           <EmptyState
-            icon={<Plug size={24} color="#94a3b8" />}
+            icon={<Plug size={28} color="#94a3b8" />}
             title="No channels connected"
             description="Connect Amazon, Flipkart, Shopify & more to sync orders."
           />

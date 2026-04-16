@@ -5,7 +5,7 @@ import { tokenCache, tokenStorage } from './storage';
 
 const baseURL =
   (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl ||
-  'http://localhost:5000/api/v1';
+  'https://api.finvera.solutions/api/v1';
 
 const api = axios.create({
   baseURL,

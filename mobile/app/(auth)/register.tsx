@@ -1,5 +1,5 @@
-import { Link, router } from 'expo-router';
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react-native';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -16,56 +16,54 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { authApi } from '../../lib/api';
 import { useAuthStore } from '../../store/auth.store';
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const setContext = useAuthStore((s) => s.setContext);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-
-  const handleAuthSuccess = (data: any) => {
-    setContext({
-      tenant: data.tenant ?? null,
-      plan: data.plan ?? null,
-      subscription: data.subscription ?? null,
-      permissions: data.permissions ?? [],
-    });
-    if (data.user?.tenantId || data.user?.isPlatformAdmin) {
-      router.replace('/dashboard');
-    } else {
-      router.replace('/onboarding');
-    }
-  };
 
   const onSubmit = async () => {
-    if (!email || !password) {
-      Alert.alert('Missing fields', 'Email and password are required.');
+    if (!name.trim()) {
+      Alert.alert('Missing fields', 'Full name is required.');
+      return;
+    }
+    if (!email.trim()) {
+      Alert.alert('Missing fields', 'Email is required.');
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert('Weak password', 'Password must be at least 6 characters.');
       return;
     }
     setLoading(true);
     try {
-      const { data } = await authApi.login(email.trim(), password);
+      const { data } = await authApi.register({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      });
       await setAuth(data.user, data.token);
-      handleAuthSuccess(data);
+      setContext({
+        tenant: data.tenant ?? null,
+        plan: data.plan ?? null,
+        subscription: data.subscription ?? null,
+        permissions: data.permissions ?? [],
+      });
+      if (data.user?.tenantId) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/onboarding');
+      }
     } catch (err: any) {
-      Alert.alert('Login failed', err?.response?.data?.message || 'Invalid credentials');
+      Alert.alert(
+        'Registration failed',
+        err?.response?.data?.message || 'Something went wrong. Try again.'
+      );
     } finally {
       setLoading(false);
-    }
-  };
-
-  const onGoogleLogin = async () => {
-    setGoogleLoading(true);
-    try {
-      // Placeholder: In production, use expo-auth-session to get Google ID token
-      // then send it to authApi.google(credential)
-      Alert.alert('Coming soon', 'Google sign-in will be available shortly.');
-    } catch (err: any) {
-      Alert.alert('Google sign-in failed', err?.message || 'Try again');
-    } finally {
-      setGoogleLoading(false);
     }
   };
 
@@ -80,9 +78,9 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Top branding area */}
+          {/* Header */}
           <View
-            className="bg-slate-900 px-8 pt-16 pb-12 rounded-b-[40px]"
+            className="bg-slate-900 px-8 pt-14 pb-10 rounded-b-[40px]"
             style={{
               shadowColor: '#0f172a',
               shadowOpacity: 0.15,
@@ -104,19 +102,20 @@ export default function LoginScreen() {
               <Text className="text-white text-xl font-extrabold">O</Text>
             </View>
             <Text className="text-3xl font-extrabold text-white tracking-tight">
-              Welcome back
+              Create account
             </Text>
             <Text className="text-slate-400 text-base mt-2 font-medium">
-              Sign in to your OmniStock account
+              Start managing your commerce today
             </Text>
           </View>
 
           {/* Form */}
           <View className="flex-1 px-8 pt-8">
-            {/* Google Login */}
+            {/* Google sign up */}
             <Pressable
-              onPress={onGoogleLogin}
-              disabled={googleLoading}
+              onPress={() => {
+                Alert.alert('Coming soon', 'Google sign-up will be available shortly.');
+              }}
               className="flex-row items-center justify-center bg-white border border-slate-200 rounded-2xl py-3.5 mb-6 active:bg-slate-50"
               style={{
                 shadowColor: '#0f172a',
@@ -124,21 +123,14 @@ export default function LoginScreen() {
                 shadowRadius: 8,
                 shadowOffset: { width: 0, height: 2 },
                 elevation: 1,
-                opacity: googleLoading ? 0.7 : 1,
               }}
             >
-              {googleLoading ? (
-                <ActivityIndicator color="#0f172a" size="small" />
-              ) : (
-                <>
-                  <View className="w-5 h-5 mr-3 items-center justify-center">
-                    <Text className="text-lg font-bold">G</Text>
-                  </View>
-                  <Text className="text-[15px] font-bold text-slate-700">
-                    Continue with Google
-                  </Text>
-                </>
-              )}
+              <View className="w-5 h-5 mr-3 items-center justify-center">
+                <Text className="text-lg font-bold">G</Text>
+              </View>
+              <Text className="text-[15px] font-bold text-slate-700">
+                Sign up with Google
+              </Text>
             </Pressable>
 
             {/* Divider */}
@@ -148,6 +140,21 @@ export default function LoginScreen() {
                 or with email
               </Text>
               <View className="flex-1 h-px bg-slate-200" />
+            </View>
+
+            {/* Name */}
+            <Text className="text-[13px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+              Full name
+            </Text>
+            <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 mb-4">
+              <User size={18} color="#94a3b8" />
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder="John Doe"
+                placeholderTextColor="#94a3b8"
+                className="flex-1 py-3.5 px-3 text-slate-900 text-[15px]"
+              />
             </View>
 
             {/* Email */}
@@ -171,13 +178,13 @@ export default function LoginScreen() {
             <Text className="text-[13px] font-bold text-slate-500 uppercase tracking-wider mb-2">
               Password
             </Text>
-            <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 mb-2">
+            <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 mb-6">
               <Lock size={18} color="#94a3b8" />
               <TextInput
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
-                placeholder="Enter your password"
+                placeholder="Min. 6 characters"
                 placeholderTextColor="#94a3b8"
                 className="flex-1 py-3.5 px-3 text-slate-900 text-[15px]"
               />
@@ -193,16 +200,7 @@ export default function LoginScreen() {
               </Pressable>
             </View>
 
-            {/* Forgot password */}
-            <View className="items-end mb-6">
-              <Pressable className="py-1 active:opacity-60">
-                <Text className="text-[13px] font-bold text-emerald-600">
-                  Forgot password?
-                </Text>
-              </Pressable>
-            </View>
-
-            {/* Sign in button */}
+            {/* Submit */}
             <Pressable
               onPress={onSubmit}
               disabled={loading}
@@ -220,20 +218,21 @@ export default function LoginScreen() {
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text className="text-white text-base font-bold tracking-wide">
-                  Sign in
+                  Create account
                 </Text>
               )}
             </Pressable>
 
-            {/* Sign up link */}
-            <Link href="/register" asChild>
-              <Pressable className="mt-6 mb-8 items-center active:opacity-60">
-                <Text className="text-sm text-slate-500 font-medium">
-                  Don't have an account?{' '}
-                  <Text className="text-emerald-600 font-bold">Sign up</Text>
-                </Text>
-              </Pressable>
-            </Link>
+            {/* Switch to login */}
+            <Pressable
+              onPress={() => router.back()}
+              className="mt-6 mb-8 items-center active:opacity-60"
+            >
+              <Text className="text-sm text-slate-500 font-medium">
+                Already have an account?{' '}
+                <Text className="text-emerald-600 font-bold">Sign in</Text>
+              </Text>
+            </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

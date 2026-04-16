@@ -1,11 +1,12 @@
 import { Building2, CreditCard, Shield, User } from 'lucide-react-native';
 import { Text, View } from 'react-native';
 import Card from '../../components/ui/Card';
+import Badge from '../../components/ui/Badge';
 import PageShell from '../../components/ui/PageShell';
 import { useAuthStore } from '../../store/auth.store';
 
 type Row = { label: string; value: string };
-type Section = { title: string; icon: React.ReactNode; rows: Row[] };
+type Section = { title: string; icon: React.ReactNode; iconBg: string; rows: Row[] };
 
 export default function SettingsScreen() {
   const user = useAuthStore((s) => s.user);
@@ -16,34 +17,38 @@ export default function SettingsScreen() {
   const sections: Section[] = [
     {
       title: 'Account',
-      icon: <User size={15} color="#059669" />,
+      icon: <User size={18} color="#059669" />,
+      iconBg: 'bg-emerald-50',
       rows: [
-        { label: 'Name', value: user?.name ?? '—' },
-        { label: 'Email', value: user?.email ?? '—' },
-        { label: 'Role', value: user?.role ?? '—' },
+        { label: 'Name', value: user?.name ?? '\u2014' },
+        { label: 'Email', value: user?.email ?? '\u2014' },
+        { label: 'Role', value: user?.role ?? '\u2014' },
       ],
     },
     {
       title: 'Workspace',
-      icon: <Building2 size={15} color="#059669" />,
+      icon: <Building2 size={18} color="#0ea5e9" />,
+      iconBg: 'bg-sky-50',
       rows: [
-        { label: 'Tenant', value: tenant?.businessName ?? '—' },
-        { label: 'Slug', value: tenant?.slug ?? '—' },
-        { label: 'Status', value: tenant?.status ?? '—' },
+        { label: 'Tenant', value: tenant?.businessName ?? '\u2014' },
+        { label: 'Slug', value: tenant?.slug ?? '\u2014' },
+        { label: 'Status', value: tenant?.status ?? '\u2014' },
       ],
     },
     {
       title: 'Subscription',
-      icon: <CreditCard size={15} color="#059669" />,
+      icon: <CreditCard size={18} color="#8b5cf6" />,
+      iconBg: 'bg-violet-50',
       rows: [
-        { label: 'Plan', value: plan?.name ?? '—' },
-        { label: 'Status', value: subscription?.status ?? '—' },
+        { label: 'Plan', value: plan?.name ?? '\u2014' },
+        { label: 'Status', value: subscription?.status ?? '\u2014' },
         { label: 'PAYG', value: subscription?.payAsYouGo ? 'On' : 'Off' },
       ],
     },
     {
       title: 'Security',
-      icon: <Shield size={15} color="#059669" />,
+      icon: <Shield size={18} color="#f59e0b" />,
+      iconBg: 'bg-amber-50',
       rows: [
         { label: 'Platform admin', value: user?.isPlatformAdmin ? 'Yes' : 'No' },
       ],
@@ -54,23 +59,33 @@ export default function SettingsScreen() {
     <PageShell title="Settings" subtitle="Account and workspace">
       {sections.map((sec) => (
         <Card key={sec.title} className="p-5 mb-4">
-          <View className="flex-row items-center mb-3">
-            <View className="w-8 h-8 rounded-lg bg-emerald-50 items-center justify-center mr-2">
+          <View className="flex-row items-center mb-4">
+            <View
+              className={`w-10 h-10 rounded-2xl ${sec.iconBg} items-center justify-center mr-3`}
+            >
               {sec.icon}
             </View>
-            <Text className="font-bold text-slate-900">{sec.title}</Text>
+            <Text className="text-lg font-extrabold text-slate-900 tracking-tight">
+              {sec.title}
+            </Text>
           </View>
           {sec.rows.map((r, idx) => (
             <View
               key={r.label}
-              className={`flex-row justify-between py-3 ${
+              className={`flex-row justify-between items-center py-3.5 ${
                 idx > 0 ? 'border-t border-slate-100' : ''
               }`}
             >
-              <Text className="text-sm text-slate-500">{r.label}</Text>
-              <Text className="text-sm font-bold text-slate-900" numberOfLines={1}>
-                {r.value}
-              </Text>
+              <Text className="text-[14px] text-slate-500 font-medium">{r.label}</Text>
+              {r.value === 'active' || r.value === 'Yes' ? (
+                <Badge variant="emerald">{r.value}</Badge>
+              ) : r.value === 'Off' || r.value === 'No' ? (
+                <Badge variant="slate">{r.value}</Badge>
+              ) : (
+                <Text className="text-[14px] font-bold text-slate-900" numberOfLines={1}>
+                  {r.value}
+                </Text>
+              )}
             </View>
           ))}
         </Card>
