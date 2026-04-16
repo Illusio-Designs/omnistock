@@ -40,13 +40,20 @@ async function initDb() {
     return;
   }
 
+  // Even if state file says we seeded, verify data actually exists
   if (state.lastSeededMigration === latestFile) {
-    console.log(`[initDb] seed up-to-date (${latestFile}).`);
-    return;
+    const [rows] = await db.raw("SELECT COUNT(*) as cnt FROM `plans`").catch(() => [{ cnt: 0 }]);
+    const count = rows?.[0]?.cnt ?? rows?.cnt ?? 0;
+    if (Number(count) > 0) {
+      console.log(`[initDb] seed up-to-date (${latestFile}).`);
+      return;
+    }
+    console.log('[initDb] state file exists but tables are empty — re-seeding…');
   }
 
   console.log(`[initDb] schema changed (${state.lastSeededMigration || 'none'} → ${latestFile}), running seed…`);
   run('node prisma/seed.js');
+  run('node prisma/seed-content.js');
   writeState({ lastSeededMigration: latestFile, seededAt: new Date().toISOString() });
   console.log('[initDb] seed complete.');
 }

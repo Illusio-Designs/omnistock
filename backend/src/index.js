@@ -38,6 +38,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ── Trust proxy (needed behind nginx/Apache/load balancer) ──
+app.set('trust proxy', 1);
+
 // ── Security & Middleware ──────────────────────────────
 app.use(helmet());
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
@@ -97,9 +100,12 @@ app.use((err, _req, res, _next) => {
     console.error('[initDb] failed:', err.message);
     process.exit(1);
   }
-  app.listen(PORT, () => {
-    console.log(`OmniStock API running on http://localhost:${PORT}`);
-  });
+  // LiteSpeed (lsnode.js) calls listen() automatically — skip in that environment
+  if (!process.env.LSNODE_ROOT) {
+    app.listen(PORT, () => {
+      console.log(`OmniStock API running on http://localhost:${PORT}`);
+    });
+  }
 })();
 
 module.exports = app;
