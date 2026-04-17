@@ -5,13 +5,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { vendorApi } from '@/lib/api';
 import {
-  Button, Badge, Card, Modal, Input, Textarea, Pagination,
+  Button, Badge, Card, Modal, Input, Textarea, Tooltip,
 } from '@/components/ui';
-import { Plus, Building2, Mail, Phone, MapPin } from 'lucide-react';
+import { Plus, Building2, Mail, Phone, Pencil, Trash2 } from 'lucide-react';
 
 export default function VendorsPage() {
-  const [modalOpen, setModalOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editVendor, setEditVendor] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
 
+  const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ['vendors'],
     queryFn: () => vendorApi.list().then(r => r.data),
@@ -19,15 +22,23 @@ export default function VendorsPage() {
 
   const vendors = data || [];
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => vendorApi.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vendors'] });
+      setDeleteTarget(null);
+    },
+  });
+
   return (
     <DashboardLayout>
       <div className="space-y-5 animate-slide-up">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Vendors</h1>
-            <p className="text-sm text-slate-500 mt-1">{vendors.length} active vendors</p>
+            <p className="text-sm text-slate-500 mt-1">{vendors.length} suppliers</p>
           </div>
-          <Button leftIcon={<Plus size={15} />} onClick={() => setModalOpen(true)}>
+          <Button leftIcon={<Plus size={15} />} onClick={() => setCreateOpen(true)}>
             New Vendor
           </Button>
         </div>
@@ -72,6 +83,20 @@ export default function VendorsPage() {
                     </div>
                   )}
                 </div>
+                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100">
+                  <button
+                    onClick={() => setEditVendor(v)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                  >
+                    <Pencil size={12} /> Edit
+                  </button>
+                  <button
+                    onClick={() => setDeleteTarget(v)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
+                  >
+                    <Trash2 size={12} /> Delete
+                  </button>
+                </div>
               </Card>
             ))}
           </div>
@@ -82,37 +107,72 @@ export default function VendorsPage() {
             </div>
             <h3 className="font-bold text-slate-900 text-lg">No vendors yet</h3>
             <p className="text-sm text-slate-500 mt-1">Add your first supplier to start creating purchase orders.</p>
-            <Button leftIcon={<Plus size={14} />} onClick={() => setModalOpen(true)} className="mt-5">
+            <Button leftIcon={<Plus size={14} />} onClick={() => setCreateOpen(true)} className="mt-5">
               New Vendor
             </Button>
           </Card>
         )}
       </div>
 
-      <NewVendorModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <VendorModal open={createOpen} onClose={() => setCreateOpen(false)} mode="create" />
+      <VendorModal open={!!editVendor} onClose={() => setEditVendor(null)} mode="edit" vendor={editVendor} />
+
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete Vendor"
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button
+              variant="danger"
+              onClick={() => deleteMutation.mutate(deleteTarget.id)}
+              loading={deleteMutation.isPending}
+            >
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-slate-600">
+          Delete <span className="font-bold">{deleteTarget?.name}</span>? This cannot be undone.
+        </p>
+      </Modal>
     </DashboardLayout>
   );
 }
 
-function NewVendorModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function VendorModal({ open, onClose, mode, vendor }: {
+  open: boolean; onClose: () => void; mode: 'create' | 'edit'; vendor?: any;
+}) {
   const qc = useQueryClient();
   const [form, setForm] = useState({
-    name: '', email: '', phone: '', gstin: '', paymentTerms: '', address: '',
+    name:         vendor?.name         || '',
+    email:        vendor?.email        || '',
+    phone:        vendor?.phone        || '',
+    gstin:        vendor?.gstin        || '',
+    paymentTerms: vendor?.paymentTerms || '',
+    address:      typeof vendor?.address === 'object' ? (vendor?.address?.line1 || '') : (vendor?.address || ''),
+    isActive:     vendor?.isActive ?? true,
   });
   const [error, setError] = useState('');
 
-  const createMutation = useMutation({
-    mutationFn: () => vendorApi.create({
-      name: form.name,
-      email: form.email || undefined,
-      phone: form.phone || undefined,
-      gstin: form.gstin || undefined,
-      paymentTerms: form.paymentTerms || undefined,
-      address: form.address ? { line1: form.address } : undefined,
-    }),
+  const mutation = useMutation({
+    mutationFn: () => {
+      const payload = {
+        name: form.name,
+        email: form.email || undefined,
+        phone: form.phone || undefined,
+        gstin: form.gstin || undefined,
+        paymentTerms: form.paymentTerms || undefined,
+        address: form.address ? { line1: form.address } : undefined,
+        isActive: form.isActive,
+      };
+      return mode === 'create' ? vendorApi.create(payload) : vendorApi.update(vendor.id, payload);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['vendors'] });
-      setForm({ name: '', email: '', phone: '', gstin: '', paymentTerms: '', address: '' });
       setError('');
       onClose();
     },
@@ -123,18 +183,18 @@ function NewVendorModal({ open, onClose }: { open: boolean; onClose: () => void 
     <Modal
       open={open}
       onClose={onClose}
-      title="New Vendor"
-      description="Add a supplier to source products from"
+      title={mode === 'create' ? 'New Vendor' : 'Edit Vendor'}
+      description={mode === 'create' ? 'Add a supplier to source products from' : 'Update supplier details'}
       size="md"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button
-            onClick={() => { setError(''); createMutation.mutate(); }}
-            loading={createMutation.isPending}
+            onClick={() => { setError(''); mutation.mutate(); }}
+            loading={mutation.isPending}
             disabled={!form.name}
           >
-            Create Vendor
+            {mode === 'create' ? 'Create Vendor' : 'Save Changes'}
           </Button>
         </>
       }
@@ -150,6 +210,17 @@ function NewVendorModal({ open, onClose }: { open: boolean; onClose: () => void 
           <Input label="Payment Terms" value={form.paymentTerms} onChange={(e) => setForm({ ...form, paymentTerms: e.target.value })} placeholder="Net 30" />
         </div>
         <Textarea label="Address (optional)" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={2} placeholder="Street, city, state, pincode" />
+        {mode === 'edit' && (
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.isActive}
+              onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+              className="w-4 h-4 accent-emerald-600"
+            />
+            <span className="text-sm font-semibold text-slate-700">Active vendor</span>
+          </label>
+        )}
         {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
       </div>
     </Modal>

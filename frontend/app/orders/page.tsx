@@ -246,7 +246,7 @@ export default function OrdersPage() {
             ))}
           </div>
 
-          {(data?.total || 0) > 0 && (
+          {(data?.total || 0) > pageSize && (
             <div className="border-t border-slate-100">
               <Pagination
                 page={page}

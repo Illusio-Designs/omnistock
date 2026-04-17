@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api/v1',
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -252,6 +252,7 @@ export const vendorApi = {
   get: (id: string) => api.get(`/vendors/${id}`),
   create: (data: any) => api.post('/vendors', data),
   update: (id: string, data: any) => api.put(`/vendors/${id}`, data),
+  delete: (id: string) => api.delete(`/vendors/${id}`),
 };
 
 export const warehouseApi = {
@@ -267,12 +268,15 @@ export const shipmentApi = {
   get: (id: string) => api.get(`/shipments/${id}`),
   create: (data: any) => api.post('/shipments', data),
   updateStatus: (id: string, status: string) => api.patch(`/shipments/${id}/status`, { status }),
+  delete: (id: string) => api.delete(`/shipments/${id}`),
 };
 
 export const invoiceApi = {
   list: (params?: any) => api.get('/invoices', { params }),
   get: (id: string) => api.get(`/invoices/${id}`),
+  create: (data: any) => api.post('/invoices', data),
   pay: (id: string, data: any) => api.post(`/invoices/${id}/pay`, data),
+  delete: (id: string) => api.delete(`/invoices/${id}`),
 };
 
 // ─── Channels ──────────────────────────────────────────────────────────────
@@ -314,6 +318,7 @@ export const channelApi = {
   // SKU mappings (ChannelListing)
   listListings: (id: string) => api.get(`/channels/${id}/listings`),
   createListing: (id: string, data: any) => api.post(`/channels/${id}/listings`, data),
+  deleteListing: (id: string, sku: string) => api.delete(`/channels/${id}/listings/${sku}`),
 
   // Shipping channels
   shippingRates: (id: string, data: any) => api.post(`/channels/${id}/shipping/rates`, data),
@@ -337,6 +342,8 @@ export const customerApi = {
   list: (params?: any) => api.get('/customers', { params }),
   get: (id: string) => api.get(`/customers/${id}`),
   create: (data: any) => api.post('/customers', data),
+  update: (id: string, data: any) => api.put(`/customers/${id}`, data),
+  delete: (id: string) => api.delete(`/customers/${id}`),
 };
 
 export const reportApi = {

@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import api from '@/lib/api';
+import { invoiceApi } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
-import { Button, Badge, Card, Pagination, Select, Tooltip } from '@/components/ui';
-import { FileText, Download, Eye, Plus, Receipt } from 'lucide-react';
+import { Button, Badge, Card, Pagination, Select, Tooltip, Modal, Input } from '@/components/ui';
+import { FileText, Download, Eye, Plus, Receipt, CreditCard, X } from 'lucide-react';
 
 const TYPE_FILTERS = [
   { value: '',             label: 'All Types' },
@@ -17,28 +17,57 @@ const TYPE_FILTERS = [
 ];
 
 const STATUS_VARIANT: Record<string, any> = {
-  DRAFT: 'slate',
-  UNPAID: 'amber',
+  DRAFT:          'slate',
+  UNPAID:         'amber',
   PARTIALLY_PAID: 'blue',
-  PAID: 'emerald',
-  OVERDUE: 'rose',
-  CANCELLED: 'slate',
+  PAID:           'emerald',
+  OVERDUE:        'rose',
+  CANCELLED:      'slate',
 };
 
+const PAYABLE_STATUSES = ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'];
+
 export default function InvoicesPage() {
+  const qc = useQueryClient();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [type, setType] = useState('');
+  const [viewInvoice, setViewInvoice] = useState<any>(null);
+  const [payInvoice, setPayInvoice] = useState<any>(null);
+  const [payRef, setPayRef] = useState('');
+  const [payAmount, setPayAmount] = useState('');
+  const [payError, setPayError] = useState('');
 
   const { data, isLoading } = useQuery({
     queryKey: ['invoices', page, pageSize, type],
-    queryFn: () => api.get('/invoices', { params: { page, limit: pageSize, type: type || undefined } }).then(r => r.data).catch(() => ({ invoices: [], total: 0 })),
+    queryFn: () => invoiceApi.list({ page, limit: pageSize, type: type || undefined }).then(r => r.data).catch(() => ({ invoices: [], total: 0 })),
   });
 
   const invoices = data?.invoices || data || [];
   const total = data?.total || invoices.length;
   const totalValue = invoices.reduce((s: number, inv: any) => s + Number(inv.total || 0), 0);
   const paidCount = invoices.filter((i: any) => i.status === 'PAID').length;
+  const overdueCount = invoices.filter((i: any) => i.status === 'OVERDUE').length;
+
+  const payMutation = useMutation({
+    mutationFn: () => invoiceApi.pay(payInvoice.id, {
+      amount: Number(payAmount) || payInvoice.total,
+      paymentReference: payRef || undefined,
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['invoices'] });
+      setPayInvoice(null);
+      setPayRef('');
+      setPayAmount('');
+      setPayError('');
+    },
+    onError: (err: any) => setPayError(err.response?.data?.error || err.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => invoiceApi.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['invoices'] }),
+  });
 
   return (
     <DashboardLayout>
@@ -48,7 +77,6 @@ export default function InvoicesPage() {
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Invoices</h1>
             <p className="text-sm text-slate-500 mt-1">{total} invoices generated</p>
           </div>
-          <Button leftIcon={<Plus size={15} />}>Create Invoice</Button>
         </div>
 
         {/* Stats */}
@@ -68,11 +96,11 @@ export default function InvoicesPage() {
             <div className="text-xs text-slate-500 font-semibold mt-1 uppercase tracking-wider">Paid</div>
           </Card>
           <Card className="p-5">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
               <FileText size={17} />
             </div>
-            <div className="text-2xl font-bold text-slate-900">{total - paidCount}</div>
-            <div className="text-xs text-slate-500 font-semibold mt-1 uppercase tracking-wider">Pending</div>
+            <div className="text-2xl font-bold text-slate-900">{overdueCount}</div>
+            <div className="text-xs text-slate-500 font-semibold mt-1 uppercase tracking-wider">Overdue</div>
           </Card>
         </div>
 
@@ -109,8 +137,35 @@ export default function InvoicesPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        <Tooltip content="View invoice"><button className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-900"><Eye size={13} /></button></Tooltip>
-                        <Tooltip content="Download PDF"><button className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-900"><Download size={13} /></button></Tooltip>
+                        <Tooltip content="View invoice">
+                          <button
+                            onClick={() => setViewInvoice(inv)}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-900"
+                          >
+                            <Eye size={13} />
+                          </button>
+                        </Tooltip>
+                        {PAYABLE_STATUSES.includes(inv.status) && (
+                          <Tooltip content="Mark as paid">
+                            <button
+                              onClick={() => { setPayInvoice(inv); setPayAmount(String(inv.total || '')); }}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-emerald-50 text-slate-400 hover:text-emerald-700"
+                            >
+                              <CreditCard size={13} />
+                            </button>
+                          </Tooltip>
+                        )}
+                        {inv.status === 'DRAFT' && (
+                          <Tooltip content="Delete draft">
+                            <button
+                              onClick={() => deleteMutation.mutate(inv.id)}
+                              disabled={deleteMutation.isPending}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 disabled:opacity-40"
+                            >
+                              <X size={13} />
+                            </button>
+                          </Tooltip>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -134,6 +189,101 @@ export default function InvoicesPage() {
           )}
         </Card>
       </div>
+
+      {/* View Invoice Modal */}
+      {viewInvoice && (
+        <Modal
+          open={!!viewInvoice}
+          onClose={() => setViewInvoice(null)}
+          title={`Invoice ${viewInvoice.invoiceNumber}`}
+          size="lg"
+          footer={<Button variant="secondary" onClick={() => setViewInvoice(null)}>Close</Button>}
+        >
+          <div className="space-y-4 text-sm">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Type</div>
+                <Badge variant="slate">{viewInvoice.type}</Badge>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Status</div>
+                <Badge variant={STATUS_VARIANT[viewInvoice.status] || 'slate'}>{viewInvoice.status}</Badge>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Total</div>
+                <div className="font-bold text-slate-900 text-lg">{formatCurrency(viewInvoice.total || 0)}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Due Date</div>
+                <div className="text-slate-700">
+                  {viewInvoice.dueDate ? new Date(viewInvoice.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                </div>
+              </div>
+              {viewInvoice.order?.orderNumber && (
+                <div>
+                  <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Order</div>
+                  <div className="font-mono text-slate-700">{viewInvoice.order.orderNumber}</div>
+                </div>
+              )}
+              {viewInvoice.purchaseOrder?.poNumber && (
+                <div>
+                  <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">PO Number</div>
+                  <div className="font-mono text-slate-700">{viewInvoice.purchaseOrder.poNumber}</div>
+                </div>
+              )}
+            </div>
+            {viewInvoice.notes && (
+              <div>
+                <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Notes</div>
+                <div className="text-slate-600 bg-slate-50 rounded-lg p-3">{viewInvoice.notes}</div>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+
+      {/* Pay Invoice Modal */}
+      {payInvoice && (
+        <Modal
+          open={!!payInvoice}
+          onClose={() => { setPayInvoice(null); setPayError(''); }}
+          title={`Record Payment — ${payInvoice.invoiceNumber}`}
+          size="md"
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => { setPayInvoice(null); setPayError(''); }}>Cancel</Button>
+              <Button
+                onClick={() => { setPayError(''); payMutation.mutate(); }}
+                loading={payMutation.isPending}
+                disabled={!payAmount || Number(payAmount) <= 0}
+              >
+                Confirm Payment
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <div className="p-4 bg-slate-50 rounded-xl">
+              <div className="text-xs text-slate-500">Invoice total</div>
+              <div className="text-2xl font-bold text-slate-900">{formatCurrency(payInvoice.total || 0)}</div>
+            </div>
+            <Input
+              label="Amount being paid (₹)"
+              type="number"
+              value={payAmount}
+              onChange={(e) => setPayAmount(e.target.value)}
+              placeholder={String(payInvoice.total || 0)}
+            />
+            <Input
+              label="Payment reference (optional)"
+              value={payRef}
+              onChange={(e) => setPayRef(e.target.value)}
+              placeholder="e.g. UTR number, cheque #, transaction ID"
+            />
+            {payError && <p className="text-xs text-rose-600 font-medium">{payError}</p>}
+          </div>
+        </Modal>
+      )}
     </DashboardLayout>
   );
 }

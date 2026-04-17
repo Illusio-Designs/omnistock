@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { billingApi, planApi, paymentApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
-import { CheckCircle2, AlertCircle, Zap, Crown, Sparkles, X, Wallet, Plus } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Zap, Crown, Sparkles, X, Wallet, Plus, Settings2 } from 'lucide-react';
 
 export default function BillingPage() {
   const { hasPermission } = useAuthStore();
@@ -18,6 +18,14 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
   const [topupAmount, setTopupAmount] = useState('');
+  const [showWalletSettings, setShowWalletSettings] = useState(false);
+  const [walletSettings, setWalletSettings] = useState({
+    lowBalanceThreshold: '',
+    autoTopupEnabled: false,
+    autoTopupAmount: '',
+    autoTopupTriggerBelow: '',
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   const load = async () => {
     const [s, u, p, w, t] = await Promise.all([
@@ -28,7 +36,36 @@ export default function BillingPage() {
       billingApi.walletTransactions(20).catch(() => ({ data: [] })),
     ]);
     setSub(s.data); setUsage(u.data); setPlans(p.data);
-    setWallet(w.data); setTxns(t.data || []);
+    const walletData = w.data;
+    setWallet(walletData);
+    setTxns(t.data?.transactions || (Array.isArray(t.data) ? t.data : []));
+    if (walletData) {
+      setWalletSettings({
+        lowBalanceThreshold: walletData.lowBalanceThreshold ?? '',
+        autoTopupEnabled: !!walletData.autoTopupEnabled,
+        autoTopupAmount: walletData.autoTopupAmount ?? '',
+        autoTopupTriggerBelow: walletData.autoTopupTriggerBelow ?? '',
+      });
+    }
+  };
+
+  const saveWalletSettings = async () => {
+    setSavingSettings(true);
+    try {
+      await billingApi.walletSettings({
+        lowBalanceThreshold: walletSettings.lowBalanceThreshold ? Number(walletSettings.lowBalanceThreshold) : undefined,
+        autoTopupEnabled: walletSettings.autoTopupEnabled,
+        autoTopupAmount: walletSettings.autoTopupAmount ? Number(walletSettings.autoTopupAmount) : undefined,
+        autoTopupTriggerBelow: walletSettings.autoTopupTriggerBelow ? Number(walletSettings.autoTopupTriggerBelow) : undefined,
+      });
+      setMsg('Wallet settings saved');
+      setShowWalletSettings(false);
+      await load();
+    } catch (e: any) {
+      setMsg(e?.response?.data?.error || 'Failed to save settings');
+    } finally {
+      setSavingSettings(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -153,7 +190,18 @@ export default function BillingPage() {
                   <Wallet size={20} className="text-emerald-600" />
                 </div>
                 <div>
-                  <div className="text-xs uppercase tracking-wider text-slate-400 font-bold">Wallet balance</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-xs uppercase tracking-wider text-slate-400 font-bold">Wallet balance</div>
+                    {canManage && (
+                      <button
+                        onClick={() => setShowWalletSettings(!showWalletSettings)}
+                        className="text-slate-400 hover:text-slate-600"
+                        title="Wallet settings"
+                      >
+                        <Settings2 size={13} />
+                      </button>
+                    )}
+                  </div>
                   <div className={`text-3xl font-bold mt-1 ${wallet.lowBalance ? 'text-rose-600' : 'text-slate-900'}`}>
                     ₹{Number(wallet.balance).toLocaleString()}
                   </div>
@@ -217,6 +265,74 @@ export default function BillingPage() {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {showWalletSettings && canManage && (
+              <div className="mt-5 pt-5 border-t border-slate-100">
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Auto top-up settings</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-600 block mb-1">Low balance alert below (₹)</label>
+                    <input
+                      type="number"
+                      value={walletSettings.lowBalanceThreshold}
+                      onChange={(e) => setWalletSettings(s => ({ ...s, lowBalanceThreshold: e.target.value }))}
+                      placeholder="e.g. 500"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    />
+                  </div>
+                  <div className="flex items-end pb-1">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={walletSettings.autoTopupEnabled}
+                        onChange={(e) => setWalletSettings(s => ({ ...s, autoTopupEnabled: e.target.checked }))}
+                        className="w-4 h-4 accent-emerald-600"
+                      />
+                      <span className="text-sm font-semibold text-slate-700">Enable auto top-up</span>
+                    </label>
+                  </div>
+                  {walletSettings.autoTopupEnabled && (
+                    <>
+                      <div>
+                        <label className="text-xs font-semibold text-slate-600 block mb-1">Top-up amount (₹)</label>
+                        <input
+                          type="number"
+                          value={walletSettings.autoTopupAmount}
+                          onChange={(e) => setWalletSettings(s => ({ ...s, autoTopupAmount: e.target.value }))}
+                          placeholder="e.g. 1000"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-slate-600 block mb-1">Trigger when balance below (₹)</label>
+                        <input
+                          type="number"
+                          value={walletSettings.autoTopupTriggerBelow}
+                          onChange={(e) => setWalletSettings(s => ({ ...s, autoTopupTriggerBelow: e.target.value }))}
+                          placeholder="e.g. 200"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={saveWalletSettings}
+                    disabled={savingSettings}
+                    className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-50"
+                  >
+                    {savingSettings ? 'Saving…' : 'Save settings'}
+                  </button>
+                  <button
+                    onClick={() => setShowWalletSettings(false)}
+                    className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             )}

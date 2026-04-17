@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { inventoryApi, warehouseApi } from '@/lib/api';
+import { inventoryApi, warehouseApi, productApi } from '@/lib/api';
 import {
   Button, Badge, Card, Modal, Input, Textarea, Select, Pagination,
 } from '@/components/ui';
-import { AlertTriangle, Plus } from 'lucide-react';
+import { AlertTriangle, Plus, ArrowUpDown } from 'lucide-react';
 
 const TYPE_OPTIONS = [
   { value: 'INBOUND',    label: 'Inbound (Add Stock)' },
@@ -15,12 +15,24 @@ const TYPE_OPTIONS = [
   { value: 'ADJUSTMENT', label: 'Adjustment' },
 ];
 
+const MOVEMENT_VARIANT: Record<string, string> = {
+  INBOUND:    'emerald',
+  OUTBOUND:   'rose',
+  ADJUSTMENT: 'amber',
+  TRANSFER:   'blue',
+  RETURN:     'violet',
+};
+
+type Tab = 'stock' | 'movements';
+
 export default function InventoryPage() {
   const qc = useQueryClient();
+  const [tab, setTab] = useState<Tab>('stock');
   const [warehouseId, setWarehouseId] = useState('');
   const [showAdjust, setShowAdjust] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [movPage, setMovPage] = useState(1);
   const [adjustForm, setAdjustForm] = useState({
     warehouseId: '', variantId: '', quantity: 0, type: 'ADJUSTMENT', notes: '',
   });
@@ -28,10 +40,7 @@ export default function InventoryPage() {
 
   const { data } = useQuery({
     queryKey: ['inventory', warehouseId, page, pageSize],
-    queryFn: () => inventoryApi.list({
-      warehouseId: warehouseId || undefined,
-      page, limit: pageSize,
-    }).then(r => r.data),
+    queryFn: () => inventoryApi.list({ warehouseId: warehouseId || undefined, page, limit: pageSize }).then(r => r.data),
   });
   const { data: lowStock } = useQuery({
     queryKey: ['low-stock'],
@@ -41,21 +50,41 @@ export default function InventoryPage() {
     queryKey: ['warehouses'],
     queryFn: () => warehouseApi.list().then(r => r.data),
   });
+  const { data: movements } = useQuery({
+    queryKey: ['movements', movPage],
+    queryFn: () => inventoryApi.movements({ page: movPage, limit: 20 }).then(r => r.data),
+    enabled: tab === 'movements',
+  });
+  // Fetch products+variants for the adjust dropdown
+  const { data: products } = useQuery({
+    queryKey: ['products-variants'],
+    queryFn: () => productApi.list({ limit: 200 }).then(r => r.data),
+    enabled: showAdjust,
+  });
 
   const warehouseOptions = [
     { value: '', label: 'All Warehouses' },
     ...(warehouses || []).map((w: any) => ({ value: w.id, label: w.name })),
   ];
-  const adjustWarehouseOptions = (warehouses || []).map((w: any) => ({
-    value: w.id, label: w.name,
-  }));
+  const adjustWarehouseOptions = (warehouses || []).map((w: any) => ({ value: w.id, label: w.name }));
+
+  // Build variant options from all products
+  const variantOptions = (products?.products || []).flatMap((p: any) =>
+    (p.variants || []).map((v: any) => ({
+      value: v.id,
+      label: `${p.name} — ${v.name || v.sku} (${v.sku})`,
+    }))
+  );
 
   const adjustMutation = useMutation({
     mutationFn: (d: any) => inventoryApi.adjust(d),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inventory'] });
+      qc.invalidateQueries({ queryKey: ['low-stock'] });
+      qc.invalidateQueries({ queryKey: ['movements'] });
       setShowAdjust(false);
       setAdjustForm({ warehouseId: '', variantId: '', quantity: 0, type: 'ADJUSTMENT', notes: '' });
+      setError('');
     },
     onError: (err: any) => setError(err.response?.data?.error || err.message),
   });
@@ -83,59 +112,132 @@ export default function InventoryPage() {
           </div>
         )}
 
-        <Select
-          value={warehouseId}
-          onChange={setWarehouseId}
-          options={warehouseOptions}
-        />
+        {/* Tabs */}
+        <div className="flex gap-1 p-1 bg-slate-100 rounded-xl w-fit">
+          {(['stock', 'movements'] as Tab[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                tab === t ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              {t === 'stock' ? 'Stock Levels' : 'Movements'}
+            </button>
+          ))}
+        </div>
 
-        <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50/50 border-b border-slate-100">
-                <tr className="text-left text-[10px] uppercase tracking-widest text-slate-400">
-                  {['Product', 'SKU', 'Warehouse', 'On Hand', 'Reserved', 'Available', 'Reorder', 'Status'].map(h => (
-                    <th key={h} className="px-4 py-3 font-bold">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {data?.items?.length ? data.items.map((item: any) => (
-                  <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="px-4 py-3 font-bold text-slate-900">{item.variant?.product?.name}</td>
-                    <td className="px-4 py-3 text-slate-500 font-mono text-xs">{item.variant?.sku}</td>
-                    <td className="px-4 py-3 text-slate-500">{item.warehouse?.name}</td>
-                    <td className="px-4 py-3 font-semibold">{item.quantityOnHand}</td>
-                    <td className="px-4 py-3 text-slate-400">{item.quantityReserved}</td>
-                    <td className="px-4 py-3 font-bold">{item.quantityAvailable}</td>
-                    <td className="px-4 py-3 text-slate-400">{item.reorderPoint}</td>
-                    <td className="px-4 py-3">
-                      {item.quantityAvailable <= item.reorderPoint ? (
-                        <Badge variant="rose" dot>Low Stock</Badge>
-                      ) : (
-                        <Badge variant="emerald" dot>In Stock</Badge>
-                      )}
-                    </td>
+        {tab === 'stock' && (
+          <>
+            <Select value={warehouseId} onChange={setWarehouseId} options={warehouseOptions} />
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50/50 border-b border-slate-100">
+                    <tr className="text-left text-[10px] uppercase tracking-widest text-slate-400">
+                      {['Product', 'SKU', 'Warehouse', 'On Hand', 'Reserved', 'Available', 'Reorder', 'Status'].map(h => (
+                        <th key={h} className="px-4 py-3 font-bold">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {data?.items?.length ? data.items.map((item: any) => (
+                      <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="px-4 py-3 font-bold text-slate-900">{item.variant?.product?.name}</td>
+                        <td className="px-4 py-3 text-slate-500 font-mono text-xs">{item.variant?.sku}</td>
+                        <td className="px-4 py-3 text-slate-500">{item.warehouse?.name}</td>
+                        <td className="px-4 py-3 font-semibold">{item.quantityOnHand}</td>
+                        <td className="px-4 py-3 text-slate-400">{item.quantityReserved}</td>
+                        <td className="px-4 py-3 font-bold">{item.quantityAvailable}</td>
+                        <td className="px-4 py-3 text-slate-400">{item.reorderPoint}</td>
+                        <td className="px-4 py-3">
+                          {item.quantityAvailable <= item.reorderPoint ? (
+                            <Badge variant="rose" dot>Low Stock</Badge>
+                          ) : (
+                            <Badge variant="emerald" dot>In Stock</Badge>
+                          )}
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">No inventory items</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {(data?.total || 0) > pageSize && (
+                <div className="border-t border-slate-100">
+                  <Pagination
+                    page={page}
+                    pageSize={pageSize}
+                    total={data?.total || 0}
+                    onPageChange={setPage}
+                    onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+                  />
+                </div>
+              )}
+            </Card>
+          </>
+        )}
+
+        {tab === 'movements' && (
+          <Card className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50/50 border-b border-slate-100">
+                  <tr className="text-left text-[10px] uppercase tracking-widest text-slate-400">
+                    {['Type', 'Product / SKU', 'Warehouse', 'Qty', 'Notes', 'Date'].map(h => (
+                      <th key={h} className="px-4 py-3 font-bold">{h}</th>
+                    ))}
                   </tr>
-                )) : (
-                  <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">No inventory items</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {(data?.total || 0) > pageSize && (
-            <div className="border-t border-slate-100">
-              <Pagination
-                page={page}
-                pageSize={pageSize}
-                total={data?.total || 0}
-                onPageChange={setPage}
-                onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
-              />
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {(movements?.movements || movements || []).length ? (movements?.movements || movements || []).map((m: any) => (
+                    <tr key={m.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="px-4 py-3">
+                        <Badge variant={(MOVEMENT_VARIANT[m.type] as any) || 'slate'}>{m.type}</Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-slate-900">{m.variant?.product?.name || '—'}</div>
+                        <div className="text-xs text-slate-400 font-mono">{m.variant?.sku}</div>
+                      </td>
+                      <td className="px-4 py-3 text-slate-500">{m.warehouse?.name || '—'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`font-bold ${['INBOUND', 'RETURN'].includes(m.type) ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {['INBOUND', 'RETURN'].includes(m.type) ? '+' : '-'}{Math.abs(m.quantity)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-slate-500 text-xs max-w-xs truncate">{m.notes || '—'}</td>
+                      <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">
+                        {m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-16 text-center">
+                        <div className="inline-flex w-12 h-12 rounded-2xl bg-slate-100 items-center justify-center mb-3">
+                          <ArrowUpDown size={20} className="text-slate-400" />
+                        </div>
+                        <div className="font-bold text-slate-900">No movements yet</div>
+                        <div className="text-xs text-slate-500 mt-1">Stock adjustments and order fulfillments appear here.</div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-          )}
-        </Card>
+            {(movements?.total || 0) > 20 && (
+              <div className="border-t border-slate-100">
+                <Pagination
+                  page={movPage}
+                  pageSize={20}
+                  total={movements?.total || 0}
+                  onPageChange={setMovPage}
+                  onPageSizeChange={() => {}}
+                />
+              </div>
+            )}
+          </Card>
+        )}
       </div>
 
       {/* Adjust Stock Modal */}
@@ -167,11 +269,13 @@ export default function InventoryPage() {
             placeholder="Select warehouse…"
             fullWidth
           />
-          <Input
-            label="Variant ID"
+          <Select
+            label="Product / SKU"
             value={adjustForm.variantId}
-            onChange={(e) => setAdjustForm(f => ({ ...f, variantId: e.target.value }))}
-            placeholder="Paste the variant UUID"
+            onChange={(v) => setAdjustForm(f => ({ ...f, variantId: v }))}
+            options={variantOptions}
+            placeholder={variantOptions.length ? 'Select product variant…' : 'Loading products…'}
+            fullWidth
           />
           <Select
             label="Movement Type"

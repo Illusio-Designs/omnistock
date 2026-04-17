@@ -8,14 +8,16 @@ import {
   Button, Badge, Card, Modal, Input, Pagination, Tooltip, Checkbox,
 } from '@/components/ui';
 import {
-  Plus, Users, Mail, Phone, UserPlus, TrendingUp, Crown,
+  Plus, Users, Mail, Phone, UserPlus, TrendingUp, Crown, Pencil, Trash2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export default function CustomersPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editCustomer, setEditCustomer] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['customers', page, pageSize],
@@ -26,6 +28,23 @@ export default function CustomersPage() {
   const total = data?.total || customers.length;
   const b2bCount = customers.filter((c: any) => c.isB2B).length;
 
+  // Customers created in the current calendar month
+  const thisMonth = customers.filter((c: any) => {
+    if (!c.createdAt) return false;
+    const d = new Date(c.createdAt);
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+
+  const qc = useQueryClient();
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => customerApi.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['customers'] });
+      setDeleteTarget(null);
+    },
+  });
+
   return (
     <DashboardLayout>
       <div className="space-y-5 animate-slide-up">
@@ -34,16 +53,16 @@ export default function CustomersPage() {
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Customers</h1>
             <p className="text-sm text-slate-500 mt-1">{total} total customers</p>
           </div>
-          <Button leftIcon={<UserPlus size={15} />} onClick={() => setModalOpen(true)}>
+          <Button leftIcon={<UserPlus size={15} />} onClick={() => setCreateOpen(true)}>
             New Customer
           </Button>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCard label="Total Customers" value={total} icon={Users} color="emerald" />
-          <StatCard label="B2B Accounts"    value={b2bCount} icon={Crown} color="amber" />
-          <StatCard label="This Month"      value={Math.floor(total * 0.12)} icon={TrendingUp} color="sky" />
+          <StatCard label="Total Customers" value={total}     icon={Users}     color="emerald" />
+          <StatCard label="B2B Accounts"    value={b2bCount}  icon={Crown}     color="amber" />
+          <StatCard label="This Month"      value={thisMonth} icon={TrendingUp} color="sky" />
         </div>
 
         {/* Table */}
@@ -52,14 +71,14 @@ export default function CustomersPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50/50 border-b border-slate-100">
                 <tr className="text-left text-[10px] uppercase tracking-widest text-slate-400">
-                  {['Customer', 'Email', 'Phone', 'Type', 'GSTIN', 'Joined'].map(h => (
+                  {['Customer', 'Email', 'Phone', 'Type', 'GSTIN', 'Joined', ''].map(h => (
                     <th key={h} className="px-4 py-3 font-bold">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
-                  <tr><td colSpan={6} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
                 ) : customers.length ? customers.map((c: any) => (
                   <tr key={c.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="px-4 py-3">
@@ -76,17 +95,35 @@ export default function CustomersPage() {
                     <td className="px-4 py-3 text-slate-600">{c.email || '—'}</td>
                     <td className="px-4 py-3 text-slate-600">{c.phone || '—'}</td>
                     <td className="px-4 py-3">
-                      <Badge variant={c.isB2B ? 'amber' : 'emerald'}>
-                        {c.isB2B ? 'B2B' : 'Retail'}
-                      </Badge>
+                      <Badge variant={c.isB2B ? 'amber' : 'emerald'}>{c.isB2B ? 'B2B' : 'Retail'}</Badge>
                     </td>
                     <td className="px-4 py-3 text-slate-500 font-mono text-xs">{c.gstIn || '—'}</td>
                     <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">
                       {c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
                     </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
+                        <Tooltip content="Edit customer">
+                          <button
+                            onClick={() => setEditCustomer(c)}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-900"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content="Delete customer">
+                          <button
+                            onClick={() => setDeleteTarget(c)}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </Tooltip>
+                      </div>
+                    </td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={6} className="px-4 py-12 text-center text-slate-400">No customers yet</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400">No customers yet</td></tr>
                 )}
               </tbody>
             </table>
@@ -103,7 +140,12 @@ export default function CustomersPage() {
                   <div className="font-bold text-slate-900 truncate">{c.name}</div>
                   <div className="text-xs text-slate-500 truncate">{c.email || c.phone || '—'}</div>
                 </div>
-                <Badge variant={c.isB2B ? 'amber' : 'emerald'}>{c.isB2B ? 'B2B' : 'Retail'}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant={c.isB2B ? 'amber' : 'emerald'}>{c.isB2B ? 'B2B' : 'Retail'}</Badge>
+                  <button onClick={() => setEditCustomer(c)} className="text-slate-400 hover:text-slate-700">
+                    <Pencil size={14} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -122,16 +164,47 @@ export default function CustomersPage() {
         </Card>
       </div>
 
-      <NewCustomerModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <CustomerModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        mode="create"
+      />
+      <CustomerModal
+        open={!!editCustomer}
+        onClose={() => setEditCustomer(null)}
+        mode="edit"
+        customer={editCustomer}
+      />
+
+      {/* Delete confirm */}
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete Customer"
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button
+              variant="danger"
+              onClick={() => deleteMutation.mutate(deleteTarget.id)}
+              loading={deleteMutation.isPending}
+            >
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-slate-600">
+          Delete <span className="font-bold">{deleteTarget?.name}</span>? This cannot be undone.
+        </p>
+      </Modal>
     </DashboardLayout>
   );
 }
 
 function StatCard({ label, value, icon: Icon, color }: {
-  label: string;
-  value: string | number;
-  icon: LucideIcon;
-  color: string;
+  label: string; value: string | number; icon: LucideIcon; color: string;
 }) {
   const colorMap: Record<string, string> = {
     emerald: 'bg-emerald-50 text-emerald-600',
@@ -149,22 +222,33 @@ function StatCard({ label, value, icon: Icon, color }: {
   );
 }
 
-function NewCustomerModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function CustomerModal({
+  open, onClose, mode, customer,
+}: {
+  open: boolean; onClose: () => void; mode: 'create' | 'edit'; customer?: any;
+}) {
   const qc = useQueryClient();
-  const [form, setForm] = useState({ name: '', email: '', phone: '', gstIn: '', isB2B: false });
+  const [form, setForm] = useState({
+    name:  customer?.name  || '',
+    email: customer?.email || '',
+    phone: customer?.phone || '',
+    gstIn: customer?.gstIn || '',
+    isB2B: customer?.isB2B || false,
+  });
   const [error, setError] = useState('');
 
-  const createMutation = useMutation({
-    mutationFn: () => customerApi.create({
-      name: form.name,
-      email: form.email || undefined,
-      phone: form.phone || undefined,
-      gstIn: form.gstIn || undefined,
-      isB2B: form.isB2B,
-    }),
+  // Reset form when customer changes (switching between rows)
+  const resetToCustomer = (c: any) => setForm({
+    name: c?.name || '', email: c?.email || '', phone: c?.phone || '',
+    gstIn: c?.gstIn || '', isB2B: c?.isB2B || false,
+  });
+
+  const mutation = useMutation({
+    mutationFn: () => mode === 'create'
+      ? customerApi.create({ ...form, email: form.email || undefined, phone: form.phone || undefined, gstIn: form.gstIn || undefined })
+      : customerApi.update(customer.id, { ...form, email: form.email || undefined, phone: form.phone || undefined, gstIn: form.gstIn || undefined }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['customers'] });
-      setForm({ name: '', email: '', phone: '', gstIn: '', isB2B: false });
       setError('');
       onClose();
     },
@@ -175,18 +259,18 @@ function NewCustomerModal({ open, onClose }: { open: boolean; onClose: () => voi
     <Modal
       open={open}
       onClose={onClose}
-      title="New Customer"
-      description="Add a customer to your database"
+      title={mode === 'create' ? 'New Customer' : 'Edit Customer'}
+      description={mode === 'create' ? 'Add a customer to your database' : 'Update customer details'}
       size="md"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button
-            onClick={() => { setError(''); createMutation.mutate(); }}
-            loading={createMutation.isPending}
+            onClick={() => { setError(''); mutation.mutate(); }}
+            loading={mutation.isPending}
             disabled={!form.name}
           >
-            Create Customer
+            {mode === 'create' ? 'Create Customer' : 'Save Changes'}
           </Button>
         </>
       }

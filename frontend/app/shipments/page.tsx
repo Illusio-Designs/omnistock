@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import api from '@/lib/api';
+import { shipmentApi, orderApi, channelApi } from '@/lib/api';
 import { Button, Badge, Card, Pagination, Select, Tooltip, Input, Modal } from '@/components/ui';
-import { Truck, Package, MapPin, Calendar, Eye, ExternalLink, Search, Plus } from 'lucide-react';
+import { Truck, Package, MapPin, Eye, ExternalLink, Search, Plus, CheckCircle2, XCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 const STATUS_FILTERS = [
@@ -30,21 +30,51 @@ const STATUS_VARIANT: Record<string, any> = {
 };
 
 export default function ShipmentsPage() {
+  const qc = useQueryClient();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [status, setStatus] = useState('');
   const [trackModalOpen, setTrackModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [trackingInput, setTrackingInput] = useState('');
+  const [trackResult, setTrackResult] = useState<any>(null);
+  const [trackError, setTrackError] = useState('');
+  const [trackLoading, setTrackLoading] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['shipments', page, pageSize, status],
-    queryFn: () => api.get('/shipments', { params: { page, limit: pageSize, status: status || undefined } }).then(r => r.data).catch(() => ({ shipments: [], total: 0 })),
+    queryFn: () => shipmentApi.list({ page, limit: pageSize, status: status || undefined }).then(r => r.data).catch(() => ({ shipments: [], total: 0 })),
   });
 
   const shipments = data?.shipments || data || [];
   const total = data?.total || shipments.length;
   const delivered = shipments.filter((s: any) => s.status === 'DELIVERED').length;
   const inTransit = shipments.filter((s: any) => ['IN_TRANSIT', 'PICKED_UP', 'OUT_FOR_DELIVERY'].includes(s.status)).length;
+
+  const handleTrack = async () => {
+    if (!trackingInput.trim()) return;
+    setTrackLoading(true);
+    setTrackResult(null);
+    setTrackError('');
+    try {
+      // Find the shipment by AWB from our list or use a generic channel tracking
+      const match = shipments.find((s: any) => s.trackingNumber === trackingInput.trim());
+      if (match?.channelId) {
+        const res = await channelApi.trackShipment(match.channelId, trackingInput.trim());
+        setTrackResult(res.data);
+      } else {
+        // Fall back to local status from our records
+        const res = await shipmentApi.list({ trackingNumber: trackingInput.trim() });
+        const found = (res.data?.shipments || [])[0];
+        if (found) setTrackResult({ status: found.status, awb: found.trackingNumber, courier: found.courierName });
+        else setTrackError('No shipment found with this tracking number.');
+      }
+    } catch (e: any) {
+      setTrackError(e.response?.data?.error || e.message || 'Tracking failed');
+    } finally {
+      setTrackLoading(false);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -55,10 +85,10 @@ export default function ShipmentsPage() {
             <p className="text-sm text-slate-500 mt-1">{total} shipments tracked</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="secondary" leftIcon={<Search size={14} />} onClick={() => setTrackModalOpen(true)}>
+            <Button variant="secondary" leftIcon={<Search size={14} />} onClick={() => { setTrackModalOpen(true); setTrackResult(null); setTrackError(''); setTrackingInput(''); }}>
               Track AWB
             </Button>
-            <Button leftIcon={<Plus size={15} />}>Create Shipment</Button>
+            <Button leftIcon={<Plus size={15} />} onClick={() => setCreateModalOpen(true)}>Create Shipment</Button>
           </div>
         </div>
 
@@ -86,7 +116,7 @@ export default function ShipmentsPage() {
                   <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
                 ) : shipments.length ? shipments.map((s: any) => (
                   <tr key={s.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="px-4 py-3 font-bold text-emerald-600">{s.orderNumber}</td>
+                    <td className="px-4 py-3 font-bold text-emerald-600">{s.orderNumber || s.order?.orderNumber || '—'}</td>
                     <td className="px-4 py-3 text-slate-700">{s.courierName}</td>
                     <td className="px-4 py-3 text-slate-500 font-mono text-xs">{s.trackingNumber || '—'}</td>
                     <td className="px-4 py-3">
@@ -99,8 +129,28 @@ export default function ShipmentsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        <Tooltip content="View details"><button className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-900"><Eye size={13} /></button></Tooltip>
-                        <Tooltip content="Track on courier site"><button className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-900"><ExternalLink size={13} /></button></Tooltip>
+                        {s.trackingNumber && (
+                          <Tooltip content="Track AWB">
+                            <button
+                              onClick={() => { setTrackingInput(s.trackingNumber); setTrackModalOpen(true); setTrackResult(null); setTrackError(''); }}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-900"
+                            >
+                              <Eye size={13} />
+                            </button>
+                          </Tooltip>
+                        )}
+                        {s.trackingUrl && (
+                          <Tooltip content="Track on courier site">
+                            <a
+                              href={s.trackingUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-900"
+                            >
+                              <ExternalLink size={13} />
+                            </a>
+                          </Tooltip>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -134,20 +184,128 @@ export default function ShipmentsPage() {
         size="md"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setTrackModalOpen(false)}>Cancel</Button>
-            <Button disabled={!trackingInput}>Track</Button>
+            <Button variant="secondary" onClick={() => setTrackModalOpen(false)}>Close</Button>
+            <Button onClick={handleTrack} loading={trackLoading} disabled={!trackingInput.trim()}>Track</Button>
           </>
         }
       >
-        <Input
-          label="Tracking Number (AWB)"
-          leftIcon={<Truck size={14} />}
-          value={trackingInput}
-          onChange={(e) => setTrackingInput(e.target.value)}
-          placeholder="Paste AWB number…"
-        />
+        <div className="space-y-4">
+          <Input
+            label="Tracking Number (AWB)"
+            leftIcon={<Truck size={14} />}
+            value={trackingInput}
+            onChange={(e) => { setTrackingInput(e.target.value); setTrackResult(null); setTrackError(''); }}
+            placeholder="Paste AWB number…"
+          />
+          {trackError && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-sm">
+              <XCircle size={15} /> {trackError}
+            </div>
+          )}
+          {trackResult && (
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-sm">
+              <div className="flex items-center gap-2 text-emerald-700 font-bold">
+                <CheckCircle2 size={15} /> Shipment found
+              </div>
+              {trackResult.status && (
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Status</span>
+                  <Badge variant={STATUS_VARIANT[trackResult.status] || 'slate'} dot>{trackResult.status}</Badge>
+                </div>
+              )}
+              {trackResult.courier && (
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Courier</span>
+                  <span className="font-medium text-slate-700">{trackResult.courier}</span>
+                </div>
+              )}
+              {trackResult.awb && (
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">AWB</span>
+                  <span className="font-mono text-xs text-slate-700">{trackResult.awb}</span>
+                </div>
+              )}
+              {trackResult.estimatedDelivery && (
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Est. Delivery</span>
+                  <span className="font-medium text-slate-700">{new Date(trackResult.estimatedDelivery).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
+                </div>
+              )}
+              {trackResult.trackingUrl && (
+                <a
+                  href={trackResult.trackingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs text-emerald-600 hover:underline mt-1"
+                >
+                  <ExternalLink size={11} /> Track on courier site
+                </a>
+              )}
+            </div>
+          )}
+        </div>
       </Modal>
+
+      <CreateShipmentModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} onCreated={() => qc.invalidateQueries({ queryKey: ['shipments'] })} />
     </DashboardLayout>
+  );
+}
+
+function CreateShipmentModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: () => void }) {
+  const [orderId, setOrderId] = useState('');
+  const [courierName, setCourierName] = useState('');
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [weight, setWeight] = useState('');
+  const [charges, setCharges] = useState('');
+  const [error, setError] = useState('');
+
+  const createMutation = useMutation({
+    mutationFn: () => shipmentApi.create({
+      orderId,
+      courierName,
+      trackingNumber: trackingNumber || undefined,
+      weight: weight ? Number(weight) : undefined,
+      charges: charges ? Number(charges) : undefined,
+    }),
+    onSuccess: () => {
+      onCreated();
+      onClose();
+      setOrderId(''); setCourierName(''); setTrackingNumber(''); setWeight(''); setCharges(''); setError('');
+    },
+    onError: (err: any) => setError(err.response?.data?.error || err.message),
+  });
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Create Shipment"
+      description="Manually create a shipment record for an order"
+      size="md"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button
+            onClick={() => { setError(''); createMutation.mutate(); }}
+            loading={createMutation.isPending}
+            disabled={!orderId || !courierName}
+          >
+            Create Shipment
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <Input label="Order ID" value={orderId} onChange={(e) => setOrderId(e.target.value)} placeholder="Paste the order UUID" />
+        <Input label="Courier Name" value={courierName} onChange={(e) => setCourierName(e.target.value)} placeholder="e.g. Delhivery, Shiprocket, BlueDart" />
+        <Input label="AWB / Tracking Number" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} placeholder="Optional" />
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="Weight (kg)" type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="0.5" />
+          <Input label="Charges (₹)" type="number" value={charges} onChange={(e) => setCharges(e.target.value)} placeholder="0" />
+        </div>
+        {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
+      </div>
+    </Modal>
   );
 }
 

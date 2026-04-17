@@ -5,19 +5,30 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { warehouseApi } from '@/lib/api';
 import {
-  Button, Badge, Card, Modal, Input, Textarea,
+  Button, Badge, Card, Modal, Input,
 } from '@/components/ui';
-import { Plus, Store, MapPin, Package } from 'lucide-react';
+import { Plus, Store, MapPin, Package, Pencil, Trash2 } from 'lucide-react';
 
 export default function WarehousesPage() {
-  const [modalOpen, setModalOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editWarehouse, setEditWarehouse] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
 
+  const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ['warehouses'],
     queryFn: () => warehouseApi.list().then(r => r.data),
   });
 
   const warehouses = data || [];
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => warehouseApi.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['warehouses'] });
+      setDeleteTarget(null);
+    },
+  });
 
   return (
     <DashboardLayout>
@@ -27,7 +38,7 @@ export default function WarehousesPage() {
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Warehouses</h1>
             <p className="text-sm text-slate-500 mt-1">{warehouses.length} fulfillment locations</p>
           </div>
-          <Button leftIcon={<Plus size={15} />} onClick={() => setModalOpen(true)}>
+          <Button leftIcon={<Plus size={15} />} onClick={() => setCreateOpen(true)}>
             New Warehouse
           </Button>
         </div>
@@ -62,11 +73,23 @@ export default function WarehousesPage() {
                       </span>
                     </div>
                   )}
-                  <div className="flex items-center gap-4 mt-5 pt-4 border-t border-slate-100">
-                    <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <div className="flex items-center gap-4 mt-4 pt-3 border-t border-slate-100">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-600 flex-1">
                       <Package size={12} className="text-emerald-500" />
                       <span className="font-bold">{w.inventoryItems?.length || 0}</span> SKUs
                     </div>
+                    <button
+                      onClick={() => setEditWarehouse(w)}
+                      className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors"
+                    >
+                      <Pencil size={11} /> Edit
+                    </button>
+                    <button
+                      onClick={() => setDeleteTarget(w)}
+                      className="flex items-center gap-1 text-xs text-rose-500 hover:text-rose-700 px-2 py-1 rounded-lg hover:bg-rose-50 transition-colors"
+                    >
+                      <Trash2 size={11} /> Delete
+                    </button>
                   </div>
                 </div>
               </Card>
@@ -79,40 +102,70 @@ export default function WarehousesPage() {
             </div>
             <h3 className="font-bold text-slate-900 text-lg">No warehouses yet</h3>
             <p className="text-sm text-slate-500 mt-1">Add a fulfillment location to start managing inventory.</p>
-            <Button leftIcon={<Plus size={14} />} onClick={() => setModalOpen(true)} className="mt-5">
+            <Button leftIcon={<Plus size={14} />} onClick={() => setCreateOpen(true)} className="mt-5">
               New Warehouse
             </Button>
           </Card>
         )}
       </div>
 
-      <NewWarehouseModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <WarehouseModal open={createOpen} onClose={() => setCreateOpen(false)} mode="create" />
+      <WarehouseModal open={!!editWarehouse} onClose={() => setEditWarehouse(null)} mode="edit" warehouse={editWarehouse} />
+
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete Warehouse"
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button
+              variant="danger"
+              onClick={() => deleteMutation.mutate(deleteTarget.id)}
+              loading={deleteMutation.isPending}
+            >
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-slate-600">
+          Delete <span className="font-bold">{deleteTarget?.name}</span>? Inventory records linked to this warehouse will also be removed.
+        </p>
+      </Modal>
     </DashboardLayout>
   );
 }
 
-function NewWarehouseModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function WarehouseModal({ open, onClose, mode, warehouse }: {
+  open: boolean; onClose: () => void; mode: 'create' | 'edit'; warehouse?: any;
+}) {
   const qc = useQueryClient();
+  const addr = typeof warehouse?.address === 'object' ? warehouse.address : {};
   const [form, setForm] = useState({
-    name: '', code: '', line1: '', city: '', state: '', pincode: '',
+    name:    warehouse?.name  || '',
+    code:    warehouse?.code  || '',
+    line1:   addr.line1   || '',
+    city:    addr.city    || '',
+    state:   addr.state   || '',
+    pincode: addr.pincode || '',
+    isActive: warehouse?.isActive ?? true,
   });
   const [error, setError] = useState('');
 
-  const createMutation = useMutation({
-    mutationFn: () => warehouseApi.create({
-      name: form.name,
-      code: form.code,
-      address: {
-        line1: form.line1,
-        city: form.city,
-        state: form.state,
-        pincode: form.pincode,
-        country: 'India',
-      },
-    }),
+  const mutation = useMutation({
+    mutationFn: () => {
+      const payload = {
+        name: form.name,
+        code: form.code,
+        address: { line1: form.line1, city: form.city, state: form.state, pincode: form.pincode, country: 'India' },
+        isActive: form.isActive,
+      };
+      return mode === 'create' ? warehouseApi.create(payload) : warehouseApi.update(warehouse.id, payload);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['warehouses'] });
-      setForm({ name: '', code: '', line1: '', city: '', state: '', pincode: '' });
       setError('');
       onClose();
     },
@@ -123,18 +176,18 @@ function NewWarehouseModal({ open, onClose }: { open: boolean; onClose: () => vo
     <Modal
       open={open}
       onClose={onClose}
-      title="New Warehouse"
-      description="Add a fulfillment location"
+      title={mode === 'create' ? 'New Warehouse' : 'Edit Warehouse'}
+      description={mode === 'create' ? 'Add a fulfillment location' : 'Update warehouse details'}
       size="md"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button
-            onClick={() => { setError(''); createMutation.mutate(); }}
-            loading={createMutation.isPending}
+            onClick={() => { setError(''); mutation.mutate(); }}
+            loading={mutation.isPending}
             disabled={!form.name || !form.code}
           >
-            Create Warehouse
+            {mode === 'create' ? 'Create Warehouse' : 'Save Changes'}
           </Button>
         </>
       }
@@ -150,6 +203,17 @@ function NewWarehouseModal({ open, onClose }: { open: boolean; onClose: () => vo
           <Input label="State" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="Karnataka" />
           <Input label="Pincode" value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} placeholder="560001" />
         </div>
+        {mode === 'edit' && (
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.isActive}
+              onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+              className="w-4 h-4 accent-emerald-600"
+            />
+            <span className="text-sm font-semibold text-slate-700">Active warehouse</span>
+          </label>
+        )}
         {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
       </div>
     </Modal>
