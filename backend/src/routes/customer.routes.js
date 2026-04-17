@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const { z } = require('zod');
 const {
   authenticate, requireTenant, requirePermission,
 } = require('../middleware/auth.middleware');
@@ -6,6 +7,19 @@ const prisma = require('../utils/prisma');
 
 const router = Router();
 router.use(authenticate, requireTenant);
+
+const createSchema = z.object({
+  name: z.string().min(1).max(200),
+  email: z.string().email().max(200).optional().nullable(),
+  phone: z.string().max(30).optional().nullable(),
+  gstin: z.string().max(20).optional().nullable(),
+  type: z.enum(['RETAIL', 'B2B']).optional(),
+  address: z.any().optional(),
+  city: z.string().max(100).optional().nullable(),
+  state: z.string().max(100).optional().nullable(),
+  country: z.string().max(100).optional().nullable(),
+});
+const updateSchema = createSchema.partial();
 
 router.get('/', requirePermission('customers.read'), async (req, res) => {
   const { search, page = '1', limit = '20' } = req.query;
@@ -32,19 +46,31 @@ router.get('/:id', requirePermission('customers.read'), async (req, res) => {
 });
 
 router.post('/', requirePermission('customers.create'), async (req, res) => {
-  const c = await prisma.customer.create({
-    data: { ...req.body, tenantId: req.tenant.id },
-  });
-  res.status(201).json(c);
+  try {
+    const data = createSchema.parse(req.body);
+    const c = await prisma.customer.create({
+      data: { ...data, tenantId: req.tenant.id },
+    });
+    res.status(201).json(c);
+  } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.put('/:id', requirePermission('customers.update'), async (req, res) => {
-  const existing = await prisma.customer.findFirst({
-    where: { id: req.params.id, tenantId: req.tenant.id },
-  });
-  if (!existing) return res.status(404).json({ error: 'Customer not found' });
-  const c = await prisma.customer.update({ where: { id: req.params.id }, data: req.body });
-  res.json(c);
+  try {
+    const data = updateSchema.parse(req.body);
+    const existing = await prisma.customer.findFirst({
+      where: { id: req.params.id, tenantId: req.tenant.id },
+    });
+    if (!existing) return res.status(404).json({ error: 'Customer not found' });
+    const c = await prisma.customer.update({ where: { id: req.params.id }, data });
+    res.json(c);
+  } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.delete('/:id', requirePermission('customers.delete'), async (req, res) => {

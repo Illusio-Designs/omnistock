@@ -63,6 +63,16 @@ const authLimiter = rateLimit({
 });
 app.use('/api/v1/auth/login', authLimiter);
 app.use('/api/v1/auth/register', authLimiter);
+app.use('/api/v1/auth/onboard', authLimiter);
+app.use('/api/v1/auth/google', authLimiter);
+
+// Webhook rate limit — one tenant shouldn't be able to DOS us via webhook flood
+const webhookLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120, // 2 orders per second per IP; enough for legitimate marketplace traffic
+  message: { error: 'Too many webhook requests' },
+});
+app.use('/api/v1/webhooks', webhookLimiter);
 
 // ── Health Check ──────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date() }));

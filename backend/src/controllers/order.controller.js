@@ -1,25 +1,40 @@
 const { z } = require('zod');
 const prisma = require('../utils/prisma');
 
+// Accept either full variant reference (variantId) or a lightweight one (sku / productName).
+// If sku is provided, we look up the variant server-side. If neither works, a placeholder
+// variant is created so manual orders with ad-hoc items don't fail.
 const orderItemSchema = z.object({
-  variantId: z.string(),
-  qty: z.number().min(1),
+  variantId: z.string().optional(),
+  sku: z.string().optional(),
+  productName: z.string().optional(),
+  name: z.string().optional(), // alias for productName (web frontend uses this)
+  qty: z.number().int().min(1).optional(),
+  quantity: z.number().int().min(1).optional(), // mobile alias
   unitPrice: z.number(),
   discount: z.number().optional().default(0),
   tax: z.number().optional().default(0),
-});
+  total: z.number().optional(), // ignored — recomputed
+}).refine(
+  (i) => i.variantId || i.sku || i.productName || i.name,
+  { message: 'Each item needs variantId, sku, productName, or name' }
+);
 
 const createOrderSchema = z.object({
-  channelId: z.string(),
+  // channelId and customerId are OPTIONAL for manual orders (walk-in, offline)
+  channelId: z.string().optional(),
   channelOrderId: z.string().optional(),
-  customerId: z.string(),
+  customerId: z.string().optional(),
+  customerName: z.string().optional(), // for walk-ins
   warehouseId: z.string().optional(),
-  shippingAddress: z.any(),
+  shippingAddress: z.any().optional(),
   billingAddress: z.any().optional(),
   paymentMethod: z.string().optional(),
   items: z.array(orderItemSchema).min(1),
   discount: z.number().optional().default(0),
   shippingCharge: z.number().optional().default(0),
+  subtotal: z.number().optional(), // ignored — recomputed
+  total: z.number().optional(),    // ignored — recomputed
   tax: z.number().optional().default(0),
   notes: z.string().optional(),
 });
@@ -31,6 +46,7 @@ const getOrders = async (req, res) => {
   try {
     const { page = '1', limit = '20', status, channelId, search, risk, needsApproval, fulfillment, completeness } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
+    // Knex-backed Prisma shim — unknown columns pass through to SQL directly
     const where = { tenantId: tid(req) };
     if (status) where.status = String(status);
     if (channelId) where.channelId = String(channelId);
@@ -69,32 +85,116 @@ const getOrder = async (req, res) => {
   }
 };
 
+// Helper: ensure a "Manual" channel and "Walk-in" customer exist for ad-hoc orders
+async function ensureManualChannel(tenantId) {
+  let ch = await prisma.channel.findFirst({ where: { tenantId, type: 'OFFLINE' } });
+  if (!ch) {
+    ch = await prisma.channel.create({
+      data: { tenantId, name: 'Manual / Walk-in', type: 'OFFLINE', category: 'CUSTOM' },
+    });
+  }
+  return ch;
+}
+async function ensureWalkInCustomer(tenantId, name) {
+  const label = name && name.trim() ? name.trim() : 'Walk-in Customer';
+  let c = await prisma.customer.findFirst({ where: { tenantId, name: label } });
+  if (!c) {
+    c = await prisma.customer.create({ data: { tenantId, name: label } });
+  }
+  return c;
+}
+
+// Helper: resolve items — turn {sku|productName|name, qty|quantity} into {variantId, qty}.
+// Looks up variants by SKU; if not found, creates a placeholder "Quick" product+variant.
+async function resolveItems(tenantId, rawItems) {
+  const out = [];
+  for (const raw of rawItems) {
+    const qty = Number(raw.qty ?? raw.quantity ?? 1);
+    const unitPrice = Number(raw.unitPrice ?? 0);
+    let variantId = raw.variantId;
+
+    if (!variantId && raw.sku) {
+      const v = await prisma.productVariant.findFirst({
+        where: { tenantId, sku: String(raw.sku) },
+        select: { id: true },
+      });
+      if (v) variantId = v.id;
+    }
+
+    if (!variantId) {
+      // Create a placeholder product + variant for the ad-hoc item
+      const name = raw.productName || raw.name || raw.sku || 'Manual Item';
+      const sku = raw.sku || `QUICK-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const existingProd = await prisma.product.findFirst({
+        where: { tenantId, sku },
+        select: { id: true },
+      });
+      let productId = existingProd?.id;
+      if (!productId) {
+        const prod = await prisma.product.create({
+          data: { tenantId, name, sku, isActive: true },
+        });
+        productId = prod.id;
+      }
+      const variant = await prisma.productVariant.create({
+        data: {
+          tenantId,
+          productId,
+          sku,
+          name,
+          attributes: {},
+          costPrice: 0,
+          mrp: unitPrice,
+          sellingPrice: unitPrice,
+        },
+      });
+      variantId = variant.id;
+    }
+
+    out.push({
+      variantId,
+      qty,
+      unitPrice,
+      discount: Number(raw.discount || 0),
+      tax: Number(raw.tax || 0),
+    });
+  }
+  return out;
+}
+
 const createOrder = async (req, res) => {
   try {
     const data = createOrderSchema.parse(req.body);
     const tenantId = tid(req);
 
-    // Verify channel + customer (and warehouse if provided) belong to tenant
-    const [channel, customer, wh] = await Promise.all([
-      prisma.channel.findFirst({ where: { id: data.channelId, tenantId } }),
-      prisma.customer.findFirst({ where: { id: data.customerId, tenantId } }),
-      data.warehouseId ? prisma.warehouse.findFirst({ where: { id: data.warehouseId, tenantId } }) : null,
-    ]);
-    if (!channel) return res.status(404).json({ error: 'Channel not found' });
-    if (!customer) return res.status(404).json({ error: 'Customer not found' });
-    if (data.warehouseId && !wh) return res.status(404).json({ error: 'Warehouse not found' });
-
-    // Verify all variants belong to tenant
-    const variantIds = data.items.map((i) => i.variantId);
-    const variants = await prisma.productVariant.findMany({
-      where: { id: { in: variantIds }, tenantId },
-      select: { id: true },
-    });
-    if (variants.length !== variantIds.length) {
-      return res.status(400).json({ error: 'One or more variants do not belong to your tenant' });
+    // Resolve channel: use provided ID, or default to Manual/Walk-in channel
+    let channel;
+    if (data.channelId) {
+      channel = await prisma.channel.findFirst({ where: { id: data.channelId, tenantId } });
+      if (!channel) return res.status(404).json({ error: 'Channel not found' });
+    } else {
+      channel = await ensureManualChannel(tenantId);
     }
 
-    const subtotal = data.items.reduce((sum, i) => sum + i.unitPrice * i.qty - (i.discount || 0), 0);
+    // Resolve customer: use provided ID, create walk-in, or reuse cached walk-in
+    let customer;
+    if (data.customerId) {
+      customer = await prisma.customer.findFirst({ where: { id: data.customerId, tenantId } });
+      if (!customer) return res.status(404).json({ error: 'Customer not found' });
+    } else {
+      customer = await ensureWalkInCustomer(tenantId, data.customerName);
+    }
+
+    // Optional warehouse ownership
+    if (data.warehouseId) {
+      const wh = await prisma.warehouse.findFirst({ where: { id: data.warehouseId, tenantId } });
+      if (!wh) return res.status(404).json({ error: 'Warehouse not found' });
+    }
+
+    // Normalize items into {variantId, qty, unitPrice, ...}
+    const resolvedItems = await resolveItems(tenantId, data.items);
+
+    const subtotal = resolvedItems.reduce((sum, i) => sum + i.unitPrice * i.qty - (i.discount || 0), 0);
     const total = subtotal + (data.shippingCharge || 0) + (data.tax || 0) - (data.discount || 0);
 
     const order = await prisma.$transaction(async (tx) => {
@@ -102,11 +202,11 @@ const createOrder = async (req, res) => {
         data: {
           tenantId,
           orderNumber: generateOrderNumber(),
-          channelId: data.channelId,
+          channelId: channel.id,
           channelOrderId: data.channelOrderId,
-          customerId: data.customerId,
+          customerId: customer.id,
           warehouseId: data.warehouseId,
-          shippingAddress: data.shippingAddress,
+          shippingAddress: data.shippingAddress || {},
           billingAddress: data.billingAddress,
           paymentMethod: data.paymentMethod,
           subtotal,
@@ -117,7 +217,7 @@ const createOrder = async (req, res) => {
           notes: data.notes,
           createdById: req.user?.id,
           items: {
-            create: data.items.map((item) => ({
+            create: resolvedItems.map((item) => ({
               tenantId,
               variantId: item.variantId,
               qty: item.qty,
@@ -142,11 +242,13 @@ const createOrder = async (req, res) => {
       return created;
     });
 
-    // Debit wallet if this order was an overage (PAYG flow)
+    // Debit wallet if this order was an overage (PAYG flow).
+    // If the debit fails (insufficient funds race, DB error), roll back the order.
     if (req.overage?.unitRate > 0) {
+      const wallet = require('../services/wallet.service');
+      let debitResult;
       try {
-        const wallet = require('../services/wallet.service');
-        await wallet.debit(tid(req), req.overage.unitRate, {
+        debitResult = await wallet.debit(tid(req), req.overage.unitRate, {
           metric: 'orders',
           quantity: 1,
           reference: order.id,
@@ -154,7 +256,30 @@ const createOrder = async (req, res) => {
           createdById: req.user?.id,
         });
       } catch (e) {
-        console.error('[wallet] debit failed', e.message);
+        console.error('[wallet] debit failed, rolling back order', e.message);
+      }
+      if (!debitResult?.ok) {
+        // Roll back: delete the order we just created + decrement the usage meter
+        try {
+          await prisma.$transaction([
+            prisma.orderItem.deleteMany({ where: { orderId: order.id } }),
+            prisma.order.delete({ where: { id: order.id } }),
+          ]);
+          const period = new Date().toISOString().slice(0, 7);
+          await prisma.usageMeter.updateMany({
+            where: { tenantId, metric: 'orders', period, count: { gt: 0 } },
+            data: { count: { decrement: 1 } },
+          });
+        } catch (rollbackErr) {
+          console.error('[wallet] rollback failed', rollbackErr.message);
+        }
+        return res.status(402).json({
+          error: 'Wallet debit failed — order not created',
+          metric: 'orders',
+          unitRate: req.overage.unitRate,
+          walletBalance: debitResult?.balance ?? null,
+          topupUrl: '/dashboard/billing',
+        });
       }
     }
 

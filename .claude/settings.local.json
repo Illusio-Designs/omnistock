@@ -50,7 +50,8 @@
       "Bash(node -c src/services/fulfillment.service.js)",
       "Bash(node -c src/routes/billing.routes.js)",
       "Bash(node -c src/middleware/auth.middleware.js)",
-      "Bash(node -c src/bootstrap/initDb.js)"
+      "Bash(node -c src/bootstrap/initDb.js)",
+      "Bash(JWT_SECRET=test-secret-for-dev-only node src/index.js)"
     ],
     "additionalDirectories": [
       "\\tmp"

@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const { z } = require('zod');
 const prisma = require('../utils/prisma');
 const { authenticate, requirePlatformAdmin } = require('../middleware/auth.middleware');
 const settingsService = require('../services/settings.service');
@@ -6,6 +7,47 @@ const cronJob = require('../jobs/cron.job');
 
 const router = Router();
 router.use(authenticate, requirePlatformAdmin);
+
+// ── Zod schemas for admin writes (prevents mass assignment / privilege escalation)
+const planSchema = z.object({
+  code: z.string().min(1).max(32),
+  name: z.string().min(1).max(100),
+  tagline: z.string().max(500).optional().nullable(),
+  description: z.string().max(2000).optional().nullable(),
+  monthlyPrice: z.number().min(0).optional(),
+  yearlyPrice: z.number().min(0).optional(),
+  currency: z.string().max(8).optional(),
+  isPublic: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
+  maxFacilities: z.number().int().min(0).nullable().optional(),
+  maxSkus: z.number().int().min(0).nullable().optional(),
+  maxUserRoles: z.number().int().min(0).nullable().optional(),
+  maxUsers: z.number().int().min(0).nullable().optional(),
+  maxOrdersPerMonth: z.number().int().min(0).nullable().optional(),
+  features: z.record(z.any()).optional(),
+  meteredRates: z.record(z.any()).optional(),
+});
+const planPartial = planSchema.partial();
+
+const tenantUpdateSchema = z.object({
+  businessName: z.string().min(1).max(200).optional(),
+  ownerName: z.string().max(100).optional(),
+  ownerEmail: z.string().email().optional(),
+  phone: z.string().max(30).optional(),
+  gstin: z.string().max(20).optional(),
+  industry: z.string().max(100).optional(),
+  companySize: z.string().max(50).optional(),
+  country: z.string().max(100).optional(),
+  status: z.enum(['TRIAL', 'ACTIVE', 'SUSPENDED', 'CANCELLED']).optional(),
+  trialEndsAt: z.string().datetime().optional(),
+});
+
+const assignPlanSchema = z.object({
+  planCode: z.enum(['STANDARD', 'PROFESSIONAL', 'BUSINESS', 'ENTERPRISE']),
+  billingCycle: z.enum(['MONTHLY', 'YEARLY']).optional(),
+  payAsYouGo: z.boolean().optional(),
+});
 
 // ── CRON TRIGGERS (manual runs for debugging) ──────────────────────────
 router.post('/cron/run', async (_req, res) => {
@@ -33,16 +75,24 @@ router.get('/plans', async (_req, res) => {
 
 router.post('/plans', async (req, res) => {
   try {
-    const plan = await prisma.plan.create({ data: req.body });
+    const data = planSchema.parse(req.body);
+    const plan = await prisma.plan.create({ data });
     res.status(201).json(plan);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    if (e instanceof z.ZodError) return res.status(400).json({ error: e.errors });
+    res.status(400).json({ error: e.message });
+  }
 });
 
 router.put('/plans/:id', async (req, res) => {
   try {
-    const plan = await prisma.plan.update({ where: { id: req.params.id }, data: req.body });
+    const data = planPartial.parse(req.body);
+    const plan = await prisma.plan.update({ where: { id: req.params.id }, data });
     res.json(plan);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    if (e instanceof z.ZodError) return res.status(400).json({ error: e.errors });
+    res.status(400).json({ error: e.message });
+  }
 });
 
 router.delete('/plans/:id', async (req, res) => {
@@ -83,8 +133,14 @@ router.get('/tenants/:id', async (req, res) => {
 });
 
 router.put('/tenants/:id', async (req, res) => {
-  const tenant = await prisma.tenant.update({ where: { id: req.params.id }, data: req.body });
-  res.json(tenant);
+  try {
+    const data = tenantUpdateSchema.parse(req.body);
+    const tenant = await prisma.tenant.update({ where: { id: req.params.id }, data });
+    res.json(tenant);
+  } catch (e) {
+    if (e instanceof z.ZodError) return res.status(400).json({ error: e.errors });
+    res.status(400).json({ error: e.message });
+  }
 });
 
 router.post('/tenants/:id/suspend', async (req, res) => {
@@ -99,21 +155,26 @@ router.post('/tenants/:id/activate', async (req, res) => {
 
 // Force-assign a plan
 router.post('/tenants/:id/assign-plan', async (req, res) => {
-  const { planCode, billingCycle, payAsYouGo } = req.body;
-  const plan = await prisma.plan.findUnique({ where: { code: planCode } });
-  if (!plan) return res.status(404).json({ error: 'Plan not found' });
-  const periodEnd = new Date(); periodEnd.setMonth(periodEnd.getMonth() + 1);
+  try {
+    const { planCode, billingCycle, payAsYouGo } = assignPlanSchema.parse(req.body);
+    const plan = await prisma.plan.findUnique({ where: { code: planCode } });
+    if (!plan) return res.status(404).json({ error: 'Plan not found' });
+    const periodEnd = new Date(); periodEnd.setMonth(periodEnd.getMonth() + 1);
 
-  const sub = await prisma.subscription.upsert({
-    where: { tenantId: req.params.id },
-    update: { planId: plan.id, billingCycle, payAsYouGo: !!payAsYouGo, status: 'ACTIVE', currentPeriodEnd: periodEnd },
-    create: {
-      tenantId: req.params.id, planId: plan.id, billingCycle: billingCycle || 'MONTHLY',
-      payAsYouGo: !!payAsYouGo, status: 'ACTIVE', currentPeriodEnd: periodEnd,
-    },
-    include: { plan: true },
-  });
-  res.json(sub);
+    const sub = await prisma.subscription.upsert({
+      where: { tenantId: req.params.id },
+      update: { planId: plan.id, billingCycle: billingCycle || 'MONTHLY', payAsYouGo: !!payAsYouGo, status: 'ACTIVE', currentPeriodEnd: periodEnd },
+      create: {
+        tenantId: req.params.id, planId: plan.id, billingCycle: billingCycle || 'MONTHLY',
+        payAsYouGo: !!payAsYouGo, status: 'ACTIVE', currentPeriodEnd: periodEnd,
+      },
+      include: { plan: true },
+    });
+    res.json(sub);
+  } catch (e) {
+    if (e instanceof z.ZodError) return res.status(400).json({ error: e.errors });
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // ── SUBSCRIPTIONS overview ──────────────────────────────

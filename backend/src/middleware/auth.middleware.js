@@ -3,7 +3,9 @@ const prisma = require('../utils/prisma');
 
 // ── In-process cache for permissions/plan to avoid hitting DB on every req
 const ctxCache = new Map(); // userId -> { ts, ctx }
-const TTL_MS = 60 * 1000;
+// Short TTL so role/permission changes propagate quickly; critical actions
+// (logout, role change, deactivate) call invalidateUserCache() to be safe.
+const TTL_MS = 10 * 1000;
 
 async function loadUserContext(userId, { byEmail = false } = {}) {
   const cacheKey = byEmail ? `email:${userId}` : userId;
@@ -96,8 +98,10 @@ async function applyImpersonation(req) {
 }
 
 // ── Authenticate: verify JWT, load tenant + permissions
-// Dev auth bypass — ONLY when explicitly enabled AND not production
-const DEV_AUTH_ENABLED = process.env.DEV_AUTH_BYPASS === 'true' && process.env.NODE_ENV !== 'production';
+// Dev auth bypass — STRICT whitelist: only in explicit dev/test envs
+const DEV_AUTH_ENABLED =
+  process.env.DEV_AUTH_BYPASS === 'true' &&
+  (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test');
 
 const authenticate = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];

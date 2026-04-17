@@ -21,7 +21,8 @@ const router = Router();
 const STATE_TTL_MS = 15 * 60 * 1000;
 
 function signState(payload) {
-  const secret = process.env.JWT_SECRET || 'dev-secret';
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET env var is required');
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
   const sig = crypto.createHmac('sha256', secret).update(body).digest('base64url');
   return `${body}.${sig}`;
@@ -29,7 +30,8 @@ function signState(payload) {
 
 function verifyState(state) {
   if (!state || typeof state !== 'string' || !state.includes('.')) return null;
-  const secret = process.env.JWT_SECRET || 'dev-secret';
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET env var is required');
   const [body, sig] = state.split('.');
   const expected = crypto.createHmac('sha256', secret).update(body).digest('base64url');
   if (sig !== expected) return null;

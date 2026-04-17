@@ -20,7 +20,10 @@ async function handleIncomingWebhook(channelId, req, res) {
 
   const adapter = getAdapter(channel);
 
-  // Optional HMAC signature verification
+  // Mandatory signature verification — channels MUST either:
+  //   1. expose validateWebhookSignature(rawBody, sig), OR
+  //   2. set skipSignatureVerification = true to explicitly opt-out
+  //      (only for trusted internal channels: OFFLINE, CUSTOM_WEBHOOK with shared secret)
   if (typeof adapter.validateWebhookSignature === 'function') {
     const rawBody = JSON.stringify(req.body);
     const sig =
@@ -33,6 +36,11 @@ async function handleIncomingWebhook(channelId, req, res) {
     if (!adapter.validateWebhookSignature(rawBody, sig)) {
       return res.status(401).json({ error: 'Invalid webhook signature' });
     }
+  } else if (!adapter.skipSignatureVerification) {
+    return res.status(501).json({
+      error: `Webhook signature verification not implemented for channel type ${channel.type}`,
+      hint: 'Adapter must expose validateWebhookSignature(rawBody, sig) or explicitly set skipSignatureVerification=true',
+    });
   }
 
   // Adapters expose parseWebhook(body) → normalized raw order

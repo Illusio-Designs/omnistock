@@ -12,6 +12,10 @@ const productSchema = z.object({
   dimensions: z.any().optional(),
   images: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
+  // Pricing — NOT on Product model; we create a default variant below if provided
+  costPrice: z.number().optional(),
+  mrp: z.number().optional(),
+  sellingPrice: z.number().optional(),
 });
 
 const variantSchema = z.object({
@@ -62,11 +66,39 @@ const getProduct = async (req, res) => {
 const createProduct = async (req, res) => {
   try {
     const data = productSchema.parse(req.body);
-    const product = await prisma.product.create({
-      data: { ...data, tenantId: tenantId(req) },
-      include: { category: true, brand: true },
+    const { costPrice, mrp, sellingPrice, ...productFields } = data;
+    const tId = tenantId(req);
+
+    const product = await prisma.$transaction(async (tx) => {
+      const p = await tx.product.create({
+        data: { ...productFields, tenantId: tId },
+        include: { category: true, brand: true },
+      });
+      // If pricing is provided, create a default variant so the product has a sellable SKU
+      const hasPricing = costPrice != null || mrp != null || sellingPrice != null;
+      if (hasPricing) {
+        await tx.productVariant.create({
+          data: {
+            tenantId: tId,
+            productId: p.id,
+            sku: data.sku,
+            name: data.name,
+            attributes: {},
+            costPrice: costPrice ?? 0,
+            mrp: mrp ?? sellingPrice ?? 0,
+            sellingPrice: sellingPrice ?? mrp ?? 0,
+          },
+        });
+      }
+      return p;
     });
-    res.status(201).json(product);
+
+    // Re-fetch with variants so the client can see the default variant
+    const full = await prisma.product.findFirst({
+      where: { id: product.id },
+      include: { category: true, brand: true, variants: true },
+    });
+    res.status(201).json(full);
   } catch (err) {
     if (err instanceof z.ZodError) { res.status(400).json({ error: err.errors }); return; }
     if (err.code === 'P2002') return res.status(409).json({ error: 'SKU already exists' });
