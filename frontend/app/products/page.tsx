@@ -159,25 +159,35 @@ function NewProductModal({ open, onClose }: { open: boolean; onClose: () => void
   const categoryOptions = (categories || []).map((c: any) => ({ value: c.id, label: c.name }));
   const brandOptions = (brands || []).map((b: any) => ({ value: b.id, label: b.name }));
 
+  const toBase64 = (file: File): Promise<string> =>
+    new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
+
   const createMutation = useMutation({
-    mutationFn: () => productApi.create({
-      name: form.name,
-      sku: form.sku,
-      barcode: form.barcode || undefined,
-      description: form.description || undefined,
-      categoryId: form.categoryId || undefined,
-      brandId: form.brandId || undefined,
-      weight: form.weight ? Number(form.weight) : undefined,
-      // First variant with the pricing info
-      variants: [{
+    mutationFn: async () => {
+      const imageUrls = images.length ? await Promise.all(images.map(toBase64)) : undefined;
+      return productApi.create({
+        name: form.name,
         sku: form.sku,
-        name: 'Default',
-        attributes: {},
-        costPrice: Number(form.costPrice || 0),
-        mrp: Number(form.mrp || 0),
-        sellingPrice: Number(form.sellingPrice || 0),
-      }],
-    }),
+        barcode: form.barcode || undefined,
+        description: form.description || undefined,
+        categoryId: form.categoryId || undefined,
+        brandId: form.brandId || undefined,
+        weight: form.weight ? Number(form.weight) : undefined,
+        images: imageUrls,
+        variants: [{
+          sku: form.sku,
+          name: 'Default',
+          attributes: {},
+          costPrice: Number(form.costPrice || 0),
+          mrp: Number(form.mrp || 0),
+          sellingPrice: Number(form.sellingPrice || 0),
+        }],
+      });
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['products'] });
       reset();

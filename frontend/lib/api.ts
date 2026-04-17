@@ -49,6 +49,9 @@ export const authApi = {
   me: () => api.get('/auth/me'),
   onboard: (data: any) => api.post('/auth/onboard', data),
   logout: () => api.post('/auth/logout', {}),
+  updateMe: (data: { name?: string; phone?: string }) => api.patch('/auth/me', data),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.post('/auth/change-password', { currentPassword, newPassword }),
 };
 
 // ── SaaS: plans (public) ───────────────────────────────────────────
@@ -77,6 +80,8 @@ export const billingApi = {
     autoTopupAmount?: number;
     autoTopupTriggerBelow?: number;
   }) => api.patch('/billing/wallet/settings', body),
+  updateTenant: (data: { businessName?: string; gstin?: string }) =>
+    api.patch('/billing/tenant', data),
 };
 
 // ── OAuth (per-seller channel authorization) ──────────────────────

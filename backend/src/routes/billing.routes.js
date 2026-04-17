@@ -80,6 +80,21 @@ router.patch('/wallet/settings', requirePermission('billing.manage'), async (req
   }
 });
 
+// Update tenant company info (name, GSTIN)
+router.patch('/tenant', requirePermission('billing.manage'), async (req, res) => {
+  try {
+    const { businessName, gstin } = req.body;
+    const data = {};
+    if (businessName != null) data.businessName = String(businessName).trim().slice(0, 191);
+    if (gstin != null) data.gstin = String(gstin).trim().slice(0, 20);
+    if (!Object.keys(data).length) return res.json({ ok: true });
+    await prisma.tenant.update({ where: { id: req.tenant.id }, data });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Current subscription + plan
 router.get('/subscription', async (req, res) => {
   const sub = await prisma.subscription.findUnique({

@@ -40,6 +40,9 @@ async function initDb() {
 
     // Per-channel default fulfillment (SELF | CHANNEL | BOTH)
     { table: 'channels', column: 'defaultFulfillmentType', ddl: "VARCHAR(16) NOT NULL DEFAULT 'SELF'" },
+
+    // User profile extras
+    { table: 'users', column: 'phone', ddl: 'VARCHAR(30) DEFAULT NULL' },
   ];
 
   // Create wallet tables if they don't exist (separate from column migrations)

@@ -96,10 +96,12 @@ const adjustInventory = async (req, res) => {
 
 const getLowStockItems = async (req, res) => {
   try {
+    const limit = Math.min(100, Number(req.query.limit) || 50);
     const items = await prisma.inventoryItem.findMany({
       where: { tenantId: tid(req), quantityAvailable: { lte: 10 } },
       include: { warehouse: true, variant: { include: { product: true } } },
       orderBy: { quantityAvailable: 'asc' },
+      take: limit,
     });
     res.json(items);
   } catch {

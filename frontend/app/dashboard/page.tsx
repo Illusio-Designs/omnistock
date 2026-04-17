@@ -113,8 +113,8 @@ export default function DashboardPage() {
                 <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
                   <TrendingDown size={15} className="text-rose-600" />
                 </div>
-                <span className="text-sm font-semibold text-slate-700">Low Stock Value</span>
-                <Tooltip content="Value of SKUs below their reorder point">
+                <span className="text-sm font-semibold text-slate-700">Low Stock SKUs</span>
+                <Tooltip content="Number of SKUs below their reorder point">
                   <Info size={12} className="text-slate-400" />
                 </Tooltip>
               </div>
@@ -123,16 +123,16 @@ export default function DashboardPage() {
               </button>
             </div>
             <div className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
-              {formatCurrency((s.lowStockCount || 0) * 1000 + 9845.20)}
+              {(s.lowStockCount || 0).toLocaleString()}
             </div>
             <div className="flex items-center gap-1.5 mt-2">
               <Badge variant="rose">
-                <ArrowDown size={10} /> 2.3%
+                <ArrowDown size={10} /> SKUs
               </Badge>
-              <span className="text-xs text-slate-400">from last month</span>
+              <span className="text-xs text-slate-400">below reorder point</span>
             </div>
             <div className="mt-5 text-xs text-slate-500">
-              <span className="font-bold text-slate-700">{s.lowStockCount || 0}</span> SKUs below reorder point
+              Requires attention to avoid stockouts
             </div>
           </Card>
 
@@ -182,7 +182,7 @@ export default function DashboardPage() {
                 <div key={c.type} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-xs shadow-sm flex-shrink-0">
-                      {c.name.slice(0, 2).toUpperCase()}
+                      {(c.name || c.type || '?').slice(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
                       <div className="text-sm font-bold text-slate-900 truncate">{c.name}</div>

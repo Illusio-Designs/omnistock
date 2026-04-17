@@ -9,6 +9,7 @@ import {
   User, Building2, Bell, Shield, CreditCard, Globe, Mail, Phone, Save, Check,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
+import { authApi, billingApi } from '@/lib/api';
 
 const TABS = [
   { key: 'profile',  label: 'Profile',       icon: User },
@@ -45,16 +46,64 @@ export default function SettingsPage() {
     orders: true, lowStock: true, reviews: false, marketing: false, weekly: true,
   });
   const [logo, setLogo] = useState<File[]>([]);
+  const [profileError, setProfileError] = useState('');
+  const [companyError, setCompanyError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   // Hydrate from the auth store once it's loaded
   useEffect(() => {
     if (user) setProfile({ name: user.name || '', email: user.email || '', phone: (user as any).phone || '' });
   }, [user]);
   useEffect(() => {
-    if (tenant) setCompany((c) => ({ ...c, name: tenant.businessName || '' }));
+    if (tenant) setCompany((c) => ({ ...c, name: tenant.businessName || '', gstin: (tenant as any).gstin || '' }));
   }, [tenant]);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('notificationPrefs');
+      if (saved) setNotifications(JSON.parse(saved));
+    } catch {}
+  }, []);
 
-  const save = () => {
+  const saveProfile = async () => {
+    setProfileError('');
+    try {
+      await authApi.updateMe({ name: profile.name, phone: profile.phone });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err: any) {
+      setProfileError(err.response?.data?.error || err.message);
+    }
+  };
+
+  const saveCompany = async () => {
+    setCompanyError('');
+    try {
+      await billingApi.updateTenant({ businessName: company.name, gstin: company.gstin });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err: any) {
+      setCompanyError(err.response?.data?.error || err.message);
+    }
+  };
+
+  const savePassword = async () => {
+    setPasswordError('');
+    if (password.next !== password.confirm) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+    try {
+      await authApi.changePassword(password.current, password.next);
+      setPassword({ current: '', next: '', confirm: '' });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err: any) {
+      setPasswordError(err.response?.data?.error || err.message);
+    }
+  };
+
+  const saveNotifications = () => {
+    localStorage.setItem('notificationPrefs', JSON.stringify(notifications));
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
@@ -117,9 +166,12 @@ export default function SettingsPage() {
                   <Input label="Phone" leftIcon={<Phone size={14} />} value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} />
                 </div>
 
+                {profileError && <p className="text-xs text-rose-600 font-medium mt-2">{profileError}</p>}
                 <div className="flex items-center justify-end gap-2 mt-6 pt-6 border-t border-slate-100">
-                  <Button variant="secondary">Reset</Button>
-                  <Button leftIcon={saved ? <Check size={14} /> : <Save size={14} />} onClick={save}>
+                  <Button variant="secondary" onClick={() => {
+                    if (user) setProfile({ name: user.name || '', email: user.email || '', phone: (user as any).phone || '' });
+                  }}>Reset</Button>
+                  <Button leftIcon={saved ? <Check size={14} /> : <Save size={14} />} onClick={saveProfile}>
                     {saved ? 'Saved' : 'Save Changes'}
                   </Button>
                 </div>
@@ -149,8 +201,9 @@ export default function SettingsPage() {
                   />
                 </div>
 
+                {companyError && <p className="text-xs text-rose-600 font-medium mt-2">{companyError}</p>}
                 <div className="flex items-center justify-end gap-2 mt-6 pt-6 border-t border-slate-100">
-                  <Button leftIcon={saved ? <Check size={14} /> : <Save size={14} />} onClick={save}>
+                  <Button leftIcon={saved ? <Check size={14} /> : <Save size={14} />} onClick={saveCompany}>
                     {saved ? 'Saved' : 'Save Changes'}
                   </Button>
                 </div>
@@ -169,8 +222,9 @@ export default function SettingsPage() {
                     <PasswordInput label="Confirm Password" value={password.confirm} onChange={(e) => setPassword({ ...password, confirm: e.target.value })} />
                   </div>
 
+                  {passwordError && <p className="text-xs text-rose-600 font-medium">{passwordError}</p>}
                   <div className="flex items-center justify-end gap-2 mt-6 pt-6 border-t border-slate-100">
-                    <Button leftIcon={<Save size={14} />} onClick={save}>Update Password</Button>
+                    <Button leftIcon={<Save size={14} />} onClick={savePassword}>Update Password</Button>
                   </div>
                 </Card>
 
@@ -224,7 +278,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex items-center justify-end gap-2 mt-6 pt-6 border-t border-slate-100">
-                  <Button leftIcon={saved ? <Check size={14} /> : <Save size={14} />} onClick={save}>
+                  <Button leftIcon={saved ? <Check size={14} /> : <Save size={14} />} onClick={saveNotifications}>
                     {saved ? 'Saved' : 'Save Preferences'}
                   </Button>
                 </div>

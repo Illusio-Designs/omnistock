@@ -117,16 +117,25 @@ router.post('/', requirePermission('purchases.create'), async (req, res) => {
   }
 });
 
+const PO_STATUSES = ['DRAFT', 'SENT', 'CONFIRMED', 'PARTIALLY_RECEIVED', 'RECEIVED', 'CANCELLED'];
+const poStatusSchema = z.object({ status: z.enum(PO_STATUSES) });
+
 router.patch('/:id/status', requirePermission('purchases.update'), async (req, res) => {
-  const existing = await prisma.purchaseOrder.findFirst({
-    where: { id: req.params.id, tenantId: req.tenant.id },
-  });
-  if (!existing) return res.status(404).json({ error: 'Purchase order not found' });
-  const po = await prisma.purchaseOrder.update({
-    where: { id: req.params.id },
-    data: { status: req.body.status },
-  });
-  res.json(po);
+  try {
+    const { status } = poStatusSchema.parse(req.body);
+    const existing = await prisma.purchaseOrder.findFirst({
+      where: { id: req.params.id, tenantId: req.tenant.id },
+    });
+    if (!existing) return res.status(404).json({ error: 'Purchase order not found' });
+    const po = await prisma.purchaseOrder.update({
+      where: { id: req.params.id },
+      data: { status },
+    });
+    res.json(po);
+  } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;
