@@ -76,10 +76,15 @@ export default function OrdersScreen() {
     onError: (err: any) => {
       if (err?.response?.status === 402) {
         const d = err.response.data || {};
-        if (d.metric === 'orders') {
+        if (d.walletBalance != null) {
+          Alert.alert(
+            'Wallet balance low',
+            `Overage charge \u20B9${d.unitRate} per order, but wallet only has \u20B9${d.walletBalance}. Top up to continue.`
+          );
+        } else if (d.metric === 'orders') {
           Alert.alert(
             'Order limit reached',
-            `You've reached your plan's monthly limit of ${d.limit} orders. Enable Pay-As-You-Go from Billing to continue, or upgrade your plan.`
+            `You've reached your plan's monthly limit of ${d.limit} orders. Enable Pay-As-You-Go + top up your wallet to continue.`
           );
         } else {
           Alert.alert('Plan limit reached', d.error || 'Upgrade your plan to continue');

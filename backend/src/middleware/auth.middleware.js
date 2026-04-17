@@ -263,9 +263,38 @@ const enforceLimit = (resource) => async (req, res, next) => {
     }
 
     if (limit !== null && used >= limit) {
-      // PAYG: allow overage, just record usage
+      // PAYG with wallet: check if the tenant has enough balance for one overage unit
       if (req.subscription?.payAsYouGo) {
-        req.overage = { metric, used, limit };
+        const rates = plan.meteredRates || {};
+        const rateKey =
+          metric === 'orders' ? 'extraOrders' :
+          metric === 'skus' ? 'extraSkus' :
+          metric === 'users' ? 'extraUsers' :
+          metric === 'channels' ? 'extraChannels' :
+          metric === 'facilities' ? 'extraFacilities' : null;
+        const unitRate = Number((rateKey && rates[rateKey]) || 0);
+
+        if (unitRate > 0) {
+          // Load wallet balance (lazy — only when we're actually over the limit)
+          const wallet = require('../services/wallet.service');
+          const balance = await wallet.getBalance(tenantId);
+          if (balance < unitRate) {
+            return res.status(402).json({
+              error: 'Wallet balance too low for overage',
+              metric,
+              limit,
+              used,
+              unitRate,
+              walletBalance: balance,
+              topupUrl: '/dashboard/billing',
+            });
+          }
+          // Enough balance — stash the debit intent for the controller to execute after create
+          req.overage = { metric, used, limit, unitRate, walletBalance: balance };
+          return next();
+        }
+        // Free overage (rate = 0) — just log and let it through
+        req.overage = { metric, used, limit, unitRate: 0 };
         return next();
       }
       return res.status(402).json({
@@ -273,7 +302,7 @@ const enforceLimit = (resource) => async (req, res, next) => {
         metric,
         limit,
         used,
-        upgradeTo: 'next plan or enable pay-as-you-go',
+        upgradeTo: 'Enable Pay-As-You-Go with a funded wallet, or upgrade your plan',
       });
     }
     next();

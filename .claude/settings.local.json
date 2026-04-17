@@ -44,7 +44,13 @@
       "Bash(/tmp/check_logos.sh)",
       "Bash(npm info *)",
       "Bash(npx tsc *)",
-      "Bash(node src/scripts/seed.js)"
+      "Bash(node src/scripts/seed.js)",
+      "Bash(timeout 10 node -e \"require\\('./src/bootstrap/initDb'\\).initDb\\(\\).then\\(\\(\\)=>{console.log\\('ok'\\);process.exit\\(0\\)}\\).catch\\(e=>{console.error\\('ERR:', e.message, e.stack\\); process.exit\\(1\\)}\\)\")",
+      "Bash(node -c src/services/wallet.service.js)",
+      "Bash(node -c src/services/fulfillment.service.js)",
+      "Bash(node -c src/routes/billing.routes.js)",
+      "Bash(node -c src/middleware/auth.middleware.js)",
+      "Bash(node -c src/bootstrap/initDb.js)"
     ],
     "additionalDirectories": [
       "\\tmp"

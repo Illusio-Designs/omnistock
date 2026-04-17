@@ -5,16 +5,25 @@ import {
   CreditCard,
   Package,
   Plug,
+  Plus,
   ShoppingCart,
   Users,
+  Wallet,
   Zap,
 } from 'lucide-react-native';
+import { useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import Badge from '../../components/ui/Badge';
+import BottomSheet from '../../components/ui/BottomSheet';
+import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
+import FormInput from '../../components/ui/FormInput';
+import ListRow from '../../components/ui/ListRow';
 import PageShell from '../../components/ui/PageShell';
 import { billingApi } from '../../lib/api';
 import { formatCurrency } from '../../lib/utils';
+
+const TOPUP_PRESETS = [500, 1000, 2500, 5000];
 
 type UsageRow = {
   key: string;
@@ -30,10 +39,22 @@ type UsageRow = {
 
 export default function BillingScreen() {
   const qc = useQueryClient();
+  const [showTopup, setShowTopup] = useState(false);
+  const [topupAmount, setTopupAmount] = useState('');
 
   const { data, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ['billing', 'usage'],
     queryFn: async () => (await billingApi.usage()).data,
+  });
+
+  const { data: wallet, refetch: refetchWallet } = useQuery({
+    queryKey: ['billing', 'wallet'],
+    queryFn: async () => (await billingApi.wallet()).data,
+  });
+
+  const { data: txns } = useQuery({
+    queryKey: ['billing', 'wallet', 'txns'],
+    queryFn: async () => (await billingApi.walletTransactions(20)).data,
   });
 
   const toggleMutation = useMutation({
@@ -44,6 +65,19 @@ export default function BillingScreen() {
     },
     onError: (err: any) => {
       Alert.alert('Error', err?.response?.data?.error || 'Failed to toggle PAYG');
+    },
+  });
+
+  const topupMutation = useMutation({
+    mutationFn: (amount: number) => billingApi.topupWallet(amount),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['billing'] });
+      setShowTopup(false);
+      setTopupAmount('');
+      Alert.alert('Success', 'Wallet topped up');
+    },
+    onError: (err: any) => {
+      Alert.alert('Error', err?.response?.data?.error || 'Top-up failed');
     },
   });
 
@@ -167,6 +201,135 @@ export default function BillingScreen() {
           ) : null}
         </Card>
       ) : null}
+
+      {/* Wallet */}
+      <Card className="p-5 mb-4">
+        <View className="flex-row items-start mb-4">
+          <View className="w-10 h-10 rounded-2xl bg-emerald-50 items-center justify-center mr-3">
+            <Wallet size={18} color="#059669" />
+          </View>
+          <View className="flex-1">
+            <Text className="text-[13px] font-bold text-slate-400 uppercase tracking-wider">
+              Wallet Balance
+            </Text>
+            <Text className={`text-3xl font-extrabold tracking-tight ${wallet?.lowBalance ? 'text-rose-600' : 'text-slate-900'}`}>
+              {formatCurrency(wallet?.balance ?? 0)}
+            </Text>
+            {wallet?.lowBalance ? (
+              <Text className="text-[12px] text-rose-600 font-bold mt-1">
+                Low balance — top up soon
+              </Text>
+            ) : (
+              <Text className="text-[12px] text-slate-500 font-medium mt-1">
+                Used for overage charges
+              </Text>
+            )}
+          </View>
+        </View>
+
+        <Button
+          onPress={() => setShowTopup(true)}
+          leftIcon={<Plus size={14} color="#fff" />}
+          size="sm"
+        >
+          Top up wallet
+        </Button>
+
+        {/* Recent transactions */}
+        {Array.isArray(txns) && txns.length > 0 ? (
+          <View className="mt-4 pt-4 border-t border-slate-100">
+            <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+              Recent transactions
+            </Text>
+            {txns.slice(0, 5).map((t: any) => {
+              const isCredit = ['TOPUP', 'REFUND', 'ADJUSTMENT_CREDIT'].includes(t.type);
+              const amt = Number(t.amount);
+              return (
+                <View
+                  key={t.id}
+                  className="flex-row items-center py-2 border-b border-slate-50 last:border-b-0"
+                >
+                  <View className={`w-8 h-8 rounded-xl items-center justify-center mr-3 ${
+                    isCredit ? 'bg-emerald-50' : 'bg-rose-50'
+                  }`}>
+                    <Text className={`text-sm font-bold ${isCredit ? 'text-emerald-700' : 'text-rose-700'}`}>
+                      {isCredit ? '+' : '-'}
+                    </Text>
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-[13px] font-bold text-slate-900" numberOfLines={1}>
+                      {t.description || t.type}
+                    </Text>
+                    <Text className="text-[10px] text-slate-400 font-medium">
+                      {new Date(t.createdAt).toLocaleString()}
+                    </Text>
+                  </View>
+                  <Text className={`text-[13px] font-extrabold ${
+                    isCredit ? 'text-emerald-700' : 'text-rose-700'
+                  }`}>
+                    {isCredit ? '+' : ''}{formatCurrency(Math.abs(amt))}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        ) : null}
+      </Card>
+
+      {/* Top-up modal */}
+      <BottomSheet visible={showTopup} onClose={() => setShowTopup(false)} title="Top up wallet">
+        <Text className="text-[13px] font-bold text-slate-400 uppercase tracking-wider mb-3">
+          Quick amounts
+        </Text>
+        <View className="flex-row flex-wrap gap-2 mb-5">
+          {TOPUP_PRESETS.map((amt) => (
+            <Pressable
+              key={amt}
+              onPress={() => setTopupAmount(String(amt))}
+              className={`px-5 py-3 rounded-2xl border ${
+                topupAmount === String(amt)
+                  ? 'bg-emerald-600 border-emerald-600'
+                  : 'bg-white border-slate-200 active:bg-slate-50'
+              }`}
+            >
+              <Text className={`text-[14px] font-bold ${
+                topupAmount === String(amt) ? 'text-white' : 'text-slate-700'
+              }`}>
+                {formatCurrency(amt)}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <FormInput
+          label="Or enter amount"
+          value={topupAmount}
+          onChangeText={setTopupAmount}
+          keyboardType="decimal-pad"
+          placeholder="0.00"
+        />
+
+        <View className="bg-slate-50 rounded-2xl p-3 mb-5">
+          <Text className="text-[11px] text-slate-500 font-medium">
+            Payments are processed securely. In production this would redirect to Razorpay / Stripe.
+          </Text>
+        </View>
+
+        <Button
+          onPress={() => {
+            const n = parseFloat(topupAmount);
+            if (!n || n <= 0) {
+              Alert.alert('Invalid', 'Enter a valid amount');
+              return;
+            }
+            topupMutation.mutate(n);
+          }}
+          loading={topupMutation.isPending}
+          disabled={!topupAmount || parseFloat(topupAmount) <= 0}
+        >
+          Add {topupAmount ? formatCurrency(parseFloat(topupAmount) || 0) : 'credit'}
+        </Button>
+      </BottomSheet>
 
       {/* PAYG toggle */}
       <Card className="p-5 mb-4">

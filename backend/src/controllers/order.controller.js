@@ -141,6 +141,23 @@ const createOrder = async (req, res) => {
 
       return created;
     });
+
+    // Debit wallet if this order was an overage (PAYG flow)
+    if (req.overage?.unitRate > 0) {
+      try {
+        const wallet = require('../services/wallet.service');
+        await wallet.debit(tid(req), req.overage.unitRate, {
+          metric: 'orders',
+          quantity: 1,
+          reference: order.id,
+          description: `Overage: order ${order.orderNumber}`,
+          createdById: req.user?.id,
+        });
+      } catch (e) {
+        console.error('[wallet] debit failed', e.message);
+      }
+    }
+
     res.status(201).json(order);
   } catch (err) {
     if (err instanceof z.ZodError) { res.status(400).json({ error: err.errors }); return; }

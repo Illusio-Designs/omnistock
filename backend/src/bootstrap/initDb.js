@@ -41,6 +41,45 @@ async function initDb() {
     // Per-channel default fulfillment (SELF | CHANNEL | BOTH)
     { table: 'channels', column: 'defaultFulfillmentType', ddl: "VARCHAR(16) NOT NULL DEFAULT 'SELF'" },
   ];
+
+  // Create wallet tables if they don't exist (separate from column migrations)
+  const walletTables = [
+    `CREATE TABLE IF NOT EXISTS \`tenant_wallets\` (
+      \`id\` varchar(191) NOT NULL,
+      \`tenantId\` varchar(191) NOT NULL,
+      \`balance\` decimal(12,2) NOT NULL DEFAULT 0.00,
+      \`currency\` varchar(8) NOT NULL DEFAULT 'INR',
+      \`lowBalanceThreshold\` decimal(12,2) NOT NULL DEFAULT 100.00,
+      \`autoTopupEnabled\` tinyint(1) NOT NULL DEFAULT 0,
+      \`autoTopupAmount\` decimal(12,2) DEFAULT NULL,
+      \`autoTopupTriggerBelow\` decimal(12,2) DEFAULT NULL,
+      \`createdAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+      \`updatedAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3) ON UPDATE current_timestamp(3),
+      PRIMARY KEY (\`id\`),
+      UNIQUE KEY \`tenant_wallets_tenantId_unique\` (\`tenantId\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    `CREATE TABLE IF NOT EXISTS \`wallet_transactions\` (
+      \`id\` varchar(191) NOT NULL,
+      \`tenantId\` varchar(191) NOT NULL,
+      \`walletId\` varchar(191) NOT NULL,
+      \`type\` varchar(16) NOT NULL,
+      \`amount\` decimal(12,2) NOT NULL,
+      \`balanceAfter\` decimal(12,2) NOT NULL,
+      \`metric\` varchar(32) DEFAULT NULL,
+      \`quantity\` int(11) DEFAULT NULL,
+      \`reference\` varchar(191) DEFAULT NULL,
+      \`description\` text DEFAULT NULL,
+      \`createdById\` varchar(191) DEFAULT NULL,
+      \`paymentRef\` varchar(191) DEFAULT NULL,
+      \`createdAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+      PRIMARY KEY (\`id\`),
+      KEY \`wallet_txn_tenant_idx\` (\`tenantId\`, \`createdAt\`),
+      KEY \`wallet_txn_wallet_idx\` (\`walletId\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  ];
+  for (const sql of walletTables) {
+    try { await db.raw(sql); } catch (e) { console.warn('[initDb] wallet table:', e.message); }
+  }
   for (const m of migrations) {
     try {
       const [cols] = await db.raw(

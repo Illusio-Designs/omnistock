@@ -58,6 +58,17 @@ export const billingApi = {
   togglePayg: (enabled: boolean) => api.post('/billing/subscription/payg', { enabled }),
   cancel: () => api.post('/billing/subscription/cancel', {}),
   invoices: () => api.get('/billing/invoices'),
+  // Wallet
+  wallet: () => api.get('/billing/wallet'),
+  walletTransactions: (limit?: number) => api.get('/billing/wallet/transactions', { params: { limit } }),
+  topupWallet: (amount: number, paymentRef?: string) =>
+    api.post('/billing/wallet/topup', { amount, paymentRef }),
+  walletSettings: (body: {
+    lowBalanceThreshold?: number;
+    autoTopupEnabled?: boolean;
+    autoTopupAmount?: number;
+    autoTopupTriggerBelow?: number;
+  }) => api.patch('/billing/wallet/settings', body),
 };
 
 export const userApi = {
