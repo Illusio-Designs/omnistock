@@ -9,14 +9,14 @@ const router = Router();
 router.use(authenticate, requireTenant);
 
 const createSchema = z.object({
-  name: z.string().min(1).max(200),
-  email: z.string().email().max(200).optional().nullable(),
-  phone: z.string().max(30).optional().nullable(),
-  gstin: z.string().max(20).optional().nullable(),
-  type: z.enum(['RETAIL', 'B2B']).optional(),
+  name:    z.string().min(1).max(200),
+  email:   z.string().email().max(200).optional().nullable(),
+  phone:   z.string().max(30).optional().nullable(),
+  gstIn:   z.string().max(20).optional().nullable(),
+  isB2B:   z.boolean().optional().default(false),
   address: z.any().optional(),
-  city: z.string().max(100).optional().nullable(),
-  state: z.string().max(100).optional().nullable(),
+  city:    z.string().max(100).optional().nullable(),
+  state:   z.string().max(100).optional().nullable(),
   country: z.string().max(100).optional().nullable(),
 });
 const updateSchema = createSchema.partial();

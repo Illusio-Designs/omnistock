@@ -48,9 +48,14 @@ Tests are vanilla Node.js `http.request` (no framework). To run a subset, commen
 OmniStock is a multi-tenant SaaS ERP for omnichannel inventory and order management (Amazon, Shopify, Flipkart, 50+ channels). It is a monorepo with three packages: `backend` (Express.js), `frontend` (Next.js 14), and `mobile` (Expo/React Native).
 
 ### Stack
-- **Backend**: Node.js + Express, Knex.js query builder (not Prisma ORM), MySQL
+- **Backend**: Node.js + Express, Knex.js query builder, MySQL
 - **Frontend**: Next.js 14 App Router, Zustand, React Query, Axios
 - **Database**: MySQL (XAMPP locally). Schema bootstrap is raw SQL via `backend/src/config/schema.sql.js`
+
+### The "Prisma" Shim
+`backend/src/utils/prisma.js` is **not real Prisma ORM** — it is a custom Knex-based shim that exposes a Prisma-like API (`prisma.model.findMany`, `.create`, `.update`, etc.) backed by raw SQL. All routes use this shim. Do not install or use actual Prisma ORM for queries; use the shim or `backend/src/utils/db.js` (raw Knex) directly.
+
+When creating a record via the shim, only pass fields that exist as columns in the DB table (`schema.sql.js` is the source of truth). Unknown fields are silently inserted as columns and will cause a DB error if the column doesn't exist.
 
 ### Multi-Tenancy & RBAC
 Every resource is scoped to a `tenant`. The middleware in `backend/src/middleware/auth.middleware.js` attaches `req.tenant`, `req.user`, `req.plan`, and `req.permissions` to every authenticated request. All DB queries must filter by `tenantId`.
@@ -84,23 +89,85 @@ Channels fall into categories: e-commerce (Amazon SP-API OAuth, Shopify OAuth), 
 | `backend/src/index.js` | Express app entry, route registration, global error handler |
 | `backend/src/middleware/auth.middleware.js` | JWT verify, permission/plan/limit enforcement |
 | `backend/src/bootstrap/initDb.js` | DB auto-migrate + conditional seed |
-| `backend/src/config/schema.sql.js` | All `CREATE TABLE` statements |
+| `backend/src/config/schema.sql.js` | All `CREATE TABLE` statements — source of truth for column names |
+| `backend/src/utils/prisma.js` | Knex-backed Prisma-like shim (not real Prisma) |
+| `backend/src/utils/db.js` | Raw Knex instance |
+| `backend/src/utils/crypto.js` | AES-256-GCM encrypt/decrypt for channel credentials |
 | `backend/src/scripts/seed.js` | Idempotent seeder (plans, admin user, sample data) |
 | `backend/src/scripts/test.js` | e2e test suite |
-| `backend/src/utils/db.js` | Knex.js instance |
-| `backend/src/utils/crypto.js` | AES-256-GCM encrypt/decrypt for channel credentials |
 | `frontend/store/auth.store.ts` | Zustand store: user, token, tenant, plan, permissions |
 | `frontend/lib/api.ts` | Axios instance + all typed API methods |
 
 ### Adding a Route
 1. Create `backend/src/routes/foo.routes.js` with `authenticate`, `requireTenant`, `requirePermission('foos.view')` middleware chain
-2. Create `backend/src/controllers/foo.controller.js` — always filter by `req.tenant.id`
+2. Always filter queries by `req.tenant.id`
 3. Register in `backend/src/index.js`: `app.use(\`${api}/foos\`, fooRoutes)`
-4. Add table to `schema.sql.js` if needed
+4. Add table to `schema.sql.js` if needed; add the corresponding `api.ts` method in the frontend
 
 ### Frontend Data Flow
 - `frontend/lib/api.ts`: Axios instance auto-attaches JWT from `localStorage`; 401 responses redirect to `/login`; 402 responses trigger a plan-limit modal
 - `frontend/store/auth.store.ts`: Populated after login via `/auth/me`; `hasPermission()` and `hasFeature()` are used throughout pages to conditionally render UI
+
+---
+
+## API Response Shape Contracts
+
+All LIST endpoints must return a consistent envelope. **Do not return bare arrays** — the frontend relies on this shape:
+
+| Resource | Response shape |
+|---|---|
+| orders | `{ orders, total, page, limit }` |
+| products | `{ products, total }` |
+| inventory | `{ items, total, page, limit }` |
+| customers | `{ customers, total }` |
+| invoices | `{ invoices, total }` |
+| shipments | `{ shipments, total, page, limit }` |
+| movements | `{ movements, total, page, limit }` |
+| vendors | plain array `[...]` (no pagination — always fetches all) |
+| warehouses | plain array `[...]` (no pagination — always fetches all) |
+
+The frontend pages all guard against both shapes: `data?.orders || data || []`.
+
+---
+
+## Known Field Name Conventions
+
+These caused real bugs — always verify against `schema.sql.js` before adding a new field to a Zod schema or frontend form:
+
+| Table | Correct column | Wrong (was used) |
+|---|---|---|
+| `shipments` | `trackingNumber` | `awb` |
+| `customers` | `isB2B` (boolean) | `type` enum `RETAIL/B2B` |
+| `customers` | `gstIn` | `gstin` |
+| `invoices` pay body | `reference` | `paymentReference` |
+
+When creating a `shipments` row, the route accepts `orderId` (to look up the order), then strips it and writes `orderNumber` to the DB. The `shipments` table has no `orderId` or `awb` column.
+
+---
+
+## Backend Route Checklist
+
+When adding or editing a backend route, verify:
+
+- [ ] All `GET /` list endpoints include `page`/`limit`/`skip` query params and return `{ data, total }` (or plain array for small-set resources like vendors/warehouses)
+- [ ] All `DELETE` routes check tenant ownership before deleting
+- [ ] All wallet/billing `GET` routes have `requirePermission('billing.read')` — wallet endpoints without permission checks expose financial data cross-tenant
+- [ ] Pay/mark-paid endpoints guard against double-payment: check `if (existing.status === 'PAID') return 400`
+- [ ] Shipment create: accept `orderId`, look up `order.orderNumber`, write `orderNumber` to the `shipments` table (no `orderId` or `awb` column exists)
+- [ ] Customer create/update: use `isB2B` boolean, not `type` enum
+
+---
+
+## Frontend Page Checklist
+
+When adding or editing a frontend page:
+
+- [ ] Use the typed API helper from `frontend/lib/api.ts` — never `api.get('/raw-path')` directly in pages
+- [ ] Pagination: show `Pagination` component only when `total > pageSize`, not `total > 0`
+- [ ] Delete actions need a confirm modal before calling the delete mutation
+- [ ] Edit modals should pre-populate from the existing record and call `.update()` not `.create()`
+- [ ] "This Month" or other time-based stats must derive from real `createdAt` dates, not `Math.floor(total * factor)`
+- [ ] Variant/SKU selectors in forms must use a dropdown populated from the API — never ask users to paste UUIDs
 
 ---
 
@@ -125,11 +192,16 @@ DISABLE_RATE_LIMIT=true
 NEXT_PUBLIC_API_URL=http://localhost:5001/api/v1
 ```
 
+The fallback baseURL in `frontend/lib/api.ts` is `http://localhost:5001/api/v1`. If `.env.local` is missing, the app will connect to port 5001.
+
 ---
 
 ## Common Gotchas
 
 - **Windows DLL lock**: If `npm install` fails with `EPERM rename query_engine-windows.dll.node`, stop the dev server first (it holds a file lock).
 - **DB doesn't exist**: XAMPP creates the MySQL instance but not the `omnistock` database — create it once via phpMyAdmin; migrations handle the rest.
-- **Prisma vs Knex**: The repo has Prisma installed (for `prisma generate` / Studio GUI) but the application code uses **Knex.js** for all queries. Do not add Prisma ORM queries to controllers.
+- **Prisma shim ≠ Prisma ORM**: `utils/prisma.js` is a Knex wrapper. Passing unknown field names to `.create()` or `.update()` will cause a DB column-not-found error at runtime. Always check `schema.sql.js` for actual column names before writing data.
 - **Tenant isolation**: Never write a query without a `tenantId` filter unless the resource is explicitly global (plans, public content).
+- **Vendor/warehouse delete is soft**: Both `DELETE /vendors/:id` and `DELETE /warehouses/:id` set `isActive = false` rather than hard-deleting. The `GET /` list for both filters `isActive: true` so soft-deleted records disappear from listings.
+- **Invoice pay is idempotent**: Attempting to pay an already-`PAID` invoice returns `400`. Partial payments set status to `PARTIALLY_PAID`; full payment sets `PAID` and records `paidAt`.
+- **Wallet permission**: `GET /billing/wallet` and `GET /billing/wallet/transactions` require `billing.read` permission. Forgetting this on new wallet endpoints exposes financial data cross-tenant.

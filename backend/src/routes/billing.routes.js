@@ -10,7 +10,7 @@ const router = Router();
 router.use(authenticate, requireTenant);
 
 // ── Wallet endpoints ────────────────────────────────────────────────────────
-router.get('/wallet', async (req, res) => {
+router.get('/wallet', requirePermission('billing.read'), async (req, res) => {
   try {
     const w = await wallet.getOrCreateWallet(req.tenant.id);
     const low = Number(w.balance) < Number(w.lowBalanceThreshold);
@@ -29,7 +29,7 @@ router.get('/wallet', async (req, res) => {
   }
 });
 
-router.get('/wallet/transactions', async (req, res) => {
+router.get('/wallet/transactions', requirePermission('billing.read'), async (req, res) => {
   try {
     const limit = Math.min(200, Number(req.query.limit) || 50);
     const txns = await wallet.history(req.tenant.id, limit);

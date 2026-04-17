@@ -30,21 +30,54 @@ router.get('/:id', requirePermission('invoices.read'), async (req, res) => {
 });
 
 router.post('/:id/pay', requirePermission('invoices.update'), async (req, res) => {
-  const tenantId = req.tenant.id;
-  const invoice = await prisma.invoice.findFirst({
-    where: { id: req.params.id, tenantId },
-  });
-  if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+  try {
+    const tenantId = req.tenant.id;
+    const invoice = await prisma.invoice.findFirst({
+      where: { id: req.params.id, tenantId },
+    });
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    if (invoice.status === 'PAID') return res.status(400).json({ error: 'Invoice is already paid' });
+    if (invoice.status === 'CANCELLED') return res.status(400).json({ error: 'Cannot pay a cancelled invoice' });
 
-  const { amount, method, reference } = req.body;
-  const payment = await prisma.payment.create({
-    data: { tenantId, invoiceId: req.params.id, amount, method, reference },
-  });
-  await prisma.invoice.update({
-    where: { id: req.params.id },
-    data: { status: 'PAID', paidAt: new Date() },
-  });
-  res.json(payment);
+    const { amount, method, reference, paymentReference } = req.body;
+    const payAmount = Number(amount) || Number(invoice.total);
+    const payment = await prisma.payment.create({
+      data: {
+        tenantId,
+        invoiceId: req.params.id,
+        amount: payAmount,
+        method: method || 'MANUAL',
+        reference: reference || paymentReference || null,
+      },
+    });
+
+    // Mark fully paid only when payment covers the full outstanding amount
+    const paidSoFar = (invoice.payments || []).reduce((s, p) => s + Number(p.amount), 0) + payAmount;
+    const newStatus = paidSoFar >= Number(invoice.total) ? 'PAID' : 'PARTIALLY_PAID';
+    await prisma.invoice.update({
+      where: { id: req.params.id },
+      data: { status: newStatus, ...(newStatus === 'PAID' ? { paidAt: new Date() } : {}) },
+    });
+    res.json(payment);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/:id', requirePermission('invoices.delete'), async (req, res) => {
+  try {
+    const invoice = await prisma.invoice.findFirst({
+      where: { id: req.params.id, tenantId: req.tenant.id },
+    });
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    if (invoice.status !== 'DRAFT') {
+      return res.status(400).json({ error: 'Only draft invoices can be deleted' });
+    }
+    await prisma.invoice.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Invoice deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

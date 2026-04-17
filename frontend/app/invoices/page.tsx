@@ -52,7 +52,8 @@ export default function InvoicesPage() {
   const payMutation = useMutation({
     mutationFn: () => invoiceApi.pay(payInvoice.id, {
       amount: Number(payAmount) || payInvoice.total,
-      paymentReference: payRef || undefined,
+      reference: payRef || undefined,
+      method: 'MANUAL',
     }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['invoices'] });

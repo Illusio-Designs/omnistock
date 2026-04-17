@@ -59,7 +59,11 @@
       "Read(//c/Program Files/**)",
       "Read(//c/xampp/mysql/**)",
       "Read(//e/xampp/mysql/**)",
-      "Bash(node src/scripts/test.js)"
+      "Bash(node src/scripts/test.js)",
+      "Bash('\\)\\).map\\(l => l.trim\\(\\).split\\(')",
+      "Bash(node -e \"const schema = require\\('/Users/Development/GitHub/omnistock/backend/src/config/schema.sql.js'\\); const ordersTable = schema.match\\(/CREATE TABLE IF NOT EXISTS \\\\`orders\\\\`[^;]+;/s\\)[0]; console.log\\(ordersTable.split\\('\\\\\\\\n'\\).filter\\(l => l.includes\\('`'\\)\\).map\\(l => l.trim\\(\\).split\\('`'\\)[1]\\).filter\\(Boolean\\).join\\('\\\\\\\\n'\\)\\)\")",
+      "Bash('\\).filter\\(\\(c,i\\) => i % 2 === 1\\).slice\\(1, -20\\); console.log\\('Actual orders table columns:\\\\n' + cols.join\\('\\\\n'\\)\\)\")",
+      "Bash(node -e \"const schema = require\\('/Users/Development/GitHub/omnistock/backend/src/config/schema.sql.js'\\); const cols = schema.match\\(/CREATE TABLE IF NOT EXISTS \\\\`orders\\\\`[^;]+;/s\\)[0].split\\('`'\\).filter\\(\\(c,i\\) => i % 2 === 1\\).slice\\(1, -20\\); console.log\\('Actual orders table columns:\\\\n' + cols.join\\('\\\\n'\\)\\)\")"
     ],
     "additionalDirectories": [
       "\\tmp"
