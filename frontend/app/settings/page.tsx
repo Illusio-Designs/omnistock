@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import {
   Button, Card, Input, Textarea, Select, Switch, PasswordInput, FileUpload, Badge,
@@ -8,6 +8,7 @@ import {
 import {
   User, Building2, Bell, Shield, CreditCard, Globe, Mail, Phone, Save, Check,
 } from 'lucide-react';
+import { useAuthStore } from '@/store/auth.store';
 
 const TABS = [
   { key: 'profile',  label: 'Profile',       icon: User },
@@ -32,17 +33,26 @@ const TIMEZONES = [
 ];
 
 export default function SettingsPage() {
+  const { user, tenant } = useAuthStore();
   const [tab, setTab] = useState('profile');
   const [saved, setSaved] = useState(false);
-  const [profile, setProfile] = useState({ name: 'Dev User', email: 'dev@omnistock.in', phone: '+91 90000 00000' });
+  const [profile, setProfile] = useState({ name: '', email: '', phone: '' });
   const [company, setCompany] = useState({
-    name: 'OmniStock Inc', gstin: '', address: '', currency: 'INR', timezone: 'Asia/Kolkata',
+    name: '', gstin: '', address: '', currency: 'INR', timezone: 'Asia/Kolkata',
   });
   const [password, setPassword] = useState({ current: '', next: '', confirm: '' });
   const [notifications, setNotifications] = useState({
     orders: true, lowStock: true, reviews: false, marketing: false, weekly: true,
   });
   const [logo, setLogo] = useState<File[]>([]);
+
+  // Hydrate from the auth store once it's loaded
+  useEffect(() => {
+    if (user) setProfile({ name: user.name || '', email: user.email || '', phone: (user as any).phone || '' });
+  }, [user]);
+  useEffect(() => {
+    if (tenant) setCompany((c) => ({ ...c, name: tenant.businessName || '' }));
+  }, [tenant]);
 
   const save = () => {
     setSaved(true);

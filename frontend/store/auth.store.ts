@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { authApi } from '@/lib/api';
 
 interface User {
   id: string;
@@ -86,6 +87,8 @@ export const useAuthStore = create<AuthState>()(
         set({ impersonatingTenant: null });
       },
       logout: () => {
+        // Invalidate server-side permission cache; ignore network errors
+        authApi.logout().catch(() => {});
         localStorage.removeItem('token');
         localStorage.removeItem('impersonate-tenant');
         set({ user: null, token: null, tenant: null, plan: null, subscription: null, permissions: [], impersonatingTenant: null });

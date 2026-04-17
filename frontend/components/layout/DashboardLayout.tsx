@@ -7,12 +7,44 @@ import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { useAuthStore } from '@/store/auth.store';
 import { MaintenancePage } from '@/components/MaintenancePage';
-import { Eye, X, ArrowLeft } from 'lucide-react';
+import { setPlanLimitHandler, authApi } from '@/lib/api';
+import { Eye, X, ArrowLeft, Zap } from 'lucide-react';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { impersonatingTenant, stopImpersonation, isPlatformAdmin } = useAuthStore();
+  const { token, impersonatingTenant, stopImpersonation, isPlatformAdmin, setContext, logout } = useAuthStore();
   const [maintenance, setMaintenance] = useState<{ enabled: boolean; message: string; eta: string } | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [planLimit, setPlanLimit] = useState<any>(null);
+
+  // ── Auth guard: redirect to /login when unauthenticated + validate token
+  useEffect(() => {
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+    // Validate token against /auth/me and refresh context
+    authApi.me()
+      .then(({ data }) => {
+        setContext({
+          tenant: data.tenant ?? null,
+          plan: data.plan ?? null,
+          subscription: data.subscription ?? null,
+          permissions: data.permissions ?? [],
+        });
+        setAuthChecked(true);
+      })
+      .catch(() => {
+        logout();
+        router.replace('/login');
+      });
+  }, []);
+
+  // ── Global 402 plan-limit handler
+  useEffect(() => {
+    setPlanLimitHandler((info) => setPlanLimit(info));
+    return () => setPlanLimitHandler(null);
+  }, []);
 
   useEffect(() => {
     const api = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
@@ -21,6 +53,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       .then(data => { if (data) setMaintenance(data); })
       .catch(() => {});
   }, []);
+
+  if (!token || !authChecked) {
+    return <div className="min-h-screen flex items-center justify-center text-slate-400 text-sm">Loading…</div>;
+  }
 
   // Show maintenance page for non-admin users
   if (maintenance?.enabled && !isPlatformAdmin()) {
@@ -66,6 +102,34 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </div>
         )}
         <Topbar />
+        {planLimit && (
+          <div className="bg-rose-50 border-b border-rose-200 text-rose-800 px-4 py-2.5 flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              <Zap size={14} className="text-rose-600" />
+              <span className="font-bold">
+                {planLimit.error || 'Plan limit reached'}
+              </span>
+              {planLimit.metric && (
+                <span className="text-rose-600">— {planLimit.metric} {planLimit.used ?? ''}/{planLimit.limit ?? '∞'}</span>
+              )}
+              {planLimit.requiredPlan && (
+                <span className="text-rose-600">— requires {planLimit.requiredPlan}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/dashboard/billing" className="px-3 py-1 rounded-lg bg-rose-600 text-white text-xs font-bold hover:bg-rose-700">
+                {planLimit.metric === 'orders' || planLimit.unitRate ? 'Top up wallet' : 'Upgrade'}
+              </Link>
+              <button
+                onClick={() => setPlanLimit(null)}
+                className="p-1 hover:bg-rose-100 rounded"
+                aria-label="Dismiss"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+        )}
         <div className="flex-1 p-4 sm:p-5 lg:p-6 xl:p-8 animate-fade-in">{children}</div>
       </main>
     </div>

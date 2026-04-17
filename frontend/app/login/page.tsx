@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authApi } from '@/lib/api';
@@ -9,12 +9,17 @@ import { Sparkles, ArrowRight, Mail, Lock, AlertCircle, Loader2 } from 'lucide-r
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setAuth, setContext } = useAuthStore();
+  const { token, setAuth, setContext, isPlatformAdmin } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Already logged in? Redirect away
+  useEffect(() => {
+    if (token) router.replace(isPlatformAdmin() ? '/admin' : '/dashboard');
+  }, [token]);
 
   const loadContext = async () => {
     try {

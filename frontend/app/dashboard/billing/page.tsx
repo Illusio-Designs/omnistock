@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { billingApi, planApi, paymentApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
-import { CheckCircle2, AlertCircle, Zap, Crown, Sparkles, X } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Zap, Crown, Sparkles, X, Wallet, Plus } from 'lucide-react';
 
 export default function BillingPage() {
   const { hasPermission } = useAuthStore();
@@ -13,15 +13,37 @@ export default function BillingPage() {
   const [sub, setSub] = useState<any>(null);
   const [usage, setUsage] = useState<any>(null);
   const [plans, setPlans] = useState<any[]>([]);
+  const [wallet, setWallet] = useState<any>(null);
+  const [txns, setTxns] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+  const [topupAmount, setTopupAmount] = useState('');
 
   const load = async () => {
-    const [s, u, p] = await Promise.all([billingApi.subscription(), billingApi.usage(), planApi.list()]);
+    const [s, u, p, w, t] = await Promise.all([
+      billingApi.subscription(),
+      billingApi.usage(),
+      planApi.list(),
+      billingApi.wallet().catch(() => ({ data: null })),
+      billingApi.walletTransactions(20).catch(() => ({ data: [] })),
+    ]);
     setSub(s.data); setUsage(u.data); setPlans(p.data);
+    setWallet(w.data); setTxns(t.data || []);
   };
 
   useEffect(() => { load(); }, []);
+
+  const topup = async (amount: number) => {
+    if (!canManage || !amount || amount <= 0) return;
+    try {
+      await billingApi.topupWallet(amount);
+      setMsg(`Wallet topped up by ₹${amount}`);
+      setTopupAmount('');
+      await load();
+    } catch (e: any) {
+      setMsg(e?.response?.data?.error || 'Top up failed');
+    }
+  };
 
   // Razorpay checkout helper — lazy-loads the script the first time
   const loadRazorpay = () =>
@@ -121,6 +143,85 @@ export default function BillingPage() {
             </div>
           </div>
         </div>
+
+        {/* Wallet */}
+        {wallet && (
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+            <div className="flex items-start justify-between flex-wrap gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
+                  <Wallet size={20} className="text-emerald-600" />
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-slate-400 font-bold">Wallet balance</div>
+                  <div className={`text-3xl font-bold mt-1 ${wallet.lowBalance ? 'text-rose-600' : 'text-slate-900'}`}>
+                    ₹{Number(wallet.balance).toLocaleString()}
+                  </div>
+                  {wallet.lowBalance ? (
+                    <div className="text-xs text-rose-600 font-bold mt-1">Low balance — top up soon</div>
+                  ) : (
+                    <div className="text-xs text-slate-500 mt-1">Used for overage charges when plan limits are exceeded</div>
+                  )}
+                </div>
+              </div>
+              {canManage && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  {[500, 1000, 2500, 5000].map((amt) => (
+                    <button
+                      key={amt}
+                      onClick={() => topup(amt)}
+                      className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700"
+                    >
+                      + ₹{amt}
+                    </button>
+                  ))}
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      value={topupAmount}
+                      onChange={(e) => setTopupAmount(e.target.value)}
+                      placeholder="Amount"
+                      className="w-24 px-3 py-1.5 rounded-lg border border-slate-200 text-xs"
+                    />
+                    <button
+                      onClick={() => topup(Number(topupAmount))}
+                      disabled={!topupAmount || Number(topupAmount) <= 0}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-50"
+                    >
+                      <Plus size={12} /> Top up
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {txns.length > 0 && (
+              <div className="mt-5 pt-5 border-t border-slate-100">
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Recent transactions</div>
+                <div className="space-y-1">
+                  {txns.slice(0, 5).map((t: any) => {
+                    const isCredit = ['TOPUP', 'REFUND'].includes(t.type);
+                    const amt = Number(t.amount);
+                    return (
+                      <div key={t.id} className="flex items-center justify-between py-1.5 text-sm">
+                        <div>
+                          <span className={`inline-block w-2 h-2 rounded-full mr-2 ${isCredit ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                          <span className="font-medium text-slate-700">{t.description || t.type}</span>
+                          <span className="text-xs text-slate-400 ml-2">
+                            {new Date(t.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <span className={`font-bold ${isCredit ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {isCredit ? '+' : ''}₹{Math.abs(amt).toLocaleString()}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Usage */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">

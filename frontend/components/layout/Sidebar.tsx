@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Package, Warehouse, ShoppingCart, TrendingUp,
   Users, Store, Truck, FileText, BarChart2, Settings, LogOut,
   Building2, Plug, HelpCircle, Sparkles, PanelLeftClose, PanelLeftOpen, X,
+  Wallet, UserCog,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useUIStore } from '@/store/ui.store';
@@ -50,6 +51,8 @@ const DEFAULT_NAV_GROUPS: SidebarNavGroup[] = [
       { label: 'Vendors',     href: '/vendors',      icon: Building2 },
       { label: 'Warehouses',  href: '/warehouses',   icon: Store },
       { label: 'Customers',   href: '/customers',    icon: Users },
+      { label: 'Team',        href: '/dashboard/team',    icon: UserCog },
+      { label: 'Billing',     href: '/dashboard/billing', icon: Wallet },
       { label: 'Settings',    href: '/settings',     icon: Settings },
       { label: 'Help Desk',   href: '/help',         icon: HelpCircle },
     ],

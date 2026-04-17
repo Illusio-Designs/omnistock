@@ -16,13 +16,24 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 globally
+// Handle auth + plan-limit errors globally
+type PlanLimitCallback = (info: any) => void;
+let onPlanLimitHit: PlanLimitCallback | null = null;
+export function setPlanLimitHandler(cb: PlanLimitCallback | null) { onPlanLimitHit = cb; }
+
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+    if (typeof window !== 'undefined') {
+      const status = err.response?.status;
+      const url = err.config?.url || '';
+      const isAuth = url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/onboard') || url.includes('/auth/google');
+      if (status === 401 && !isAuth) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      } else if (status === 402 && onPlanLimitHit) {
+        onPlanLimitHit(err.response.data || {});
+      }
     }
     return Promise.reject(err);
   }
@@ -37,6 +48,7 @@ export const authApi = {
   google: (credential: string) => api.post('/auth/google', { credential }),
   me: () => api.get('/auth/me'),
   onboard: (data: any) => api.post('/auth/onboard', data),
+  logout: () => api.post('/auth/logout', {}),
 };
 
 // ── SaaS: plans (public) ───────────────────────────────────────────
@@ -246,6 +258,21 @@ export const warehouseApi = {
   list: () => api.get('/warehouses'),
   get: (id: string) => api.get(`/warehouses/${id}`),
   create: (data: any) => api.post('/warehouses', data),
+  update: (id: string, data: any) => api.put(`/warehouses/${id}`, data),
+  delete: (id: string) => api.delete(`/warehouses/${id}`),
+};
+
+export const shipmentApi = {
+  list: (params?: any) => api.get('/shipments', { params }),
+  get: (id: string) => api.get(`/shipments/${id}`),
+  create: (data: any) => api.post('/shipments', data),
+  updateStatus: (id: string, status: string) => api.patch(`/shipments/${id}/status`, { status }),
+};
+
+export const invoiceApi = {
+  list: (params?: any) => api.get('/invoices', { params }),
+  get: (id: string) => api.get(`/invoices/${id}`),
+  pay: (id: string, data: any) => api.post(`/invoices/${id}/pay`, data),
 };
 
 // ─── Channels ──────────────────────────────────────────────────────────────
