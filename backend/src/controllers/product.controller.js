@@ -69,6 +69,10 @@ const createProduct = async (req, res) => {
     const { costPrice, mrp, sellingPrice, ...productFields } = data;
     const tId = tenantId(req);
 
+    // Default JSON fields to empty arrays so MySQL NOT NULL constraint is satisfied
+    productFields.images = productFields.images || [];
+    productFields.tags = productFields.tags || [];
+
     const product = await prisma.$transaction(async (tx) => {
       const p = await tx.product.create({
         data: { ...productFields, tenantId: tId },

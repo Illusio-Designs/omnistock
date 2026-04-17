@@ -53,8 +53,9 @@ router.post('/',
   async (req, res) => {
     try {
       const data = createSchema.parse(req.body);
+      const code = data.code || `WH-${Date.now().toString(36).toUpperCase()}`;
       const wh = await prisma.warehouse.create({
-        data: { ...data, tenantId: req.tenant.id },
+        data: { ...data, code, address: data.address || {}, tenantId: req.tenant.id },
       });
       res.status(201).json(wh);
     } catch (err) {

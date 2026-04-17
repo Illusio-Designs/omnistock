@@ -14,11 +14,21 @@ const { getAdapter, importOrders } = require('../services/channel.service');
 const router = Router();
 
 async function handleIncomingWebhook(channelId, req, res) {
-  const channel = await prisma.channel.findUnique({ where: { id: channelId } });
-  if (!channel) return res.status(404).json({ error: 'Channel not found' });
-  if (!channel.isActive) return res.status(410).json({ error: 'Channel disabled' });
+  try {
+    const channel = await prisma.channel.findUnique({ where: { id: channelId } });
+    if (!channel) return res.status(404).json({ error: 'Channel not found' });
+    if (!channel.isActive) return res.status(410).json({ error: 'Channel disabled' });
 
-  const adapter = getAdapter(channel);
+    let adapter;
+    try {
+      adapter = getAdapter(channel);
+    } catch (e) {
+      // Channel exists but isn't connected (no credentials yet) — reject politely
+      return res.status(412).json({
+        error: e.message || 'Channel not ready for webhooks',
+        hint: 'Connect the channel first via /channels/:id/connect',
+      });
+    }
 
   // Mandatory signature verification — channels MUST either:
   //   1. expose validateWebhookSignature(rawBody, sig), OR
@@ -63,6 +73,10 @@ async function handleIncomingWebhook(channelId, req, res) {
       data: { lastSyncError: err.message },
     }).catch(() => {});
     return res.status(400).json({ error: err.message });
+  }
+  } catch (outer) {
+    console.error('[webhook] unexpected:', outer.message);
+    return res.status(500).json({ error: outer.message });
   }
 }
 

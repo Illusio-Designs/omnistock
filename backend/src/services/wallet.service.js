@@ -1,41 +1,19 @@
 // Tenant wallet for Pay-As-You-Go
 //
-// Instead of post-paid overage billing, tenants pre-fund a wallet and overages
-// are debited in real-time. This removes bill-shock at period end and lets the
-// tenant cap their exposure by choosing how much to top up.
-//
-// Operations:
-//   getOrCreateWallet(tenantId)    — idempotent fetch + create
-//   getBalance(tenantId)           — current balance
-//   topup(tenantId, amount, ref)   — add credit (from payment gateway)
-//   debit(tenantId, amount, meta)  — deduct for overage usage (atomic)
-//   history(tenantId, limit)       — recent transactions
+// Tenants pre-fund a wallet and overages are debited in real-time.
+// Uses the Knex-backed "prisma" shim with FOR UPDATE row locks for safety.
 
+const db = require('../utils/db');
 const prisma = require('../utils/prisma');
 const { randomUUID } = require('crypto');
 
 async function getOrCreateWallet(tenantId) {
-  let wallet = await prisma.tenantWallet.findUnique({ where: { tenantId } }).catch(() => null);
+  let wallet = await prisma.tenantWallet.findFirst({ where: { tenantId } });
   if (wallet) return wallet;
 
-  // Fall back to raw query if Prisma client doesn't know about this model yet
-  // (new table created via initDb migration; client regenerate required otherwise)
-  try {
-    wallet = await prisma.tenantWallet.create({
-      data: { id: randomUUID(), tenantId, balance: 0, currency: 'INR', lowBalanceThreshold: 100 },
-    });
-  } catch {
-    // Raw fallback — works even if Prisma client isn't regenerated
-    const id = randomUUID();
-    await prisma.$executeRawUnsafe(
-      `INSERT INTO tenant_wallets (id, tenantId, balance, currency, lowBalanceThreshold) VALUES (?, ?, 0, 'INR', 100)`,
-      id, tenantId
-    );
-    const [row] = await prisma.$queryRawUnsafe(
-      `SELECT * FROM tenant_wallets WHERE tenantId = ?`, tenantId
-    );
-    wallet = row;
-  }
+  wallet = await prisma.tenantWallet.create({
+    data: { tenantId, balance: 0, currency: 'INR', lowBalanceThreshold: 100 },
+  });
   return wallet;
 }
 
@@ -50,61 +28,54 @@ async function topup(tenantId, amount, { reference, description, createdById, pa
   if (!amt || amt <= 0) throw new Error('Topup amount must be positive');
 
   await getOrCreateWallet(tenantId);
-  return prisma.$transaction(async (tx) => {
-    // Lock the wallet row
-    const [w] = await tx.$queryRawUnsafe(
-      `SELECT * FROM tenant_wallets WHERE tenantId = ? FOR UPDATE`, tenantId
-    );
-    const newBalance = Number(w.balance) + amt;
-    await tx.$executeRawUnsafe(
-      `UPDATE tenant_wallets SET balance = ?, updatedAt = NOW(3) WHERE tenantId = ?`,
-      newBalance, tenantId
-    );
+  return db.transaction(async (trx) => {
+    const [w] = await trx.raw('SELECT * FROM tenant_wallets WHERE tenantId = ? FOR UPDATE', [tenantId]);
+    const row = Array.isArray(w) ? w[0] : w;
+    const newBalance = Number(row.balance) + amt;
+    await trx('tenant_wallets').where({ tenantId }).update({ balance: newBalance, updatedAt: new Date() });
     const txId = randomUUID();
-    await tx.$executeRawUnsafe(
-      `INSERT INTO wallet_transactions (id, tenantId, walletId, type, amount, balanceAfter, reference, description, createdById, paymentRef)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      txId, tenantId, w.id, type, amt, newBalance, reference || null, description || null, createdById || null, paymentRef || null
-    );
+    await trx('wallet_transactions').insert({
+      id: txId, tenantId, walletId: row.id, type, amount: amt, balanceAfter: newBalance,
+      reference: reference || null, description: description || null,
+      createdById: createdById || null, paymentRef: paymentRef || null,
+      createdAt: new Date(),
+    });
     return { balanceAfter: newBalance, amount: amt, transactionId: txId };
   });
 }
 
-// Debit the wallet for overage usage. Returns null if insufficient funds (caller decides).
+// Debit the wallet for overage usage. Returns { ok: false, ... } if insufficient funds.
 async function debit(tenantId, amount, { metric, quantity, reference, description, createdById } = {}) {
   const amt = Number(amount);
   if (!amt || amt <= 0) throw new Error('Debit amount must be positive');
 
   await getOrCreateWallet(tenantId);
-  return prisma.$transaction(async (tx) => {
-    const [w] = await tx.$queryRawUnsafe(
-      `SELECT * FROM tenant_wallets WHERE tenantId = ? FOR UPDATE`, tenantId
-    );
-    const current = Number(w.balance);
+  return db.transaction(async (trx) => {
+    const [w] = await trx.raw('SELECT * FROM tenant_wallets WHERE tenantId = ? FOR UPDATE', [tenantId]);
+    const row = Array.isArray(w) ? w[0] : w;
+    const current = Number(row.balance);
     if (current < amt) {
       return { ok: false, balance: current, required: amt };
     }
     const newBalance = current - amt;
-    await tx.$executeRawUnsafe(
-      `UPDATE tenant_wallets SET balance = ?, updatedAt = NOW(3) WHERE tenantId = ?`,
-      newBalance, tenantId
-    );
+    await trx('tenant_wallets').where({ tenantId }).update({ balance: newBalance, updatedAt: new Date() });
     const txId = randomUUID();
-    await tx.$executeRawUnsafe(
-      `INSERT INTO wallet_transactions (id, tenantId, walletId, type, amount, balanceAfter, metric, quantity, reference, description, createdById)
-       VALUES (?, ?, ?, 'DEBIT', ?, ?, ?, ?, ?, ?, ?)`,
-      txId, tenantId, w.id, -amt, newBalance, metric || null, quantity || null, reference || null, description || null, createdById || null
-    );
+    await trx('wallet_transactions').insert({
+      id: txId, tenantId, walletId: row.id, type: 'DEBIT', amount: -amt, balanceAfter: newBalance,
+      metric: metric || null, quantity: quantity || null,
+      reference: reference || null, description: description || null,
+      createdById: createdById || null,
+      createdAt: new Date(),
+    });
     return { ok: true, balanceAfter: newBalance, amount: amt, transactionId: txId };
   });
 }
 
 async function history(tenantId, limit = 50) {
-  const rows = await prisma.$queryRawUnsafe(
-    `SELECT * FROM wallet_transactions WHERE tenantId = ? ORDER BY createdAt DESC LIMIT ?`,
-    tenantId, Number(limit)
-  );
-  return rows;
+  return db('wallet_transactions')
+    .where({ tenantId })
+    .orderBy('createdAt', 'desc')
+    .limit(Number(limit));
 }
 
 async function isLowBalance(tenantId) {

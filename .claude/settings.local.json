@@ -51,7 +51,15 @@
       "Bash(node -c src/routes/billing.routes.js)",
       "Bash(node -c src/middleware/auth.middleware.js)",
       "Bash(node -c src/bootstrap/initDb.js)",
-      "Bash(JWT_SECRET=test-secret-for-dev-only node src/index.js)"
+      "Bash(JWT_SECRET=test-secret-for-dev-only node src/index.js)",
+      "Bash(curl -s http://localhost:5000/health)",
+      "Read(//c/Users/K N Corporation/AppData/Local/Temp/claude/e--omnistock/eae4a8cc-3bd5-4ce7-9817-c75d81c2df6f/tasks/**)",
+      "Bash(node -e ' *)",
+      "Read(//c//**)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/xampp/mysql/**)",
+      "Read(//e/xampp/mysql/**)",
+      "Bash(node src/scripts/test.js)"
     ],
     "additionalDirectories": [
       "\\tmp"

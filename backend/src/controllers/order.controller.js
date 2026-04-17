@@ -132,7 +132,7 @@ async function resolveItems(tenantId, rawItems) {
       let productId = existingProd?.id;
       if (!productId) {
         const prod = await prisma.product.create({
-          data: { tenantId, name, sku, isActive: true },
+          data: { tenantId, name, sku, isActive: true, images: [], tags: [] },
         });
         productId = prod.id;
       }

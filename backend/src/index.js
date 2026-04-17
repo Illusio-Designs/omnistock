@@ -50,14 +50,20 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Rate limiting — relaxed in test mode so the e2e test suite can run
+const isTestMode = process.env.NODE_ENV === 'test' || process.env.DISABLE_RATE_LIMIT === 'true';
+
 // Global rate limit
-const globalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: isTestMode ? 10000 : 200,
+});
 app.use(globalLimiter);
 
 // Strict rate limit for auth (5 attempts per 15 min)
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
+  windowMs: isTestMode ? 60 * 1000 : 15 * 60 * 1000,
+  max: isTestMode ? 1000 : 5,
   skipSuccessfulRequests: true,
   message: { error: 'Too many login attempts. Please try again after 15 minutes.' },
 });
@@ -69,7 +75,7 @@ app.use('/api/v1/auth/google', authLimiter);
 // Webhook rate limit — one tenant shouldn't be able to DOS us via webhook flood
 const webhookLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 120, // 2 orders per second per IP; enough for legitimate marketplace traffic
+  max: isTestMode ? 10000 : 120,
   message: { error: 'Too many webhook requests' },
 });
 app.use('/api/v1/webhooks', webhookLimiter);

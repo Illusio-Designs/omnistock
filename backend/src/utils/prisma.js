@@ -88,7 +88,7 @@ async function loadIncludes(rows, table, include, select) {
       if (relOpts.take) relQuery = relQuery.limit(relOpts.take);
       if (relOpts.select) relQuery = relQuery.select(Object.keys(relOpts.select));
       if (relOpts.include) {
-        const relRows = await relQuery;
+        const relRows = deserializeRows(await relQuery);
         const nested = await loadIncludes(relRows, rel.table, relOpts.include);
         for (const row of rows) {
           row[relName] = rel.type === 'one'
@@ -99,7 +99,7 @@ async function loadIncludes(rows, table, include, select) {
       }
     }
 
-    const relRows = await relQuery;
+    const relRows = deserializeRows(await relQuery);
     for (const row of rows) {
       row[relName] = rel.type === 'one'
         ? relRows.find(r => r[rel.foreignKey] === row[rel.localKey || 'id']) || null
@@ -286,6 +286,7 @@ const TABLE_MAP = {
   customer: 'customers', order: 'orders', orderItem: 'order_items',
   return: 'returns', invoice: 'invoices', payment: 'payments', shipment: 'shipments',
   supportTicket: 'support_tickets', ticketMessage: 'ticket_messages',
+  tenantWallet: 'tenant_wallets', walletTransaction: 'wallet_transactions',
 };
 
 // ── UPDATE data builder (handles { increment } etc.) ────────────────
@@ -400,6 +401,7 @@ const JSON_FIELDS = {
 const NO_UPDATED_AT = new Set([
   'permissions', 'role_permissions', 'user_roles', 'audit_logs',
   'stock_movements', 'order_items', 'purchase_order_items', 'ticket_messages', 'payments',
+  'wallet_transactions',
 ]);
 const NO_CREATED_AT = new Set([
   'role_permissions', 'user_roles', 'order_items', 'purchase_order_items', 'payments', 'usage_meters',
