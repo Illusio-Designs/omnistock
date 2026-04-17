@@ -46,6 +46,7 @@ async function loadUserContext(userId, { byEmail = false } = {}) {
       maxUserRoles: plan.maxUserRoles, maxUsers: plan.maxUsers,
       maxOrdersPerMonth: plan.maxOrdersPerMonth,
       features: plan.features || {},
+      meteredRates: plan.meteredRates || {},
     } : null,
     subscription: user.tenant?.subscription ? {
       id: user.tenant.subscription.id,
@@ -87,6 +88,7 @@ async function applyImpersonation(req) {
     maxUserRoles: plan.maxUserRoles, maxUsers: plan.maxUsers,
     maxOrdersPerMonth: plan.maxOrdersPerMonth,
     features: plan.features || {},
+    meteredRates: plan.meteredRates || {},
   } : null;
   req.subscription = tenant.subscription ? {
     id: tenant.subscription.id,
