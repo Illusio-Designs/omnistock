@@ -43,6 +43,10 @@ export const authApi = {
   google: (credential: string) => api.post('/auth/google', { credential }),
   me: () => api.get('/auth/me'),
   onboard: (data: any) => api.post('/auth/onboard', data),
+  logout: () => api.post('/auth/logout', {}),
+  updateMe: (data: { name?: string; phone?: string }) => api.patch('/auth/me', data),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.post('/auth/change-password', { currentPassword, newPassword }),
 };
 
 export const planApi = {
@@ -69,6 +73,8 @@ export const billingApi = {
     autoTopupAmount?: number;
     autoTopupTriggerBelow?: number;
   }) => api.patch('/billing/wallet/settings', body),
+  updateTenant: (data: { businessName?: string; gstin?: string }) =>
+    api.patch('/billing/tenant', data),
 };
 
 export const userApi = {
@@ -162,12 +168,15 @@ export const vendorApi = {
   get: (id: string) => api.get(`/vendors/${id}`),
   create: (data: any) => api.post('/vendors', data),
   update: (id: string, data: any) => api.put(`/vendors/${id}`, data),
+  delete: (id: string) => api.delete(`/vendors/${id}`),
 };
 
 export const warehouseApi = {
   list: () => api.get('/warehouses'),
   get: (id: string) => api.get(`/warehouses/${id}`),
   create: (data: any) => api.post('/warehouses', data),
+  update: (id: string, data: any) => api.put(`/warehouses/${id}`, data),
+  delete: (id: string) => api.delete(`/warehouses/${id}`),
 };
 
 export const channelApi = {
@@ -203,6 +212,25 @@ export const customerApi = {
   list: (params?: any) => api.get('/customers', { params }),
   get: (id: string) => api.get(`/customers/${id}`),
   create: (data: any) => api.post('/customers', data),
+  update: (id: string, data: any) => api.put(`/customers/${id}`, data),
+  delete: (id: string) => api.delete(`/customers/${id}`),
+};
+
+export const invoiceApi = {
+  list: (params?: any) => api.get('/invoices', { params }),
+  get: (id: string) => api.get(`/invoices/${id}`),
+  pay: (id: string, data: { amount?: number; method?: string; reference?: string }) =>
+    api.post(`/invoices/${id}/pay`, data),
+  delete: (id: string) => api.delete(`/invoices/${id}`),
+};
+
+export const shipmentApi = {
+  list: (params?: any) => api.get('/shipments', { params }),
+  get: (id: string) => api.get(`/shipments/${id}`),
+  create: (data: any) => api.post('/shipments', data),
+  updateStatus: (id: string, status: string) =>
+    api.patch(`/shipments/${id}/status`, { status }),
+  delete: (id: string) => api.delete(`/shipments/${id}`),
 };
 
 export const reportApi = {

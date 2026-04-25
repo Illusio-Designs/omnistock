@@ -12,7 +12,7 @@
     "web": { "bundler": "metro" },
     "plugins": ["expo-router", "expo-secure-store"],
     "extra": {
-      "apiUrl": "https://api.finvera.solutions/api/v1"
+      "apiUrl": "http://localhost:5001/api/v1"
     }
   }
 }

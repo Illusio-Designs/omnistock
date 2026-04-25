@@ -63,7 +63,13 @@
       "Bash('\\)\\).map\\(l => l.trim\\(\\).split\\(')",
       "Bash(node -e \"const schema = require\\('/Users/Development/GitHub/omnistock/backend/src/config/schema.sql.js'\\); const ordersTable = schema.match\\(/CREATE TABLE IF NOT EXISTS \\\\`orders\\\\`[^;]+;/s\\)[0]; console.log\\(ordersTable.split\\('\\\\\\\\n'\\).filter\\(l => l.includes\\('`'\\)\\).map\\(l => l.trim\\(\\).split\\('`'\\)[1]\\).filter\\(Boolean\\).join\\('\\\\\\\\n'\\)\\)\")",
       "Bash('\\).filter\\(\\(c,i\\) => i % 2 === 1\\).slice\\(1, -20\\); console.log\\('Actual orders table columns:\\\\n' + cols.join\\('\\\\n'\\)\\)\")",
-      "Bash(node -e \"const schema = require\\('/Users/Development/GitHub/omnistock/backend/src/config/schema.sql.js'\\); const cols = schema.match\\(/CREATE TABLE IF NOT EXISTS \\\\`orders\\\\`[^;]+;/s\\)[0].split\\('`'\\).filter\\(\\(c,i\\) => i % 2 === 1\\).slice\\(1, -20\\); console.log\\('Actual orders table columns:\\\\n' + cols.join\\('\\\\n'\\)\\)\")"
+      "Bash(node -e \"const schema = require\\('/Users/Development/GitHub/omnistock/backend/src/config/schema.sql.js'\\); const cols = schema.match\\(/CREATE TABLE IF NOT EXISTS \\\\`orders\\\\`[^;]+;/s\\)[0].split\\('`'\\).filter\\(\\(c,i\\) => i % 2 === 1\\).slice\\(1, -20\\); console.log\\('Actual orders table columns:\\\\n' + cols.join\\('\\\\n'\\)\\)\")",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(npx --package=typescript@5.6 tsc --noEmit -p .)",
+      "Bash(npx --package=typescript@5.6 -- tsc --noEmit -p .)",
+      "Bash(npx expo *)",
+      "Bash(curl -s -o /tmp/bundle.js -w \"HTTP %{http_code} | size %{size_download} bytes | %{time_total}s\\\\n\" \"http://localhost:8081/index.bundle?platform=ios&dev=false&minify=false\")",
+      "Bash(curl -s -o /tmp/bundle.js -w \"HTTP %{http_code} | size %{size_download} bytes | %{time_total}s\\\\n\" \"http://localhost:8081/node_modules/expo-router/entry.bundle?platform=ios&dev=true&minify=false&modulesOnly=false&runModule=true\" --max-time 200)"
     ],
     "additionalDirectories": [
       "\\tmp"
