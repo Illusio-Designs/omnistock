@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { channelApi } from '@/lib/api';
 import {
-  Plug, CheckCircle2, Circle, Clock, ExternalLink, Inbox, Sparkles,
+  Plug, CheckCircle2, Circle, Clock, ExternalLink, Inbox, Sparkles, Lock,
   ShoppingBag, Zap, Truck, Globe, MessageCircle, Building2, Boxes, ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -335,11 +335,13 @@ function ChannelCard({
   onConnect: () => void;
   onRequest: () => void;
 }) {
-  const statusBadge = {
+  const STATUS_BADGES: Record<string, { icon: any; text: string; bg: string }> = {
     connected:     { icon: CheckCircle2, text: 'Connected',   bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
     available:     { icon: Circle,       text: 'Available',   bg: 'bg-sky-50 text-sky-700 border-sky-200' },
+    plan_locked:   { icon: Lock,         text: 'Upgrade plan',bg: 'bg-slate-100 text-slate-600 border-slate-200' },
     not_available: { icon: Clock,        text: 'Coming Soon', bg: 'bg-amber-50 text-amber-700 border-amber-200' },
-  }[entry.status];
+  };
+  const statusBadge = STATUS_BADGES[entry.status] || STATUS_BADGES.not_available;
   const StatusIcon = statusBadge.icon;
 
   return (
