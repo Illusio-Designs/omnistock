@@ -46,12 +46,12 @@ export default function CustomersScreen() {
       name: name.trim(),
       email: email.trim() || undefined,
       phone: phone.trim() || undefined,
-      gstin: gstin.trim() || undefined,
-      type: isB2B ? 'B2B' : 'RETAIL',
+      gstIn: gstin.trim() || undefined,
+      isB2B,
     });
   };
 
-  const items: any[] = data?.items ?? data ?? [];
+  const items: any[] = data?.customers ?? data ?? [];
 
   return (
     <PageShell
@@ -78,7 +78,7 @@ export default function CustomersScreen() {
               subtitle={c.email ?? c.phone ?? ''}
               meta={c.city ?? c.country}
               right={
-                c.type === 'B2B' ? <Badge variant="violet">B2B</Badge> : null
+                c.isB2B ? <Badge variant="violet">B2B</Badge> : null
               }
             />
           ))

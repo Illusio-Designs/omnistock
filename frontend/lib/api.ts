@@ -195,6 +195,7 @@ export const publicApi = {
   stats: () => api.get('/public/stats'),
   content: (type: string) => api.get('/public/content', { params: { type } }),
   tracking: () => api.get('/public/tracking'),
+  maintenance: () => api.get('/public/maintenance'),
 };
 
 export const dashboardApi = {

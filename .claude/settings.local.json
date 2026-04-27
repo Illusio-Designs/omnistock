@@ -69,7 +69,12 @@
       "Bash(npx --package=typescript@5.6 -- tsc --noEmit -p .)",
       "Bash(npx expo *)",
       "Bash(curl -s -o /tmp/bundle.js -w \"HTTP %{http_code} | size %{size_download} bytes | %{time_total}s\\\\n\" \"http://localhost:8081/index.bundle?platform=ios&dev=false&minify=false\")",
-      "Bash(curl -s -o /tmp/bundle.js -w \"HTTP %{http_code} | size %{size_download} bytes | %{time_total}s\\\\n\" \"http://localhost:8081/node_modules/expo-router/entry.bundle?platform=ios&dev=true&minify=false&modulesOnly=false&runModule=true\" --max-time 200)"
+      "Bash(curl -s -o /tmp/bundle.js -w \"HTTP %{http_code} | size %{size_download} bytes | %{time_total}s\\\\n\" \"http://localhost:8081/node_modules/expo-router/entry.bundle?platform=ios&dev=true&minify=false&modulesOnly=false&runModule=true\" --max-time 200)",
+      "Read(//c/Users/K N Corporation/AppData/Local/Temp/claude/e--omnistock/a71e952e-0cc4-495f-9819-d924a5274dd1/tasks/**)",
+      "Bash(netstat -ano)",
+      "Bash(tasklist //FI \"PID eq 20872\")",
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\\\\n\" http://localhost:5001/api/v1/public/maintenance)",
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\\\\n\" http://localhost:5001/api/v1/plans)"
     ],
     "additionalDirectories": [
       "\\tmp"

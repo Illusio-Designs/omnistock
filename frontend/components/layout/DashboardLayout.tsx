@@ -7,7 +7,7 @@ import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { useAuthStore } from '@/store/auth.store';
 import { MaintenancePage } from '@/components/MaintenancePage';
-import { setPlanLimitHandler, authApi } from '@/lib/api';
+import { setPlanLimitHandler, authApi, publicApi } from '@/lib/api';
 import { Eye, X, ArrowLeft, Zap } from 'lucide-react';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -47,10 +47,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const api = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-    fetch(`${api}/public/maintenance`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setMaintenance(data); })
+    publicApi.maintenance()
+      .then(res => { if (res.data) setMaintenance(res.data); })
       .catch(() => {});
   }, []);
 
