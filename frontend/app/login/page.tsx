@@ -42,13 +42,21 @@ export default function LoginPage() {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!email || !password) return;
+    // Read from the form so browser-autofilled values work even if React
+    // state didn't catch the autofill onChange event.
+    const formData = new FormData(e.currentTarget);
+    const emailValue = ((formData.get('email') as string) || email).trim();
+    const passwordValue = (formData.get('password') as string) || password;
+    if (!emailValue || !passwordValue) {
+      setError('Enter your email and password.');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
-      const res = await authApi.login(email, password);
+      const res = await authApi.login(emailValue, passwordValue);
       setAuth(res.data.user, res.data.token);
       const me = await loadContext();
       router.replace(me?.isPlatformAdmin ? '/admin' : '/dashboard');
@@ -81,6 +89,7 @@ export default function LoginPage() {
                 <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="email"
+                  name="email"
                   autoComplete="email"
                   required
                   value={email}
@@ -103,6 +112,7 @@ export default function LoginPage() {
                 </button>
               </div>
               <PasswordInput
+                name="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -120,8 +130,8 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading || !email || !password}
-              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              disabled={loading}
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-500/30 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
             >
               {loading ? (
                 <>
