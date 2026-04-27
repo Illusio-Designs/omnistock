@@ -14,6 +14,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Input, Textarea } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { Avatar } from '@/components/ui/Avatar';
 import { getSchemaForType } from '@/lib/channel-schemas';
 
 const CATEGORY_ORDER = ['ECOM', 'QUICKCOM', 'LOGISTICS', 'OWNSTORE', 'SOCIAL', 'B2B', 'CUSTOM'];
@@ -358,9 +359,7 @@ function ChannelCard({
       {/* Header */}
       <div className="relative flex items-start justify-between mb-3">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${categoryGradient} flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0`}>
-            {entry.name.slice(0, 2).toUpperCase()}
-          </div>
+          <Avatar name={entry.name} size="md" gradient={categoryGradient} className="shadow-md" />
           <div className="min-w-0 flex-1">
             <h3 className="font-bold text-slate-900 text-sm leading-tight truncate">{entry.name}</h3>
             <p className="text-[10px] text-slate-400 mt-0.5 font-semibold uppercase tracking-wider truncate">{entry.type}</p>

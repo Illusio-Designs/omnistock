@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { adminApi } from '@/lib/api';
 import { useSearchStore } from '@/store/search.store';
 import { LifeBuoy, Filter } from 'lucide-react';
+import { Tabs } from '@/components/ui';
 
 const STATUS_COLORS: Record<string, string> = {
   OPEN:     'bg-rose-100 text-rose-700',
@@ -43,19 +44,18 @@ export default function AdminTicketsPage() {
       </div>
 
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100">
-          {['', 'OPEN', 'PENDING', 'RESOLVED', 'CLOSED'].map((s) => (
-            <button
-              key={s || 'ALL'}
-              onClick={() => setFilter(s)}
-              className={`px-3 py-1.5 rounded-md text-xs font-bold ${
-                filter === s ? 'bg-white text-slate-900 shadow' : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              {s || 'All'}
-            </button>
-          ))}
-        </div>
+        <Tabs
+          size="sm"
+          value={filter}
+          onChange={setFilter}
+          items={[
+            { key: '',         label: 'All' },
+            { key: 'OPEN',     label: 'OPEN' },
+            { key: 'PENDING',  label: 'PENDING' },
+            { key: 'RESOLVED', label: 'RESOLVED' },
+            { key: 'CLOSED',   label: 'CLOSED' },
+          ]}
+        />
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">

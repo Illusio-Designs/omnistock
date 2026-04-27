@@ -6,7 +6,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { dashboardApi, channelApi } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 import {
-  Button, Tooltip, Badge, Card, DatePicker, Pagination, Dropdown,
+  Button, Tooltip, Badge, Card, DatePicker, Pagination, Dropdown, Avatar,
 } from '@/components/ui';
 import {
   Wallet, TrendingDown, PiggyBank, Download, MoreHorizontal, ArrowUp, ArrowDown,
@@ -195,9 +195,7 @@ export default function DashboardPage() {
               {connectedChannels.length > 0 ? connectedChannels.map((c: any) => (
                 <div key={c.type} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-xs shadow-sm flex-shrink-0">
-                      {(c.name || c.type || '?').slice(0, 2).toUpperCase()}
-                    </div>
+                    <Avatar name={c.name || c.type} size="md" />
                     <div className="min-w-0">
                       <div className="text-sm font-bold text-slate-900 truncate">{c.name}</div>
                       <div className="text-xs text-slate-500 font-semibold">
