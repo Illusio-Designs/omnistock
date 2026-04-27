@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import {
   Button, Badge, Card, Input, Textarea, Select, PasswordInput,
   Checkbox, Switch, FileUpload, DatePicker, Pagination, Tooltip,
@@ -30,26 +31,28 @@ export default function UiKitPage() {
   const [section, setSection] = useState<Section>('buttons');
 
   return (
-    <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">UI Kit</h1>
-        <p className="text-slate-500 mt-1">
-          Live, interactive showcase of every shared component in <code>@/components/ui</code>.
-          Use this page when designing new screens to see what's available.
-        </p>
+    <DashboardLayout>
+      <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">UI Kit</h1>
+          <p className="text-slate-500 mt-1">
+            Live, interactive showcase of every shared component in <code>@/components/ui</code>.
+            Use this page when designing new screens to see what's available.
+          </p>
+        </div>
+
+        <Tabs value={section} onChange={setSection} items={SECTIONS.map((s) => ({ key: s.key, label: s.label }))} />
+
+        {section === 'buttons'  && <ButtonsSection />}
+        {section === 'inputs'   && <InputsSection />}
+        {section === 'select'   && <SelectSection />}
+        {section === 'toggles'  && <TogglesSection />}
+        {section === 'feedback' && <FeedbackSection />}
+        {section === 'overlays' && <OverlaysSection />}
+        {section === 'data'     && <DataSection />}
+        {section === 'layout'   && <LayoutSection />}
       </div>
-
-      <Tabs value={section} onChange={setSection} items={SECTIONS.map((s) => ({ key: s.key, label: s.label }))} />
-
-      {section === 'buttons'  && <ButtonsSection />}
-      {section === 'inputs'   && <InputsSection />}
-      {section === 'select'   && <SelectSection />}
-      {section === 'toggles'  && <TogglesSection />}
-      {section === 'feedback' && <FeedbackSection />}
-      {section === 'overlays' && <OverlaysSection />}
-      {section === 'data'     && <DataSection />}
-      {section === 'layout'   && <LayoutSection />}
-    </div>
+    </DashboardLayout>
   );
 }
 
