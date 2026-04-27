@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { CheckCircle2, AlertCircle, Zap, Crown, Sparkles, X, Wallet, Plus, Settings2 } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { TopupModal, WALLET_CHANGED_EVENT } from '@/components/wallet/TopupModal';
 
 export default function BillingPage() {
   const { hasPermission } = useAuthStore();
@@ -19,7 +20,7 @@ export default function BillingPage() {
   const [txns, setTxns] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
-  const [topupAmount, setTopupAmount] = useState('');
+  const [topupOpen, setTopupOpen] = useState(false);
   const [showWalletSettings, setShowWalletSettings] = useState(false);
   const [walletSettings, setWalletSettings] = useState({
     lowBalanceThreshold: '',
@@ -70,19 +71,12 @@ export default function BillingPage() {
     }
   };
 
-  useEffect(() => { load(); }, []);
-
-  const topup = async (amount: number) => {
-    if (!canManage || !amount || amount <= 0) return;
-    try {
-      await billingApi.topupWallet(amount);
-      setMsg(`Wallet topped up by ₹${amount}`);
-      setTopupAmount('');
-      await load();
-    } catch (e: any) {
-      setMsg(e?.response?.data?.error || 'Top up failed');
-    }
-  };
+  useEffect(() => {
+    load();
+    const onChange = () => load();
+    window.addEventListener(WALLET_CHANGED_EVENT, onChange);
+    return () => window.removeEventListener(WALLET_CHANGED_EVENT, onChange);
+  }, []);
 
   // Razorpay checkout helper — lazy-loads the script the first time
   const loadRazorpay = () =>
@@ -215,32 +209,13 @@ export default function BillingPage() {
                 </div>
               </div>
               {canManage && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  {[500, 1000, 2500, 5000].map((amt) => (
-                    <Button key={amt} variant="secondary" size="sm" onClick={() => topup(amt)}>
-                      + ₹{amt}
-                    </Button>
-                  ))}
-                  <div className="flex items-end gap-1">
-                    <div className="w-28">
-                      <Input
-                        type="number"
-                        value={topupAmount}
-                        onChange={(e) => setTopupAmount(e.target.value)}
-                        placeholder="Amount"
-                      />
-                    </div>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      leftIcon={<Plus size={12} />}
-                      onClick={() => topup(Number(topupAmount))}
-                      disabled={!topupAmount || Number(topupAmount) <= 0}
-                    >
-                      Top up
-                    </Button>
-                  </div>
-                </div>
+                <Button
+                  variant="primary"
+                  leftIcon={<Plus size={14} />}
+                  onClick={() => setTopupOpen(true)}
+                >
+                  Top up
+                </Button>
               )}
             </div>
 
@@ -376,6 +351,12 @@ export default function BillingPage() {
           </div>
         </div>
       </div>
+
+      <TopupModal
+        open={topupOpen}
+        onClose={() => setTopupOpen(false)}
+        currentBalance={wallet ? Number(wallet.balance) : undefined}
+      />
     </DashboardLayout>
   );
 }

@@ -185,7 +185,7 @@ export default function SettingsPage() {
 
                 <div className="space-y-4">
                   <Input label="Company Name" leftIcon={<Building2 size={14} />} value={company.name} onChange={(e) => setCompany({ ...company, name: e.target.value })} />
-                  <Input label="GSTIN" value={company.gstin} onChange={(e) => setCompany({ ...company, gstin: e.target.value })} placeholder="22AAAAA0000A1Z5" />
+                  <Input label="GSTIN" value={company.gstin} onChange={(e) => setCompany({ ...company, gstin: e.target.value.toUpperCase() })} placeholder="22AAAAA0000A1Z5" />
                   <Textarea label="Registered Address" value={company.address} onChange={(e) => setCompany({ ...company, address: e.target.value })} rows={3} />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <Select label="Currency" value={company.currency} onChange={(v) => setCompany({ ...company, currency: v })} options={CURRENCIES} fullWidth />

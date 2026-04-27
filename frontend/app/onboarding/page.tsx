@@ -92,7 +92,7 @@ function OnboardingInner() {
               <Field label="Business name"  value={form.businessName} onChange={(v) => update('businessName', v)} />
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Phone"   value={form.phone}   onChange={(v) => update('phone', v)} />
-                <Field label="GSTIN"   value={form.gstin}   onChange={(v) => update('gstin', v)} />
+                <Field label="GSTIN"   value={form.gstin}   onChange={(v) => update('gstin', v.toUpperCase())} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Industry"     value={form.industry}     onChange={(v) => update('industry', v)} />

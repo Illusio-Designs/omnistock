@@ -276,7 +276,7 @@ function CustomerModal({
           <Input label="Email" type="email" leftIcon={<Mail size={14} />} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="priya@example.com" />
           <Input label="Phone" leftIcon={<Phone size={14} />} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+91 90000 00000" />
         </div>
-        <Input label="GSTIN (optional)" value={form.gstIn} onChange={(e) => setForm({ ...form, gstIn: e.target.value })} placeholder="22AAAAA0000A1Z5" />
+        <Input label="GSTIN (optional)" value={form.gstIn} onChange={(e) => setForm({ ...form, gstIn: e.target.value.toUpperCase() })} placeholder="22AAAAA0000A1Z5" />
         <Checkbox
           label="B2B Customer"
           description="Mark as wholesale / business buyer"

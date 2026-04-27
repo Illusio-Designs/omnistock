@@ -30,6 +30,15 @@ export default function DashboardPage() {
   });
 
   const s = data?.summary || {};
+  const monthRevenue = Number(s.monthRevenue || 0);
+  const lastMonthRevenue = Number(s.lastMonthRevenue || 0);
+  const revenueChangePct = lastMonthRevenue > 0
+    ? ((monthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
+    : null;
+
+  // Default goals shown until tenant-configurable targets exist
+  const MONTHLY_REVENUE_GOAL = 100_000;
+  const PRODUCT_LISTING_GOAL = 500;
   const connectedChannels = (channelCatalog?.catalog || [])
     .filter((c: any) => c.status === 'connected')
     .slice(0, 4);
@@ -89,13 +98,20 @@ export default function DashboardPage() {
               />
             </div>
             <div className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
-              {formatCurrency(s.monthRevenue || 35340.89)}
+              {formatCurrency(monthRevenue)}
             </div>
             <div className="flex items-center gap-1.5 mt-2">
-              <Badge variant="emerald">
-                <ArrowUp size={10} /> 3.2%
-              </Badge>
-              <span className="text-xs text-slate-400">from last month</span>
+              {revenueChangePct === null ? (
+                <span className="text-xs text-slate-400">No prior-month data</span>
+              ) : (
+                <>
+                  <Badge variant={revenueChangePct >= 0 ? 'emerald' : 'rose'}>
+                    {revenueChangePct >= 0 ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
+                    {Math.abs(revenueChangePct).toFixed(1)}%
+                  </Badge>
+                  <span className="text-xs text-slate-400">from last month</span>
+                </>
+              )}
             </div>
             <div className="flex items-center gap-2 mt-5">
               <Button variant="primary" size="sm" leftIcon={<Send size={12} />} className="flex-1">
@@ -155,10 +171,8 @@ export default function DashboardPage() {
               {(s.totalOrders || 0).toLocaleString()}
             </div>
             <div className="flex items-center gap-1.5 mt-2">
-              <Badge variant="emerald">
-                <ArrowUp size={10} /> 4.5%
-              </Badge>
-              <span className="text-xs text-slate-400">from last month</span>
+              <Badge variant="emerald">{(s.pendingOrders || 0).toLocaleString()} pending</Badge>
+              <span className="text-xs text-slate-400">awaiting fulfillment</span>
             </div>
             <div className="mt-5 text-xs text-slate-500">
               <span className="font-bold text-slate-700">{s.todayOrders || 0}</span> orders received today
@@ -251,9 +265,18 @@ export default function DashboardPage() {
             </div>
             <div className="space-y-3">
               {[
-                { name: 'Reorder Point',    current: 15600,                  target: 25000, pct: 62 },
-                { name: 'Monthly Target',   current: s.monthRevenue || 0,    target: 100000, pct: Math.min(100, Math.round(((s.monthRevenue || 0) / 100000) * 100)) },
-                { name: 'Product Listings', current: s.totalProducts || 0,   target: 500, pct: Math.min(100, Math.round(((s.totalProducts || 0) / 500) * 100)) },
+                {
+                  name: 'Monthly Target',
+                  current: monthRevenue,
+                  target: MONTHLY_REVENUE_GOAL,
+                  pct: Math.min(100, Math.round((monthRevenue / MONTHLY_REVENUE_GOAL) * 100)),
+                },
+                {
+                  name: 'Product Listings',
+                  current: s.totalProducts || 0,
+                  target: PRODUCT_LISTING_GOAL,
+                  pct: Math.min(100, Math.round(((s.totalProducts || 0) / PRODUCT_LISTING_GOAL) * 100)),
+                },
               ].map(g => (
                 <div key={g.name} className="p-3 rounded-xl bg-slate-50/70">
                   <div className="flex items-center gap-3 mb-2">

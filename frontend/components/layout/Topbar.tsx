@@ -4,6 +4,7 @@ import { Search, HelpCircle, Mail, ChevronDown, Menu, Sparkles } from 'lucide-re
 import { useAuthStore } from '@/store/auth.store';
 import { useUIStore } from '@/store/ui.store';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { WalletPill } from '@/components/wallet/WalletPill';
 
 export function Topbar() {
   const { user, logout } = useAuthStore();
@@ -49,11 +50,13 @@ export function Topbar() {
           </button>
         </Tooltip>
 
+        {/* Wallet balance */}
+        <WalletPill />
+
         {/* Mail */}
-        <Tooltip content="Inbox · 3 new" side="bottom">
-          <button className="relative w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors">
+        <Tooltip content="Inbox" side="bottom">
+          <button className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors">
             <Mail size={17} />
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse" />
           </button>
         </Tooltip>
 

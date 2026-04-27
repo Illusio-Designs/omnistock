@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import {
   LayoutDashboard, Package, Warehouse, ShoppingCart, TrendingUp,
   Users, Store, Truck, FileText, BarChart2, Settings, LogOut,
@@ -11,6 +12,7 @@ import {
 import { useAuthStore } from '@/store/auth.store';
 import { useUIStore } from '@/store/ui.store';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { dashboardApi, channelApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 export interface SidebarNavItem {
@@ -30,7 +32,7 @@ const DEFAULT_NAV_GROUPS: SidebarNavGroup[] = [
     label: 'Main Menu',
     items: [
       { label: 'Dashboard',   href: '/dashboard',   icon: LayoutDashboard },
-      { label: 'Orders',      href: '/orders',       icon: ShoppingCart, badge: 20 },
+      { label: 'Orders',      href: '/orders',       icon: ShoppingCart },
       { label: 'Products',    href: '/products',     icon: Package },
       { label: 'Inventory',   href: '/inventory',    icon: Warehouse },
       { label: 'Reports',     href: '/reports',      icon: BarChart2 },
@@ -39,7 +41,7 @@ const DEFAULT_NAV_GROUPS: SidebarNavGroup[] = [
   {
     label: 'Features',
     items: [
-      { label: 'Channels',    href: '/channels',     icon: Plug,       badge: 16 },
+      { label: 'Channels',    href: '/channels',     icon: Plug },
       { label: 'Purchases',   href: '/purchases',    icon: TrendingUp },
       { label: 'Shipments',   href: '/shipments',    icon: Truck },
       { label: 'Invoices',    href: '/invoices',     icon: FileText },
@@ -72,11 +74,42 @@ export function Sidebar({
   brandSubtitle,
   showUpgradeCard = true,
 }: SidebarProps = {}) {
-  const navGroups = groups || DEFAULT_NAV_GROUPS;
+  const baseGroups = groups || DEFAULT_NAV_GROUPS;
+  const isDefaultNav = !groups;
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useAuthStore();
+  const { logout, tenant, isPlatformAdmin } = useAuthStore();
   const { sidebarCollapsed, toggleSidebar, mobileSidebarOpen, setMobileSidebar } = useUIStore();
+
+  // Live counts for nav badges (only on tenant nav, not platform admin nav)
+  const [counts, setCounts] = useState<{ orders?: number; channels?: number }>({});
+  useEffect(() => {
+    if (!isDefaultNav || !tenant || isPlatformAdmin()) return;
+    let cancelled = false;
+    Promise.all([
+      dashboardApi.get().catch(() => null),
+      channelApi.list().catch(() => null),
+    ]).then(([d, c]) => {
+      if (cancelled) return;
+      setCounts({
+        orders: d?.data?.summary?.pendingOrders,
+        channels: Array.isArray(c?.data) ? c.data.length : c?.data?.channels?.length,
+      });
+    });
+    return () => { cancelled = true; };
+  }, [isDefaultNav, tenant, isPlatformAdmin]);
+
+  const navGroups = useMemo(() => {
+    if (!isDefaultNav) return baseGroups;
+    return baseGroups.map(g => ({
+      ...g,
+      items: g.items.map(it => {
+        if (it.href === '/orders'   && counts.orders)   return { ...it, badge: counts.orders };
+        if (it.href === '/channels' && counts.channels) return { ...it, badge: counts.channels };
+        return it;
+      }),
+    }));
+  }, [baseGroups, counts, isDefaultNav]);
 
   const handleLogout = () => {
     logout();
