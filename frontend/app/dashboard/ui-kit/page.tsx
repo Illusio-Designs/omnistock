@@ -6,7 +6,7 @@ import {
   Button, Badge, Card, Input, Textarea, Select, PasswordInput,
   Checkbox, Switch, FileUpload, DatePicker, Pagination, Tooltip,
   Modal, Dropdown, Skeleton, Loader, Avatar, Tabs, EmptyState,
-  ConfirmDialog, useConfirm,
+  ConfirmDialog, useConfirm, FilterBar, FilterChips,
 } from '@/components/ui';
 import { toast } from '@/store/toast.store';
 import {
@@ -22,6 +22,7 @@ const SECTIONS = [
   { key: 'feedback', label: 'Feedback' },
   { key: 'overlays', label: 'Overlays' },
   { key: 'data',     label: 'Data Display' },
+  { key: 'filters',  label: 'Filters' },
   { key: 'layout',   label: 'Layout' },
 ] as const;
 
@@ -50,6 +51,7 @@ export default function UiKitPage() {
         {section === 'feedback' && <FeedbackSection />}
         {section === 'overlays' && <OverlaysSection />}
         {section === 'data'     && <DataSection />}
+        {section === 'filters'  && <FiltersSection />}
         {section === 'layout'   && <LayoutSection />}
       </div>
     </DashboardLayout>
@@ -365,6 +367,86 @@ function DataSection() {
               { key: 'inventory', label: 'Inventory', badge: 3 },
             ]}
           />
+        </div>
+      </Demo>
+    </div>
+  );
+}
+
+// ─── Filters ───────────────────────────────────────────────────
+function FiltersSection() {
+  const [status, setStatus] = useState('');
+  const [risk, setRisk] = useState('');
+  const [chipStatus, setChipStatus] = useState<'' | 'open' | 'closed' | 'pending'>('');
+  const [tags, setTags] = useState<string[]>(['urgent']);
+  const activeCount = [status, risk].filter(Boolean).length;
+
+  return (
+    <div className="space-y-4">
+      <Demo title="FilterBar" description="Wraps a row of filter controls with active count + Clear all.">
+        <div className="w-full">
+          <FilterBar
+            activeCount={activeCount}
+            onClear={() => { setStatus(''); setRisk(''); }}
+          >
+            <Select
+              value={status}
+              onChange={setStatus}
+              options={[
+                { value: '',          label: 'All statuses' },
+                { value: 'PENDING',   label: 'Pending' },
+                { value: 'CONFIRMED', label: 'Confirmed' },
+                { value: 'SHIPPED',   label: 'Shipped' },
+              ]}
+              size="sm"
+            />
+            <Select
+              value={risk}
+              onChange={setRisk}
+              options={[
+                { value: '',       label: 'All risk' },
+                { value: 'LOW',    label: 'Low' },
+                { value: 'MEDIUM', label: 'Medium' },
+                { value: 'HIGH',   label: 'High' },
+              ]}
+              size="sm"
+            />
+          </FilterBar>
+        </div>
+      </Demo>
+
+      <Demo title="FilterChips — single-select" description="Radio-style chips. One value at a time. Optional inline counts.">
+        <div className="w-full">
+          <FilterChips
+            value={chipStatus}
+            onChange={setChipStatus}
+            options={[
+              { value: '',        label: 'All',     count: 142 },
+              { value: 'open',    label: 'Open',    count: 23 },
+              { value: 'pending', label: 'Pending', count: 7,  activeColor: 'amber' },
+              { value: 'closed',  label: 'Closed',  count: 112, activeColor: 'slate' },
+            ]}
+          />
+          <p className="text-xs text-slate-500 mt-3">Selected: <span className="font-mono">{chipStatus || '(empty)'}</span></p>
+        </div>
+      </Demo>
+
+      <Demo title="FilterChips — multi-select" description="`multiple` flag toggles individual chips. value is an array.">
+        <div className="w-full">
+          <FilterChips
+            multiple
+            value={tags}
+            onChange={setTags}
+            options={[
+              { value: 'urgent',     label: 'Urgent',     activeColor: 'rose' },
+              { value: 'follow-up',  label: 'Follow-up',  activeColor: 'amber' },
+              { value: 'vip',        label: 'VIP',        activeColor: 'violet' },
+              { value: 'wholesale',  label: 'Wholesale',  activeColor: 'blue' },
+              { value: 'returning',  label: 'Returning' },
+            ]}
+            size="sm"
+          />
+          <p className="text-xs text-slate-500 mt-3">Selected: <span className="font-mono">[{tags.join(', ')}]</span></p>
         </div>
       </Demo>
     </div>

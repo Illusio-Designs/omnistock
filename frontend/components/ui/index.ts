@@ -20,3 +20,6 @@ export { EmptyState } from './EmptyState';
 export { Tabs } from './Tabs';
 export type { TabItem } from './Tabs';
 export { Avatar } from './Avatar';
+export { FilterBar } from './FilterBar';
+export { FilterChips } from './FilterChips';
+export type { FilterChipOption } from './FilterChips';
