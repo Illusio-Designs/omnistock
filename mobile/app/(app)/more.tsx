@@ -7,6 +7,7 @@ import {
   FileText,
   Info,
   LogOut,
+  Palette,
   Plug,
   Settings as SettingsIcon,
   Shield,
@@ -41,6 +42,7 @@ const ITEMS: Item[] = [
   { href: '/team', label: 'Team', icon: <Users size={18} color="#059669" />, iconBg: 'bg-emerald-50' },
   { href: '/billing', label: 'Billing & Usage', icon: <CreditCard size={18} color="#f59e0b" />, iconBg: 'bg-amber-50' },
   { href: '/settings', label: 'Settings', icon: <SettingsIcon size={18} color="#64748b" />, iconBg: 'bg-slate-100' },
+  { href: '/ui-kit',   label: 'UI Kit',   icon: <Palette size={18} color="#0ea5e9" />,        iconBg: 'bg-sky-50' },
   {
     href: '/admin',
     label: 'Platform Admin',

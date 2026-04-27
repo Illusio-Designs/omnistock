@@ -11,6 +11,7 @@ import FormInput from '../../components/ui/FormInput';
 import ListRow from '../../components/ui/ListRow';
 import PageShell from '../../components/ui/PageShell';
 import StatusFilter from '../../components/ui/StatusFilter';
+import Tabs from '../../components/ui/Tabs';
 import { orderApi, customerApi, channelApi } from '../../lib/api';
 import { orderStatusVariant } from '../../lib/statusColors';
 import { formatCurrency, formatShortDate } from '../../lib/utils';
@@ -272,25 +273,16 @@ export default function OrdersScreen() {
       onRefresh={refetch}
     >
       {/* Fulfillment tabs */}
-      <View className="flex-row p-1 bg-slate-100 rounded-xl mb-3">
-        {([
-          { key: 'all',    label: 'All' },
-          { key: 'auto',   label: 'Auto Fulfill' },
-          { key: 'manual', label: 'Manual' },
-        ] as { key: FulfillmentTab; label: string }[]).map((t) => {
-          const active = fulfillmentTab === t.key;
-          return (
-            <Pressable
-              key={t.key}
-              onPress={() => setFulfillmentTab(t.key)}
-              className={`flex-1 items-center py-1.5 rounded-lg ${active ? 'bg-white shadow' : ''}`}
-            >
-              <Text className={`text-[12px] font-bold ${active ? 'text-slate-900' : 'text-slate-500'}`}>
-                {t.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+      <View className="mb-3">
+        <Tabs<FulfillmentTab>
+          value={fulfillmentTab}
+          onChange={setFulfillmentTab}
+          items={[
+            { key: 'all',    label: 'All' },
+            { key: 'auto',   label: 'Auto Fulfill' },
+            { key: 'manual', label: 'Manual' },
+          ]}
+        />
       </View>
 
       <StatusFilter options={STATUSES} value={filter} onChange={setFilter} />

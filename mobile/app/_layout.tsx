@@ -9,6 +9,7 @@ import { useAuthStore } from '../store/auth.store';
 import ErrorBoundary from '../components/ErrorBoundary';
 import AnimatedSplash from '../components/SplashScreen';
 import IntroScreen from '../components/IntroScreen';
+import Toaster from '../components/ui/Toaster';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -76,6 +77,7 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <StatusBar style="auto" />
           <Slot />
+          <Toaster />
         </SafeAreaProvider>
       </QueryClientProvider>
     </ErrorBoundary>

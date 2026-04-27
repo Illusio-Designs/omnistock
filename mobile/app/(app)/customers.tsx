@@ -10,7 +10,9 @@ import EmptyState from '../../components/ui/EmptyState';
 import FormInput from '../../components/ui/FormInput';
 import ListRow from '../../components/ui/ListRow';
 import PageShell from '../../components/ui/PageShell';
+import Avatar from '../../components/ui/Avatar';
 import { customerApi } from '../../lib/api';
+import { toast } from '../../store/toast.store';
 
 export default function CustomersScreen() {
   const qc = useQueryClient();
@@ -33,15 +35,15 @@ export default function CustomersScreen() {
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       setShowCreate(false);
       setName(''); setEmail(''); setPhone(''); setGstin(''); setIsB2B(false);
-      Alert.alert('Success', 'Customer created');
+      toast.success('Customer created');
     },
     onError: (err: any) => {
-      Alert.alert('Error', err?.response?.data?.error || 'Failed to create customer');
+      toast.error(err?.response?.data?.error || 'Failed to create customer');
     },
   });
 
   const onSubmit = () => {
-    if (!name.trim()) { Alert.alert('Required', 'Customer name is required'); return; }
+    if (!name.trim()) { toast.warning('Customer name is required'); return; }
     createMutation.mutate({
       name: name.trim(),
       email: email.trim() || undefined,
@@ -73,7 +75,7 @@ export default function CustomersScreen() {
             <ListRow
               key={c.id}
               isFirst={idx === 0}
-              icon={<User size={15} color="#059669" />}
+              icon={<Avatar name={c.name} size="sm" />}
               title={c.name}
               subtitle={c.email ?? c.phone ?? ''}
               meta={c.city ?? c.country}
