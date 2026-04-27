@@ -6,7 +6,7 @@ import {
   Button, Badge, Card, Input, Textarea, Select, PasswordInput,
   Checkbox, Switch, FileUpload, DatePicker, Pagination, Tooltip,
   Modal, Dropdown, Skeleton, Loader, Avatar, Tabs, EmptyState,
-  ConfirmDialog, useConfirm, FilterBar, FilterChips,
+  ConfirmDialog, useConfirm, FilterBar, FilterChips, MultiSelect,
 } from '@/components/ui';
 import { toast } from '@/store/toast.store';
 import {
@@ -379,11 +379,15 @@ function FiltersSection() {
   const [risk, setRisk] = useState('');
   const [chipStatus, setChipStatus] = useState<'' | 'open' | 'closed' | 'pending'>('');
   const [tags, setTags] = useState<string[]>(['urgent']);
+  const [pickedStatuses, setPickedStatuses] = useState<string[]>([]);
+  const [pickedChannels, setPickedChannels] = useState<string[]>(['AMAZON', 'FLIPKART']);
+  const [pickedDate, setPickedDate] = useState<Date | null>(null);
   const activeCount = [status, risk].filter(Boolean).length;
+  const multiActiveCount = pickedStatuses.length + pickedChannels.length + (pickedDate ? 1 : 0);
 
   return (
     <div className="space-y-4">
-      <Demo title="FilterBar" description="Wraps a row of filter controls with active count + Clear all.">
+      <Demo title="FilterBar — single-select filters" description="Standard row of single-select dropdowns with badge + Clear all.">
         <div className="w-full">
           <FilterBar
             activeCount={activeCount}
@@ -412,6 +416,70 @@ function FiltersSection() {
               size="sm"
             />
           </FilterBar>
+        </div>
+      </Demo>
+
+      <Demo title="FilterBar + MultiSelect" description="OR-style multi-pick filters. Each MultiSelect shows '<first> +N' when 2+ are picked. Selected values appear in the active-count badge above.">
+        <div className="w-full space-y-3">
+          <FilterBar
+            activeCount={multiActiveCount}
+            onClear={() => { setPickedStatuses([]); setPickedChannels([]); setPickedDate(null); }}
+          >
+            <MultiSelect
+              size="sm"
+              value={pickedStatuses}
+              onChange={setPickedStatuses}
+              placeholder="All statuses"
+              options={[
+                { value: 'PENDING',   label: 'Pending' },
+                { value: 'CONFIRMED', label: 'Confirmed' },
+                { value: 'PROCESSING',label: 'Processing' },
+                { value: 'SHIPPED',   label: 'Shipped' },
+                { value: 'DELIVERED', label: 'Delivered' },
+                { value: 'CANCELLED', label: 'Cancelled' },
+              ]}
+            />
+            <MultiSelect
+              size="sm"
+              value={pickedChannels}
+              onChange={setPickedChannels}
+              placeholder="All channels"
+              options={[
+                { value: 'AMAZON',   label: 'Amazon' },
+                { value: 'FLIPKART', label: 'Flipkart' },
+                { value: 'SHOPIFY',  label: 'Shopify' },
+                { value: 'MEESHO',   label: 'Meesho' },
+                { value: 'NYKAA',    label: 'Nykaa' },
+              ]}
+            />
+            <DatePicker value={pickedDate} onChange={setPickedDate} placeholder="Date" />
+          </FilterBar>
+
+          {/* Show selection summary */}
+          <div className="text-xs text-slate-500 space-y-1 px-1">
+            <div>Statuses: <span className="font-mono text-slate-700">[{pickedStatuses.join(', ')}]</span></div>
+            <div>Channels: <span className="font-mono text-slate-700">[{pickedChannels.join(', ')}]</span></div>
+            <div>Date: <span className="font-mono text-slate-700">{pickedDate?.toLocaleDateString() || '(none)'}</span></div>
+          </div>
+        </div>
+      </Demo>
+
+      <Demo title="MultiSelect — chips summary" description="`summary='chips'` shows comma-separated labels instead of '<first> +N'.">
+        <div className="w-72">
+          <MultiSelect
+            label="Order tags"
+            value={tags}
+            onChange={setTags}
+            summary="chips"
+            placeholder="Pick tags"
+            options={[
+              { value: 'urgent',     label: 'Urgent' },
+              { value: 'follow-up',  label: 'Follow-up' },
+              { value: 'vip',        label: 'VIP' },
+              { value: 'wholesale',  label: 'Wholesale' },
+              { value: 'returning',  label: 'Returning' },
+            ]}
+          />
         </div>
       </Demo>
 

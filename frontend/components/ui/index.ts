@@ -23,3 +23,5 @@ export { Avatar } from './Avatar';
 export { FilterBar } from './FilterBar';
 export { FilterChips } from './FilterChips';
 export type { FilterChipOption } from './FilterChips';
+export { MultiSelect } from './MultiSelect';
+export type { MultiSelectOption } from './MultiSelect';
