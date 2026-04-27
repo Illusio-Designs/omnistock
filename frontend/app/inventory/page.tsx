@@ -5,9 +5,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { inventoryApi, warehouseApi, productApi } from '@/lib/api';
 import {
-  Button, Badge, Card, Modal, Input, Textarea, Select, Pagination,
+  Button, Badge, Card, Modal, Input, Textarea, Select, Pagination, Tabs,
 } from '@/components/ui';
-import { AlertTriangle, Plus, ArrowUpDown } from 'lucide-react';
+import { AlertTriangle, Plus, ArrowUpDown, Boxes, History } from 'lucide-react';
 
 const TYPE_OPTIONS = [
   { value: 'INBOUND',    label: 'Inbound (Add Stock)' },
@@ -113,19 +113,14 @@ export default function InventoryPage() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 p-1 bg-slate-100 rounded-xl w-fit">
-          {(['stock', 'movements'] as Tab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                tab === t ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              {t === 'stock' ? 'Stock Levels' : 'Movements'}
-            </button>
-          ))}
-        </div>
+        <Tabs<Tab>
+          value={tab}
+          onChange={setTab}
+          items={[
+            { key: 'stock',     label: 'Stock Levels', icon: <Boxes size={14} /> },
+            { key: 'movements', label: 'Movements',    icon: <History size={14} /> },
+          ]}
+        />
 
         {tab === 'stock' && (
           <>

@@ -6,20 +6,22 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { channelApi } from '@/lib/api';
 import {
-  ArrowLeft, CheckCircle2, XCircle, RefreshCw, Download, Upload,
-  Plug, AlertCircle, Trash2, ExternalLink, KeyRound,
+  ArrowLeft, RefreshCw, Download, Upload,
+  Plug, AlertCircle, Trash2, KeyRound,
 } from 'lucide-react';
 import Link from 'next/link';
 import { ConnectChannelModal } from '@/components/channels/ConnectChannelModal';
 import { Button } from '@/components/ui/Button';
+import { useConfirm } from '@/components/ui';
+import { toast } from '@/store/toast.store';
 
 export default function ChannelDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
   const qc = useQueryClient();
-  const [result, setResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [connectOpen, setConnectOpen] = useState(false);
+  const [confirmUi, askConfirm] = useConfirm();
 
   const { data: channel, isLoading } = useQuery({
     queryKey: ['channel', id],
@@ -34,23 +36,23 @@ export default function ChannelDetailPage() {
 
   const testMutation = useMutation({
     mutationFn: () => channelApi.test(id),
-    onSuccess: (res) => setResult({ type: 'success', message: `Connected: ${JSON.stringify(res.data)}` }),
-    onError: (err: any) => setResult({ type: 'error', message: err.response?.data?.error || err.message }),
+    onSuccess: (res) => toast.success(`Connected: ${JSON.stringify(res.data)}`),
+    onError: (err: any) => toast.error(err.response?.data?.error || err.message),
   });
 
   const syncOrdersMutation = useMutation({
     mutationFn: () => channelApi.syncOrders(id),
     onSuccess: (res) => {
-      setResult({ type: 'success', message: `Synced: ${res.data.imported} imported, ${res.data.skipped} skipped, ${res.data.failed} failed` });
+      toast.success(`Synced: ${res.data.imported} imported, ${res.data.skipped} skipped, ${res.data.failed} failed`);
       qc.invalidateQueries({ queryKey: ['channel', id] });
     },
-    onError: (err: any) => setResult({ type: 'error', message: err.response?.data?.details || err.response?.data?.error || err.message }),
+    onError: (err: any) => toast.error(err.response?.data?.details || err.response?.data?.error || err.message),
   });
 
   const syncInventoryMutation = useMutation({
     mutationFn: () => channelApi.syncInventory(id),
-    onSuccess: (res) => setResult({ type: 'success', message: `Inventory pushed: ${res.data.updated} updated, ${res.data.failed} failed` }),
-    onError: (err: any) => setResult({ type: 'error', message: err.response?.data?.details || err.response?.data?.error || err.message }),
+    onSuccess: (res) => toast.success(`Inventory pushed: ${res.data.updated} updated, ${res.data.failed} failed`),
+    onError: (err: any) => toast.error(err.response?.data?.details || err.response?.data?.error || err.message),
   });
 
   const deleteMutation = useMutation({
@@ -74,6 +76,7 @@ export default function ChannelDetailPage() {
 
   return (
     <DashboardLayout>
+      {confirmUi}
       <div className="space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -95,8 +98,14 @@ export default function ChannelDetailPage() {
             <Button
               variant="danger"
               leftIcon={<Trash2 size={14} />}
-              onClick={() => {
-                if (confirm('Deactivate this channel? You can reconnect it later.')) deleteMutation.mutate();
+              onClick={async () => {
+                const ok = await askConfirm({
+                  title: 'Deactivate this channel?',
+                  description: 'Order sync and inventory push will stop. You can reconnect it later.',
+                  confirmLabel: 'Deactivate',
+                  variant: 'danger',
+                });
+                if (ok) deleteMutation.mutate();
               }}
             >
               Deactivate
@@ -139,7 +148,7 @@ export default function ChannelDetailPage() {
             onConnected={() => {
               setConnectOpen(false);
               qc.invalidateQueries({ queryKey: ['channel', id] });
-              setResult({ type: 'success', message: 'Channel connected successfully' });
+              toast.success('Channel connected successfully');
             }}
           />
         )}
@@ -171,17 +180,6 @@ export default function ChannelDetailPage() {
             disabled={!hasCredentials}
           />
         </div>
-
-        {/* Result */}
-        {result && (
-          <div className={`flex items-start gap-2 rounded-lg p-3 text-sm border ${
-            result.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'
-          }`}>
-            {result.type === 'success' ? <CheckCircle2 size={16} className="mt-0.5" /> : <XCircle size={16} className="mt-0.5" />}
-            <div className="flex-1 break-all">{result.message}</div>
-            <Button variant="ghost" size="sm" onClick={() => setResult(null)} className="text-xs underline">Dismiss</Button>
-          </div>
-        )}
 
         {/* SKU Mappings */}
         <div className="bg-white rounded-xl border">

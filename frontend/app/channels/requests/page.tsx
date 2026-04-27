@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { Loader } from '@/components/ui/Loader';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { EmptyState, useConfirm } from '@/components/ui';
 
 const STATUS_FILTERS = [
   { value: '', label: 'All Statuses' },
@@ -29,6 +30,7 @@ const STATUS_STYLES: Record<string, { bg: string; icon: any }> = {
 export default function ChannelRequestsPage() {
   const [status, setStatus] = useState('');
   const qc = useQueryClient();
+  const [confirmUi, askConfirm] = useConfirm();
 
   const { data: requests, isLoading } = useQuery({
     queryKey: ['channel-requests', status],
@@ -42,6 +44,7 @@ export default function ChannelRequestsPage() {
 
   return (
     <DashboardLayout>
+      {confirmUi}
       <div className="space-y-5">
         <div className="flex items-center gap-3">
           <Link href="/channels" className="p-1.5 hover:bg-gray-100 rounded-lg">
@@ -62,12 +65,18 @@ export default function ChannelRequestsPage() {
         {isLoading ? (
           <Loader />
         ) : !requests || requests.length === 0 ? (
-          <div className="bg-white rounded-xl border p-12 text-center">
-            <Inbox size={40} className="mx-auto text-gray-300 mb-3" />
-            <p className="text-gray-500 mb-4">No requests yet.</p>
-            <Link href="/channels" className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700">
-              Browse Catalog
-            </Link>
+          <div className="bg-white rounded-xl border">
+            <EmptyState
+              icon={<Inbox size={28} />}
+              iconBg="bg-slate-100 text-slate-500"
+              title="No requests yet"
+              description="Browse the channel catalog and request the integrations you need."
+              action={
+                <Link href="/channels">
+                  <Button>Browse Catalog</Button>
+                </Link>
+              }
+            />
           </div>
         ) : (
           <div className="bg-white rounded-xl border overflow-hidden">
@@ -110,7 +119,15 @@ export default function ChannelRequestsPage() {
                             <Button
                               variant="danger"
                               size="icon"
-                              onClick={() => { if (confirm('Cancel this request?')) cancelMutation.mutate(r.id); }}
+                              onClick={async () => {
+                                const ok = await askConfirm({
+                                  title: 'Cancel this request?',
+                                  description: 'The integration request will be withdrawn.',
+                                  confirmLabel: 'Cancel request',
+                                  variant: 'danger',
+                                });
+                                if (ok) cancelMutation.mutate(r.id);
+                              }}
                             >
                               <X size={13} />
                             </Button>

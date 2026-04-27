@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { useConfirm } from '@/components/ui';
 
 const EMPTY_DRAFT = {
   path: '',
@@ -24,6 +25,7 @@ export default function AdminSeoPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [draft, setDraft] = useState<any>(EMPTY_DRAFT);
+  const [confirmUi, askConfirm] = useConfirm();
 
   const load = () => adminApi.seo().then((r) => setList(r.data));
   useEffect(() => { load(); }, []);
@@ -39,13 +41,20 @@ export default function AdminSeoPage() {
   };
 
   const del = async (id: string) => {
-    if (!confirm('Delete?')) return;
+    const ok = await askConfirm({
+      title: 'Delete this SEO entry?',
+      description: 'The page will fall back to default meta tags. This cannot be undone.',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
     await adminApi.deleteSeo(id);
     load();
   };
 
   return (
     <div className="p-8">
+      {confirmUi}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">SEO Settings</h1>

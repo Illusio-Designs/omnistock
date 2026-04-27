@@ -6,6 +6,7 @@ import {
   Save, Eye, EyeOff, CheckCircle2, Lock, Package2, Mail, CreditCard, ShoppingBag, Cable, Globe, Sparkles, Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Tabs, TabItem } from '@/components/ui';
 
 const CATEGORY_META: Record<string, { label: string; description: string; icon: any }> = {
   amazon:   { label: 'Amazon SP-API',  description: 'Public app credentials used for OAuth. Every seller authorizes this one app.', icon: ShoppingBag },
@@ -89,21 +90,19 @@ export default function AdminSettingsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mt-6 mb-6 p-1 bg-slate-100 rounded-xl w-fit flex-wrap">
-        {categories.map((c) => {
-          const CIcon = (CATEGORY_META[c]?.icon) || Package2;
-          return (
-            <button
-              key={c}
-              onClick={() => setActiveTab(c)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition ${
-                activeTab === c ? 'bg-white text-slate-900 shadow' : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              <CIcon size={14} /> {CATEGORY_META[c]?.label || c}
-            </button>
-          );
-        })}
+      <div className="mt-6 mb-6">
+        <Tabs
+          value={activeTab}
+          onChange={setActiveTab}
+          items={categories.map((c): TabItem => {
+            const CIcon = (CATEGORY_META[c]?.icon) || Package2;
+            return {
+              key: c,
+              label: CATEGORY_META[c]?.label || c,
+              icon: <CIcon size={14} />,
+            };
+          })}
+        />
       </div>
 
       {/* Category header */}

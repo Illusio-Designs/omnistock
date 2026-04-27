@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/Checkbox';
 import { Loader } from '@/components/ui/Loader';
 import { Modal } from '@/components/ui/Modal';
 import { TopupModal, WALLET_CHANGED_EVENT } from '@/components/wallet/TopupModal';
+import { toast } from '@/store/toast.store';
 
 export default function BillingPage() {
   const { hasPermission } = useAuthStore();
@@ -22,7 +23,6 @@ export default function BillingPage() {
   const [wallet, setWallet] = useState<any>(null);
   const [txns, setTxns] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState('');
   const [topupOpen, setTopupOpen] = useState(false);
   const [showWalletSettings, setShowWalletSettings] = useState(false);
   const [walletSettings, setWalletSettings] = useState({
@@ -64,11 +64,11 @@ export default function BillingPage() {
         autoTopupAmount: walletSettings.autoTopupAmount ? Number(walletSettings.autoTopupAmount) : undefined,
         autoTopupTriggerBelow: walletSettings.autoTopupTriggerBelow ? Number(walletSettings.autoTopupTriggerBelow) : undefined,
       });
-      setMsg('Wallet settings saved');
+      toast.success('Wallet settings saved');
       setShowWalletSettings(false);
       await load();
     } catch (e: any) {
-      setMsg(e?.response?.data?.error || 'Failed to save settings');
+      toast.error(e?.response?.data?.error || 'Failed to save settings');
     } finally {
       setSavingSettings(false);
     }
@@ -94,7 +94,7 @@ export default function BillingPage() {
 
   const change = async (planCode: string) => {
     if (!canManage) return;
-    setLoading(true); setMsg('');
+    setLoading(true);
     try {
       // Try real payment flow first; fall back to free switch when in stub mode
       const { data } = await paymentApi.checkout({ planCode, billingCycle: 'MONTHLY' });
@@ -107,7 +107,7 @@ export default function BillingPage() {
           planCode,
           billingCycle: 'MONTHLY',
         });
-        setMsg(`Switched to ${planCode} (stub)`);
+        toast.success(`Switched to ${planCode} (stub)`);
         await load();
         return;
       }
@@ -123,13 +123,13 @@ export default function BillingPage() {
         prefill: data.prefill,
         handler: async (resp: any) => {
           await paymentApi.verify({ ...resp, planCode, billingCycle: 'MONTHLY' });
-          setMsg(`Switched to ${planCode}`);
+          toast.success(`Switched to ${planCode}`);
           await load();
         },
       });
       rzp.open();
     } catch (e: any) {
-      setMsg(e?.response?.data?.error || e.message || 'Failed');
+      toast.error(e?.response?.data?.error || e.message || 'Failed');
     } finally { setLoading(false); }
   };
 
@@ -150,8 +150,6 @@ export default function BillingPage() {
           <h1 className="text-3xl font-bold text-slate-900">Billing & Subscription</h1>
           <p className="text-slate-500 mt-1">Manage your plan, usage and pay-as-you-go.</p>
         </div>
-
-        {msg && <div className="p-3 rounded-lg bg-emerald-50 text-emerald-700 text-sm">{msg}</div>}
 
         {/* Current plan */}
         <div className="bg-gradient-to-br from-slate-900 to-emerald-900 text-white p-6 rounded-3xl shadow-xl">

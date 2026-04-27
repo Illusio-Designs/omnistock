@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { warehouseApi } from '@/lib/api';
 import {
-  Button, Badge, Card, Modal, Input, Checkbox,
+  Button, Badge, Card, Modal, Input, Checkbox, EmptyState,
 } from '@/components/ui';
 import { Plus, Store, MapPin, Package, Pencil, Trash2 } from 'lucide-react';
 
@@ -90,15 +90,19 @@ export default function WarehousesPage() {
             ))}
           </div>
         ) : (
-          <Card className="p-16 text-center">
-            <div className="inline-flex w-16 h-16 rounded-2xl bg-emerald-50 items-center justify-center mb-4">
-              <Store size={28} className="text-emerald-600" />
-            </div>
-            <h3 className="font-bold text-slate-900 text-lg">No warehouses yet</h3>
-            <p className="text-sm text-slate-500 mt-1">Add a fulfillment location to start managing inventory.</p>
-            <Button leftIcon={<Plus size={14} />} onClick={() => setCreateOpen(true)} className="mt-5">
-              New Warehouse
-            </Button>
+          <Card>
+            <EmptyState
+              icon={<Store size={28} />}
+              iconBg="bg-emerald-50 text-emerald-600"
+              title="No warehouses yet"
+              description="Add a fulfillment location to start managing inventory."
+              action={
+                <Button leftIcon={<Plus size={14} />} onClick={() => setCreateOpen(true)}>
+                  New Warehouse
+                </Button>
+              }
+              size="lg"
+            />
           </Card>
         )}
       </div>

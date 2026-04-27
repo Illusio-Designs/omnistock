@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useUIStore } from '@/store/ui.store';
 import { useSearchStore } from '@/store/search.store';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { Avatar } from '@/components/ui/Avatar';
 import { WalletPill } from '@/components/wallet/WalletPill';
 
 export function Topbar() {
@@ -12,7 +13,6 @@ export function Topbar() {
   const { setMobileSidebar } = useUIStore();
   const { query, setQuery, clear } = useSearchStore();
   const displayUser = user || { name: 'Dev User', role: 'SUPER_ADMIN', email: 'dev@omnistock.in' };
-  const initial = displayUser.name?.[0]?.toUpperCase() || 'U';
 
   return (
     <header className="sticky top-0 z-30 bg-white/85 backdrop-blur-xl border-b border-slate-200 px-4 md:px-6 h-16 flex items-center gap-3">
@@ -73,9 +73,7 @@ export function Topbar() {
         {/* Avatar */}
         <Tooltip content={displayUser.name} side="bottom">
           <button className="ml-2 flex items-center gap-2 pl-1 pr-3 py-1 rounded-full hover:bg-slate-50 transition-colors">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
-              {initial}
-            </div>
+            <Avatar name={displayUser.name} size="sm" shape="circle" />
             <ChevronDown size={14} className="text-slate-400 hidden sm:block" />
           </button>
         </Tooltip>

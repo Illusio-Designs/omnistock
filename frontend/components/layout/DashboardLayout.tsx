@@ -10,6 +10,7 @@ import { useAuthStore, isTokenExpired } from '@/store/auth.store';
 import { MaintenancePage } from '@/components/MaintenancePage';
 import { setPlanLimitHandler, authApi, publicApi } from '@/lib/api';
 import { Loader } from '@/components/ui/Loader';
+import { Toaster } from '@/components/ui/Toaster';
 import { Eye, X, ArrowLeft, Zap } from 'lucide-react';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -74,6 +75,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <SearchRouteReset />
+      <Toaster />
       <Sidebar />
       <main className="flex-1 flex flex-col min-w-0 w-full">
         {impersonatingTenant && (

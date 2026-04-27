@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { productApi } from '@/lib/api';
 import {
-  Button, Card, Modal, Input, Textarea, Select, Pagination, FileUpload, Tooltip,
+  Button, Card, Modal, Input, Textarea, Select, Pagination, FileUpload, Tooltip, EmptyState,
 } from '@/components/ui';
 import { Plus, Package, RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -115,15 +115,19 @@ export default function ProductsPage() {
             )}
           </>
         ) : (
-          <Card className="p-16 text-center">
-            <div className="inline-flex w-16 h-16 rounded-2xl bg-emerald-50 items-center justify-center mb-4">
-              <Package size={28} className="text-emerald-600" />
-            </div>
-            <h3 className="font-bold text-slate-900 text-lg">No products yet</h3>
-            <p className="text-sm text-slate-500 mt-1">Add your first product to start selling.</p>
-            <Button leftIcon={<Plus size={14} />} onClick={() => setModalOpen(true)} className="mt-5">
-              Add Product
-            </Button>
+          <Card>
+            <EmptyState
+              icon={<Package size={28} />}
+              iconBg="bg-emerald-50 text-emerald-600"
+              title="No products yet"
+              description="Add your first product to start selling."
+              action={
+                <Button leftIcon={<Plus size={14} />} onClick={() => setModalOpen(true)}>
+                  Add Product
+                </Button>
+              }
+              size="lg"
+            />
           </Card>
         )}
       </div>

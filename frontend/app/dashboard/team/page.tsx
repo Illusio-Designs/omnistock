@@ -11,6 +11,7 @@ import { PasswordInput } from '@/components/ui/PasswordInput';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { Tabs, useConfirm } from '@/components/ui';
 
 export default function TeamPage() {
   const { hasPermission } = useAuthStore();
@@ -22,21 +23,15 @@ export default function TeamPage() {
         <h1 className="text-3xl font-bold text-slate-900">Team</h1>
         <p className="text-slate-500 mt-1">Manage users and role-based access.</p>
 
-        <div className="flex gap-1 mt-6 p-1 bg-slate-100 rounded-xl w-fit">
-          {[
-            { k: 'users', label: 'Users',  icon: Users  },
-            { k: 'roles', label: 'Roles',  icon: Shield },
-          ].map(({ k, label, icon: Icon }) => (
-            <button
-              key={k}
-              onClick={() => setTab(k as any)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold ${
-                tab === k ? 'bg-white text-slate-900 shadow' : 'text-slate-500'
-              }`}
-            >
-              <Icon size={14} /> {label}
-            </button>
-          ))}
+        <div className="mt-6">
+          <Tabs<'users' | 'roles'>
+            value={tab}
+            onChange={setTab}
+            items={[
+              { key: 'users', label: 'Users', icon: <Users size={14} /> },
+              { key: 'roles', label: 'Roles', icon: <Shield size={14} /> },
+            ]}
+          />
         </div>
 
         <div className="mt-6">
@@ -54,6 +49,7 @@ function UsersTab({ canManage }: { canManage: boolean }) {
   const [roles, setRoles] = useState<any[]>([]);
   const [showNew, setShowNew] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [confirmUi, askConfirm] = useConfirm();
 
   const load = async () => {
     const [u, r] = await Promise.all([userApi.list(), roleApi.list()]);
@@ -68,12 +64,19 @@ function UsersTab({ canManage }: { canManage: boolean }) {
   };
 
   const del = async (id: string) => {
-    if (!confirm('Deactivate this user?')) return;
+    const ok = await askConfirm({
+      title: 'Deactivate this user?',
+      description: 'The user will lose access immediately. You can re-activate them later.',
+      confirmLabel: 'Deactivate',
+      variant: 'danger',
+    });
+    if (!ok) return;
     await userApi.delete(id); load();
   };
 
   return (
     <>
+      {confirmUi}
       {canManage && (
         <div className="mb-4">
           <Button variant="primary" leftIcon={<Plus size={16} />} onClick={() => setShowNew(true)}>
@@ -234,6 +237,7 @@ function RolesTab({ canManage }: { canManage: boolean }) {
   const [perms, setPerms] = useState<any[]>([]);
   const [editing, setEditing] = useState<any>(null);
   const [showNew, setShowNew] = useState(false);
+  const [confirmUi, askConfirm] = useConfirm();
 
   const load = async () => {
     const [r, p] = await Promise.all([roleApi.list(), userApi.permissionCatalog()]);
@@ -247,7 +251,13 @@ function RolesTab({ canManage }: { canManage: boolean }) {
     setEditing(null); setShowNew(false); load();
   };
   const del = async (id: string) => {
-    if (!confirm('Delete this role?')) return;
+    const ok = await askConfirm({
+      title: 'Delete this role?',
+      description: 'Users assigned to this role will lose its permissions. This cannot be undone.',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
     await roleApi.delete(id); load();
   };
 
@@ -259,6 +269,7 @@ function RolesTab({ canManage }: { canManage: boolean }) {
 
   return (
     <>
+      {confirmUi}
       {canManage && (
         <div className="mb-4">
           <Button variant="primary" leftIcon={<Plus size={16} />} onClick={() => setShowNew(true)}>

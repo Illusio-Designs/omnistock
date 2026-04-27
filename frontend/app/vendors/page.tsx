@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { vendorApi } from '@/lib/api';
 import {
-  Button, Badge, Card, Modal, Input, Textarea, Tooltip, Checkbox,
+  Button, Badge, Card, Modal, Input, Textarea, Tooltip, Checkbox, EmptyState, Avatar,
 } from '@/components/ui';
 import { Plus, Building2, Mail, Phone, Pencil, Trash2 } from 'lucide-react';
 
@@ -52,9 +52,7 @@ export default function VendorsPage() {
             {vendors.map((v: any) => (
               <Card key={v.id} className="p-5 hover:shadow-lg transition-shadow">
                 <div className="flex items-start gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                    {v.name?.slice(0, 2).toUpperCase()}
-                  </div>
+                  <Avatar name={v.name} size="lg" />
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-slate-900 truncate">{v.name}</h3>
                     {v.gstin && <div className="text-[10px] text-slate-400 font-mono mt-0.5">{v.gstin}</div>}
@@ -95,15 +93,19 @@ export default function VendorsPage() {
             ))}
           </div>
         ) : (
-          <Card className="p-16 text-center">
-            <div className="inline-flex w-16 h-16 rounded-2xl bg-emerald-50 items-center justify-center mb-4">
-              <Building2 size={28} className="text-emerald-600" />
-            </div>
-            <h3 className="font-bold text-slate-900 text-lg">No vendors yet</h3>
-            <p className="text-sm text-slate-500 mt-1">Add your first supplier to start creating purchase orders.</p>
-            <Button leftIcon={<Plus size={14} />} onClick={() => setCreateOpen(true)} className="mt-5">
-              New Vendor
-            </Button>
+          <Card>
+            <EmptyState
+              icon={<Building2 size={28} />}
+              iconBg="bg-emerald-50 text-emerald-600"
+              title="No vendors yet"
+              description="Add your first supplier to start creating purchase orders."
+              action={
+                <Button leftIcon={<Plus size={14} />} onClick={() => setCreateOpen(true)}>
+                  New Vendor
+                </Button>
+              }
+              size="lg"
+            />
           </Card>
         )}
       </div>

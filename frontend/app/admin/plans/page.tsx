@@ -8,11 +8,13 @@ import { Input } from '@/components/ui/Input';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { useConfirm } from '@/components/ui';
 
 export default function AdminPlansPage() {
   const [plans, setPlans] = useState<any[]>([]);
   const [editing, setEditing] = useState<any>(null);
   const [showNew, setShowNew] = useState(false);
+  const [confirmUi, askConfirm] = useConfirm();
 
   const load = () => adminApi.plans().then((r) => setPlans(r.data));
   useEffect(() => { load(); }, []);
@@ -24,12 +26,19 @@ export default function AdminPlansPage() {
   };
 
   const del = async (id: string) => {
-    if (!confirm('Deactivate this plan?')) return;
+    const ok = await askConfirm({
+      title: 'Deactivate this plan?',
+      description: 'It will no longer be selectable on the pricing page. Existing subscribers stay on it.',
+      confirmLabel: 'Deactivate',
+      variant: 'danger',
+    });
+    if (!ok) return;
     await adminApi.deletePlan(id); load();
   };
 
   return (
     <div className="p-8">
+      {confirmUi}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Plans</h1>

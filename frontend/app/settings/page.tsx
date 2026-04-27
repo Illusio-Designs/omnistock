@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import {
-  Button, Card, Input, Textarea, Select, Switch, PasswordInput, FileUpload, Badge,
+  Button, Card, Input, Textarea, Select, Switch, PasswordInput, FileUpload, Badge, Avatar,
 } from '@/components/ui';
 import {
   User, Building2, Bell, Shield, CreditCard, Mail, Phone, Save, Check,
@@ -172,9 +172,7 @@ export default function SettingsPage() {
                 <p className="text-xs text-slate-500 mb-5">Your personal information</p>
 
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-2xl">
-                    {profile.name?.[0]?.toUpperCase() || 'U'}
-                  </div>
+                  <Avatar name={profile.name || 'U'} size="xl" />
                   <div>
                     <Button size="sm" variant="secondary">Change Avatar</Button>
                     <p className="text-xs text-slate-500 mt-1">PNG, JPG up to 2MB</p>

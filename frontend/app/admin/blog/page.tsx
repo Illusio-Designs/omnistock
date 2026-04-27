@@ -8,11 +8,13 @@ import { Input, Textarea } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { useConfirm } from '@/components/ui';
 
 export default function AdminBlogPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [editing, setEditing] = useState<any>(null);
   const [showNew, setShowNew] = useState(false);
+  const [confirmUi, askConfirm] = useConfirm();
 
   const load = () => adminApi.blog().then((r) => setPosts(r.data));
   useEffect(() => { load(); }, []);
@@ -24,12 +26,19 @@ export default function AdminBlogPage() {
   };
 
   const del = async (id: string) => {
-    if (!confirm('Delete this post?')) return;
+    const ok = await askConfirm({
+      title: 'Delete this post?',
+      description: 'It will be removed from the public blog. This cannot be undone.',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
     await adminApi.deleteBlog(id); load();
   };
 
   return (
     <div className="p-8">
+      {confirmUi}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Blog</h1>

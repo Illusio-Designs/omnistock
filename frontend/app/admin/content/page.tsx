@@ -9,6 +9,8 @@ import { Select } from '@/components/ui/Select';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { EmptyState, useConfirm } from '@/components/ui';
+import { FileText } from 'lucide-react';
 
 const TYPES = [
   { value: 'LANDING_CHALLENGE',    label: 'Landing — Challenges' },
@@ -36,6 +38,7 @@ export default function AdminContentPage() {
   const [editing, setEditing] = useState<any>(null);
   const [showNew, setShowNew] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [confirmUi, askConfirm] = useConfirm();
 
   const load = async () => {
     setLoading(true);
@@ -59,7 +62,13 @@ export default function AdminContentPage() {
   };
 
   const del = async (id: string) => {
-    if (!confirm('Delete this content item?')) return;
+    const ok = await askConfirm({
+      title: 'Delete this content item?',
+      description: 'It will disappear from the public site immediately. This cannot be undone.',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
     await adminApi.deleteContent(id);
     load();
   };
@@ -71,6 +80,7 @@ export default function AdminContentPage() {
 
   return (
     <div className="p-8">
+      {confirmUi}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-slate-900">Content Manager</h1>
         <p className="text-slate-500 mt-1">Edit the copy shown on every public marketing page.</p>
@@ -113,9 +123,12 @@ export default function AdminContentPage() {
 
       <div className="bg-white border border-slate-200 rounded-2xl divide-y divide-slate-100">
         {items.length === 0 && !loading && (
-          <div className="p-12 text-center text-slate-400 text-sm">
-            No items yet. Click "Add item" to create your first.
-          </div>
+          <EmptyState
+            icon={<FileText size={24} />}
+            iconBg="bg-slate-100 text-slate-500"
+            title="No items yet"
+            description='Click "Add item" to create your first.'
+          />
         )}
         {items.map((item) => (
           <div key={item.id} className="p-5 flex items-start gap-4">

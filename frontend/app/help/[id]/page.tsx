@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, Button, Textarea, Badge } from '@/components/ui';
+import { Card, Button, Textarea, Badge, useConfirm } from '@/components/ui';
 import { ticketApi } from '@/lib/api';
 import { ArrowLeft, Send, Loader2, Lock, ShieldCheck, User } from 'lucide-react';
 
@@ -34,6 +34,7 @@ export default function TicketDetailPage() {
   const [reply, setReply] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [confirmUi, askConfirm] = useConfirm();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const load = () =>
@@ -67,7 +68,13 @@ export default function TicketDetailPage() {
   };
 
   const close = async () => {
-    if (!confirm('Close this ticket?')) return;
+    const ok = await askConfirm({
+      title: 'Close this ticket?',
+      description: 'You can reply later, but the ticket will be marked as resolved.',
+      confirmLabel: 'Close ticket',
+      variant: 'danger',
+    });
+    if (!ok) return;
     await ticketApi.close(id);
     await load();
   };
@@ -98,6 +105,7 @@ export default function TicketDetailPage() {
 
   return (
     <DashboardLayout>
+      {confirmUi}
       <div className="max-w-4xl mx-auto space-y-5">
         <Link href="/help" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-emerald-600">
           <ArrowLeft size={14} /> All tickets

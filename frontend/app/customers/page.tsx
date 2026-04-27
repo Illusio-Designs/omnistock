@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { customerApi } from '@/lib/api';
 import {
-  Button, Badge, Card, Modal, Input, Pagination, Tooltip, Checkbox, Loader,
+  Button, Badge, Card, Modal, Input, Pagination, Tooltip, Checkbox, Loader, Avatar,
 } from '@/components/ui';
 import {
   Plus, Users, Mail, Phone, UserPlus, TrendingUp, Crown, Pencil, Trash2,
@@ -84,9 +84,7 @@ export default function CustomersPage() {
                     <td className="px-4 py-3 text-slate-500 font-semibold">{(page - 1) * pageSize + idx + 1}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                          {c.name?.[0]?.toUpperCase() || '?'}
-                        </div>
+                        <Avatar name={c.name} size="sm" />
                         <div>
                           <div className="font-bold text-slate-900">{c.name}</div>
                           <div className="text-[10px] text-slate-400 font-mono">{c.id?.slice(0, 8)}</div>
@@ -128,9 +126,7 @@ export default function CustomersPage() {
           <div className="md:hidden divide-y divide-slate-100">
             {customers.map((c: any) => (
               <div key={c.id} className="p-4 flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                  {c.name?.[0]?.toUpperCase() || '?'}
-                </div>
+                <Avatar name={c.name} size="md" />
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-slate-900 truncate">{c.name}</div>
                   <div className="text-xs text-slate-500 truncate">{c.email || c.phone || '—'}</div>
