@@ -46,7 +46,7 @@ export default function CustomersScreen() {
       name: name.trim(),
       email: email.trim() || undefined,
       phone: phone.trim() || undefined,
-      gstIn: gstin.trim() || undefined,
+      gstIn: gstin.trim().toUpperCase() || undefined,
       isB2B,
     });
   };
@@ -91,7 +91,7 @@ export default function CustomersScreen() {
         <FormInput label="Full Name" value={name} onChangeText={setName} placeholder="John Doe" />
         <FormInput label="Email" value={email} onChangeText={setEmail} placeholder="john@example.com" keyboardType="email-address" autoCapitalize="none" />
         <FormInput label="Phone" value={phone} onChangeText={setPhone} placeholder="+91 98765 43210" keyboardType="phone-pad" />
-        <FormInput label="GSTIN" value={gstin} onChangeText={setGstin} placeholder="Optional" autoCapitalize="characters" />
+        <FormInput label="GSTIN" value={gstin} onChangeText={(v) => setGstin(v.toUpperCase())} placeholder="Optional" autoCapitalize="characters" />
 
         {/* B2B toggle */}
         <Pressable

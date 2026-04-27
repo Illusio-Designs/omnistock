@@ -26,10 +26,18 @@ const riskVariant = (level?: string) => {
   return 'slate' as const;
 };
 
+type FulfillmentTab = 'all' | 'auto' | 'manual';
+const FULFILLMENT_PARAM: Record<FulfillmentTab, string | undefined> = {
+  all: undefined,
+  auto: 'CHANNEL,DROPSHIP',
+  manual: 'SELF',
+};
+
 export default function OrdersScreen() {
   const qc = useQueryClient();
   const [filter, setFilter] = useState('ALL');
   const [riskFilter, setRiskFilter] = useState('ALL');
+  const [fulfillmentTab, setFulfillmentTab] = useState<FulfillmentTab>('all');
   const [showCreate, setShowCreate] = useState(false);
 
   // Form state
@@ -42,12 +50,14 @@ export default function OrdersScreen() {
   const [notes, setNotes] = useState('');
 
   const { data, isLoading, error, refetch, isRefetching } = useQuery({
-    queryKey: ['orders', filter, riskFilter],
+    queryKey: ['orders', filter, riskFilter, fulfillmentTab],
     queryFn: async () => {
       const params: any = {};
       if (filter !== 'ALL') params.status = filter;
       if (riskFilter === 'NEEDS_APPROVAL') params.needsApproval = 'true';
       else if (riskFilter !== 'ALL') params.risk = riskFilter;
+      const fulfillment = FULFILLMENT_PARAM[fulfillmentTab];
+      if (fulfillment) params.fulfillment = fulfillment;
       return (await orderApi.list(params)).data;
     },
   });
@@ -261,6 +271,28 @@ export default function OrdersScreen() {
       refreshing={isRefetching}
       onRefresh={refetch}
     >
+      {/* Fulfillment tabs */}
+      <View className="flex-row p-1 bg-slate-100 rounded-xl mb-3">
+        {([
+          { key: 'all',    label: 'All' },
+          { key: 'auto',   label: 'Auto Fulfill' },
+          { key: 'manual', label: 'Manual' },
+        ] as { key: FulfillmentTab; label: string }[]).map((t) => {
+          const active = fulfillmentTab === t.key;
+          return (
+            <Pressable
+              key={t.key}
+              onPress={() => setFulfillmentTab(t.key)}
+              className={`flex-1 items-center py-1.5 rounded-lg ${active ? 'bg-white shadow' : ''}`}
+            >
+              <Text className={`text-[12px] font-bold ${active ? 'text-slate-900' : 'text-slate-500'}`}>
+                {t.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
       <StatusFilter options={STATUSES} value={filter} onChange={setFilter} />
 
       {/* RTO Risk filter */}

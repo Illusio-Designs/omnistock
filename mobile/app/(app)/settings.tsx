@@ -1,9 +1,11 @@
 import { Building2, CreditCard, Shield, User } from 'lucide-react-native';
+import { useEffect } from 'react';
 import { Text, View } from 'react-native';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import PageShell from '../../components/ui/PageShell';
 import { useAuthStore } from '../../store/auth.store';
+import { authApi } from '../../lib/api';
 
 type Row = { label: string; value: string };
 type Section = { title: string; icon: React.ReactNode; iconBg: string; rows: Row[] };
@@ -13,6 +15,25 @@ export default function SettingsScreen() {
   const tenant = useAuthStore((s) => s.tenant);
   const plan = useAuthStore((s) => s.plan);
   const subscription = useAuthStore((s) => s.subscription);
+  const setContext = useAuthStore((s) => s.setContext);
+
+  // Pull the freshest user/tenant on mount so cached values from login don't override post-save updates.
+  useEffect(() => {
+    authApi
+      .me()
+      .then(({ data }: any) => {
+        const { tenant: t, plan: p, subscription: sub, permissions, ...userFields } = data;
+        setContext({
+          user: userFields,
+          tenant: t ?? null,
+          plan: p ?? null,
+          subscription: sub ?? null,
+          permissions: permissions ?? [],
+        });
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const sections: Section[] = [
     {
@@ -22,6 +43,7 @@ export default function SettingsScreen() {
       rows: [
         { label: 'Name', value: user?.name ?? '\u2014' },
         { label: 'Email', value: user?.email ?? '\u2014' },
+        { label: 'Phone', value: user?.phone ?? '\u2014' },
         { label: 'Role', value: user?.role ?? '\u2014' },
       ],
     },
@@ -32,6 +54,7 @@ export default function SettingsScreen() {
       rows: [
         { label: 'Tenant', value: tenant?.businessName ?? '\u2014' },
         { label: 'Slug', value: tenant?.slug ?? '\u2014' },
+        { label: 'GSTIN', value: tenant?.gstin ?? '\u2014' },
         { label: 'Status', value: tenant?.status ?? '\u2014' },
       ],
     },

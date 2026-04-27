@@ -300,16 +300,27 @@ export default function ChannelsScreen() {
         <FormInput label="Channel Name" value={chName} onChangeText={setChName} placeholder="e.g. My Amazon Store" />
 
         {selectedEntry ? (
-          <View className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-4">
-            <Text className="text-[12px] font-bold text-emerald-700">
-              {selectedEntry.tagline || 'Channel integration'}
-            </Text>
-            {selectedEntry.features?.length ? (
-              <Text className="text-[11px] text-emerald-600 font-medium mt-1">
-                Features: {selectedEntry.features.join(', ')}
+          selectedEntry.manualOnly ? (
+            <View className="bg-sky-50 border border-sky-200 rounded-2xl p-4 mb-4">
+              <Text className="text-[12px] font-bold text-sky-800">
+                Manual channel — no API connection
               </Text>
-            ) : null}
-          </View>
+              <Text className="text-[11px] text-sky-700 font-medium mt-1">
+                Connect once; then enter orders against it via the New Order form.
+              </Text>
+            </View>
+          ) : (
+            <View className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-4">
+              <Text className="text-[12px] font-bold text-emerald-700">
+                {selectedEntry.tagline || 'Channel integration'}
+              </Text>
+              {selectedEntry.features?.length ? (
+                <Text className="text-[11px] text-emerald-600 font-medium mt-1">
+                  Features: {selectedEntry.features.join(', ')}
+                </Text>
+              ) : null}
+            </View>
+          )
         ) : null}
 
         <Button
