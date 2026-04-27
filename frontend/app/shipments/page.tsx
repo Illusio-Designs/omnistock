@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { shipmentApi, orderApi, channelApi } from '@/lib/api';
-import { Button, Badge, Card, Pagination, Select, Tooltip, Input, Modal } from '@/components/ui';
+import { Button, Badge, Card, Pagination, Select, Tooltip, Input, Modal, Loader } from '@/components/ui';
 import { Truck, Package, MapPin, Eye, ExternalLink, Search, Plus, CheckCircle2, XCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -113,7 +113,7 @@ export default function ShipmentsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
-                  <tr><td colSpan={9} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
+                  <tr><td colSpan={9}><Loader size="sm" /></td></tr>
                 ) : shipments.length ? shipments.map((s: any, idx: number) => (
                   <tr key={s.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="px-4 py-3 text-slate-500 font-semibold">{(page - 1) * pageSize + idx + 1}</td>

@@ -391,7 +391,7 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {totalOrders > 0 && (
+            {totalOrders > pageSize && (
               <div className="border-t border-slate-100">
                 <Pagination
                   page={page}

@@ -8,6 +8,7 @@ import { Topbar } from './Topbar';
 import { useAuthStore, isTokenExpired } from '@/store/auth.store';
 import { MaintenancePage } from '@/components/MaintenancePage';
 import { setPlanLimitHandler, authApi, publicApi } from '@/lib/api';
+import { Loader } from '@/components/ui/Loader';
 import { Eye, X, ArrowLeft, Zap } from 'lucide-react';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -54,25 +55,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   if (!token || !authChecked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="flex flex-col items-center gap-6">
-          <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-2xl border-2 border-emerald-200 animate-spin-slow" />
-            <div className="absolute inset-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/30 animate-pulse-soft flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-emerald-400 animate-orbit" />
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-teal-400 animate-orbit" style={{ animationDelay: '0.5s' }} />
-          </div>
-          <div className="w-32 h-1 bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-400 rounded-full animate-loading-bar" />
-          </div>
-        </div>
-      </div>
-    );
+    return <Loader fullScreen size="lg" />;
   }
 
   // Show maintenance page for non-admin users

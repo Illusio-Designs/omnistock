@@ -8,6 +8,7 @@ import { CheckCircle2, AlertCircle, Zap, Crown, Sparkles, X, Wallet, Plus, Setti
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { Loader } from '@/components/ui/Loader';
 import { TopupModal, WALLET_CHANGED_EVENT } from '@/components/wallet/TopupModal';
 
 export default function BillingPage() {
@@ -137,7 +138,7 @@ export default function BillingPage() {
     await load();
   };
 
-  if (!sub || !usage) return <DashboardLayout><div className="p-8">Loading…</div></DashboardLayout>;
+  if (!sub || !usage) return <DashboardLayout><Loader fullScreen size="lg" /></DashboardLayout>;
 
   const plan = sub.plan;
 

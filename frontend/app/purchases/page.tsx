@@ -6,9 +6,9 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { purchaseApi, vendorApi } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 import {
-  Button, Badge, Card, Modal, Input, Textarea, Select, Pagination, Tooltip,
+  Button, Badge, Card, Modal, Input, Textarea, Select, Pagination, Tooltip, Loader, DatePicker,
 } from '@/components/ui';
-import { Plus, TrendingUp, Calendar, Trash2 } from 'lucide-react';
+import { Plus, TrendingUp, Trash2 } from 'lucide-react';
 
 const STATUS_VARIANT: Record<string, any> = {
   DRAFT: 'slate',
@@ -57,7 +57,7 @@ export default function PurchasesPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
-                  <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
+                  <tr><td colSpan={8}><Loader size="sm" /></td></tr>
                 ) : purchases.length ? purchases.map((p: any, idx: number) => (
                   <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="px-4 py-3 text-slate-500 font-semibold">{(page - 1) * pageSize + idx + 1}</td>
@@ -176,7 +176,14 @@ function NewPurchaseModal({ open, onClose }: { open: boolean; onClose: () => voi
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Select label="Vendor" value={vendorId} onChange={setVendorId} options={vendorOptions} placeholder="Select vendor…" fullWidth />
-          <Input label="Expected Date" type="date" leftIcon={<Calendar size={14} />} value={expectedDate} onChange={(e) => setExpectedDate(e.target.value)} />
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Expected Date</label>
+            <DatePicker
+              value={expectedDate ? new Date(expectedDate) : null}
+              onChange={(d) => setExpectedDate(d.toISOString().slice(0, 10))}
+              placeholder="Select expected date"
+            />
+          </div>
         </div>
 
         <div>

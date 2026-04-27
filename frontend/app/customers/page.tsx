@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { customerApi } from '@/lib/api';
 import {
-  Button, Badge, Card, Modal, Input, Pagination, Tooltip, Checkbox,
+  Button, Badge, Card, Modal, Input, Pagination, Tooltip, Checkbox, Loader,
 } from '@/components/ui';
 import {
   Plus, Users, Mail, Phone, UserPlus, TrendingUp, Crown, Pencil, Trash2,
@@ -78,7 +78,7 @@ export default function CustomersPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
-                  <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
+                  <tr><td colSpan={8}><Loader size="sm" /></td></tr>
                 ) : customers.length ? customers.map((c: any, idx: number) => (
                   <tr key={c.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="px-4 py-3 text-slate-500 font-semibold">{(page - 1) * pageSize + idx + 1}</td>

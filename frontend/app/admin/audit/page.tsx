@@ -5,6 +5,7 @@ import { adminApi } from '@/lib/api';
 import { Activity, Search, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { Loader } from '@/components/ui/Loader';
 
 interface AuditRow {
   id: string;
@@ -127,7 +128,7 @@ export default function AdminAuditPage() {
 
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center text-slate-400 text-sm">Loading…</div>
+          <Loader />
         ) : filtered.length === 0 ? (
           <div className="p-12 text-center text-slate-400 text-sm">
             <Activity size={28} className="mx-auto mb-3 text-slate-300" />

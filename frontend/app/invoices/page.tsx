@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { invoiceApi } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
-import { Button, Badge, Card, Pagination, Select, Tooltip, Modal, Input } from '@/components/ui';
+import { Button, Badge, Card, Pagination, Select, Tooltip, Modal, Input, Loader } from '@/components/ui';
 import { FileText, Download, Eye, Plus, Receipt, CreditCard, X } from 'lucide-react';
 
 const TYPE_FILTERS = [
@@ -119,7 +119,7 @@ export default function InvoicesPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
-                  <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
+                  <tr><td colSpan={8}><Loader size="sm" /></td></tr>
                 ) : invoices.length ? invoices.map((inv: any, idx: number) => (
                   <tr key={inv.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="px-4 py-3 text-slate-500 font-semibold">{(page - 1) * pageSize + idx + 1}</td>

@@ -6,7 +6,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { orderApi, customerApi, channelApi } from '@/lib/api';
 import { formatCurrency, formatDateTime, ORDER_STATUS_COLORS } from '@/lib/utils';
 import {
-  Button, Badge, Card, Modal, Input, Textarea, Select, Pagination, Tooltip,
+  Button, Badge, Card, Modal, Input, Textarea, Select, Pagination, Tooltip, Loader,
 } from '@/components/ui';
 import { AlertTriangle, CheckCircle2, Package, Plus, Star, Trash2, XCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -138,7 +138,7 @@ export default function OrdersPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
-                  <tr><td colSpan={10} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
+                  <tr><td colSpan={10}><Loader size="sm" /></td></tr>
                 ) : data?.orders?.length ? data.orders.map((o: any, idx: number) => (
                   <tr key={o.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="px-4 py-3 text-slate-500 font-semibold">{(page - 1) * pageSize + idx + 1}</td>
@@ -150,7 +150,7 @@ export default function OrdersPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
                         <Badge variant={
-                          o.fulfillmentType === 'CHANNEL' ? 'sky' :
+                          o.fulfillmentType === 'CHANNEL' ? 'blue' :
                           o.fulfillmentType === 'DROPSHIP' ? 'violet' : 'slate'
                         } dot>
                           {o.fulfillmentType === 'CHANNEL' ? 'Channel' :

@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { reportApi } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
-import { Input } from '@/components/ui/Input';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 export default function ReportsPage() {
@@ -31,9 +31,23 @@ export default function ReportsPage() {
         </div>
 
         {/* Date Filter */}
-        <div className="flex gap-3 items-end">
-          <Input label="From" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-          <Input label="To" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+        <div className="flex gap-3 items-end flex-wrap">
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">From</label>
+            <DatePicker
+              value={from ? new Date(from) : null}
+              onChange={(d) => setFrom(d.toISOString().slice(0, 10))}
+              placeholder="From date"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">To</label>
+            <DatePicker
+              value={to ? new Date(to) : null}
+              onChange={(d) => setTo(d.toISOString().slice(0, 10))}
+              placeholder="To date"
+            />
+          </div>
         </div>
 
         {/* Sales Summary */}

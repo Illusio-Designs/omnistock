@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/api';
 import { Building2, Users, ShoppingBag, Activity, Sparkles } from 'lucide-react';
+import { Loader } from '@/components/ui/Loader';
 
 export default function AdminOverview() {
   const [stats, setStats] = useState<any>(null);
   useEffect(() => { adminApi.stats().then((r) => setStats(r.data)).catch(() => {}); }, []);
-  if (!stats) return <div className="p-8">Loading…</div>;
+  if (!stats) return <div className="p-8"><Loader /></div>;
 
   const cards = [
     { label: 'Tenants',       value: stats.tenants,    icon: Building2,  color: 'emerald' },

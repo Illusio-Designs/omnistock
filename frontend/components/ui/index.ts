@@ -3,6 +3,7 @@ export { Button } from './Button';
 export { Badge } from './Badge';
 export { Card, CardHeader, CardTitle, CardDescription, CardBody, CardFooter } from './Card';
 export { Skeleton } from './Skeleton';
+export { Loader } from './Loader';
 export { DatePicker } from './DatePicker';
 export { Pagination } from './Pagination';
 export { Input, Textarea } from './Input';

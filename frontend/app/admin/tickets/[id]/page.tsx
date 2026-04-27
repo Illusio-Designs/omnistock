@@ -8,6 +8,7 @@ import { ArrowLeft, Send, ShieldCheck, User } from 'lucide-react';
 import { Textarea } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
+import { Loader } from '@/components/ui/Loader';
 
 const NEXT_STATUS_OPTIONS = [
   { value: 'PENDING', label: 'Mark PENDING after reply' },
@@ -47,7 +48,7 @@ export default function AdminTicketDetailPage() {
     await load();
   };
 
-  if (loading) return <div className="p-8">Loading…</div>;
+  if (loading) return <div className="p-8"><Loader /></div>;
   if (!ticket) return <div className="p-8">Ticket not found</div>;
 
   return (

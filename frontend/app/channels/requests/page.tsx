@@ -8,6 +8,7 @@ import { ArrowLeft, Inbox, Clock, CheckCircle2, XCircle, Loader2 } from 'lucide-
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
+import { Loader } from '@/components/ui/Loader';
 
 const STATUS_FILTERS = [
   { value: '', label: 'All Statuses' },
@@ -58,7 +59,7 @@ export default function ChannelRequestsPage() {
         />
 
         {isLoading ? (
-          <div className="bg-white rounded-xl border p-12 text-center text-gray-400">Loading…</div>
+          <Loader />
         ) : !requests || requests.length === 0 ? (
           <div className="bg-white rounded-xl border p-12 text-center">
             <Inbox size={40} className="mx-auto text-gray-300 mb-3" />
