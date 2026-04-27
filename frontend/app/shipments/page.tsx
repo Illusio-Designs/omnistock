@@ -106,16 +106,17 @@ export default function ShipmentsPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50/50 border-b border-slate-100">
                 <tr className="text-left text-[10px] uppercase tracking-widest text-slate-400">
-                  {['Order', 'Courier', 'AWB', 'Status', 'Weight', 'Charges', 'Shipped', 'Actions'].map(h => (
+                  {['#', 'Order', 'Courier', 'AWB', 'Status', 'Weight', 'Charges', 'Shipped', 'Actions'].map(h => (
                     <th key={h} className="px-4 py-3 font-bold">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
-                  <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
-                ) : shipments.length ? shipments.map((s: any) => (
+                  <tr><td colSpan={9} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
+                ) : shipments.length ? shipments.map((s: any, idx: number) => (
                   <tr key={s.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="px-4 py-3 text-slate-500 font-semibold">{(page - 1) * pageSize + idx + 1}</td>
                     <td className="px-4 py-3 font-bold text-emerald-600">{s.orderNumber || s.order?.orderNumber || '—'}</td>
                     <td className="px-4 py-3 text-slate-700">{s.courierName}</td>
                     <td className="px-4 py-3 text-slate-500 font-mono text-xs">{s.trackingNumber || '—'}</td>
@@ -131,12 +132,9 @@ export default function ShipmentsPage() {
                       <div className="flex items-center gap-1">
                         {s.trackingNumber && (
                           <Tooltip content="Track AWB">
-                            <button
-                              onClick={() => { setTrackingInput(s.trackingNumber); setTrackModalOpen(true); setTrackResult(null); setTrackError(''); }}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-900"
-                            >
+                            <Button variant="ghost" size="icon" onClick={() => { setTrackingInput(s.trackingNumber); setTrackModalOpen(true); setTrackResult(null); setTrackError(''); }}>
                               <Eye size={13} />
-                            </button>
+                            </Button>
                           </Tooltip>
                         )}
                         {s.trackingUrl && (
@@ -155,7 +153,7 @@ export default function ShipmentsPage() {
                     </td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={8} className="px-4 py-16 text-center">
+                  <tr><td colSpan={9} className="px-4 py-16 text-center">
                     <div className="inline-flex w-14 h-14 rounded-2xl bg-emerald-50 items-center justify-center mb-3">
                       <Truck size={24} className="text-emerald-600" />
                     </div>

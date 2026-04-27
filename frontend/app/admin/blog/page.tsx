@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/api';
-import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save } from 'lucide-react';
+import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 export default function AdminBlogPage() {
   const [posts, setPosts] = useState<any[]>([]);
@@ -30,19 +33,25 @@ export default function AdminBlogPage() {
           <h1 className="text-3xl font-bold text-slate-900">Blog</h1>
           <p className="text-slate-500 mt-1">Manage articles for the public site.</p>
         </div>
-        <button onClick={() => setShowNew(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg font-semibold">
-          <Plus size={16} /> New post
-        </button>
+        <Button variant="primary" leftIcon={<Plus size={16} />} onClick={() => setShowNew(true)}>
+          New post
+        </Button>
       </div>
 
-      {(showNew || editing) && (
+      <Modal
+        open={showNew || !!editing}
+        onClose={() => { setEditing(null); setShowNew(false); }}
+        title={editing ? 'Edit post' : 'New post'}
+        size="xl"
+      >
         <BlogForm initial={editing} onClose={() => { setEditing(null); setShowNew(false); }} onSave={save} />
-      )}
+      </Modal>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
+              <th className="text-left p-3">#</th>
               <th className="text-left p-3">Title</th>
               <th className="text-left p-3">Slug</th>
               <th className="text-left p-3">Status</th>
@@ -51,8 +60,9 @@ export default function AdminBlogPage() {
             </tr>
           </thead>
           <tbody>
-            {posts.map((p) => (
+            {posts.map((p, idx) => (
               <tr key={p.id} className="border-t border-slate-100">
+                <td className="p-3 text-slate-500 font-semibold">{idx + 1}</td>
                 <td className="p-3 font-semibold">{p.title}</td>
                 <td className="p-3 font-mono text-xs text-slate-500">{p.slug}</td>
                 <td className="p-3">
@@ -64,8 +74,12 @@ export default function AdminBlogPage() {
                 </td>
                 <td className="p-3 text-xs text-slate-500">{p.publishedAt ? new Date(p.publishedAt).toLocaleDateString() : '—'}</td>
                 <td className="p-3 flex gap-2 justify-end">
-                  <button onClick={() => setEditing(p)}><Edit2 size={14} /></button>
-                  <button onClick={() => del(p.id)} className="text-red-500"><Trash2 size={14} /></button>
+                  <Button variant="ghost" size="icon" onClick={() => setEditing(p)}>
+                    <Edit2 size={14} />
+                  </Button>
+                  <Button variant="danger" size="icon" onClick={() => del(p.id)}>
+                    <Trash2 size={14} />
+                  </Button>
                 </td>
               </tr>
             ))}
@@ -87,14 +101,12 @@ function BlogForm({ initial, onClose, onSave }: {
   });
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold">{initial ? 'Edit post' : 'New post'}</h2>
-        <button onClick={onClose}><X size={18} /></button>
-      </div>
+    <div>
       <div className="grid grid-cols-2 gap-4">
-        <Input label="Title" value={f.title} onChange={(v) => setF({ ...f, title: v })} className="col-span-2" />
-        <Input label="Slug"  value={f.slug}  onChange={(v) => setF({ ...f, slug: v })} />
+        <div className="col-span-2">
+          <Input label="Title" value={f.title ?? ''} onChange={(e) => setF({ ...f, title: e.target.value })} />
+        </div>
+        <Input label="Slug"  value={f.slug ?? ''}  onChange={(e) => setF({ ...f, slug: e.target.value })} />
         <div>
           <label className="block text-xs font-semibold text-slate-600 mb-1">Status</label>
           <select value={f.status} onChange={(e) => setF({ ...f, status: e.target.value, publishedAt: e.target.value === 'PUBLISHED' ? new Date() : f.publishedAt })}
@@ -104,38 +116,27 @@ function BlogForm({ initial, onClose, onSave }: {
             <option value="ARCHIVED">Archived</option>
           </select>
         </div>
-        <Input label="Excerpt" value={f.excerpt} onChange={(v) => setF({ ...f, excerpt: v })} className="col-span-2" />
+        <div className="col-span-2">
+          <Input label="Excerpt" value={f.excerpt ?? ''} onChange={(e) => setF({ ...f, excerpt: e.target.value })} />
+        </div>
         <div className="col-span-2">
           <label className="block text-xs font-semibold text-slate-600 mb-1">Content (Markdown)</label>
           <textarea value={f.content} onChange={(e) => setF({ ...f, content: e.target.value })}
             className="w-full px-3 py-2 rounded-lg border border-slate-200 h-40 font-mono text-sm" />
         </div>
-        <Input label="Author" value={f.authorName} onChange={(v) => setF({ ...f, authorName: v })} />
-        <Input label="Cover image URL" value={f.coverImage || ''} onChange={(v) => setF({ ...f, coverImage: v })} />
-        <Input label="Meta title" value={f.metaTitle || ''} onChange={(v) => setF({ ...f, metaTitle: v })} className="col-span-2" />
-        <Input label="Meta description" value={f.metaDescription || ''} onChange={(v) => setF({ ...f, metaDescription: v })} className="col-span-2" />
+        <Input label="Author" value={f.authorName ?? ''} onChange={(e) => setF({ ...f, authorName: e.target.value })} />
+        <Input label="Cover image URL" value={f.coverImage ?? ''} onChange={(e) => setF({ ...f, coverImage: e.target.value })} />
+        <div className="col-span-2">
+          <Input label="Meta title" value={f.metaTitle ?? ''} onChange={(e) => setF({ ...f, metaTitle: e.target.value })} />
+        </div>
+        <div className="col-span-2">
+          <Input label="Meta description" value={f.metaDescription ?? ''} onChange={(e) => setF({ ...f, metaDescription: e.target.value })} />
+        </div>
       </div>
       <div className="mt-5 flex gap-2 justify-end">
-        <button onClick={onClose} className="px-4 py-2 text-slate-600">Cancel</button>
-        <button onClick={() => onSave(f)} className="px-4 py-2 bg-emerald-500 text-white rounded-lg font-semibold inline-flex items-center gap-2">
-          <Save size={14} /> Save
-        </button>
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" leftIcon={<Save size={14} />} onClick={() => onSave(f)}>Save</Button>
       </div>
-    </div>
-  );
-}
-
-function Input({ label, value, onChange, className = '' }: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  className?: string;
-}) {
-  return (
-    <div className={className}>
-      <label className="block text-xs font-semibold text-slate-600 mb-1">{label}</label>
-      <input value={value ?? ''} onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg border border-slate-200" />
     </div>
   );
 }

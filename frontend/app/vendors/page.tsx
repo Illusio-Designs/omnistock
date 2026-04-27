@@ -84,18 +84,12 @@ export default function VendorsPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100">
-                  <button
-                    onClick={() => setEditVendor(v)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
-                  >
-                    <Pencil size={12} /> Edit
-                  </button>
-                  <button
-                    onClick={() => setDeleteTarget(v)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
-                  >
-                    <Trash2 size={12} /> Delete
-                  </button>
+                  <Button variant="ghost" size="sm" leftIcon={<Pencil size={12} />} onClick={() => setEditVendor(v)} className="flex-1">
+                    Edit
+                  </Button>
+                  <Button variant="danger" size="sm" leftIcon={<Trash2 size={12} />} onClick={() => setDeleteTarget(v)} className="flex-1">
+                    Delete
+                  </Button>
                 </div>
               </Card>
             ))}

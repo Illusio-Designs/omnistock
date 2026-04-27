@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { adminApi } from '@/lib/api';
 import { LifeBuoy, Search, Filter } from 'lucide-react';
+import { Input } from '@/components/ui/Input';
 
 const STATUS_COLORS: Record<string, string> = {
   OPEN:     'bg-rose-100 text-rose-700',
@@ -42,13 +43,12 @@ export default function AdminTicketsPage() {
       </div>
 
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <div className="relative flex-1 max-w-md">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
+        <div className="flex-1 max-w-md">
+          <Input
+            leftIcon={<Search size={14} />}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search subject, tenant, id…"
-            className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200"
           />
         </div>
         <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100">
@@ -76,6 +76,7 @@ export default function AdminTicketsPage() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
+                <th className="text-left p-3">#</th>
                 <th className="text-left p-3">Subject</th>
                 <th className="text-left p-3">Tenant</th>
                 <th className="text-left p-3">Status</th>
@@ -85,8 +86,9 @@ export default function AdminTicketsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((t: any) => (
+              {filtered.map((t: any, idx: number) => (
                 <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50/50">
+                  <td className="p-3 text-slate-500 font-semibold">{idx + 1}</td>
                   <td className="p-3">
                     <Link href={`/admin/tickets/${t.id}`} className="font-semibold text-slate-900 hover:text-emerald-700">
                       {t.subject}

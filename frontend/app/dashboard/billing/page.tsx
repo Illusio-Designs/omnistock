@@ -5,6 +5,8 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { billingApi, planApi, paymentApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 import { CheckCircle2, AlertCircle, Zap, Crown, Sparkles, X, Wallet, Plus, Settings2 } from 'lucide-react';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 export default function BillingPage() {
   const { hasPermission } = useAuthStore();
@@ -173,7 +175,7 @@ export default function BillingPage() {
                 disabled={!canManage}
                 className={`mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold ${
                   sub.payAsYouGo ? 'bg-emerald-400 text-slate-900' : 'bg-white/10 text-white'
-                }`}
+                } disabled:opacity-50`}
               >
                 <Zap size={12} /> Pay-as-you-go {sub.payAsYouGo ? 'ON' : 'OFF'}
               </button>
@@ -215,29 +217,28 @@ export default function BillingPage() {
               {canManage && (
                 <div className="flex items-center gap-2 flex-wrap">
                   {[500, 1000, 2500, 5000].map((amt) => (
-                    <button
-                      key={amt}
-                      onClick={() => topup(amt)}
-                      className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700"
-                    >
+                    <Button key={amt} variant="secondary" size="sm" onClick={() => topup(amt)}>
                       + ₹{amt}
-                    </button>
+                    </Button>
                   ))}
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="number"
-                      value={topupAmount}
-                      onChange={(e) => setTopupAmount(e.target.value)}
-                      placeholder="Amount"
-                      className="w-24 px-3 py-1.5 rounded-lg border border-slate-200 text-xs"
-                    />
-                    <button
+                  <div className="flex items-end gap-1">
+                    <div className="w-28">
+                      <Input
+                        type="number"
+                        value={topupAmount}
+                        onChange={(e) => setTopupAmount(e.target.value)}
+                        placeholder="Amount"
+                      />
+                    </div>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      leftIcon={<Plus size={12} />}
                       onClick={() => topup(Number(topupAmount))}
                       disabled={!topupAmount || Number(topupAmount) <= 0}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-50"
                     >
-                      <Plus size={12} /> Top up
-                    </button>
+                      Top up
+                    </Button>
                   </div>
                 </div>
               )}
@@ -273,16 +274,13 @@ export default function BillingPage() {
               <div className="mt-5 pt-5 border-t border-slate-100">
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Auto top-up settings</div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-slate-600 block mb-1">Low balance alert below (₹)</label>
-                    <input
-                      type="number"
-                      value={walletSettings.lowBalanceThreshold}
-                      onChange={(e) => setWalletSettings(s => ({ ...s, lowBalanceThreshold: e.target.value }))}
-                      placeholder="e.g. 500"
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                    />
-                  </div>
+                  <Input
+                    label="Low balance alert below (₹)"
+                    type="number"
+                    value={walletSettings.lowBalanceThreshold}
+                    onChange={(e) => setWalletSettings(s => ({ ...s, lowBalanceThreshold: e.target.value }))}
+                    placeholder="e.g. 500"
+                  />
                   <div className="flex items-end pb-1">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -296,43 +294,30 @@ export default function BillingPage() {
                   </div>
                   {walletSettings.autoTopupEnabled && (
                     <>
-                      <div>
-                        <label className="text-xs font-semibold text-slate-600 block mb-1">Top-up amount (₹)</label>
-                        <input
-                          type="number"
-                          value={walletSettings.autoTopupAmount}
-                          onChange={(e) => setWalletSettings(s => ({ ...s, autoTopupAmount: e.target.value }))}
-                          placeholder="e.g. 1000"
-                          className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold text-slate-600 block mb-1">Trigger when balance below (₹)</label>
-                        <input
-                          type="number"
-                          value={walletSettings.autoTopupTriggerBelow}
-                          onChange={(e) => setWalletSettings(s => ({ ...s, autoTopupTriggerBelow: e.target.value }))}
-                          placeholder="e.g. 200"
-                          className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                        />
-                      </div>
+                      <Input
+                        label="Top-up amount (₹)"
+                        type="number"
+                        value={walletSettings.autoTopupAmount}
+                        onChange={(e) => setWalletSettings(s => ({ ...s, autoTopupAmount: e.target.value }))}
+                        placeholder="e.g. 1000"
+                      />
+                      <Input
+                        label="Trigger when balance below (₹)"
+                        type="number"
+                        value={walletSettings.autoTopupTriggerBelow}
+                        onChange={(e) => setWalletSettings(s => ({ ...s, autoTopupTriggerBelow: e.target.value }))}
+                        placeholder="e.g. 200"
+                      />
                     </>
                   )}
                 </div>
                 <div className="flex gap-2 mt-3">
-                  <button
-                    onClick={saveWalletSettings}
-                    disabled={savingSettings}
-                    className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-50"
-                  >
-                    {savingSettings ? 'Saving…' : 'Save settings'}
-                  </button>
-                  <button
-                    onClick={() => setShowWalletSettings(false)}
-                    className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
-                  >
+                  <Button variant="primary" size="sm" onClick={saveWalletSettings} loading={savingSettings}>
+                    Save settings
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setShowWalletSettings(false)}>
                     Cancel
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
@@ -376,13 +361,15 @@ export default function BillingPage() {
                       </li>
                     ))}
                   </ul>
-                  <button
+                  <Button
+                    variant="primary"
+                    fullWidth
+                    className="mt-4"
                     disabled={current || !canManage || loading}
                     onClick={() => change(p.code)}
-                    className="mt-4 w-full py-2 rounded-xl font-bold text-sm bg-slate-900 text-white disabled:opacity-40"
                   >
                     {current ? 'Active' : 'Switch'}
-                  </button>
+                  </Button>
                 </div>
               );
             })}

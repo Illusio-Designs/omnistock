@@ -112,16 +112,17 @@ export default function InvoicesPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50/50 border-b border-slate-100">
                 <tr className="text-left text-[10px] uppercase tracking-widest text-slate-400">
-                  {['Invoice #', 'Type', 'Reference', 'Amount', 'Status', 'Due Date', 'Actions'].map(h => (
+                  {['#', 'Invoice #', 'Type', 'Reference', 'Amount', 'Status', 'Due Date', 'Actions'].map(h => (
                     <th key={h} className="px-4 py-3 font-bold">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
-                  <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
-                ) : invoices.length ? invoices.map((inv: any) => (
+                  <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
+                ) : invoices.length ? invoices.map((inv: any, idx: number) => (
                   <tr key={inv.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="px-4 py-3 text-slate-500 font-semibold">{(page - 1) * pageSize + idx + 1}</td>
                     <td className="px-4 py-3 font-bold text-emerald-600">{inv.invoiceNumber}</td>
                     <td className="px-4 py-3">
                       <Badge variant="slate">{inv.type}</Badge>
@@ -139,39 +140,34 @@ export default function InvoicesPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         <Tooltip content="View invoice">
-                          <button
-                            onClick={() => setViewInvoice(inv)}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-900"
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => setViewInvoice(inv)}>
                             <Eye size={13} />
-                          </button>
+                          </Button>
                         </Tooltip>
                         {PAYABLE_STATUSES.includes(inv.status) && (
                           <Tooltip content="Mark as paid">
-                            <button
-                              onClick={() => { setPayInvoice(inv); setPayAmount(String(inv.total || '')); }}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-emerald-50 text-slate-400 hover:text-emerald-700"
-                            >
+                            <Button variant="outline" size="icon" onClick={() => { setPayInvoice(inv); setPayAmount(String(inv.total || '')); }}>
                               <CreditCard size={13} />
-                            </button>
+                            </Button>
                           </Tooltip>
                         )}
                         {inv.status === 'DRAFT' && (
                           <Tooltip content="Delete draft">
-                            <button
+                            <Button
+                              variant="danger"
+                              size="icon"
                               onClick={() => deleteMutation.mutate(inv.id)}
                               disabled={deleteMutation.isPending}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 disabled:opacity-40"
                             >
                               <X size={13} />
-                            </button>
+                            </Button>
                           </Tooltip>
                         )}
                       </div>
                     </td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={7} className="px-4 py-16 text-center">
+                  <tr><td colSpan={8} className="px-4 py-16 text-center">
                     <div className="inline-flex w-14 h-14 rounded-2xl bg-emerald-50 items-center justify-center mb-3">
                       <FileText size={24} className="text-emerald-600" />
                     </div>

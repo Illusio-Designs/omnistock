@@ -131,16 +131,17 @@ export default function OrdersPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50/50 border-b border-slate-100">
                 <tr className="text-left text-[10px] uppercase tracking-widest text-slate-400">
-                  {['Order #', 'Customer', 'Channel', 'Fulfillment', 'Total', 'RTO', 'Status', 'Date', ''].map(h => (
+                  {['#', 'Order #', 'Customer', 'Channel', 'Fulfillment', 'Total', 'RTO', 'Status', 'Date', ''].map(h => (
                     <th key={h} className="px-4 py-3 font-bold">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
-                  <tr><td colSpan={9} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
-                ) : data?.orders?.length ? data.orders.map((o: any) => (
+                  <tr><td colSpan={10} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
+                ) : data?.orders?.length ? data.orders.map((o: any, idx: number) => (
                   <tr key={o.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="px-4 py-3 text-slate-500 font-semibold">{(page - 1) * pageSize + idx + 1}</td>
                     <td className="px-4 py-3">
                       <Link href={`/orders/${o.id}`} className="font-bold text-emerald-600 hover:underline">{o.orderNumber}</Link>
                     </td>
@@ -191,37 +192,30 @@ export default function OrdersPage() {
                     <td className="px-4 py-3">
                       {o.needsApproval ? (
                         <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => approveMutation.mutate(o.id)}
-                            disabled={approveMutation.isPending}
-                            className="flex items-center gap-1 px-2 py-1 text-xs font-bold border border-emerald-200 text-emerald-700 rounded-md hover:bg-emerald-50 disabled:opacity-40 transition-colors"
-                          >
-                            <CheckCircle2 size={11} /> Approve
-                          </button>
-                          <button
-                            onClick={() => rejectMutation.mutate(o.id)}
-                            disabled={rejectMutation.isPending}
-                            className="flex items-center gap-1 px-2 py-1 text-xs font-bold border border-rose-200 text-rose-700 rounded-md hover:bg-rose-50 disabled:opacity-40 transition-colors"
-                          >
-                            <XCircle size={11} /> Reject
-                          </button>
+                          <Button variant="outline" size="sm" leftIcon={<CheckCircle2 size={11} />} onClick={() => approveMutation.mutate(o.id)} disabled={approveMutation.isPending}>
+                            Approve
+                          </Button>
+                          <Button variant="danger" size="sm" leftIcon={<XCircle size={11} />} onClick={() => rejectMutation.mutate(o.id)} disabled={rejectMutation.isPending}>
+                            Reject
+                          </Button>
                         </div>
                       ) : o.status === 'DELIVERED' ? (
                         <Tooltip content={o.reviewRequestedAt ? `Requested on ${new Date(o.reviewRequestedAt).toLocaleDateString()}` : 'Request product review'}>
-                          <button
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            leftIcon={<Star size={11} />}
                             onClick={() => reviewMutation.mutate(o.id)}
                             disabled={reviewMutation.isPending || !!o.reviewRequestedAt}
-                            className="flex items-center gap-1 px-2 py-1 text-xs font-bold border border-amber-200 text-amber-700 rounded-md hover:bg-amber-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                           >
-                            <Star size={11} />
                             {o.reviewRequestedAt ? 'Requested' : 'Review'}
-                          </button>
+                          </Button>
                         </Tooltip>
                       ) : null}
                     </td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={9} className="px-4 py-12 text-center text-slate-400">No orders yet</td></tr>
+                  <tr><td colSpan={10} className="px-4 py-12 text-center text-slate-400">No orders yet</td></tr>
                 )}
               </tbody>
             </table>
@@ -386,51 +380,53 @@ function NewOrderModal({ open, onClose }: { open: boolean; onClose: () => void }
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Items</label>
-            <button
-              type="button"
-              onClick={addItem}
-              className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
-            >
-              <Plus size={12} /> Add item
-            </button>
+            <Button variant="ghost" size="sm" leftIcon={<Plus size={12} />} onClick={addItem}>
+              Add item
+            </Button>
           </div>
           <div className="space-y-2">
             {items.map((item, i) => (
-              <div key={item.id} className="grid grid-cols-12 gap-2 p-3 bg-slate-50 rounded-xl">
-                <input
-                  value={item.name}
-                  onChange={(e) => updateItem(item.id, { name: e.target.value })}
-                  placeholder="Product name"
-                  className="col-span-12 md:col-span-4 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                />
-                <input
-                  value={item.sku}
-                  onChange={(e) => updateItem(item.id, { sku: e.target.value })}
-                  placeholder="SKU"
-                  className="col-span-6 md:col-span-3 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                />
-                <input
-                  type="number"
-                  value={item.qty}
-                  onChange={(e) => updateItem(item.id, { qty: Number(e.target.value) })}
-                  placeholder="Qty"
-                  className="col-span-3 md:col-span-2 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                />
-                <input
-                  type="number"
-                  value={item.unitPrice}
-                  onChange={(e) => updateItem(item.id, { unitPrice: Number(e.target.value) })}
-                  placeholder="Price"
-                  className="col-span-3 md:col-span-2 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeItem(item.id)}
-                  disabled={items.length === 1}
-                  className="col-span-12 md:col-span-1 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-30"
-                >
-                  <Trash2 size={14} />
-                </button>
+              <div key={item.id} className="grid grid-cols-12 gap-2 p-3 bg-slate-50 rounded-xl items-center">
+                <div className="col-span-12 md:col-span-4">
+                  <Input
+                    value={item.name}
+                    onChange={(e) => updateItem(item.id, { name: e.target.value })}
+                    placeholder="Product name"
+                  />
+                </div>
+                <div className="col-span-6 md:col-span-3">
+                  <Input
+                    value={item.sku}
+                    onChange={(e) => updateItem(item.id, { sku: e.target.value })}
+                    placeholder="SKU"
+                  />
+                </div>
+                <div className="col-span-3 md:col-span-2">
+                  <Input
+                    type="number"
+                    value={item.qty}
+                    onChange={(e) => updateItem(item.id, { qty: Number(e.target.value) })}
+                    placeholder="Qty"
+                  />
+                </div>
+                <div className="col-span-3 md:col-span-2">
+                  <Input
+                    type="number"
+                    value={item.unitPrice}
+                    onChange={(e) => updateItem(item.id, { unitPrice: Number(e.target.value) })}
+                    placeholder="Price"
+                  />
+                </div>
+                <div className="col-span-12 md:col-span-1 flex items-center justify-center">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeItem(item.id)}
+                    disabled={items.length === 1}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

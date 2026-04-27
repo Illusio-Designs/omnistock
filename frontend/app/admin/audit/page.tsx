@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { adminApi } from '@/lib/api';
 import { Activity, Search, RefreshCw } from 'lucide-react';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 interface AuditRow {
   id: string;
@@ -91,37 +93,35 @@ export default function AdminAuditPage() {
             Every authenticated mutation across every tenant. Auto-captured by the autoAudit middleware.
           </p>
         </div>
-        <button
+        <Button
+          variant="secondary"
+          leftIcon={<RefreshCw size={14} className={loading ? 'animate-spin' : ''} />}
           onClick={load}
-          className="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold hover:bg-slate-50"
         >
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
-        </button>
+          Refresh
+        </Button>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div className="md:col-span-2 relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
+        <div className="md:col-span-2">
+          <Input
+            leftIcon={<Search size={14} />}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search action, email, path, resource id…"
-            className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm"
           />
         </div>
-        <input
+        <Input
           value={actionFilter}
           onChange={(e) => setActionFilter(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && load()}
           placeholder="Action filter (e.g. orders.create)"
-          className="px-3 py-2 rounded-lg border border-slate-200 text-sm"
         />
-        <input
+        <Input
           value={tenantFilter}
           onChange={(e) => setTenantFilter(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && load()}
           placeholder="Tenant ID"
-          className="px-3 py-2 rounded-lg border border-slate-200 text-sm"
         />
       </div>
 
@@ -137,6 +137,7 @@ export default function AdminAuditPage() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500 sticky top-0">
               <tr>
+                <th className="text-left p-3">#</th>
                 <th className="text-left p-3">When</th>
                 <th className="text-left p-3">Action</th>
                 <th className="text-left p-3">User</th>
@@ -146,12 +147,13 @@ export default function AdminAuditPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((l) => {
+              {filtered.map((l, idx) => {
                 const verb = verbFor(l.action);
                 const verbColor = VERB_COLORS[verb] || 'bg-slate-100 text-slate-600';
                 const methodColor = METHOD_COLORS[l.method || ''] || 'bg-slate-50 text-slate-600 border-slate-200';
                 return (
                   <tr key={l.id} className="border-t border-slate-100 hover:bg-slate-50/40">
+                    <td className="p-3 text-xs text-slate-500 font-semibold">{idx + 1}</td>
                     <td className="p-3 text-xs text-slate-500 whitespace-nowrap">
                       {new Date(l.createdAt).toLocaleString()}
                     </td>

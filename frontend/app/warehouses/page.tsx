@@ -78,18 +78,12 @@ export default function WarehousesPage() {
                       <Package size={12} className="text-emerald-500" />
                       <span className="font-bold">{w.inventoryItems?.length || 0}</span> SKUs
                     </div>
-                    <button
-                      onClick={() => setEditWarehouse(w)}
-                      className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors"
-                    >
-                      <Pencil size={11} /> Edit
-                    </button>
-                    <button
-                      onClick={() => setDeleteTarget(w)}
-                      className="flex items-center gap-1 text-xs text-rose-500 hover:text-rose-700 px-2 py-1 rounded-lg hover:bg-rose-50 transition-colors"
-                    >
-                      <Trash2 size={11} /> Delete
-                    </button>
+                    <Button variant="ghost" size="sm" leftIcon={<Pencil size={11} />} onClick={() => setEditWarehouse(w)}>
+                      Edit
+                    </Button>
+                    <Button variant="danger" size="sm" leftIcon={<Trash2 size={11} />} onClick={() => setDeleteTarget(w)}>
+                      Delete
+                    </Button>
                   </div>
                 </div>
               </Card>

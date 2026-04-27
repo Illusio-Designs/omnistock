@@ -301,16 +301,18 @@ export default function DashboardPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100">
-                    <th className="px-5 pb-3 font-bold">Activity</th>
+                    <th className="px-5 pb-3 font-bold">#</th>
+                    <th className="px-2 pb-3 font-bold">Activity</th>
                     <th className="px-2 pb-3 font-bold">Date</th>
                     <th className="px-2 pb-3 font-bold">Price</th>
                     <th className="px-2 pb-3 font-bold text-right pr-5">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {paginatedOrders.map((o: any) => (
+                  {paginatedOrders.map((o: any, idx: number) => (
                     <tr key={o.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="px-5 py-3.5">
+                      <td className="px-5 py-3.5 text-slate-500 font-semibold text-xs">{(page - 1) * pageSize + idx + 1}</td>
+                      <td className="px-2 py-3.5">
                         <div className="flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
                             <Package size={13} className="text-emerald-600" />
@@ -332,7 +334,7 @@ export default function DashboardPage() {
                   ))}
                   {paginatedOrders.length === 0 && !isLoading && (
                     <tr>
-                      <td colSpan={4} className="text-center py-10 text-sm text-slate-400">
+                      <td colSpan={5} className="text-center py-10 text-sm text-slate-400">
                         No recent orders yet
                       </td>
                     </tr>

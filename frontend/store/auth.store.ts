@@ -2,6 +2,26 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { authApi } from '@/lib/api';
 
+// Decode JWT and return its `exp` (Unix seconds) — null if malformed.
+export function getTokenExpiry(token: string | null | undefined): number | null {
+  if (!token) return null;
+  try {
+    const payload = token.split('.')[1];
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    const { exp } = JSON.parse(json);
+    return typeof exp === 'number' ? exp : null;
+  } catch {
+    return null;
+  }
+}
+
+// True when token is missing, malformed, or past its `exp`.
+export function isTokenExpired(token: string | null | undefined): boolean {
+  const exp = getTokenExpiry(token);
+  if (exp === null) return true;
+  return Date.now() / 1000 >= exp;
+}
+
 interface User {
   id: string;
   name: string;

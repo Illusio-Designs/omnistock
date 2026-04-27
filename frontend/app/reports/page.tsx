@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { reportApi } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
+import { Input } from '@/components/ui/Input';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 export default function ReportsPage() {
@@ -30,15 +31,9 @@ export default function ReportsPage() {
         </div>
 
         {/* Date Filter */}
-        <div className="flex gap-3 items-center">
-          <div>
-            <label className="text-xs text-gray-500 block mb-1">From</label>
-            <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="px-3 py-2 text-sm border rounded-lg" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 block mb-1">To</label>
-            <input type="date" value={to} onChange={e => setTo(e.target.value)} className="px-3 py-2 text-sm border rounded-lg" />
-          </div>
+        <div className="flex gap-3 items-end">
+          <Input label="From" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <Input label="To" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         </div>
 
         {/* Sales Summary */}
@@ -65,6 +60,7 @@ export default function ReportsPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50">
                 <tr className="text-left text-gray-500">
+                  <th className="px-3 py-2 font-medium">#</th>
                   <th className="px-3 py-2 font-medium">Product</th>
                   <th className="px-3 py-2 font-medium">SKU</th>
                   <th className="px-3 py-2 font-medium">Warehouse</th>
@@ -74,8 +70,9 @@ export default function ReportsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {valuation?.items?.slice(0, 20).map((item: any) => (
+                {valuation?.items?.slice(0, 20).map((item: any, idx: number) => (
                   <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-3 py-2.5 text-gray-500 font-medium">{idx + 1}</td>
                     <td className="px-3 py-2.5 font-medium">{item.variant?.product?.name}</td>
                     <td className="px-3 py-2.5 text-gray-400 font-mono text-xs">{item.variant?.sku}</td>
                     <td className="px-3 py-2.5 text-gray-500">{item.warehouse?.name}</td>

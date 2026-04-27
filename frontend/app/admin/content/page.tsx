@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/api';
-import { Plus, Edit2, Trash2, Save, X, Eye, EyeOff, GripVertical } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, Eye, EyeOff, GripVertical } from 'lucide-react';
+import { Modal } from '@/components/ui/Modal';
+import { Input, Textarea } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 const TYPES = [
   { value: 'LANDING_CHALLENGE',    label: 'Landing — Challenges' },
@@ -88,22 +91,25 @@ export default function AdminContentPage() {
         <div className="text-sm text-slate-500">
           {loading ? 'Loading…' : `${items.length} items`}
         </div>
-        <button
-          onClick={() => setShowNew(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600"
-        >
-          <Plus size={16} /> Add item
-        </button>
+        <Button variant="primary" leftIcon={<Plus size={16} />} onClick={() => setShowNew(true)}>
+          Add item
+        </Button>
       </div>
 
-      {(showNew || editing) && (
+      <Modal
+        open={showNew || !!editing}
+        onClose={() => { setEditing(null); setShowNew(false); }}
+        title={editing ? 'Edit content' : 'New content'}
+        description={activeType}
+        size="xl"
+      >
         <ContentForm
           initial={editing}
           type={activeType}
           onClose={() => { setEditing(null); setShowNew(false); }}
           onSave={save}
         />
-      )}
+      </Modal>
 
       <div className="bg-white border border-slate-200 rounded-2xl divide-y divide-slate-100">
         {items.length === 0 && !loading && (
@@ -129,25 +135,15 @@ export default function AdminContentPage() {
               {item.body && <p className="text-xs text-slate-400 mt-1 line-clamp-2">{item.body}</p>}
             </div>
             <div className="flex items-center gap-1">
-              <button
-                onClick={() => toggle(item)}
-                className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-                title={item.isActive ? 'Hide' : 'Show'}
-              >
+              <Button variant="ghost" size="icon" onClick={() => toggle(item)} title={item.isActive ? 'Hide' : 'Show'}>
                 {item.isActive ? <Eye size={14} /> : <EyeOff size={14} />}
-              </button>
-              <button
-                onClick={() => setEditing(item)}
-                className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-              >
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => setEditing(item)}>
                 <Edit2 size={14} />
-              </button>
-              <button
-                onClick={() => del(item.id)}
-                className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-              >
+              </Button>
+              <Button variant="danger" size="icon" onClick={() => del(item.id)}>
                 <Trash2 size={14} />
-              </button>
+              </Button>
             </div>
           </div>
         ))}
@@ -188,20 +184,22 @@ function ContentForm({ initial, type, onClose, onSave }: {
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-4 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold">{initial ? 'Edit content' : 'New content'} · <span className="font-mono text-sm text-slate-500">{type}</span></h2>
-        <button onClick={onClose}><X size={18} /></button>
-      </div>
+    <div>
       <div className="grid grid-cols-2 gap-4">
-        <Input label="Title" value={f.title} onChange={(v: string) => setF({ ...f, title: v })} className="col-span-2" />
-        <Input label="Subtitle" value={f.subtitle || ''} onChange={(v: string) => setF({ ...f, subtitle: v })} className="col-span-2" />
-        <Textarea label="Body (markdown)" value={f.body || ''} onChange={(v: string) => setF({ ...f, body: v })} className="col-span-2" rows={5} />
-        <Input label="Icon (lucide name)" value={f.icon || ''} onChange={(v: string) => setF({ ...f, icon: v })} placeholder="Sparkles" />
-        <Input label="Image URL" value={f.image || ''} onChange={(v: string) => setF({ ...f, image: v })} />
-        <Input label="Category" value={f.category || ''} onChange={(v: string) => setF({ ...f, category: v })} />
-        <Input label="Link href" value={f.href || ''} onChange={(v: string) => setF({ ...f, href: v })} />
-        <Input label="Sort order" type="number" value={f.sortOrder ?? 0} onChange={(v: string) => setF({ ...f, sortOrder: Number(v) })} />
+        <div className="col-span-2">
+          <Input label="Title" value={f.title ?? ''} onChange={(e) => setF({ ...f, title: e.target.value })} />
+        </div>
+        <div className="col-span-2">
+          <Input label="Subtitle" value={f.subtitle ?? ''} onChange={(e) => setF({ ...f, subtitle: e.target.value })} />
+        </div>
+        <div className="col-span-2">
+          <Textarea label="Body (markdown)" value={f.body ?? ''} onChange={(e) => setF({ ...f, body: e.target.value })} rows={5} />
+        </div>
+        <Input label="Icon (lucide name)" value={f.icon ?? ''} onChange={(e) => setF({ ...f, icon: e.target.value })} placeholder="Sparkles" />
+        <Input label="Image URL" value={f.image ?? ''} onChange={(e) => setF({ ...f, image: e.target.value })} />
+        <Input label="Category" value={f.category ?? ''} onChange={(e) => setF({ ...f, category: e.target.value })} />
+        <Input label="Link href" value={f.href ?? ''} onChange={(e) => setF({ ...f, href: e.target.value })} />
+        <Input label="Sort order" type="number" value={f.sortOrder ?? 0} onChange={(e) => setF({ ...f, sortOrder: Number(e.target.value) })} />
         <label className="flex items-center gap-2 mt-6 text-sm font-semibold text-slate-700">
           <input type="checkbox" checked={f.isActive} onChange={(e) => setF({ ...f, isActive: e.target.checked })} />
           Active (visible on the public site)
@@ -223,53 +221,9 @@ function ContentForm({ initial, type, onClose, onSave }: {
       </div>
 
       <div className="flex gap-2 justify-end mt-5">
-        <button onClick={onClose} className="px-4 py-2 text-slate-600">Cancel</button>
-        <button onClick={submit} className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600">
-          <Save size={14} /> Save
-        </button>
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" leftIcon={<Save size={14} />} onClick={submit}>Save</Button>
       </div>
-    </div>
-  );
-}
-
-function Input({ label, value, onChange, type = 'text', className = '', placeholder }: {
-  label: string;
-  value: string | number;
-  onChange: (v: string) => void;
-  type?: string;
-  className?: string;
-  placeholder?: string;
-}) {
-  return (
-    <div className={className}>
-      <label className="block text-xs font-semibold text-slate-600 mb-1">{label}</label>
-      <input
-        type={type}
-        value={value ?? ''}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-sm"
-      />
-    </div>
-  );
-}
-
-function Textarea({ label, value, onChange, className = '', rows = 4 }: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  className?: string;
-  rows?: number;
-}) {
-  return (
-    <div className={className}>
-      <label className="block text-xs font-semibold text-slate-600 mb-1">{label}</label>
-      <textarea
-        value={value ?? ''}
-        rows={rows}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-sm font-mono"
-      />
     </div>
   );
 }

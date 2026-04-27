@@ -4,7 +4,10 @@ import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { userApi, roleApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
-import { Plus, Trash2, Users, Shield, X, Save } from 'lucide-react';
+import { Plus, Trash2, Users, Shield, Save } from 'lucide-react';
+import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 export default function TeamPage() {
   const { hasPermission } = useAuthStore();
@@ -70,25 +73,31 @@ function UsersTab({ canManage }: { canManage: boolean }) {
     <>
       {canManage && (
         <div className="mb-4">
-          <button onClick={() => setShowNew(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg font-semibold">
-            <Plus size={16} /> Add user
-          </button>
+          <Button variant="primary" leftIcon={<Plus size={16} />} onClick={() => setShowNew(true)}>
+            Add user
+          </Button>
         </div>
       )}
 
-      {(showNew || editing) && (
+      <Modal
+        open={showNew || !!editing}
+        onClose={() => { setShowNew(false); setEditing(null); }}
+        title={editing ? 'Edit user' : 'Add user'}
+        size="lg"
+      >
         <UserForm
           initial={editing}
           roles={roles}
           onClose={() => { setShowNew(false); setEditing(null); }}
           onSave={save}
         />
-      )}
+      </Modal>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
+              <th className="text-left p-3">#</th>
               <th className="text-left p-3">Name</th>
               <th className="text-left p-3">Email</th>
               <th className="text-left p-3">Roles</th>
@@ -97,8 +106,9 @@ function UsersTab({ canManage }: { canManage: boolean }) {
             </tr>
           </thead>
           <tbody>
-            {users.map((u) => (
+            {users.map((u, idx) => (
               <tr key={u.id} className="border-t border-slate-100">
+                <td className="p-3 text-slate-500 font-semibold">{idx + 1}</td>
                 <td className="p-3 font-semibold">{u.name}</td>
                 <td className="p-3 text-slate-600">{u.email}</td>
                 <td className="p-3">
@@ -114,8 +124,10 @@ function UsersTab({ canManage }: { canManage: boolean }) {
                 <td className="p-3 flex gap-2 justify-end">
                   {canManage && (
                     <>
-                      <button onClick={() => setEditing(u)} className="text-slate-500 text-xs font-bold">Edit</button>
-                      <button onClick={() => del(u.id)} className="text-red-500"><Trash2 size={14} /></button>
+                      <Button variant="ghost" size="sm" onClick={() => setEditing(u)}>Edit</Button>
+                      <Button variant="danger" size="icon" onClick={() => del(u.id)}>
+                        <Trash2 size={14} />
+                      </Button>
                     </>
                   )}
                 </td>
@@ -152,16 +164,14 @@ function UserForm({ initial, roles, onClose, onSave }: {
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-4 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold">{initial ? 'Edit user' : 'Add user'}</h3>
-        <button onClick={onClose}><X size={18} /></button>
-      </div>
+    <div>
       <div className="grid grid-cols-2 gap-4">
-        <Input label="Name" value={f.name} onChange={(v) => setF({ ...f, name: v })} />
-        <Input label="Email" value={f.email} onChange={(v) => setF({ ...f, email: v })} disabled={!!initial} />
+        <Input label="Name" value={f.name ?? ''} onChange={(e) => setF({ ...f, name: e.target.value })} />
+        <Input label="Email" value={f.email ?? ''} onChange={(e) => setF({ ...f, email: e.target.value })} disabled={!!initial} />
         {!initial && (
-          <Input label="Temporary password" type="password" value={f.password} onChange={(v) => setF({ ...f, password: v })} className="col-span-2" />
+          <div className="col-span-2">
+            <Input label="Temporary password" type="password" value={f.password ?? ''} onChange={(e) => setF({ ...f, password: e.target.value })} />
+          </div>
         )}
         {initial && (
           <label className="col-span-2 flex items-center gap-2 text-sm">
@@ -188,10 +198,8 @@ function UserForm({ initial, roles, onClose, onSave }: {
         </div>
       </div>
       <div className="mt-5 flex gap-2 justify-end">
-        <button onClick={onClose} className="px-4 py-2 text-slate-600">Cancel</button>
-        <button onClick={() => onSave(f)} className="px-4 py-2 bg-emerald-500 text-white rounded-lg font-semibold inline-flex items-center gap-2">
-          <Save size={14} /> Save
-        </button>
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" leftIcon={<Save size={14} />} onClick={() => onSave(f)}>Save</Button>
       </div>
     </div>
   );
@@ -230,20 +238,25 @@ function RolesTab({ canManage }: { canManage: boolean }) {
     <>
       {canManage && (
         <div className="mb-4">
-          <button onClick={() => setShowNew(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg font-semibold">
-            <Plus size={16} /> New role
-          </button>
+          <Button variant="primary" leftIcon={<Plus size={16} />} onClick={() => setShowNew(true)}>
+            New role
+          </Button>
         </div>
       )}
 
-      {(showNew || editing) && (
+      <Modal
+        open={showNew || !!editing}
+        onClose={() => { setEditing(null); setShowNew(false); }}
+        title={editing ? 'Edit role' : 'New role'}
+        size="xl"
+      >
         <RoleForm
           initial={editing}
           permsByModule={permsByModule}
           onClose={() => { setEditing(null); setShowNew(false); }}
           onSave={save}
         />
-      )}
+      </Modal>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {roles.map((r) => (
@@ -258,9 +271,9 @@ function RolesTab({ canManage }: { canManage: boolean }) {
             <div className="text-xs text-slate-500 mt-2">{r.permissions?.length || 0} permissions</div>
             {canManage && (
               <div className="flex gap-2 mt-3">
-                <button onClick={() => setEditing(r)} className="text-xs font-bold text-slate-700">Edit</button>
+                <Button variant="ghost" size="sm" onClick={() => setEditing(r)}>Edit</Button>
                 {!r.isSystem && (
-                  <button onClick={() => del(r.id)} className="text-xs font-bold text-red-500">Delete</button>
+                  <Button variant="danger" size="sm" onClick={() => del(r.id)}>Delete</Button>
                 )}
               </div>
             )}
@@ -299,15 +312,13 @@ function RoleForm({ initial, permsByModule, onClose, onSave }: {
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-4 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold">{initial ? 'Edit role' : 'New role'}</h3>
-        <button onClick={onClose}><X size={18} /></button>
-      </div>
+    <div>
       <div className="grid grid-cols-2 gap-4">
-        <Input label="Code" value={f.code} onChange={(v) => setF({ ...f, code: v.toUpperCase() })} disabled={!!initial?.isSystem} />
-        <Input label="Name" value={f.name} onChange={(v) => setF({ ...f, name: v })} />
-        <Input label="Description" value={f.description || ''} onChange={(v) => setF({ ...f, description: v })} className="col-span-2" />
+        <Input label="Code" value={f.code ?? ''} onChange={(e) => setF({ ...f, code: e.target.value.toUpperCase() })} disabled={!!initial?.isSystem} />
+        <Input label="Name" value={f.name ?? ''} onChange={(e) => setF({ ...f, name: e.target.value })} />
+        <div className="col-span-2">
+          <Input label="Description" value={f.description ?? ''} onChange={(e) => setF({ ...f, description: e.target.value })} />
+        </div>
       </div>
 
       <div className="mt-6">
@@ -336,33 +347,9 @@ function RoleForm({ initial, permsByModule, onClose, onSave }: {
       </div>
 
       <div className="mt-5 flex gap-2 justify-end">
-        <button onClick={onClose} className="px-4 py-2 text-slate-600">Cancel</button>
-        <button onClick={() => onSave(f)} className="px-4 py-2 bg-emerald-500 text-white rounded-lg font-semibold inline-flex items-center gap-2">
-          <Save size={14} /> Save
-        </button>
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" leftIcon={<Save size={14} />} onClick={() => onSave(f)}>Save</Button>
       </div>
-    </div>
-  );
-}
-
-function Input({ label, value, onChange, className = '', disabled = false, type = 'text' }: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  className?: string;
-  disabled?: boolean;
-  type?: string;
-}) {
-  return (
-    <div className={className}>
-      <label className="block text-xs font-semibold text-slate-600 mb-1">{label}</label>
-      <input
-        type={type}
-        value={value ?? ''}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg border border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
-      />
     </div>
   );
 }

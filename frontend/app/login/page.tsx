@@ -4,21 +4,27 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authApi } from '@/lib/api';
-import { useAuthStore } from '@/store/auth.store';
+import { useAuthStore, isTokenExpired } from '@/store/auth.store';
 import { Sparkles, ArrowRight, Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { token, setAuth, setContext, isPlatformAdmin } = useAuthStore();
+  const { token, setAuth, setContext, isPlatformAdmin, logout } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Already logged in? Redirect away
+  // Already logged in with a valid token? Redirect away. If expired, clear it.
   useEffect(() => {
-    if (token) router.replace(isPlatformAdmin() ? '/admin' : '/dashboard');
+    if (!token) return;
+    if (isTokenExpired(token)) {
+      logout();
+      return;
+    }
+    router.replace(isPlatformAdmin() ? '/admin' : '/dashboard');
   }, [token]);
 
   const loadContext = async () => {
@@ -96,18 +102,13 @@ export default function LoginPage() {
                   Forgot?
                 </button>
               </div>
-              <div className="relative">
-                <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none"
-                />
-              </div>
+              <PasswordInput
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                required
+              />
             </div>
 
             {error && (

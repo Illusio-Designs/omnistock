@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { ConnectChannelModal } from '@/components/channels/ConnectChannelModal';
+import { Button } from '@/components/ui/Button';
 
 export default function ChannelDetailPage() {
   const params = useParams();
@@ -88,20 +89,18 @@ export default function ChannelDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setConnectOpen(true)}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-lg"
-            >
-              <KeyRound size={14} /> {hasCredentials ? 'Update credentials' : 'Connect'}
-            </button>
-            <button
+            <Button variant="primary" leftIcon={<KeyRound size={14} />} onClick={() => setConnectOpen(true)}>
+              {hasCredentials ? 'Update credentials' : 'Connect'}
+            </Button>
+            <Button
+              variant="danger"
+              leftIcon={<Trash2 size={14} />}
               onClick={() => {
                 if (confirm('Deactivate this channel? You can reconnect it later.')) deleteMutation.mutate();
               }}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
             >
-              <Trash2 size={14} /> Deactivate
-            </button>
+              Deactivate
+            </Button>
           </div>
         </div>
 
@@ -125,12 +124,9 @@ export default function ChannelDetailPage() {
                 Enter your {channel.type} credentials to enable order sync, inventory push and webhooks.
               </p>
             </div>
-            <button
-              onClick={() => setConnectOpen(true)}
-              className="px-3 py-1.5 bg-amber-500 text-white text-xs font-bold rounded-lg hover:bg-amber-600"
-            >
+            <Button variant="primary" size="sm" onClick={() => setConnectOpen(true)}>
               Connect now
-            </button>
+            </Button>
           </div>
         )}
 
@@ -200,6 +196,7 @@ export default function ChannelDetailPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b text-left text-gray-500">
                 <tr>
+                  <th className="px-5 py-2 font-medium">#</th>
                   <th className="px-5 py-2 font-medium">Channel SKU</th>
                   <th className="px-5 py-2 font-medium">Product</th>
                   <th className="px-5 py-2 font-medium">Variant</th>
@@ -207,8 +204,9 @@ export default function ChannelDetailPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {listings.map((l: any) => (
+                {listings.map((l: any, idx: number) => (
                   <tr key={l.id}>
+                    <td className="px-5 py-3 text-gray-500 font-semibold">{idx + 1}</td>
                     <td className="px-5 py-3 font-mono text-xs">{l.channelSku}</td>
                     <td className="px-5 py-3">{l.product?.name}</td>
                     <td className="px-5 py-3 text-gray-500">{l.variant?.name || '—'}</td>

@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { channelApi } from '@/lib/api';
 import { ArrowLeft, Inbox, Clock, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/Button';
 
 const STATUS_FILTERS = ['', 'PENDING', 'IN_PROGRESS', 'COMPLETED', 'REJECTED'];
 
@@ -66,6 +67,7 @@ export default function ChannelRequestsPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b text-left text-gray-500">
                 <tr>
+                  <th className="px-5 py-3 font-medium">#</th>
                   <th className="px-5 py-3 font-medium">Channel</th>
                   <th className="px-5 py-3 font-medium">Category</th>
                   <th className="px-5 py-3 font-medium">Status</th>
@@ -75,11 +77,12 @@ export default function ChannelRequestsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {requests.map((r: any) => {
+                {requests.map((r: any, idx: number) => {
                   const style = STATUS_STYLES[r.status] || STATUS_STYLES.PENDING;
                   const StatusIcon = style.icon;
                   return (
                     <tr key={r.id} className="hover:bg-gray-50">
+                      <td className="px-5 py-3 text-gray-500 font-semibold">{idx + 1}</td>
                       <td className="px-5 py-3">
                         <div className="font-medium text-gray-900">{r.name || r.type}</div>
                         <div className="text-xs text-gray-400">{r.type}</div>
@@ -96,12 +99,13 @@ export default function ChannelRequestsPage() {
                       </td>
                       <td className="px-5 py-3 text-right">
                         {r.status === 'PENDING' && (
-                          <button
+                          <Button
+                            variant="danger"
+                            size="sm"
                             onClick={() => { if (confirm('Cancel this request?')) cancelMutation.mutate(r.id); }}
-                            className="text-xs text-red-600 hover:underline"
                           >
                             Cancel
-                          </button>
+                          </Button>
                         )}
                       </td>
                     </tr>

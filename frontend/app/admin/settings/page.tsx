@@ -5,6 +5,7 @@ import { adminApi } from '@/lib/api';
 import {
   Save, Eye, EyeOff, CheckCircle2, Lock, Package2, Mail, CreditCard, ShoppingBag, Cable, Globe, Sparkles, Clock,
 } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 const CATEGORY_META: Record<string, { label: string; description: string; icon: any }> = {
   amazon:   { label: 'Amazon SP-API',  description: 'Public app credentials used for OAuth. Every seller authorizes this one app.', icon: ShoppingBag },
@@ -116,13 +117,15 @@ export default function AdminSettingsPage() {
             <p className="text-sm text-slate-500">{meta.description}</p>
           </div>
         </div>
-        <button
+        <Button
+          variant="primary"
+          leftIcon={<Save size={14} />}
           onClick={saveCategory}
           disabled={!hasDirty || saving}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-bold disabled:opacity-40"
+          loading={saving && hasDirty}
         >
-          <Save size={14} /> Save all
-        </button>
+          Save all
+        </Button>
       </div>
 
       {/* Fields */}
@@ -174,13 +177,15 @@ export default function AdminSettingsPage() {
                   )}
                 </div>
               </div>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-6"
                 onClick={() => saveOne(it)}
                 disabled={!isDirty || saving}
-                className="mt-6 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-50 rounded-lg disabled:opacity-30"
               >
                 Save
-              </button>
+              </Button>
             </div>
           );
         })}

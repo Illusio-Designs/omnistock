@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { adminApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 import { Power, PowerOff, Crown, Search, LayoutDashboard } from 'lucide-react';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 export default function AdminTenantsPage() {
   const router = useRouter();
@@ -35,24 +37,24 @@ export default function AdminTenantsPage() {
       <h1 className="text-3xl font-bold text-slate-900">Tenants</h1>
       <p className="text-slate-500 mt-1">All businesses signed up to OmniStock.</p>
 
-      <div className="flex items-center gap-2 mt-6 mb-4">
-        <div className="relative flex-1 max-w-md">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
+      <div className="flex items-end gap-2 mt-6 mb-4">
+        <div className="flex-1 max-w-md">
+          <Input
+            leftIcon={<Search size={14} />}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && load()}
             placeholder="Search business name…"
-            className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200"
           />
         </div>
-        <button onClick={load} className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm">Search</button>
+        <Button variant="primary" onClick={load}>Search</Button>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
+              <th className="text-left p-3">#</th>
               <th className="text-left p-3">Business</th>
               <th className="text-left p-3">Plan</th>
               <th className="text-left p-3">Status</th>
@@ -63,8 +65,9 @@ export default function AdminTenantsPage() {
             </tr>
           </thead>
           <tbody>
-            {tenants.map((t: any) => (
+            {tenants.map((t: any, idx: number) => (
               <tr key={t.id} className="border-t border-slate-100">
+                <td className="p-3 text-slate-500 font-semibold">{idx + 1}</td>
                 <td className="p-3">
                   <div className="font-semibold">{t.businessName}</div>
                   <div className="text-xs text-slate-500">{t.ownerEmail}</div>
@@ -84,15 +87,15 @@ export default function AdminTenantsPage() {
                 <td className="p-3 text-right">{t._count?.orders || 0}</td>
                 <td className="p-3 text-right">{t._count?.products || 0}</td>
                 <td className="p-3 flex gap-2 justify-end">
-                  <button onClick={() => openAsTenant(t)} title="Open dashboard as this tenant" className="text-emerald-600">
+                  <Button variant="ghost" size="icon" onClick={() => openAsTenant(t)} title="Open dashboard as this tenant">
                     <LayoutDashboard size={14} />
-                  </button>
-                  <button onClick={() => setAssigning(t)} title="Assign plan" className="text-amber-600">
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => setAssigning(t)} title="Assign plan">
                     <Crown size={14} />
-                  </button>
+                  </Button>
                   {t.status === 'SUSPENDED'
-                    ? <button onClick={() => activate(t.id)} className="text-emerald-600"><Power size={14} /></button>
-                    : <button onClick={() => suspend(t.id)} className="text-red-600"><PowerOff size={14} /></button>}
+                    ? <Button variant="ghost" size="icon" onClick={() => activate(t.id)}><Power size={14} /></Button>
+                    : <Button variant="danger" size="icon" onClick={() => suspend(t.id)}><PowerOff size={14} /></Button>}
                 </td>
               </tr>
             ))}
@@ -119,7 +122,7 @@ export default function AdminTenantsPage() {
                 </button>
               ))}
             </div>
-            <button onClick={() => setAssigning(null)} className="mt-4 w-full py-2 text-slate-500">Cancel</button>
+            <Button variant="ghost" fullWidth className="mt-4" onClick={() => setAssigning(null)}>Cancel</Button>
           </div>
         </div>
       )}

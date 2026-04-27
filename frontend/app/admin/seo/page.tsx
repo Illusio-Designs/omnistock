@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/api';
 import { Save, Plus, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 export default function AdminSeoPage() {
   const [list, setList] = useState<any[]>([]);
@@ -27,25 +29,34 @@ export default function AdminSeoPage() {
       <div className="bg-white border border-slate-200 rounded-2xl p-5 mt-6">
         <h2 className="text-lg font-bold mb-3 flex items-center gap-2"><Plus size={16} /> Add / update path</h2>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Path (e.g. /pricing)" value={draft.path} onChange={(v) => setDraft({ ...draft, path: v })} />
-          <Input label="Title" value={draft.title} onChange={(v) => setDraft({ ...draft, title: v })} />
-          <Input label="Description" value={draft.description} onChange={(v) => setDraft({ ...draft, description: v })} className="col-span-2" />
-          <Input label="Keywords" value={draft.keywords} onChange={(v) => setDraft({ ...draft, keywords: v })} className="col-span-2" />
-          <Input label="OG Title" value={draft.ogTitle || ''} onChange={(v) => setDraft({ ...draft, ogTitle: v })} />
-          <Input label="OG Image" value={draft.ogImage || ''} onChange={(v) => setDraft({ ...draft, ogImage: v })} />
-          <Input label="Robots" value={draft.robots} onChange={(v) => setDraft({ ...draft, robots: v })} />
-          <Input label="Canonical URL" value={draft.canonicalUrl || ''} onChange={(v) => setDraft({ ...draft, canonicalUrl: v })} />
+          <Input label="Path (e.g. /pricing)" value={draft.path ?? ''} onChange={(e) => setDraft({ ...draft, path: e.target.value })} />
+          <Input label="Title" value={draft.title ?? ''} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+          <div className="col-span-2">
+            <Input label="Description" value={draft.description ?? ''} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
+          </div>
+          <div className="col-span-2">
+            <Input label="Keywords" value={draft.keywords ?? ''} onChange={(e) => setDraft({ ...draft, keywords: e.target.value })} />
+          </div>
+          <Input label="OG Title" value={draft.ogTitle ?? ''} onChange={(e) => setDraft({ ...draft, ogTitle: e.target.value })} />
+          <Input label="OG Image" value={draft.ogImage ?? ''} onChange={(e) => setDraft({ ...draft, ogImage: e.target.value })} />
+          <Input label="Robots" value={draft.robots ?? ''} onChange={(e) => setDraft({ ...draft, robots: e.target.value })} />
+          <Input label="Canonical URL" value={draft.canonicalUrl ?? ''} onChange={(e) => setDraft({ ...draft, canonicalUrl: e.target.value })} />
         </div>
-        <button onClick={() => { save(draft); setDraft({ path: '', title: '', description: '', keywords: '', robots: 'index,follow' }); }}
-          className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg font-semibold">
-          <Save size={14} /> Save
-        </button>
+        <Button
+          variant="primary"
+          leftIcon={<Save size={14} />}
+          className="mt-4"
+          onClick={() => { save(draft); setDraft({ path: '', title: '', description: '', keywords: '', robots: 'index,follow' }); }}
+        >
+          Save
+        </Button>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl mt-6 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
+              <th className="text-left p-3">#</th>
               <th className="text-left p-3">Path</th>
               <th className="text-left p-3">Title</th>
               <th className="text-left p-3">Robots</th>
@@ -53,35 +64,21 @@ export default function AdminSeoPage() {
             </tr>
           </thead>
           <tbody>
-            {list.map((s) => (
+            {list.map((s, idx) => (
               <tr key={s.id} className="border-t border-slate-100">
+                <td className="p-3 text-slate-500 font-semibold">{idx + 1}</td>
                 <td className="p-3 font-mono text-xs">{s.path}</td>
                 <td className="p-3">{s.title}</td>
                 <td className="p-3 text-xs text-slate-500">{s.robots}</td>
                 <td className="p-3 text-right">
-                  <button onClick={() => setDraft(s)} className="text-slate-500 mr-2">Edit</button>
-                  <button onClick={() => del(s.id)} className="text-red-500"><Trash2 size={14} /></button>
+                  <Button variant="ghost" size="sm" onClick={() => setDraft(s)} className="mr-2">Edit</Button>
+                  <Button variant="danger" size="icon" onClick={() => del(s.id)}><Trash2 size={14} /></Button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-    </div>
-  );
-}
-
-function Input({ label, value, onChange, className = '' }: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  className?: string;
-}) {
-  return (
-    <div className={className}>
-      <label className="block text-xs font-semibold text-slate-600 mb-1">{label}</label>
-      <input value={value ?? ''} onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg border border-slate-200" />
     </div>
   );
 }

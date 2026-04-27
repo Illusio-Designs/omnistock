@@ -135,14 +135,15 @@ export default function InventoryPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50/50 border-b border-slate-100">
                     <tr className="text-left text-[10px] uppercase tracking-widest text-slate-400">
-                      {['Product', 'SKU', 'Warehouse', 'On Hand', 'Reserved', 'Available', 'Reorder', 'Status'].map(h => (
+                      {['#', 'Product', 'SKU', 'Warehouse', 'On Hand', 'Reserved', 'Available', 'Reorder', 'Status'].map(h => (
                         <th key={h} className="px-4 py-3 font-bold">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {data?.items?.length ? data.items.map((item: any) => (
+                    {data?.items?.length ? data.items.map((item: any, idx: number) => (
                       <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="px-4 py-3 text-slate-500 font-semibold">{(page - 1) * pageSize + idx + 1}</td>
                         <td className="px-4 py-3 font-bold text-slate-900">{item.variant?.product?.name}</td>
                         <td className="px-4 py-3 text-slate-500 font-mono text-xs">{item.variant?.sku}</td>
                         <td className="px-4 py-3 text-slate-500">{item.warehouse?.name}</td>
@@ -159,7 +160,7 @@ export default function InventoryPage() {
                         </td>
                       </tr>
                     )) : (
-                      <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">No inventory items</td></tr>
+                      <tr><td colSpan={9} className="px-4 py-12 text-center text-slate-400">No inventory items</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -185,14 +186,15 @@ export default function InventoryPage() {
               <table className="w-full text-sm">
                 <thead className="bg-slate-50/50 border-b border-slate-100">
                   <tr className="text-left text-[10px] uppercase tracking-widest text-slate-400">
-                    {['Type', 'Product / SKU', 'Warehouse', 'Qty', 'Notes', 'Date'].map(h => (
+                    {['#', 'Type', 'Product / SKU', 'Warehouse', 'Qty', 'Notes', 'Date'].map(h => (
                       <th key={h} className="px-4 py-3 font-bold">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {(movements?.movements || movements || []).length ? (movements?.movements || movements || []).map((m: any) => (
+                  {(movements?.movements || movements || []).length ? (movements?.movements || movements || []).map((m: any, idx: number) => (
                     <tr key={m.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="px-4 py-3 text-slate-500 font-semibold">{(movPage - 1) * 20 + idx + 1}</td>
                       <td className="px-4 py-3">
                         <Badge variant={(MOVEMENT_VARIANT[m.type] as any) || 'slate'}>{m.type}</Badge>
                       </td>
@@ -213,7 +215,7 @@ export default function InventoryPage() {
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan={6} className="px-4 py-16 text-center">
+                      <td colSpan={7} className="px-4 py-16 text-center">
                         <div className="inline-flex w-12 h-12 rounded-2xl bg-slate-100 items-center justify-center mb-3">
                           <ArrowUpDown size={20} className="text-slate-400" />
                         </div>

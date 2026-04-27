@@ -71,16 +71,17 @@ export default function CustomersPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50/50 border-b border-slate-100">
                 <tr className="text-left text-[10px] uppercase tracking-widest text-slate-400">
-                  {['Customer', 'Email', 'Phone', 'Type', 'GSTIN', 'Joined', ''].map(h => (
+                  {['#', 'Customer', 'Email', 'Phone', 'Type', 'GSTIN', 'Joined', ''].map(h => (
                     <th key={h} className="px-4 py-3 font-bold">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
-                  <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
-                ) : customers.length ? customers.map((c: any) => (
+                  <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
+                ) : customers.length ? customers.map((c: any, idx: number) => (
                   <tr key={c.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="px-4 py-3 text-slate-500 font-semibold">{(page - 1) * pageSize + idx + 1}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
@@ -104,26 +105,20 @@ export default function CustomersPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         <Tooltip content="Edit customer">
-                          <button
-                            onClick={() => setEditCustomer(c)}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-900"
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => setEditCustomer(c)}>
                             <Pencil size={13} />
-                          </button>
+                          </Button>
                         </Tooltip>
                         <Tooltip content="Delete customer">
-                          <button
-                            onClick={() => setDeleteTarget(c)}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600"
-                          >
+                          <Button variant="danger" size="icon" onClick={() => setDeleteTarget(c)}>
                             <Trash2 size={13} />
-                          </button>
+                          </Button>
                         </Tooltip>
                       </div>
                     </td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400">No customers yet</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">No customers yet</td></tr>
                 )}
               </tbody>
             </table>
@@ -142,9 +137,9 @@ export default function CustomersPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={c.isB2B ? 'amber' : 'emerald'}>{c.isB2B ? 'B2B' : 'Retail'}</Badge>
-                  <button onClick={() => setEditCustomer(c)} className="text-slate-400 hover:text-slate-700">
+                  <Button variant="ghost" size="icon" onClick={() => setEditCustomer(c)}>
                     <Pencil size={14} />
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}

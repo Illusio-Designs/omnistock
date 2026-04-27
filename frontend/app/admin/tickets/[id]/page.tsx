@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { adminApi } from '@/lib/api';
 import { ArrowLeft, Send, Loader2, ShieldCheck, User, Lock } from 'lucide-react';
+import { Textarea } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 export default function AdminTicketDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -59,14 +61,15 @@ export default function AdminTicketDetailPage() {
         </div>
         <div className="flex gap-2">
           {['OPEN', 'PENDING', 'RESOLVED', 'CLOSED'].map((s) => (
-            <button
+            <Button
               key={s}
+              variant="secondary"
+              size="sm"
               onClick={() => setStatus(s)}
               disabled={s === ticket.status}
-              className="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 hover:border-emerald-300 disabled:opacity-40"
             >
               {s}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -101,12 +104,11 @@ export default function AdminTicketDetailPage() {
       {ticket.status !== 'CLOSED' && (
         <div className="bg-white border border-slate-200 rounded-2xl p-5">
           <h3 className="font-bold text-sm text-slate-900 mb-3">Staff reply</h3>
-          <textarea
+          <Textarea
             value={reply}
             onChange={(e) => setReply(e.target.value)}
             rows={5}
             placeholder="Write your response…"
-            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"
           />
           <div className="flex items-center justify-between mt-3">
             <select
@@ -118,14 +120,15 @@ export default function AdminTicketDetailPage() {
               <option value="RESOLVED">Mark RESOLVED after reply</option>
               <option value="OPEN">Keep OPEN</option>
             </select>
-            <button
+            <Button
+              variant="primary"
+              leftIcon={<Send size={14} />}
+              loading={busy}
               onClick={submit}
-              disabled={!reply.trim() || busy}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg font-bold disabled:opacity-50"
+              disabled={!reply.trim()}
             >
-              {busy ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
               {busy ? 'Sending…' : 'Send reply'}
-            </button>
+            </Button>
           </div>
         </div>
       )}

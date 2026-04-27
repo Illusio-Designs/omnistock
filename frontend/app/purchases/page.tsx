@@ -50,16 +50,17 @@ export default function PurchasesPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50/50 border-b border-slate-100">
                 <tr className="text-left text-[10px] uppercase tracking-widest text-slate-400">
-                  {['PO Number', 'Vendor', 'Status', 'Expected', 'Items', 'Total', 'Created'].map(h => (
+                  {['#', 'PO Number', 'Vendor', 'Status', 'Expected', 'Items', 'Total', 'Created'].map(h => (
                     <th key={h} className="px-4 py-3 font-bold">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
-                  <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
-                ) : purchases.length ? purchases.map((p: any) => (
+                  <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">Loading…</td></tr>
+                ) : purchases.length ? purchases.map((p: any, idx: number) => (
                   <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="px-4 py-3 text-slate-500 font-semibold">{(page - 1) * pageSize + idx + 1}</td>
                     <td className="px-4 py-3 font-bold text-emerald-600">{p.poNumber}</td>
                     <td className="px-4 py-3 text-slate-700">{p.vendor?.name}</td>
                     <td className="px-4 py-3">
@@ -75,7 +76,7 @@ export default function PurchasesPage() {
                     </td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400">No purchase orders yet</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">No purchase orders yet</td></tr>
                 )}
               </tbody>
             </table>
@@ -181,45 +182,51 @@ function NewPurchaseModal({ open, onClose }: { open: boolean; onClose: () => voi
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Items</label>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
+              leftIcon={<Plus size={12} />}
               onClick={() => setItems([...items, { id: String(Date.now()), variantId: '', orderedQty: 1, unitCost: 0 }])}
-              className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
             >
-              <Plus size={12} /> Add line
-            </button>
+              Add line
+            </Button>
           </div>
           <div className="space-y-2">
             {items.map(item => (
-              <div key={item.id} className="grid grid-cols-12 gap-2 p-3 bg-slate-50 rounded-xl">
-                <input
-                  value={item.variantId}
-                  onChange={(e) => setItems(items.map(i => i.id === item.id ? { ...i, variantId: e.target.value } : i))}
-                  placeholder="Variant ID"
-                  className="col-span-12 md:col-span-6 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                />
-                <input
-                  type="number"
-                  value={item.orderedQty}
-                  onChange={(e) => setItems(items.map(i => i.id === item.id ? { ...i, orderedQty: Number(e.target.value) } : i))}
-                  placeholder="Qty"
-                  className="col-span-4 md:col-span-2 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                />
-                <input
-                  type="number"
-                  value={item.unitCost}
-                  onChange={(e) => setItems(items.map(i => i.id === item.id ? { ...i, unitCost: Number(e.target.value) } : i))}
-                  placeholder="Unit cost"
-                  className="col-span-6 md:col-span-3 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                />
-                <button
-                  type="button"
-                  onClick={() => items.length > 1 && setItems(items.filter(i => i.id !== item.id))}
-                  disabled={items.length === 1}
-                  className="col-span-2 md:col-span-1 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-30"
-                >
-                  <Trash2 size={14} />
-                </button>
+              <div key={item.id} className="grid grid-cols-12 gap-2 p-3 bg-slate-50 rounded-xl items-center">
+                <div className="col-span-12 md:col-span-6">
+                  <Input
+                    value={item.variantId}
+                    onChange={(e) => setItems(items.map(i => i.id === item.id ? { ...i, variantId: e.target.value } : i))}
+                    placeholder="Variant ID"
+                  />
+                </div>
+                <div className="col-span-4 md:col-span-2">
+                  <Input
+                    type="number"
+                    value={item.orderedQty}
+                    onChange={(e) => setItems(items.map(i => i.id === item.id ? { ...i, orderedQty: Number(e.target.value) } : i))}
+                    placeholder="Qty"
+                  />
+                </div>
+                <div className="col-span-6 md:col-span-3">
+                  <Input
+                    type="number"
+                    value={item.unitCost}
+                    onChange={(e) => setItems(items.map(i => i.id === item.id ? { ...i, unitCost: Number(e.target.value) } : i))}
+                    placeholder="Unit cost"
+                  />
+                </div>
+                <div className="col-span-2 md:col-span-1 flex items-center justify-center">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => items.length > 1 && setItems(items.filter(i => i.id !== item.id))}
+                    disabled={items.length === 1}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

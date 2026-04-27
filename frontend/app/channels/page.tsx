@@ -9,6 +9,7 @@ import {
   ShoppingBag, Zap, Truck, Globe, MessageCircle, Building2, Boxes, ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/Button';
 
 const CATEGORY_ORDER = ['ECOM', 'QUICKCOM', 'LOGISTICS', 'OWNSTORE', 'SOCIAL', 'B2B', 'CUSTOM'];
 
@@ -497,14 +498,15 @@ function ConnectModal({
         {error && <p className="text-xs text-rose-600 mt-3 font-medium">{error}</p>}
 
         <div className="flex gap-2 mt-6">
-          <button onClick={onClose} className="flex-1 btn-secondary justify-center">Cancel</button>
-          <button
+          <Button variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
+          <Button
+            variant="primary"
+            fullWidth
+            loading={createMutation.isPending}
             onClick={() => { setError(''); createMutation.mutate(); }}
-            disabled={createMutation.isPending}
-            className="flex-1 btn-primary justify-center disabled:opacity-50"
           >
             {createMutation.isPending ? 'Connecting…' : 'Connect Channel'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -546,7 +548,7 @@ function RequestModal({
         {error && <p className="text-xs text-rose-600 mt-3 font-medium">{error}</p>}
 
         <div className="flex gap-2 mt-5">
-          <button onClick={onClose} className="flex-1 btn-secondary justify-center">Cancel</button>
+          <Button variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
           <button
             onClick={() => { setError(''); m.mutate(); }}
             disabled={m.isPending}
