@@ -179,7 +179,7 @@ export default function ChannelDetailPage() {
           }`}>
             {result.type === 'success' ? <CheckCircle2 size={16} className="mt-0.5" /> : <XCircle size={16} className="mt-0.5" />}
             <div className="flex-1 break-all">{result.message}</div>
-            <button onClick={() => setResult(null)} className="text-xs underline">Dismiss</button>
+            <Button variant="ghost" size="sm" onClick={() => setResult(null)} className="text-xs underline">Dismiss</Button>
           </div>
         )}
 

@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { warehouseApi } from '@/lib/api';
 import {
-  Button, Badge, Card, Modal, Input,
+  Button, Badge, Card, Modal, Input, Checkbox,
 } from '@/components/ui';
 import { Plus, Store, MapPin, Package, Pencil, Trash2 } from 'lucide-react';
 
@@ -198,15 +198,11 @@ function WarehouseModal({ open, onClose, mode, warehouse }: {
           <Input label="Pincode" value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} placeholder="560001" />
         </div>
         {mode === 'edit' && (
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.isActive}
-              onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-              className="w-4 h-4 accent-emerald-600"
-            />
-            <span className="text-sm font-semibold text-slate-700">Active warehouse</span>
-          </label>
+          <Checkbox
+            label="Active warehouse"
+            checked={form.isActive}
+            onCheckedChange={(v) => setForm({ ...form, isActive: v })}
+          />
         )}
         {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
       </div>

@@ -7,8 +7,15 @@ import { channelApi } from '@/lib/api';
 import { ArrowLeft, Inbox, Clock, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 
-const STATUS_FILTERS = ['', 'PENDING', 'IN_PROGRESS', 'COMPLETED', 'REJECTED'];
+const STATUS_FILTERS = [
+  { value: '', label: 'All Statuses' },
+  { value: 'PENDING', label: 'PENDING' },
+  { value: 'IN_PROGRESS', label: 'IN_PROGRESS' },
+  { value: 'COMPLETED', label: 'COMPLETED' },
+  { value: 'REJECTED', label: 'REJECTED' },
+];
 
 const STATUS_STYLES: Record<string, { bg: string; icon: any }> = {
   PENDING:     { bg: 'bg-amber-100 text-amber-700',   icon: Clock },
@@ -44,13 +51,11 @@ export default function ChannelRequestsPage() {
           </div>
         </div>
 
-        <select
+        <Select
           value={status}
-          onChange={e => setStatus(e.target.value)}
-          className="px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-        >
-          {STATUS_FILTERS.map(s => <option key={s} value={s}>{s || 'All Statuses'}</option>)}
-        </select>
+          onChange={setStatus}
+          options={STATUS_FILTERS}
+        />
 
         {isLoading ? (
           <div className="bg-white rounded-xl border p-12 text-center text-gray-400">Loading…</div>

@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { vendorApi } from '@/lib/api';
 import {
-  Button, Badge, Card, Modal, Input, Textarea, Tooltip,
+  Button, Badge, Card, Modal, Input, Textarea, Tooltip, Checkbox,
 } from '@/components/ui';
 import { Plus, Building2, Mail, Phone, Pencil, Trash2 } from 'lucide-react';
 
@@ -205,15 +205,11 @@ function VendorModal({ open, onClose, mode, vendor }: {
         </div>
         <Textarea label="Address (optional)" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={2} placeholder="Street, city, state, pincode" />
         {mode === 'edit' && (
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.isActive}
-              onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-              className="w-4 h-4 accent-emerald-600"
-            />
-            <span className="text-sm font-semibold text-slate-700">Active vendor</span>
-          </label>
+          <Checkbox
+            label="Active vendor"
+            checked={form.isActive}
+            onCheckedChange={(v) => setForm({ ...form, isActive: v })}
+          />
         )}
         {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
       </div>

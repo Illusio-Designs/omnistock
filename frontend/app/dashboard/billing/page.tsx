@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { CheckCircle2, AlertCircle, Zap, Crown, Sparkles, X, Wallet, Plus, Settings2 } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { TopupModal, WALLET_CHANGED_EVENT } from '@/components/wallet/TopupModal';
 
 export default function BillingPage() {
@@ -189,13 +190,15 @@ export default function BillingPage() {
                   <div className="flex items-center gap-2">
                     <div className="text-xs uppercase tracking-wider text-slate-400 font-bold">Wallet balance</div>
                     {canManage && (
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => setShowWalletSettings(!showWalletSettings)}
-                        className="text-slate-400 hover:text-slate-600"
                         title="Wallet settings"
+                        className="h-7 w-7"
                       >
                         <Settings2 size={13} />
-                      </button>
+                      </Button>
                     )}
                   </div>
                   <div className={`text-3xl font-bold mt-1 ${wallet.lowBalance ? 'text-rose-600' : 'text-slate-900'}`}>
@@ -257,15 +260,11 @@ export default function BillingPage() {
                     placeholder="e.g. 500"
                   />
                   <div className="flex items-end pb-1">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={walletSettings.autoTopupEnabled}
-                        onChange={(e) => setWalletSettings(s => ({ ...s, autoTopupEnabled: e.target.checked }))}
-                        className="w-4 h-4 accent-emerald-600"
-                      />
-                      <span className="text-sm font-semibold text-slate-700">Enable auto top-up</span>
-                    </label>
+                    <Checkbox
+                      label="Enable auto top-up"
+                      checked={walletSettings.autoTopupEnabled}
+                      onCheckedChange={(v) => setWalletSettings(s => ({ ...s, autoTopupEnabled: v }))}
+                    />
                   </div>
                   {walletSettings.autoTopupEnabled && (
                     <>

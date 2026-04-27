@@ -255,7 +255,7 @@ export default function SettingsPage() {
                         {s.current ? (
                           <Badge variant="emerald" dot>Current</Badge>
                         ) : (
-                          <button className="text-xs font-bold text-rose-600 hover:text-rose-700">Revoke</button>
+                          <Button variant="ghost" size="sm" className="text-rose-600 hover:text-rose-700">Revoke</Button>
                         )}
                       </div>
                     ))}

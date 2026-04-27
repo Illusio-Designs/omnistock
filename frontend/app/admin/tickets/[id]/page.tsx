@@ -4,9 +4,16 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { adminApi } from '@/lib/api';
-import { ArrowLeft, Send, Loader2, ShieldCheck, User, Lock } from 'lucide-react';
+import { ArrowLeft, Send, ShieldCheck, User } from 'lucide-react';
 import { Textarea } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
+
+const NEXT_STATUS_OPTIONS = [
+  { value: 'PENDING', label: 'Mark PENDING after reply' },
+  { value: 'RESOLVED', label: 'Mark RESOLVED after reply' },
+  { value: 'OPEN', label: 'Keep OPEN' },
+];
 
 export default function AdminTicketDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -111,15 +118,11 @@ export default function AdminTicketDetailPage() {
             placeholder="Write your response…"
           />
           <div className="flex items-center justify-between mt-3">
-            <select
+            <Select
               value={nextStatus}
-              onChange={(e) => setNextStatus(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold"
-            >
-              <option value="PENDING">Mark PENDING after reply</option>
-              <option value="RESOLVED">Mark RESOLVED after reply</option>
-              <option value="OPEN">Keep OPEN</option>
-            </select>
+              onChange={setNextStatus}
+              options={NEXT_STATUS_OPTIONS}
+            />
             <Button
               variant="primary"
               leftIcon={<Send size={14} />}
