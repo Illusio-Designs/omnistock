@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { userApi, roleApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
-import { Plus, Trash2, Users, Shield, Save } from 'lucide-react';
+import { Plus, Trash2, Users, Shield, Save, Pencil } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { Button } from '@/components/ui/Button';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 export default function TeamPage() {
   const { hasPermission } = useAuthStore();
@@ -109,25 +111,42 @@ function UsersTab({ canManage }: { canManage: boolean }) {
             {users.map((u, idx) => (
               <tr key={u.id} className="border-t border-slate-100">
                 <td className="p-3 text-slate-500 font-semibold">{idx + 1}</td>
-                <td className="p-3 font-semibold">{u.name}</td>
+                <td className="p-3 font-semibold">
+                  <div className="flex items-center gap-2">
+                    {u.name}
+                    {u.isPlatformAdmin && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 uppercase tracking-wider">
+                        Platform Admin
+                      </span>
+                    )}
+                  </div>
+                </td>
                 <td className="p-3 text-slate-600">{u.email}</td>
                 <td className="p-3">
                   <div className="flex flex-wrap gap-1">
-                    {u.roles?.map((ur: any) => (
+                    {u.roles?.length ? u.roles.map((ur: any) => (
                       <span key={ur.role.id} className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
                         {ur.role.name}
                       </span>
-                    ))}
+                    )) : u.isPlatformAdmin ? (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">All access</span>
+                    ) : null}
                   </div>
                 </td>
                 <td className="p-3 text-center">{u.isActive ? '✅' : '—'}</td>
                 <td className="p-3 flex gap-2 justify-end">
-                  {canManage && (
+                  {canManage && !u.isPlatformAdmin && (
                     <>
-                      <Button variant="ghost" size="sm" onClick={() => setEditing(u)}>Edit</Button>
-                      <Button variant="danger" size="icon" onClick={() => del(u.id)}>
-                        <Trash2 size={14} />
-                      </Button>
+                      <Tooltip content="Edit user">
+                        <Button variant="ghost" size="icon" onClick={() => setEditing(u)}>
+                          <Pencil size={14} />
+                        </Button>
+                      </Tooltip>
+                      <Tooltip content="Deactivate user">
+                        <Button variant="danger" size="icon" onClick={() => del(u.id)}>
+                          <Trash2 size={14} />
+                        </Button>
+                      </Tooltip>
                     </>
                   )}
                 </td>
@@ -174,10 +193,13 @@ function UserForm({ initial, roles, onClose, onSave }: {
           </div>
         )}
         {initial && (
-          <label className="col-span-2 flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={f.isActive} onChange={(e) => setF({ ...f, isActive: e.target.checked })} />
-            Active
-          </label>
+          <div className="col-span-2">
+            <Checkbox
+              checked={!!f.isActive}
+              onCheckedChange={(c) => setF({ ...f, isActive: c })}
+              label="Active"
+            />
+          </div>
         )}
       </div>
       <div className="mt-4">

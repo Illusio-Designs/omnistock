@@ -6,10 +6,15 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { channelApi } from '@/lib/api';
 import {
   Plug, CheckCircle2, Circle, Clock, ExternalLink, Inbox, Sparkles, Lock,
-  ShoppingBag, Zap, Truck, Globe, MessageCircle, Building2, Boxes, ChevronRight,
+  ShoppingBag, Zap, Truck, Globe, MessageCircle, Building2, Boxes, ChevronRight, HelpCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Input, Textarea } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Tooltip } from '@/components/ui/Tooltip';
+import { getSchemaForType } from '@/lib/channel-schemas';
 
 const CATEGORY_ORDER = ['ECOM', 'QUICKCOM', 'LOGISTICS', 'OWNSTORE', 'SOCIAL', 'B2B', 'CUSTOM'];
 
@@ -455,23 +460,35 @@ function ConnectModal({
     onError: (err: any) => setError(err.response?.data?.error || err.message),
   });
 
-  const schema = detail?.credentialsSchema || [];
+  const backendSchema = detail?.credentialsSchema || [];
+  // Merge in `help` text from the frontend channel-schemas (single source of truth for tooltips)
+  const frontendSchema = getSchemaForType(entry.type);
+  const helpByKey = new Map((frontendSchema?.fields || []).map((f) => [f.key, f.help]));
+  const schema = backendSchema.map((f: any) => ({ ...f, help: helpByKey.get(f.key) }));
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
-      <div className="glass rounded-3xl max-w-md w-full p-7 max-h-[90vh] overflow-y-auto animate-slide-up shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="flex items-start gap-4 mb-5">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shadow-lg text-white">
-            <Sparkles size={18} />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">Connect {entry.name}</h2>
-            <p className="text-xs text-slate-500 mt-0.5">{entry.tagline}</p>
-          </div>
-        </div>
-
+    <Modal
+      open
+      onClose={onClose}
+      title={`Connect ${entry.name}`}
+      description={entry.tagline}
+      size="md"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            variant="primary"
+            loading={createMutation.isPending}
+            onClick={() => { setError(''); createMutation.mutate(); }}
+          >
+            {createMutation.isPending ? 'Connecting…' : 'Connect Channel'}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
         {entry.requiresApproval && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-xl p-3 mb-4">
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-xl p-3">
             ⚠️ This channel requires seller approval.{' '}
             {entry.applyUrl && (
               <a href={entry.applyUrl} target="_blank" rel="noreferrer" className="font-semibold underline">
@@ -482,36 +499,23 @@ function ConnectModal({
           </div>
         )}
 
-        <div className="space-y-3">
-          <Field label="Channel Name" value={name} onChange={setName} required />
-          {schema.map((field: any) => (
-            <Field
-              key={field.key}
-              label={field.label}
-              type={field.type}
-              options={field.options}
-              value={credentials[field.key] || ''}
-              onChange={v => setCredentials(c => ({ ...c, [field.key]: v }))}
-              required={field.required}
-            />
-          ))}
-        </div>
+        <Field label="Channel Name" value={name} onChange={setName} required />
+        {schema.map((field: any) => (
+          <Field
+            key={field.key}
+            label={field.label}
+            type={field.type}
+            options={field.options}
+            value={credentials[field.key] || ''}
+            onChange={(v) => setCredentials((c) => ({ ...c, [field.key]: v }))}
+            required={field.required}
+            help={field.help}
+          />
+        ))}
 
-        {error && <p className="text-xs text-rose-600 mt-3 font-medium">{error}</p>}
-
-        <div className="flex gap-2 mt-6">
-          <Button variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-          <Button
-            variant="primary"
-            fullWidth
-            loading={createMutation.isPending}
-            onClick={() => { setError(''); createMutation.mutate(); }}
-          >
-            {createMutation.isPending ? 'Connecting…' : 'Connect Channel'}
-          </Button>
-        </div>
+        {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -528,65 +532,72 @@ function RequestModal({
   });
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
-      <div className="glass rounded-3xl max-w-md w-full p-7 animate-slide-up shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="flex items-start gap-4 mb-5">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg text-white">
-            <Inbox size={18} />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">Request {entry.name}</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Tell us why you need it — our team reviews each request.</p>
-          </div>
-        </div>
-
-        <textarea
+    <Modal
+      open
+      onClose={onClose}
+      title={`Request ${entry.name}`}
+      description="Tell us why you need it — our team reviews each request."
+      size="md"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="primary" loading={m.isPending} onClick={() => { setError(''); m.mutate(); }}>
+            {m.isPending ? 'Submitting…' : 'Submit Request'}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-3">
+        <Textarea
+          label="Notes"
           placeholder="Use case, monthly volume, timeline, etc."
           value={notes}
-          onChange={e => setNotes(e.target.value)}
+          onChange={(e) => setNotes(e.target.value)}
           rows={5}
-          className="input-premium"
         />
-        {error && <p className="text-xs text-rose-600 mt-3 font-medium">{error}</p>}
-
-        <div className="flex gap-2 mt-5">
-          <Button variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-          <button
-            onClick={() => { setError(''); m.mutate(); }}
-            disabled={m.isPending}
-            className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-sm font-semibold rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50"
-          >
-            {m.isPending ? 'Submitting…' : 'Submit Request'}
-          </button>
-        </div>
+        {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
       </div>
-    </div>
+    </Modal>
   );
 }
 
 function Field({
-  label, value, onChange, type = 'text', options, required,
-}: { label: string; value: any; onChange: (v: any) => void; type?: string; options?: string[]; required?: boolean }) {
-  return (
-    <div>
-      <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+  label, value, onChange, type = 'text', options, required, help,
+}: { label: string; value: any; onChange: (v: any) => void; type?: string; options?: string[]; required?: boolean; help?: string }) {
+  const labelNode = (
+    <span className="inline-flex items-center gap-1.5">
+      <span>
         {label}{required && <span className="text-rose-500 ml-0.5">*</span>}
-      </label>
-      {type === 'select' ? (
-        <select value={value} onChange={e => onChange(e.target.value)} className="input-premium">
-          <option value="">Select…</option>
-          {(options || []).map(o => <option key={o} value={o}>{o}</option>)}
-        </select>
-      ) : type === 'textarea' ? (
-        <textarea value={value} onChange={e => onChange(e.target.value)} rows={3} className="input-premium" />
-      ) : (
-        <input
-          type={type === 'password' ? 'password' : 'text'}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          className="input-premium"
-        />
+      </span>
+      {help && (
+        <Tooltip content={help} side="top" wrap>
+          <HelpCircle size={13} className="text-slate-400 hover:text-emerald-600 cursor-help" />
+        </Tooltip>
       )}
-    </div>
+    </span>
+  );
+
+  if (type === 'select') {
+    return (
+      <Select
+        label={labelNode}
+        value={value}
+        onChange={(v) => onChange(v)}
+        options={(options || []).map((o) => ({ value: o, label: o }))}
+        placeholder="Select…"
+        fullWidth
+      />
+    );
+  }
+  if (type === 'textarea') {
+    return <Textarea label={labelNode} value={value} onChange={(e) => onChange(e.target.value)} rows={3} />;
+  }
+  return (
+    <Input
+      label={labelNode}
+      type={type === 'password' ? 'password' : 'text'}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
   );
 }

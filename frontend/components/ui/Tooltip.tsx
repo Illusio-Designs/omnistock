@@ -12,6 +12,8 @@ interface TooltipProps {
   side?: Side;
   delay?: number;
   className?: string;
+  /** Allow the tooltip text to wrap (use for help text > a few words). */
+  wrap?: boolean;
 }
 
 /**
@@ -19,7 +21,7 @@ interface TooltipProps {
  * container or overflow:hidden parent (like a collapsed sidebar nav).
  * Uses a wrapper span but delegates events via onMouseEnter/Leave/Focus/Blur.
  */
-export function Tooltip({ content, children, side = 'top', delay = 150, className }: TooltipProps) {
+export function Tooltip({ content, children, side = 'top', delay = 150, className, wrap }: TooltipProps) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -99,7 +101,8 @@ export function Tooltip({ content, children, side = 'top', delay = 150, classNam
             pointerEvents: 'none',
           }}
           className={cn(
-            'whitespace-nowrap px-2.5 py-1.5 text-[11px] font-semibold text-white bg-slate-900 rounded-md shadow-xl',
+            'px-2.5 py-1.5 text-[11px] font-semibold text-white bg-slate-900 rounded-md shadow-xl',
+            wrap ? 'max-w-xs leading-snug whitespace-normal break-words' : 'whitespace-nowrap',
             'animate-fade-in',
             transformClass,
             className

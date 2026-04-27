@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/api';
 import { Plus, Edit2, Trash2, Save } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
-import { Input } from '@/components/ui/Input';
+import { Input, Textarea } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 export default function AdminBlogPage() {
   const [posts, setPosts] = useState<any[]>([]);
@@ -74,12 +76,16 @@ export default function AdminBlogPage() {
                 </td>
                 <td className="p-3 text-xs text-slate-500">{p.publishedAt ? new Date(p.publishedAt).toLocaleDateString() : '—'}</td>
                 <td className="p-3 flex gap-2 justify-end">
-                  <Button variant="ghost" size="icon" onClick={() => setEditing(p)}>
-                    <Edit2 size={14} />
-                  </Button>
-                  <Button variant="danger" size="icon" onClick={() => del(p.id)}>
-                    <Trash2 size={14} />
-                  </Button>
+                  <Tooltip content="Edit post">
+                    <Button variant="ghost" size="icon" onClick={() => setEditing(p)}>
+                      <Edit2 size={14} />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip content="Delete post">
+                    <Button variant="danger" size="icon" onClick={() => del(p.id)}>
+                      <Trash2 size={14} />
+                    </Button>
+                  </Tooltip>
                 </td>
               </tr>
             ))}
@@ -107,22 +113,28 @@ function BlogForm({ initial, onClose, onSave }: {
           <Input label="Title" value={f.title ?? ''} onChange={(e) => setF({ ...f, title: e.target.value })} />
         </div>
         <Input label="Slug"  value={f.slug ?? ''}  onChange={(e) => setF({ ...f, slug: e.target.value })} />
-        <div>
-          <label className="block text-xs font-semibold text-slate-600 mb-1">Status</label>
-          <select value={f.status} onChange={(e) => setF({ ...f, status: e.target.value, publishedAt: e.target.value === 'PUBLISHED' ? new Date() : f.publishedAt })}
-            className="w-full px-3 py-2 rounded-lg border border-slate-200">
-            <option value="DRAFT">Draft</option>
-            <option value="PUBLISHED">Published</option>
-            <option value="ARCHIVED">Archived</option>
-          </select>
-        </div>
+        <Select
+          label="Status"
+          value={f.status}
+          onChange={(v) => setF({ ...f, status: v, publishedAt: v === 'PUBLISHED' ? new Date() : f.publishedAt })}
+          options={[
+            { value: 'DRAFT', label: 'Draft' },
+            { value: 'PUBLISHED', label: 'Published' },
+            { value: 'ARCHIVED', label: 'Archived' },
+          ]}
+          fullWidth
+        />
         <div className="col-span-2">
           <Input label="Excerpt" value={f.excerpt ?? ''} onChange={(e) => setF({ ...f, excerpt: e.target.value })} />
         </div>
         <div className="col-span-2">
-          <label className="block text-xs font-semibold text-slate-600 mb-1">Content (Markdown)</label>
-          <textarea value={f.content} onChange={(e) => setF({ ...f, content: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-slate-200 h-40 font-mono text-sm" />
+          <Textarea
+            label="Content (Markdown)"
+            value={f.content}
+            onChange={(e) => setF({ ...f, content: e.target.value })}
+            rows={10}
+            className="font-mono"
+          />
         </div>
         <Input label="Author" value={f.authorName ?? ''} onChange={(e) => setF({ ...f, authorName: e.target.value })} />
         <Input label="Cover image URL" value={f.coverImage ?? ''} onChange={(e) => setF({ ...f, coverImage: e.target.value })} />

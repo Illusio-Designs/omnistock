@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { ReactNode, useState, useRef, useEffect } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -15,7 +15,7 @@ interface SelectProps {
   onChange?: (value: string) => void;
   options: SelectOption[];
   placeholder?: string;
-  label?: string;
+  label?: ReactNode;
   className?: string;
   fullWidth?: boolean;
 }

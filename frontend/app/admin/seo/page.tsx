@@ -2,55 +2,88 @@
 
 import { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/api';
-import { Save, Plus, Trash2 } from 'lucide-react';
+import { Save, Plus, Trash2, Pencil } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Tooltip } from '@/components/ui/Tooltip';
+
+const EMPTY_DRAFT = {
+  path: '',
+  title: '',
+  description: '',
+  keywords: '',
+  ogTitle: '',
+  ogImage: '',
+  robots: 'index,follow',
+  canonicalUrl: '',
+};
 
 export default function AdminSeoPage() {
   const [list, setList] = useState<any[]>([]);
-  const [draft, setDraft] = useState<any>({ path: '', title: '', description: '', keywords: '', robots: 'index,follow' });
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+  const [draft, setDraft] = useState<any>(EMPTY_DRAFT);
 
   const load = () => adminApi.seo().then((r) => setList(r.data));
   useEffect(() => { load(); }, []);
 
-  const save = async (item: any) => {
-    await adminApi.upsertSeo(item); load();
+  const openNew = () => { setDraft(EMPTY_DRAFT); setEditing(null); setOpen(true); };
+  const openEdit = (item: any) => { setDraft({ ...EMPTY_DRAFT, ...item }); setEditing(item); setOpen(true); };
+  const close = () => { setOpen(false); setEditing(null); setDraft(EMPTY_DRAFT); };
+
+  const save = async () => {
+    await adminApi.upsertSeo(draft);
+    close();
+    load();
   };
+
   const del = async (id: string) => {
     if (!confirm('Delete?')) return;
-    await adminApi.deleteSeo(id); load();
+    await adminApi.deleteSeo(id);
+    load();
   };
 
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold text-slate-900">SEO Settings</h1>
-      <p className="text-slate-500 mt-1">Per-page meta tags rendered into your public site.</p>
-
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 mt-6">
-        <h2 className="text-lg font-bold mb-3 flex items-center gap-2"><Plus size={16} /> Add / update path</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <Input label="Path (e.g. /pricing)" value={draft.path ?? ''} onChange={(e) => setDraft({ ...draft, path: e.target.value })} />
-          <Input label="Title" value={draft.title ?? ''} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
-          <div className="col-span-2">
-            <Input label="Description" value={draft.description ?? ''} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
-          </div>
-          <div className="col-span-2">
-            <Input label="Keywords" value={draft.keywords ?? ''} onChange={(e) => setDraft({ ...draft, keywords: e.target.value })} />
-          </div>
-          <Input label="OG Title" value={draft.ogTitle ?? ''} onChange={(e) => setDraft({ ...draft, ogTitle: e.target.value })} />
-          <Input label="OG Image" value={draft.ogImage ?? ''} onChange={(e) => setDraft({ ...draft, ogImage: e.target.value })} />
-          <Input label="Robots" value={draft.robots ?? ''} onChange={(e) => setDraft({ ...draft, robots: e.target.value })} />
-          <Input label="Canonical URL" value={draft.canonicalUrl ?? ''} onChange={(e) => setDraft({ ...draft, canonicalUrl: e.target.value })} />
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">SEO Settings</h1>
+          <p className="text-slate-500 mt-1">Per-page meta tags rendered into your public site.</p>
         </div>
-        <Button
-          variant="primary"
-          leftIcon={<Save size={14} />}
-          className="mt-4"
-          onClick={() => { save(draft); setDraft({ path: '', title: '', description: '', keywords: '', robots: 'index,follow' }); }}
-        >
-          Save
+        <Button variant="primary" leftIcon={<Plus size={16} />} onClick={openNew}>
+          New entry
         </Button>
       </div>
+
+      <Modal
+        open={open}
+        onClose={close}
+        title={editing ? 'Edit SEO entry' : 'New SEO entry'}
+        description={editing?.path}
+        size="xl"
+      >
+        <div>
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Path (e.g. /pricing)" value={draft.path ?? ''} onChange={(e) => setDraft({ ...draft, path: e.target.value })} />
+            <Input label="Title" value={draft.title ?? ''} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+            <div className="col-span-2">
+              <Input label="Description" value={draft.description ?? ''} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
+            </div>
+            <div className="col-span-2">
+              <Input label="Keywords" value={draft.keywords ?? ''} onChange={(e) => setDraft({ ...draft, keywords: e.target.value })} />
+            </div>
+            <Input label="OG Title" value={draft.ogTitle ?? ''} onChange={(e) => setDraft({ ...draft, ogTitle: e.target.value })} />
+            <Input label="OG Image" value={draft.ogImage ?? ''} onChange={(e) => setDraft({ ...draft, ogImage: e.target.value })} />
+            <Input label="Robots" value={draft.robots ?? ''} onChange={(e) => setDraft({ ...draft, robots: e.target.value })} />
+            <Input label="Canonical URL" value={draft.canonicalUrl ?? ''} onChange={(e) => setDraft({ ...draft, canonicalUrl: e.target.value })} />
+          </div>
+          <div className="flex justify-end gap-2 mt-5 pt-4 border-t border-slate-100">
+            <Button variant="ghost" onClick={close}>Cancel</Button>
+            <Button variant="primary" leftIcon={<Save size={14} />} onClick={save}>Save</Button>
+          </div>
+        </div>
+      </Modal>
 
       <div className="bg-white border border-slate-200 rounded-2xl mt-6 overflow-hidden">
         <table className="w-full text-sm">
@@ -70,9 +103,19 @@ export default function AdminSeoPage() {
                 <td className="p-3 font-mono text-xs">{s.path}</td>
                 <td className="p-3">{s.title}</td>
                 <td className="p-3 text-xs text-slate-500">{s.robots}</td>
-                <td className="p-3 text-right">
-                  <Button variant="ghost" size="sm" onClick={() => setDraft(s)} className="mr-2">Edit</Button>
-                  <Button variant="danger" size="icon" onClick={() => del(s.id)}><Trash2 size={14} /></Button>
+                <td className="p-3">
+                  <div className="flex items-center gap-1 justify-end">
+                    <Tooltip content="Edit">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(s)}>
+                        <Pencil size={13} />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content="Delete">
+                      <Button variant="danger" size="icon" onClick={() => del(s.id)}>
+                        <Trash2 size={13} />
+                      </Button>
+                    </Tooltip>
+                  </div>
                 </td>
               </tr>
             ))}

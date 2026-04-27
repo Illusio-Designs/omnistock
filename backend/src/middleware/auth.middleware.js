@@ -32,13 +32,13 @@ async function loadUserContext(userId, { byEmail = false } = {}) {
 
   const ctx = {
     user: {
-      id: user.id, email: user.email, name: user.name,
+      id: user.id, email: user.email, name: user.name, phone: user.phone,
       role: user.role, isPlatformAdmin: user.isPlatformAdmin,
       tenantId: user.tenantId,
     },
     tenant: user.tenant ? {
       id: user.tenant.id, slug: user.tenant.slug, status: user.tenant.status,
-      businessName: user.tenant.businessName,
+      businessName: user.tenant.businessName, gstin: user.tenant.gstin,
     } : null,
     plan: plan ? {
       id: plan.id, code: plan.code, name: plan.name,
@@ -80,6 +80,7 @@ async function applyImpersonation(req) {
     slug: tenant.slug,
     status: tenant.status,
     businessName: tenant.businessName,
+    gstin: tenant.gstin,
   };
   const plan = tenant.subscription?.plan || null;
   req.plan = plan ? {

@@ -6,7 +6,7 @@ import {
   Button, Card, Input, Textarea, Select, Switch, PasswordInput, FileUpload, Badge,
 } from '@/components/ui';
 import {
-  User, Building2, Bell, Shield, CreditCard, Globe, Mail, Phone, Save, Check,
+  User, Building2, Bell, Shield, CreditCard, Mail, Phone, Save, Check,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { authApi, billingApi } from '@/lib/api';
@@ -34,7 +34,18 @@ const TIMEZONES = [
 ];
 
 export default function SettingsPage() {
-  const { user, tenant } = useAuthStore();
+  const { user, tenant, setContext } = useAuthStore();
+
+  // Pull the freshest user/tenant on mount so cached values from login don't override post-save updates
+  useEffect(() => {
+    authApi.me()
+      .then(({ data }) => {
+        const { tenant: t, plan, subscription, permissions, ...userFields } = data;
+        setContext({ user: userFields, tenant: t ?? null, plan: plan ?? null, subscription: subscription ?? null, permissions: permissions ?? [] });
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [tab, setTab] = useState('profile');
   const [saved, setSaved] = useState(false);
   const [profile, setProfile] = useState({ name: '', email: '', phone: '' });
@@ -64,10 +75,19 @@ export default function SettingsPage() {
     } catch {}
   }, []);
 
+  const refreshFromServer = async () => {
+    try {
+      const { data } = await authApi.me();
+      const { tenant: t, plan, subscription, permissions, ...userFields } = data;
+      setContext({ user: userFields, tenant: t ?? null, plan: plan ?? null, subscription: subscription ?? null, permissions: permissions ?? [] });
+    } catch {}
+  };
+
   const saveProfile = async () => {
     setProfileError('');
     try {
       await authApi.updateMe({ name: profile.name, phone: profile.phone });
+      await refreshFromServer();
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err: any) {
@@ -79,6 +99,7 @@ export default function SettingsPage() {
     setCompanyError('');
     try {
       await billingApi.updateTenant({ businessName: company.name, gstin: company.gstin });
+      await refreshFromServer();
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err: any) {
@@ -239,27 +260,9 @@ export default function SettingsPage() {
                 </Card>
 
                 <Card className="p-6">
-                  <h2 className="font-bold text-lg text-slate-900 mb-4">Active Sessions</h2>
-                  <div className="space-y-3">
-                    {[
-                      { device: 'MacBook Pro — Chrome', location: 'Bangalore, IN', current: true },
-                      { device: 'iPhone 15 — Safari',   location: 'Mumbai, IN',    current: false },
-                    ].map(s => (
-                      <div key={s.device} className="flex items-center justify-between p-4 rounded-xl bg-slate-50/50 border border-slate-100">
-                        <div>
-                          <div className="text-sm font-bold text-slate-900">{s.device}</div>
-                          <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                            <Globe size={10} /> {s.location}
-                          </div>
-                        </div>
-                        {s.current ? (
-                          <Badge variant="emerald" dot>Current</Badge>
-                        ) : (
-                          <Button variant="ghost" size="sm" className="text-rose-600 hover:text-rose-700">Revoke</Button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <h2 className="font-bold text-lg text-slate-900 mb-1">Active Session</h2>
+                  <p className="text-xs text-slate-500 mb-4">Authentication uses stateless tokens, so only the current browser session is shown.</p>
+                  <CurrentSessionCard />
                 </Card>
               </>
             )}
@@ -323,5 +326,54 @@ export default function SettingsPage() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+// Renders the current browser session derived from the JWT and navigator info.
+// JWTs are stateless — there's no per-session table on the server, so only the
+// active browser tab is shown.
+function CurrentSessionCard() {
+  const [info, setInfo] = useState<{ device: string; issuedAt?: Date; expiresAt?: Date } | null>(null);
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    let issuedAt: Date | undefined;
+    let expiresAt: Date | undefined;
+    try {
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+        if (payload.iat) issuedAt = new Date(payload.iat * 1000);
+        if (payload.exp) expiresAt = new Date(payload.exp * 1000);
+      }
+    } catch {}
+
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const browser = /Edg/i.test(ua) ? 'Edge'
+      : /Chrome/i.test(ua) ? 'Chrome'
+      : /Safari/i.test(ua) ? 'Safari'
+      : /Firefox/i.test(ua) ? 'Firefox'
+      : 'Browser';
+    const os = /Windows/i.test(ua) ? 'Windows'
+      : /Mac/i.test(ua) ? 'macOS'
+      : /Android/i.test(ua) ? 'Android'
+      : /iPhone|iPad/i.test(ua) ? 'iOS'
+      : /Linux/i.test(ua) ? 'Linux'
+      : 'Unknown OS';
+    setInfo({ device: `${os} — ${browser}`, issuedAt, expiresAt });
+  }, []);
+
+  if (!info) return null;
+
+  return (
+    <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50/50 border border-slate-100">
+      <div>
+        <div className="text-sm font-bold text-slate-900">{info.device}</div>
+        <div className="text-xs text-slate-500 mt-0.5">
+          {info.issuedAt && <>Signed in {info.issuedAt.toLocaleString()}</>}
+          {info.expiresAt && <> · Expires {info.expiresAt.toLocaleString()}</>}
+        </div>
+      </div>
+      <Badge variant="emerald" dot>Current</Badge>
+    </div>
   );
 }

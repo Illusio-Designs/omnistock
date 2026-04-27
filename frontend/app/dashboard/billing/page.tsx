@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Loader } from '@/components/ui/Loader';
+import { Modal } from '@/components/ui/Modal';
 import { TopupModal, WALLET_CHANGED_EVENT } from '@/components/wallet/TopupModal';
 
 export default function BillingPage() {
@@ -194,7 +195,7 @@ export default function BillingPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setShowWalletSettings(!showWalletSettings)}
+                        onClick={() => setShowWalletSettings(true)}
                         title="Wallet settings"
                         className="h-7 w-7"
                       >
@@ -249,55 +250,60 @@ export default function BillingPage() {
               </div>
             )}
 
-            {showWalletSettings && canManage && (
-              <div className="mt-5 pt-5 border-t border-slate-100">
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Auto top-up settings</div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Input
-                    label="Low balance alert below (₹)"
-                    type="number"
-                    value={walletSettings.lowBalanceThreshold}
-                    onChange={(e) => setWalletSettings(s => ({ ...s, lowBalanceThreshold: e.target.value }))}
-                    placeholder="e.g. 500"
-                  />
-                  <div className="flex items-end pb-1">
-                    <Checkbox
-                      label="Enable auto top-up"
-                      checked={walletSettings.autoTopupEnabled}
-                      onCheckedChange={(v) => setWalletSettings(s => ({ ...s, autoTopupEnabled: v }))}
-                    />
-                  </div>
-                  {walletSettings.autoTopupEnabled && (
-                    <>
-                      <Input
-                        label="Top-up amount (₹)"
-                        type="number"
-                        value={walletSettings.autoTopupAmount}
-                        onChange={(e) => setWalletSettings(s => ({ ...s, autoTopupAmount: e.target.value }))}
-                        placeholder="e.g. 1000"
-                      />
-                      <Input
-                        label="Trigger when balance below (₹)"
-                        type="number"
-                        value={walletSettings.autoTopupTriggerBelow}
-                        onChange={(e) => setWalletSettings(s => ({ ...s, autoTopupTriggerBelow: e.target.value }))}
-                        placeholder="e.g. 200"
-                      />
-                    </>
-                  )}
-                </div>
-                <div className="flex gap-2 mt-3">
-                  <Button variant="primary" size="sm" onClick={saveWalletSettings} loading={savingSettings}>
-                    Save settings
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setShowWalletSettings(false)}>
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         )}
+
+        {/* Wallet settings modal */}
+        <Modal
+          open={showWalletSettings && canManage}
+          onClose={() => setShowWalletSettings(false)}
+          title="Wallet settings"
+          description="Configure low balance alerts and automatic top-ups"
+          size="md"
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setShowWalletSettings(false)}>Cancel</Button>
+              <Button variant="primary" onClick={saveWalletSettings} loading={savingSettings}>
+                Save settings
+              </Button>
+            </>
+          }
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input
+              label="Low balance alert below (₹)"
+              type="number"
+              value={walletSettings.lowBalanceThreshold}
+              onChange={(e) => setWalletSettings(s => ({ ...s, lowBalanceThreshold: e.target.value }))}
+              placeholder="e.g. 500"
+            />
+            <div className="flex items-end pb-1">
+              <Checkbox
+                label="Enable auto top-up"
+                checked={walletSettings.autoTopupEnabled}
+                onCheckedChange={(v) => setWalletSettings(s => ({ ...s, autoTopupEnabled: v }))}
+              />
+            </div>
+            {walletSettings.autoTopupEnabled && (
+              <>
+                <Input
+                  label="Top-up amount (₹)"
+                  type="number"
+                  value={walletSettings.autoTopupAmount}
+                  onChange={(e) => setWalletSettings(s => ({ ...s, autoTopupAmount: e.target.value }))}
+                  placeholder="e.g. 1000"
+                />
+                <Input
+                  label="Trigger when balance below (₹)"
+                  type="number"
+                  value={walletSettings.autoTopupTriggerBelow}
+                  onChange={(e) => setWalletSettings(s => ({ ...s, autoTopupTriggerBelow: e.target.value }))}
+                  placeholder="e.g. 200"
+                />
+              </>
+            )}
+          </div>
+        </Modal>
 
         {/* Usage */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">

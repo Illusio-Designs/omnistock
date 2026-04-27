@@ -3,20 +3,20 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Button, Card, Input, Textarea, Select, Badge } from '@/components/ui';
+import { Button, Card, Input, Textarea, Select, Badge, Modal } from '@/components/ui';
 import { publicApi, ticketApi } from '@/lib/api';
 import { getIcon } from '@/lib/icon';
 import {
-  HelpCircle, MessageCircle, Mail, BookOpen, Video, Search, Send,
+  HelpCircle, MessageCircle, Mail, BookOpen, Video, Send, Plus,
   ArrowRight, ExternalLink, Inbox, Loader2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export default function HelpPage() {
-  const [q, setQ] = useState('');
   const [ticket, setTicket] = useState({ subject: '', priority: 'NORMAL', message: '' });
   const [ticketErr, setTicketErr] = useState('');
   const [ticketBusy, setTicketBusy] = useState(false);
+  const [ticketOpen, setTicketOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [popular, setPopular] = useState<any[]>([]);
   const [tickets, setTickets] = useState<any[]>([]);
@@ -40,6 +40,7 @@ export default function HelpPage() {
         body: ticket.message,
       });
       setTicket({ subject: '', priority: 'NORMAL', message: '' });
+      setTicketOpen(false);
       loadTickets();
     } catch (err: any) {
       setTicketErr(err?.response?.data?.error || 'Failed to create ticket');
@@ -51,12 +52,17 @@ export default function HelpPage() {
   return (
     <DashboardLayout>
       <div className="space-y-5 animate-slide-up">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Help Desk</h1>
-          <p className="text-sm text-slate-500 mt-1">Get help, browse guides, or contact support</p>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Help Desk</h1>
+            <p className="text-sm text-slate-500 mt-1">Get help, browse guides, or contact support</p>
+          </div>
+          <Button leftIcon={<Plus size={15} />} onClick={() => { setTicketErr(''); setTicketOpen(true); }}>
+            New Ticket
+          </Button>
         </div>
 
-        {/* Hero search */}
+        {/* Hero */}
         <Card className="p-8 md:p-10 text-center relative overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-white">
           <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-emerald-200/40 blur-3xl -translate-y-1/3 translate-x-1/3" />
           <div className="relative max-w-2xl mx-auto">
@@ -64,16 +70,7 @@ export default function HelpPage() {
               <HelpCircle size={22} className="text-emerald-600" />
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900">How can we help?</h2>
-            <p className="text-sm text-slate-500 mt-2">Search our help center or contact support below</p>
-            <div className="relative max-w-xl mx-auto mt-6">
-              <Search size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search articles, guides, tutorials…"
-                className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl shadow-lg text-sm focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400 placeholder:text-slate-400"
-              />
-            </div>
+            <p className="text-sm text-slate-500 mt-2">Browse the categories below or contact support directly</p>
           </div>
         </Card>
 
@@ -172,49 +169,18 @@ export default function HelpPage() {
             </Card>
           </div>
 
-          {/* Right: Contact form */}
+          {/* Right: Contact info */}
           <Card className="p-6 lg:sticky lg:top-20 h-fit">
             <h2 className="font-bold text-lg text-slate-900 mb-1">Contact Support</h2>
             <p className="text-xs text-slate-500 mb-5">We usually reply within 2 hours</p>
 
-            <div className="space-y-4">
-              <Input
-                label="Subject"
-                value={ticket.subject}
-                onChange={(e) => setTicket({ ...ticket, subject: e.target.value })}
-                placeholder="Brief summary of your issue"
-              />
-              <Select
-                label="Priority"
-                value={ticket.priority}
-                onChange={(v) => setTicket({ ...ticket, priority: v })}
-                options={[
-                  { value: 'LOW',    label: '🟢 Low' },
-                  { value: 'NORMAL', label: '🟡 Normal' },
-                  { value: 'HIGH',   label: '🟠 High' },
-                  { value: 'URGENT', label: '🔴 Urgent' },
-                ]}
-                fullWidth
-              />
-              <Textarea
-                label="Message"
-                value={ticket.message}
-                onChange={(e) => setTicket({ ...ticket, message: e.target.value })}
-                placeholder="Describe the issue in detail…"
-                rows={5}
-              />
-              {ticketErr && (
-                <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2.5">{ticketErr}</div>
-              )}
-              <Button
-                leftIcon={ticketBusy ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                fullWidth
-                onClick={submitTicket}
-                disabled={!ticket.subject || !ticket.message || ticketBusy}
-              >
-                {ticketBusy ? 'Sending…' : 'Send Message'}
-              </Button>
-            </div>
+            <Button
+              leftIcon={<Send size={14} />}
+              fullWidth
+              onClick={() => { setTicketErr(''); setTicketOpen(true); }}
+            >
+              Open a ticket
+            </Button>
 
             <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
               <div className="flex items-center gap-3 text-sm text-slate-600">
@@ -233,6 +199,58 @@ export default function HelpPage() {
           </Card>
         </div>
       </div>
+
+      {/* New Ticket Modal */}
+      <Modal
+        open={ticketOpen}
+        onClose={() => setTicketOpen(false)}
+        title="Contact Support"
+        description="We usually reply within 2 hours"
+        size="md"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setTicketOpen(false)}>Cancel</Button>
+            <Button
+              leftIcon={ticketBusy ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+              onClick={submitTicket}
+              disabled={!ticket.subject || !ticket.message || ticketBusy}
+            >
+              {ticketBusy ? 'Sending…' : 'Send Message'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Input
+            label="Subject"
+            value={ticket.subject}
+            onChange={(e) => setTicket({ ...ticket, subject: e.target.value })}
+            placeholder="Brief summary of your issue"
+          />
+          <Select
+            label="Priority"
+            value={ticket.priority}
+            onChange={(v) => setTicket({ ...ticket, priority: v })}
+            options={[
+              { value: 'LOW',    label: '🟢 Low' },
+              { value: 'NORMAL', label: '🟡 Normal' },
+              { value: 'HIGH',   label: '🟠 High' },
+              { value: 'URGENT', label: '🔴 Urgent' },
+            ]}
+            fullWidth
+          />
+          <Textarea
+            label="Message"
+            value={ticket.message}
+            onChange={(e) => setTicket({ ...ticket, message: e.target.value })}
+            placeholder="Describe the issue in detail…"
+            rows={5}
+          />
+          {ticketErr && (
+            <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2.5">{ticketErr}</div>
+          )}
+        </div>
+      </Modal>
     </DashboardLayout>
   );
 }

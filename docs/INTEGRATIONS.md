@@ -2,6 +2,8 @@
 
 This guide lists every channel OmniStock supports, where to register the developer app, what credentials you need, and where to paste them.
 
+> 📋 **Looking for the full channel matrix?** See [CHANNELS.md](CHANNELS.md) — every supported channel grouped by category, with status (integrated / not yet), connection type (OAuth / paste-form), and what's deliberately not included.
+
 Two types of integrations:
 
 | Type | How it works | Example |
@@ -13,6 +15,48 @@ Platform OAuth apps are configured **once** at **Admin → Settings** (`/admin/s
 
 ---
 
+## How the multi-tenant OAuth model works (concrete example: Amazon)
+
+You as the founder register **one** Amazon SP-API "Public App" for the entire OmniStock platform. Every tenant uses *that one app* — they never register their own with Amazon. Each tenant's authorization produces a per-tenant `refreshToken` that's stored encrypted, scoped to their tenant only.
+
+### Founder does once
+
+| Step | Where | Result |
+|---|---|---|
+| Register the Amazon SP-API app in Seller Central | https://sellercentral.amazon.com/sellingpartner/developerconsole | Get **LWA Client ID** + **Client Secret** |
+| Whitelist OAuth redirect URL | Same console | `https://YOUR-DOMAIN/api/v1/oauth/amazon/callback` |
+| Paste credentials in OmniStock | `/admin/settings` → Amazon SP-API tab | Saved as `amazon.clientId`, `amazon.clientSecret` (encrypted) |
+
+That's it for the founder. The credentials live in the `settings` table and are read by `backend/src/services/channels/ecom/amazon.js` whenever ANY tenant makes a call.
+
+### Each tenant does once
+
+| Step | Where | Result |
+|---|---|---|
+| Click "Connect Amazon" | `/channels` → Amazon → Connect | Redirects to Amazon's consent screen |
+| Approve the OmniStock app | Amazon's screen (NOT OmniStock) | Returns to OmniStock with an authorization code |
+| OmniStock exchanges the code for a `refreshToken` | Automatic, via the callback URL above | Stored encrypted on the tenant's `channel` row alongside their `sellerId` and `region` |
+
+When OmniStock makes an API call for **tenant X**, the adapter assembles:
+```
+Founder's clientId  +  Founder's clientSecret  +  Tenant X's refreshToken  →  Amazon access token
+```
+Tenant Y's calls use the same founder credentials but Y's own `refreshToken`. Tenants are fully isolated — they never see each other's tokens, and you (the founder) never see plaintext refresh tokens (they're AES-256-GCM encrypted in the DB using your `ENCRYPTION_KEY`).
+
+### Same model applies to
+
+- **Amazon SP-API + Smart Biz** — one founder app, per-tenant `refreshToken` + `sellerId`
+- **Shopify** — one founder public app, per-tenant `accessToken` + `shopUrl`
+- **Flipkart** — one founder app, per-tenant `appId` token
+- **Meta (Facebook Shop / Instagram / WhatsApp)** — one founder Meta app, per-tenant `pageId` + `accessToken`
+- **Google sign-in** — one founder OAuth client, per-user identity at login
+
+### Different model (legacy "paste-form")
+
+For channels in §4, the founder does NOT register an app. Each tenant generates their OWN credentials in the channel's dashboard and pastes them. Used for: Shiprocket, Delhivery, WooCommerce, Meesho, Nykaa, most logistics carriers, and any channel without a public OAuth app.
+
+---
+
 ## Quick reference — OmniStock admin paths
 
 | What | Where |
@@ -21,6 +65,21 @@ Platform OAuth apps are configured **once** at **Admin → Settings** (`/admin/s
 | Per-seller channel connection | `/channels/<channelId>` → Connect button |
 | Public webhook URL for a seller's channel | `https://YOUR-DOMAIN/api/v1/webhooks/channels/<channelId>` |
 | OAuth callback URL (register this at every provider) | `https://YOUR-DOMAIN/api/v1/oauth/<provider>/callback` |
+
+---
+
+# ════════════════════════════════════════════════════════════
+# PART 1 — FOUNDER SETUP (do this once for the entire platform)
+# ════════════════════════════════════════════════════════════
+
+You — the platform founder — register **one developer app per provider** with each marketplace, payment gateway, and email service. These credentials live in the `settings` table (encrypted) and are read by every tenant's API call. Sellers never see them and never register their own.
+
+Sections in Part 1:
+- §1 Platform OAuth apps (Amazon, Shopify, Flipkart, Meta, Google)
+- §2 Payment gateway (Razorpay)
+- §3 Email (SMTP)
+
+After you finish Part 1, sellers can sign up and self-onboard via Part 2.
 
 ---
 
@@ -287,6 +346,24 @@ Leave blank → OmniStock logs every email to the console (dev stub mode).
 
 ---
 
+# ════════════════════════════════════════════════════════════
+# PART 2 — PER-SELLER SETUP (each tenant does this themselves)
+# ════════════════════════════════════════════════════════════
+
+Each tenant logs into their OmniStock dashboard and connects channels they actually sell on. There are two flavors:
+
+- **OAuth channels** (Amazon, Shopify, Flipkart, Meta) — tenant clicks "Authorize", goes through the provider's consent screen, comes back. They never paste secrets — your founder app from Part 1 handles it.
+- **Paste-form channels** (everything in §4 below) — tenant generates their own keys in the channel's seller portal and pastes them into OmniStock.
+
+The Connect modal on `/channels/<id>` shows each required field. Hover the **?** icon next to any field to see exactly where to find that credential in the channel's seller portal.
+
+Sections in Part 2:
+- §4 Per-seller integrations (marketplaces, quick-commerce, own-store, logistics, social, custom webhook)
+- §5 Webhook URLs summary
+- §6 Environment variables (fallback if you prefer .env over the `settings` table)
+
+---
+
 # 4. Per-seller integrations (paste-form)
 
 Each tenant enters their own credentials at **Dashboard → Channels → pick channel → Connect**.
@@ -337,6 +414,16 @@ Each tenant enters their own credentials at **Dashboard → Channels → pick ch
 - **Developer portal**: https://www.etsy.com/developers/register
 - **Fields**: `apiKey`, `sharedSecret`
 
+### GlowRoad
+- **Supplier panel**: https://supplier.glowroad.com
+- **Fields**: `apiKey`
+- Reseller marketplace owned by Amazon. API access via supplier onboarding.
+
+### LimeRoad
+- **Seller panel**: https://www.limeroad.com/seller
+- **Fields**: `apiKey`
+- Fashion & lifestyle marketplace. Contact seller support for API credentials.
+
 ---
 
 ## 4.2 Quick commerce
@@ -362,6 +449,13 @@ Each tenant enters their own credentials at **Dashboard → Channels → pick ch
 ---
 
 ## 4.3 Own-store platforms
+
+### Amazon Smart Biz (D2C site on Amazon's stack)
+- **Onboarding**: https://smartcommerce.amazon.in/smartbiz
+- Uses the **same Amazon SP-API OAuth app** registered in §1.1 — sellers authorize once and the same `clientId`/`clientSecret` covers both the marketplace and Smart Biz storefront.
+- **Per-seller fields**: `clientId`, `clientSecret`, `refreshToken`, `sellerId`, `webhookSecret` (optional)
+- Adds MCF (Multi-Channel Fulfillment) features: `mcf_fulfillment`, `mcf_tracking`, `fba_inventory` on top of the standard order/inventory sync.
+- **Docs**: https://developer-docs.amazon.com/sp-api/
 
 ### Shopify (custom app, per-store) — fallback while OAuth is pending
 - **Admin URL**: `https://YOUR-STORE.myshopify.com/admin/apps`
@@ -473,6 +567,11 @@ Each tenant enters their own credentials at **Dashboard → Channels → pick ch
 - **Dashboard**: https://shipway.com
 - **Fields**: API key from Settings → API
 
+### Fship
+- **Dashboard**: https://fship.in
+- **Fields**: `apiKey` from your Fship merchant dashboard
+- Multi-carrier shipping aggregator.
+
 ---
 
 ## 4.5 Social commerce (paste-form fallback until Meta OAuth is wired)
@@ -560,6 +659,10 @@ SMTP_FROM=OmniStock <no-reply@example.com>
 **Recommended**: in production, use the database (Admin → Settings) rather than .env — rotation, audit, and multi-node deploys all get easier because you're not editing config files and restarting processes.
 
 ---
+
+# ════════════════════════════════════════════════════════════
+# REFERENCE
+# ════════════════════════════════════════════════════════════
 
 # 7. Testing a connection
 

@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { adminApi } from '@/lib/api';
-import { Activity, Search, RefreshCw } from 'lucide-react';
+import { useSearchStore } from '@/store/search.store';
+import { Activity, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Loader } from '@/components/ui/Loader';
@@ -55,7 +56,7 @@ export default function AdminAuditPage() {
   const [loading, setLoading] = useState(true);
   const [actionFilter, setActionFilter] = useState('');
   const [tenantFilter, setTenantFilter] = useState('');
-  const [query, setQuery] = useState('');
+  const query = useSearchStore((s) => s.query);
 
   const load = async () => {
     setLoading(true);
@@ -103,15 +104,7 @@ export default function AdminAuditPage() {
         </Button>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div className="md:col-span-2">
-          <Input
-            leftIcon={<Search size={14} />}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search action, email, path, resource id…"
-          />
-        </div>
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
         <Input
           value={actionFilter}
           onChange={(e) => setActionFilter(e.target.value)}

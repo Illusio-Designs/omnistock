@@ -192,23 +192,26 @@ export default function OrdersPage() {
                     <td className="px-4 py-3">
                       {o.needsApproval ? (
                         <div className="flex items-center gap-1">
-                          <Button variant="outline" size="sm" leftIcon={<CheckCircle2 size={11} />} onClick={() => approveMutation.mutate(o.id)} disabled={approveMutation.isPending}>
-                            Approve
-                          </Button>
-                          <Button variant="danger" size="sm" leftIcon={<XCircle size={11} />} onClick={() => rejectMutation.mutate(o.id)} disabled={rejectMutation.isPending}>
-                            Reject
-                          </Button>
+                          <Tooltip content="Approve order">
+                            <Button variant="outline" size="icon" onClick={() => approveMutation.mutate(o.id)} disabled={approveMutation.isPending}>
+                              <CheckCircle2 size={13} />
+                            </Button>
+                          </Tooltip>
+                          <Tooltip content="Reject order">
+                            <Button variant="danger" size="icon" onClick={() => rejectMutation.mutate(o.id)} disabled={rejectMutation.isPending}>
+                              <XCircle size={13} />
+                            </Button>
+                          </Tooltip>
                         </div>
                       ) : o.status === 'DELIVERED' ? (
                         <Tooltip content={o.reviewRequestedAt ? `Requested on ${new Date(o.reviewRequestedAt).toLocaleDateString()}` : 'Request product review'}>
                           <Button
                             variant="secondary"
-                            size="sm"
-                            leftIcon={<Star size={11} />}
+                            size="icon"
                             onClick={() => reviewMutation.mutate(o.id)}
                             disabled={reviewMutation.isPending || !!o.reviewRequestedAt}
                           >
-                            {o.reviewRequestedAt ? 'Requested' : 'Review'}
+                            <Star size={13} />
                           </Button>
                         </Tooltip>
                       ) : null}

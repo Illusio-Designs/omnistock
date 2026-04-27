@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { SearchRouteReset } from './SearchRouteReset';
 import { useAuthStore, isTokenExpired } from '@/store/auth.store';
 import { MaintenancePage } from '@/components/MaintenancePage';
 import { setPlanLimitHandler, authApi, publicApi } from '@/lib/api';
@@ -25,14 +26,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       router.replace('/login');
       return;
     }
-    // Validate token against /auth/me and refresh context
+    // Validate token against /auth/me and refresh context (incl. user phone, etc.)
     authApi.me()
       .then(({ data }) => {
+        const { tenant, plan, subscription, permissions, ...userFields } = data;
         setContext({
-          tenant: data.tenant ?? null,
-          plan: data.plan ?? null,
-          subscription: data.subscription ?? null,
-          permissions: data.permissions ?? [],
+          user: userFields,
+          tenant: tenant ?? null,
+          plan: plan ?? null,
+          subscription: subscription ?? null,
+          permissions: permissions ?? [],
         });
         setAuthChecked(true);
       })
@@ -70,6 +73,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
+      <SearchRouteReset />
       <Sidebar />
       <main className="flex-1 flex flex-col min-w-0 w-full">
         {impersonatingTenant && (

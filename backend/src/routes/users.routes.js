@@ -9,17 +9,31 @@ const { audit } = require('../services/audit.service');
 const router = Router();
 router.use(authenticate, requireTenant);
 
-// List users in the tenant
+// List users in the tenant + any platform admins (who can impersonate the tenant).
+// Platform admins are surfaced so tenant admins know who has cross-tenant access.
 router.get('/', requirePermission('users.read'), async (req, res) => {
-  const users = await prisma.user.findMany({
+  const tenantUsers = await prisma.user.findMany({
     where: { tenantId: req.tenant.id },
     select: {
-      id: true, name: true, email: true, role: true, isActive: true, createdAt: true,
+      id: true, name: true, email: true, phone: true, role: true, isActive: true,
+      isPlatformAdmin: true, createdAt: true,
       roles: { include: { role: { select: { id: true, code: true, name: true } } } },
     },
     orderBy: { createdAt: 'desc' },
   });
-  res.json(users);
+  const platformAdmins = await prisma.user.findMany({
+    where: { isPlatformAdmin: true },
+    select: {
+      id: true, name: true, email: true, phone: true, role: true, isActive: true,
+      isPlatformAdmin: true, createdAt: true,
+      roles: { include: { role: { select: { id: true, code: true, name: true } } } },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+  // De-dup: a platform admin who is ALSO a tenant member shouldn't appear twice
+  const tenantIds = new Set(tenantUsers.map((u) => u.id));
+  const combined = [...tenantUsers, ...platformAdmins.filter((u) => !tenantIds.has(u.id))];
+  res.json(combined);
 });
 
 // Invite / create a user

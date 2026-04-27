@@ -5,7 +5,9 @@ import { adminApi } from '@/lib/api';
 import { Plus, Edit2, Trash2, Save } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { Button } from '@/components/ui/Button';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 export default function AdminPlansPage() {
   const [plans, setPlans] = useState<any[]>([]);
@@ -80,12 +82,16 @@ export default function AdminPlansPage() {
                 <td className="p-3 text-right">{p.maxUserRoles ?? '∞'}</td>
                 <td className="p-3 text-center">{p.isActive ? '✅' : '—'}</td>
                 <td className="p-3 flex gap-2 justify-end">
-                  <Button variant="ghost" size="icon" onClick={() => setEditing(p)}>
-                    <Edit2 size={14} />
-                  </Button>
-                  <Button variant="danger" size="icon" onClick={() => del(p.id)}>
-                    <Trash2 size={14} />
-                  </Button>
+                  <Tooltip content="Edit plan">
+                    <Button variant="ghost" size="icon" onClick={() => setEditing(p)}>
+                      <Edit2 size={14} />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip content="Deactivate plan">
+                    <Button variant="danger" size="icon" onClick={() => del(p.id)}>
+                      <Trash2 size={14} />
+                    </Button>
+                  </Tooltip>
                 </td>
               </tr>
             ))}
@@ -133,14 +139,12 @@ function PlanForm({ initial, onClose, onSave }: {
         <div className="text-xs font-semibold text-slate-600 uppercase mb-2">Features</div>
         <div className="grid grid-cols-3 gap-2">
           {FEATURES.map((k) => (
-            <label key={k} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={!!f.features?.[k]}
-                onChange={(e) => setF({ ...f, features: { ...f.features, [k]: e.target.checked } })}
-              />
-              {k}
-            </label>
+            <Checkbox
+              key={k}
+              checked={!!f.features?.[k]}
+              onCheckedChange={(c) => setF({ ...f, features: { ...f.features, [k]: c } })}
+              label={k}
+            />
           ))}
         </div>
       </div>

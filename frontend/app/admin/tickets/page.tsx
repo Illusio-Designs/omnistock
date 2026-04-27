@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { adminApi } from '@/lib/api';
-import { LifeBuoy, Search, Filter } from 'lucide-react';
-import { Input } from '@/components/ui/Input';
+import { useSearchStore } from '@/store/search.store';
+import { LifeBuoy, Filter } from 'lucide-react';
 
 const STATUS_COLORS: Record<string, string> = {
   OPEN:     'bg-rose-100 text-rose-700',
@@ -16,7 +16,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function AdminTicketsPage() {
   const [tickets, setTickets] = useState<any[]>([]);
   const [filter, setFilter] = useState<string>('');
-  const [query, setQuery] = useState('');
+  const query = useSearchStore((s) => s.query);
 
   const load = () => adminApi.tickets(filter ? { status: filter } : undefined).then((r) => setTickets(r.data));
   useEffect(() => { load(); }, [filter]);
@@ -43,14 +43,6 @@ export default function AdminTicketsPage() {
       </div>
 
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <div className="flex-1 max-w-md">
-          <Input
-            leftIcon={<Search size={14} />}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search subject, tenant, id…"
-          />
-        </div>
         <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100">
           {['', 'OPEN', 'PENDING', 'RESOLVED', 'CLOSED'].map((s) => (
             <button

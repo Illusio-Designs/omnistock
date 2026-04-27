@@ -5,7 +5,10 @@ import { adminApi } from '@/lib/api';
 import { Plus, Edit2, Trash2, Save, Eye, EyeOff, GripVertical } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Input, Textarea } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { Button } from '@/components/ui/Button';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 const TYPES = [
   { value: 'LANDING_CHALLENGE',    label: 'Landing — Challenges' },
@@ -74,17 +77,14 @@ export default function AdminContentPage() {
       </div>
 
       {/* Type picker */}
-      <div className="mb-6">
-        <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Content type</label>
-        <select
+      <div className="mb-6 w-full md:w-96">
+        <Select
+          label="Content type"
           value={activeType}
-          onChange={(e) => setActiveType(e.target.value)}
-          className="w-full md:w-96 px-4 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none"
-        >
-          {TYPES.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
-          ))}
-        </select>
+          onChange={(v) => setActiveType(v)}
+          options={TYPES.map((t) => ({ value: t.value, label: t.label }))}
+          fullWidth
+        />
       </div>
 
       <div className="flex items-center justify-between mb-4">
@@ -135,15 +135,21 @@ export default function AdminContentPage() {
               {item.body && <p className="text-xs text-slate-400 mt-1 line-clamp-2">{item.body}</p>}
             </div>
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={() => toggle(item)} title={item.isActive ? 'Hide' : 'Show'}>
-                {item.isActive ? <Eye size={14} /> : <EyeOff size={14} />}
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => setEditing(item)}>
-                <Edit2 size={14} />
-              </Button>
-              <Button variant="danger" size="icon" onClick={() => del(item.id)}>
-                <Trash2 size={14} />
-              </Button>
+              <Tooltip content={item.isActive ? 'Hide' : 'Show'}>
+                <Button variant="ghost" size="icon" onClick={() => toggle(item)}>
+                  {item.isActive ? <Eye size={14} /> : <EyeOff size={14} />}
+                </Button>
+              </Tooltip>
+              <Tooltip content="Edit content">
+                <Button variant="ghost" size="icon" onClick={() => setEditing(item)}>
+                  <Edit2 size={14} />
+                </Button>
+              </Tooltip>
+              <Tooltip content="Delete content">
+                <Button variant="danger" size="icon" onClick={() => del(item.id)}>
+                  <Trash2 size={14} />
+                </Button>
+              </Tooltip>
             </div>
           </div>
         ))}
@@ -200,21 +206,24 @@ function ContentForm({ initial, type, onClose, onSave }: {
         <Input label="Category" value={f.category ?? ''} onChange={(e) => setF({ ...f, category: e.target.value })} />
         <Input label="Link href" value={f.href ?? ''} onChange={(e) => setF({ ...f, href: e.target.value })} />
         <Input label="Sort order" type="number" value={f.sortOrder ?? 0} onChange={(e) => setF({ ...f, sortOrder: Number(e.target.value) })} />
-        <label className="flex items-center gap-2 mt-6 text-sm font-semibold text-slate-700">
-          <input type="checkbox" checked={f.isActive} onChange={(e) => setF({ ...f, isActive: e.target.checked })} />
-          Active (visible on the public site)
-        </label>
+        <div className="flex items-center mt-6">
+          <Checkbox
+            checked={!!f.isActive}
+            onCheckedChange={(c) => setF({ ...f, isActive: c })}
+            label="Active (visible on the public site)"
+          />
+        </div>
       </div>
 
       <div className="mt-4">
-        <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Extra fields (JSON)</label>
-        <textarea
+        <Textarea
+          label="Extra fields (JSON)"
           value={dataJson}
           onChange={(e) => setDataJson(e.target.value)}
           rows={5}
-          className="w-full px-3 py-2 rounded-lg border border-slate-200 font-mono text-xs"
+          className="font-mono text-xs"
+          error={jsonError || undefined}
         />
-        {jsonError && <p className="text-xs text-red-600 mt-1">{jsonError}</p>}
         <p className="text-[10px] text-slate-400 mt-1">
           Per-type structured fields. E.g. videos: <code>{'{ "duration": "5:12", "url": "..." }'}</code>
         </p>

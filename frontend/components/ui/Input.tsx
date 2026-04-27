@@ -1,10 +1,10 @@
 'use client';
 
-import { forwardRef, InputHTMLAttributes, TextareaHTMLAttributes } from 'react';
+import { forwardRef, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
+  label?: ReactNode;
   error?: string;
   hint?: string;
   leftIcon?: React.ReactNode;
@@ -57,7 +57,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = 'Input';
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
-  label?: string;
+  label?: ReactNode;
   error?: string;
   hint?: string;
 }

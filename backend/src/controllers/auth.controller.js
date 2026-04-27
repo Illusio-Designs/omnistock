@@ -174,7 +174,7 @@ const getMe = async (req, res) => {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: {
-        id: true, name: true, email: true, role: true, avatar: true, provider: true,
+        id: true, name: true, email: true, phone: true, role: true, avatar: true, provider: true,
         tenantId: true, isPlatformAdmin: true, createdAt: true,
       },
     });

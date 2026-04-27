@@ -4,15 +4,17 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
-import { Power, PowerOff, Crown, Search, LayoutDashboard } from 'lucide-react';
-import { Input } from '@/components/ui/Input';
+import { useSearchStore } from '@/store/search.store';
+import { Power, PowerOff, Crown, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Tooltip } from '@/components/ui/Tooltip';
+import { Modal } from '@/components/ui/Modal';
 
 export default function AdminTenantsPage() {
   const router = useRouter();
   const { startImpersonation } = useAuthStore();
+  const query = useSearchStore((s) => s.query);
   const [tenants, setTenants] = useState<any[]>([]);
-  const [search, setSearch] = useState('');
   const [plans, setPlans] = useState<any[]>([]);
   const [assigning, setAssigning] = useState<any>(null);
 
@@ -26,8 +28,9 @@ export default function AdminTenantsPage() {
     router.push('/dashboard');
   };
 
-  const load = () => adminApi.tenants(search ? { search } : undefined).then((r) => setTenants(r.data));
-  useEffect(() => { load(); adminApi.plans().then((r) => setPlans(r.data)); }, []);
+  const load = () => adminApi.tenants(query ? { search: query } : undefined).then((r) => setTenants(r.data));
+  useEffect(() => { load(); }, [query]);
+  useEffect(() => { adminApi.plans().then((r) => setPlans(r.data)); }, []);
 
   const suspend = async (id: string) => { await adminApi.suspendTenant(id); load(); };
   const activate = async (id: string) => { await adminApi.activateTenant(id); load(); };
@@ -37,20 +40,7 @@ export default function AdminTenantsPage() {
       <h1 className="text-3xl font-bold text-slate-900">Tenants</h1>
       <p className="text-slate-500 mt-1">All businesses signed up to OmniStock.</p>
 
-      <div className="flex items-end gap-2 mt-6 mb-4">
-        <div className="flex-1 max-w-md">
-          <Input
-            leftIcon={<Search size={14} />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && load()}
-            placeholder="Search business name…"
-          />
-        </div>
-        <Button variant="primary" onClick={load}>Search</Button>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mt-6">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
@@ -87,15 +77,29 @@ export default function AdminTenantsPage() {
                 <td className="p-3 text-right">{t._count?.orders || 0}</td>
                 <td className="p-3 text-right">{t._count?.products || 0}</td>
                 <td className="p-3 flex gap-2 justify-end">
-                  <Button variant="ghost" size="icon" onClick={() => openAsTenant(t)} title="Open dashboard as this tenant">
-                    <LayoutDashboard size={14} />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => setAssigning(t)} title="Assign plan">
-                    <Crown size={14} />
-                  </Button>
-                  {t.status === 'SUSPENDED'
-                    ? <Button variant="ghost" size="icon" onClick={() => activate(t.id)}><Power size={14} /></Button>
-                    : <Button variant="danger" size="icon" onClick={() => suspend(t.id)}><PowerOff size={14} /></Button>}
+                  <Tooltip content="Open dashboard as this tenant">
+                    <Button variant="ghost" size="icon" onClick={() => openAsTenant(t)}>
+                      <LayoutDashboard size={14} />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip content="Assign plan">
+                    <Button variant="ghost" size="icon" onClick={() => setAssigning(t)}>
+                      <Crown size={14} />
+                    </Button>
+                  </Tooltip>
+                  {t.status === 'SUSPENDED' ? (
+                    <Tooltip content="Activate tenant">
+                      <Button variant="ghost" size="icon" onClick={() => activate(t.id)}>
+                        <Power size={14} />
+                      </Button>
+                    </Tooltip>
+                  ) : (
+                    <Tooltip content="Suspend tenant">
+                      <Button variant="danger" size="icon" onClick={() => suspend(t.id)}>
+                        <PowerOff size={14} />
+                      </Button>
+                    </Tooltip>
+                  )}
                 </td>
               </tr>
             ))}
@@ -103,29 +107,29 @@ export default function AdminTenantsPage() {
         </table>
       </div>
 
-      {assigning && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-2xl w-full max-w-md">
-            <h3 className="text-lg font-bold mb-3">Assign plan to {assigning.businessName}</h3>
-            <div className="space-y-2">
-              {plans.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={async () => {
-                    await adminApi.assignPlan(assigning.id, { planCode: p.code, billingCycle: 'MONTHLY' });
-                    setAssigning(null); load();
-                  }}
-                  className="w-full text-left p-3 rounded-xl border border-slate-200 hover:border-emerald-500"
-                >
-                  <div className="font-bold">{p.name}</div>
-                  <div className="text-xs text-slate-500">₹{Number(p.monthlyPrice).toLocaleString()}/mo</div>
-                </button>
-              ))}
-            </div>
-            <Button variant="ghost" fullWidth className="mt-4" onClick={() => setAssigning(null)}>Cancel</Button>
-          </div>
+      <Modal
+        open={!!assigning}
+        onClose={() => setAssigning(null)}
+        title={assigning ? `Assign plan to ${assigning.businessName}` : 'Assign plan'}
+        size="md"
+        footer={<Button variant="secondary" onClick={() => setAssigning(null)}>Cancel</Button>}
+      >
+        <div className="space-y-2">
+          {plans.map((p) => (
+            <button
+              key={p.id}
+              onClick={async () => {
+                await adminApi.assignPlan(assigning.id, { planCode: p.code, billingCycle: 'MONTHLY' });
+                setAssigning(null); load();
+              }}
+              className="w-full text-left p-3 rounded-xl border border-slate-200 hover:border-emerald-500"
+            >
+              <div className="font-bold">{p.name}</div>
+              <div className="text-xs text-slate-500">₹{Number(p.monthlyPrice).toLocaleString()}/mo</div>
+            </button>
+          ))}
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

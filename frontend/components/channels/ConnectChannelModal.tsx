@@ -4,8 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import { channelApi, oauthApi } from '@/lib/api';
 import { getSchemaForType, type ChannelField } from '@/lib/channel-schemas';
 import {
-  X, Plug, Eye, EyeOff, CheckCircle2, XCircle, ExternalLink, Copy, Info, ShieldCheck,
+  Plug, Eye, EyeOff, CheckCircle2, XCircle, ExternalLink, Copy, Info, ShieldCheck, HelpCircle,
 } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 
 interface Props {
   channelId: string;
@@ -32,8 +36,8 @@ export function ConnectChannelModal({
 
   if (!schema) {
     return (
-      <Modal onClose={onClose} title={`Connect ${channelName}`}>
-        <div className="p-6 text-sm text-slate-600">
+      <Modal open onClose={onClose} title={`Connect ${channelName}`} size="md">
+        <div className="text-sm text-slate-600">
           <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 mb-4">
             <Info size={14} className="mt-0.5" />
             <div>
@@ -164,34 +168,64 @@ export function ConnectChannelModal({
   };
 
   return (
-    <Modal onClose={onClose} title={`Connect ${schema.name}`}>
-      {schema.description && (
-        <p className="text-sm text-slate-600 px-6 pt-4">{schema.description}</p>
-      )}
+    <Modal
+      open
+      onClose={onClose}
+      title={`Connect ${schema.name}`}
+      description={schema.description}
+      size="md"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={status === 'saving'}>
+            Cancel
+          </Button>
+          {schema.oauth ? (
+            <Button
+              variant="primary"
+              leftIcon={<ShieldCheck size={14} />}
+              loading={status === 'saving'}
+              disabled={status === 'success'}
+              onClick={startOAuth}
+            >
+              {status === 'success' ? 'Connected' : `Authorize with ${schema.name}`}
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              leftIcon={<Plug size={14} />}
+              loading={status === 'saving'}
+              disabled={status === 'success'}
+              onClick={submit}
+            >
+              {status === 'saving' ? 'Testing & saving…' : status === 'success' ? 'Connected' : 'Test & Save'}
+            </Button>
+          )}
+        </>
+      }
+    >
+      <div className="space-y-4">
+        {schema.docsUrl && (
+          <a
+            href={schema.docsUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700"
+          >
+            <ExternalLink size={12} /> Official API docs
+          </a>
+        )}
 
-      {schema.docsUrl && (
-        <a
-          href={schema.docsUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1.5 px-6 mt-2 text-xs font-bold text-emerald-600 hover:text-emerald-700"
-        >
-          <ExternalLink size={12} /> Official API docs
-        </a>
-      )}
-
-      {schema.steps && (
-        <div className="mx-6 mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
-          <div className="text-xs font-bold text-slate-700 uppercase mb-2 flex items-center gap-1.5">
-            <Info size={12} /> Setup steps
+        {schema.steps && (
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="text-xs font-bold text-slate-700 uppercase mb-2 flex items-center gap-1.5">
+              <Info size={12} /> Setup steps
+            </div>
+            <ol className="text-xs text-slate-600 space-y-1 list-decimal pl-4">
+              {schema.steps.map((s) => <li key={s}>{s}</li>)}
+            </ol>
           </div>
-          <ol className="text-xs text-slate-600 space-y-1 list-decimal pl-4">
-            {schema.steps.map((s) => <li key={s}>{s}</li>)}
-          </ol>
-        </div>
-      )}
+        )}
 
-      <div className="p-6 space-y-4">
         {schema.fields.map((f) => (
           <FieldRow
             key={f.key}
@@ -214,81 +248,32 @@ export function ConnectChannelModal({
               value={webhookUrl}
               className="flex-1 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 font-mono text-xs text-slate-600"
             />
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="icon"
               onClick={() => { navigator.clipboard.writeText(webhookUrl); setMessage('Copied webhook URL'); }}
-              className="px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
-              title="Copy"
             >
               <Copy size={14} />
-            </button>
+            </Button>
           </div>
           <p className="text-[10px] text-slate-500 mt-1">
             This endpoint is public and looks up your tenant from the channel id.
           </p>
         </div>
-      </div>
 
-      {status !== 'idle' && message && (
-        <div className={`mx-6 mb-4 p-3 rounded-lg text-sm flex items-start gap-2 border ${
-          status === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
-          status === 'error'   ? 'bg-red-50 border-red-200 text-red-800' :
-                                 'bg-slate-50 border-slate-200 text-slate-600'
-        }`}>
-          {status === 'success' ? <CheckCircle2 size={14} className="mt-0.5 flex-shrink-0" /> :
-           status === 'error'   ? <XCircle size={14} className="mt-0.5 flex-shrink-0" /> : null}
-          <div className="flex-1 break-all">{message}</div>
-        </div>
-      )}
-
-      <div className="flex gap-2 justify-end px-6 pb-6 pt-2 border-t border-slate-100">
-        <button
-          onClick={onClose}
-          disabled={status === 'saving'}
-          className="px-4 py-2 text-slate-600 font-medium"
-        >
-          Cancel
-        </button>
-        {schema.oauth ? (
-          <button
-            onClick={startOAuth}
-            disabled={status === 'saving' || status === 'success'}
-            className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-br from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white rounded-lg font-bold disabled:opacity-50 shadow"
-          >
-            <ShieldCheck size={14} />
-            {status === 'success' ? 'Connected' : `Authorize with ${schema.name}`}
-          </button>
-        ) : (
-          <button
-            onClick={submit}
-            disabled={status === 'saving' || status === 'success'}
-            className="inline-flex items-center gap-2 px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-bold disabled:opacity-50"
-          >
-            <Plug size={14} />
-            {status === 'saving' ? 'Testing & saving…' : status === 'success' ? 'Connected' : 'Test & Save'}
-          </button>
+        {status !== 'idle' && message && (
+          <div className={`p-3 rounded-lg text-sm flex items-start gap-2 border ${
+            status === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+            status === 'error'   ? 'bg-red-50 border-red-200 text-red-800' :
+                                   'bg-slate-50 border-slate-200 text-slate-600'
+          }`}>
+            {status === 'success' ? <CheckCircle2 size={14} className="mt-0.5 flex-shrink-0" /> :
+             status === 'error'   ? <XCircle size={14} className="mt-0.5 flex-shrink-0" /> : null}
+            <div className="flex-1 break-all">{message}</div>
+          </div>
         )}
       </div>
     </Modal>
-  );
-}
-
-// ── Reusable pieces ─────────────────────────────────────────────
-function Modal({
-  title, children, onClose,
-}: { title: string; children: React.ReactNode; onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
-          <h2 className="text-lg font-bold text-slate-900">{title}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg">
-            <X size={18} />
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
   );
 }
 
@@ -304,31 +289,46 @@ function FieldRow({
   const isSecret = field.secret || field.kind === 'password';
   const inputType = isSecret && !showSecret ? 'password' : 'text';
 
-  return (
-    <div>
-      <label className="block text-xs font-semibold text-slate-700 mb-1">
+  const labelNode = (
+    <span className="flex items-center gap-1.5">
+      <span>
         {field.label}
         {field.required && <span className="text-red-500 ml-0.5">*</span>}
+      </span>
+      {field.help && (
+        <Tooltip content={field.help} side="top" wrap>
+          <HelpCircle size={13} className="text-slate-400 hover:text-emerald-600 cursor-help" />
+        </Tooltip>
+      )}
+    </span>
+  );
+
+  if (field.kind === 'select') {
+    return (
+      <Select
+        label={labelNode}
+        value={value}
+        onChange={(v) => onChange(v)}
+        options={field.options || []}
+        placeholder={field.placeholder || 'Select…'}
+        fullWidth
+      />
+    );
+  }
+
+  return (
+    <div>
+      <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+        {labelNode}
       </label>
       <div className="relative">
-        {field.kind === 'select' ? (
-          <select
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-sm"
-          >
-            <option value="">Select…</option>
-            {field.options?.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        ) : field.kind === 'textarea' ? (
+        {field.kind === 'textarea' ? (
           <textarea
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder}
             rows={3}
-            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-sm font-mono"
+            className="w-full px-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400 font-mono"
           />
         ) : (
           <input
@@ -336,21 +336,20 @@ function FieldRow({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder}
-            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-sm pr-10"
+            className="w-full px-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400 pr-10"
           />
         )}
         {isSecret && (
           <button
             type="button"
             onClick={onToggle}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700"
             tabIndex={-1}
           >
             {showSecret ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>
         )}
       </div>
-      {field.help && <p className="text-[10px] text-slate-500 mt-1">{field.help}</p>}
     </div>
   );
 }
@@ -388,14 +387,10 @@ function RawJsonForm({
       />
       {err && <p className="text-xs text-red-600 mt-1">{err}</p>}
       <div className="flex justify-end gap-2 mt-4">
-        <button onClick={onClose} className="px-4 py-2 text-slate-600">Cancel</button>
-        <button
-          onClick={submit}
-          disabled={saving}
-          className="px-4 py-2 bg-emerald-500 text-white rounded-lg font-bold disabled:opacity-50"
-        >
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" onClick={submit} loading={saving}>
           {saving ? 'Saving…' : 'Save'}
-        </button>
+        </Button>
       </div>
     </>
   );

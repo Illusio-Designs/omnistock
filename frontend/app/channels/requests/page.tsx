@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { channelApi } from '@/lib/api';
-import { ArrowLeft, Inbox, Clock, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Inbox, Clock, CheckCircle2, XCircle, Loader2, X } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { Loader } from '@/components/ui/Loader';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 const STATUS_FILTERS = [
   { value: '', label: 'All Statuses' },
@@ -105,13 +106,15 @@ export default function ChannelRequestsPage() {
                       </td>
                       <td className="px-5 py-3 text-right">
                         {r.status === 'PENDING' && (
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => { if (confirm('Cancel this request?')) cancelMutation.mutate(r.id); }}
-                          >
-                            Cancel
-                          </Button>
+                          <Tooltip content="Cancel request">
+                            <Button
+                              variant="danger"
+                              size="icon"
+                              onClick={() => { if (confirm('Cancel this request?')) cancelMutation.mutate(r.id); }}
+                            >
+                              <X size={13} />
+                            </Button>
+                          </Tooltip>
                         )}
                       </td>
                     </tr>

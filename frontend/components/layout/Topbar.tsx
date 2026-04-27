@@ -1,14 +1,16 @@
 'use client';
 
-import { Search, HelpCircle, Mail, ChevronDown, Menu, Sparkles } from 'lucide-react';
+import { Search, HelpCircle, Mail, ChevronDown, Menu, Sparkles, X } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useUIStore } from '@/store/ui.store';
+import { useSearchStore } from '@/store/search.store';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { WalletPill } from '@/components/wallet/WalletPill';
 
 export function Topbar() {
   const { user, logout } = useAuthStore();
   const { setMobileSidebar } = useUIStore();
+  const { query, setQuery, clear } = useSearchStore();
   const displayUser = user || { name: 'Dev User', role: 'SUPER_ADMIN', email: 'dev@omnistock.in' };
   const initial = displayUser.name?.[0]?.toUpperCase() || 'U';
 
@@ -26,13 +28,21 @@ export function Topbar() {
       <div className="relative flex-1 max-w-xl">
         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
-          placeholder="Search"
-          className="w-full pl-11 pr-16 md:pr-20 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400 placeholder:text-slate-400 transition-all"
+          placeholder="Search this page"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full pl-11 pr-10 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400 placeholder:text-slate-400 transition-all"
         />
-        <div className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center gap-0.5">
-          <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded-md text-[10px] font-semibold text-slate-500">⌘</kbd>
-          <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded-md text-[10px] font-semibold text-slate-500">K</kbd>
-        </div>
+        {query && (
+          <button
+            type="button"
+            onClick={clear}
+            aria-label="Clear search"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 rounded-md"
+          >
+            <X size={14} />
+          </button>
+        )}
       </div>
 
       <div className="flex items-center gap-1 ml-auto">

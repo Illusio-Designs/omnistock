@@ -26,6 +26,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
   role: string;
   tenantId?: string | null;
   isPlatformAdmin?: boolean;
@@ -37,6 +38,7 @@ interface Tenant {
   slug: string;
   status: string;
   businessName: string;
+  gstin?: string | null;
 }
 
 interface Plan {
@@ -67,7 +69,7 @@ interface AuthState {
   permissions: string[];
   impersonatingTenant: Tenant | null;
   setAuth: (user: User, token: string) => void;
-  setContext: (data: { tenant?: Tenant | null; plan?: Plan | null; subscription?: Subscription | null; permissions?: string[] }) => void;
+  setContext: (data: { user?: Partial<User> | null; tenant?: Tenant | null; plan?: Plan | null; subscription?: Subscription | null; permissions?: string[] }) => void;
   startImpersonation: (tenant: Tenant) => void;
   stopImpersonation: () => void;
   logout: () => void;
@@ -91,8 +93,9 @@ export const useAuthStore = create<AuthState>()(
         localStorage.setItem('token', token);
         set({ user, token });
       },
-      setContext: ({ tenant, plan, subscription, permissions }) =>
+      setContext: ({ user, tenant, plan, subscription, permissions }) =>
         set((s) => ({
+          user: user ? { ...(s.user as User), ...user } as User : s.user,
           tenant: tenant ?? s.tenant,
           plan: plan ?? s.plan,
           subscription: subscription ?? s.subscription,
