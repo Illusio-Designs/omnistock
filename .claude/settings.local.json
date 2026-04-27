@@ -75,7 +75,10 @@
       "Bash(tasklist //FI \"PID eq 20872\")",
       "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\\\\n\" http://localhost:5001/api/v1/public/maintenance)",
       "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\\\\n\" http://localhost:5001/api/v1/plans)",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ],
     "additionalDirectories": [
       "\\tmp"
