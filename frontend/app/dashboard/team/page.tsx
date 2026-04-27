@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { Plus, Trash2, Users, Shield, Save, Pencil } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -189,7 +190,7 @@ function UserForm({ initial, roles, onClose, onSave }: {
         <Input label="Email" value={f.email ?? ''} onChange={(e) => setF({ ...f, email: e.target.value })} disabled={!!initial} />
         {!initial && (
           <div className="col-span-2">
-            <Input label="Temporary password" type="password" value={f.password ?? ''} onChange={(e) => setF({ ...f, password: e.target.value })} />
+            <PasswordInput label="Temporary password" value={f.password ?? ''} onChange={(e) => setF({ ...f, password: e.target.value })} />
           </div>
         )}
         {initial && (

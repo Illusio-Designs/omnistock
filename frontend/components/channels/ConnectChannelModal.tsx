@@ -10,6 +10,7 @@ import { Tooltip } from '@/components/ui/Tooltip';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
+import { Input, Textarea } from '@/components/ui/Input';
 
 interface Props {
   channelId: string;
@@ -242,12 +243,14 @@ export function ConnectChannelModal({
           <label className="block text-xs font-semibold text-slate-600 mb-1">
             Webhook URL (configure in {schema.name} dashboard)
           </label>
-          <div className="flex gap-2">
-            <input
-              readOnly
-              value={webhookUrl}
-              className="flex-1 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 font-mono text-xs text-slate-600"
-            />
+          <div className="flex gap-2 items-start">
+            <div className="flex-1">
+              <Input
+                readOnly
+                value={webhookUrl}
+                className="font-mono text-xs bg-slate-50"
+              />
+            </div>
             <Button
               variant="secondary"
               size="icon"
@@ -323,12 +326,12 @@ function FieldRow({
       </label>
       <div className="relative">
         {field.kind === 'textarea' ? (
-          <textarea
+          <Textarea
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder}
             rows={3}
-            className="w-full px-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400 font-mono"
+            className="font-mono"
           />
         ) : (
           <input
@@ -379,11 +382,11 @@ function RawJsonForm({
 
   return (
     <>
-      <textarea
+      <Textarea
         value={json}
         onChange={(e) => setJson(e.target.value)}
         rows={8}
-        className="w-full px-3 py-2 rounded-lg border border-slate-200 font-mono text-xs"
+        className="font-mono text-xs"
       />
       {err && <p className="text-xs text-red-600 mt-1">{err}</p>}
       <div className="flex justify-end gap-2 mt-4">
