@@ -18,10 +18,16 @@ interface SelectProps {
   label?: ReactNode;
   className?: string;
   fullWidth?: boolean;
+  size?: 'sm' | 'md';
 }
 
+const SIZE_CLASSES = {
+  sm: 'px-2.5 py-1 text-xs rounded-lg',
+  md: 'px-4 py-2.5 text-sm rounded-xl',
+};
+
 export function Select({
-  value, onChange, options, placeholder = 'Select…', label, className, fullWidth,
+  value, onChange, options, placeholder = 'Select…', label, className, fullWidth, size = 'md',
 }: SelectProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -46,8 +52,9 @@ export function Select({
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
-          'flex items-center justify-between gap-2 px-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl hover:border-slate-300 transition-all',
+          'flex items-center justify-between gap-2 bg-white border border-slate-200 hover:border-slate-300 transition-all',
           'focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400',
+          SIZE_CLASSES[size],
           fullWidth && 'w-full'
         )}
       >
