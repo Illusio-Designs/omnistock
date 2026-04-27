@@ -4,9 +4,9 @@ Complete list of every channel registered in [`backend/src/data/channel-catalog.
 
 **Status legend:**
 - ✅ **Integrated** — adapter is built, sellers can connect today
-- ⏳ **Not integrated** — listed in the UI for category completeness but no API adapter (manual entry / coming soon)
 - 🔐 **OAuth** — founder registers ONE app at `/admin/settings`, sellers click "Authorize"
 - 📋 **Paste-form** — each seller generates keys in the channel's portal and pastes them into OmniStock
+- 📝 **Manual** — no external API; tenant connects once, then records orders via the New Order form
 - ⚠️ **Approval required** — channel requires a partnership / seller approval before API access is granted
 
 For setup steps see [INTEGRATIONS.md](INTEGRATIONS.md).
@@ -15,16 +15,18 @@ For setup steps see [INTEGRATIONS.md](INTEGRATIONS.md).
 
 ## Totals
 
-| Category | Total | Integrated | Not yet |
-|---|---:|---:|---:|
-| E-commerce marketplaces | 14 | 14 | 0 |
-| Quick commerce | 4 | 4 | 0 |
-| Logistics & shipping | 16 | 16 | 0 |
-| Own-store / D2C | 9 | 7 | 2 |
-| Social commerce | 3 | 3 | 0 |
-| B2B | 3 | 0 | 3 |
-| Custom | 2 | 1 | 1 |
-| **Total** | **51** | **45** | **6** |
+| Category | Total | Integrated | Manual-only | API-driven |
+|---|---:|---:|---:|---:|
+| E-commerce marketplaces | 14 | 14 | 0 | 14 |
+| Quick commerce | 4 | 4 | 0 | 4 |
+| Logistics & shipping | 16 | 16 | 0 | 16 |
+| Own-store / D2C | 9 | 9 | 2 | 7 |
+| Social commerce | 3 | 3 | 0 | 3 |
+| B2B | 3 | 3 | 2 | 1 |
+| Custom | 2 | 2 | 1 | 1 |
+| **Total** | **51** | **51** | **5** | **46** |
+
+> **All 51 channels are now connectable.** 46 sync via real APIs; 5 are manual-only channels backed by a no-op adapter (Offline, POS, Wholesale, Distributor, Other) — tenants connect them once, then record orders via the New Order form.
 
 ---
 
@@ -103,8 +105,8 @@ For setup steps see [INTEGRATIONS.md](INTEGRATIONS.md).
 | BigCommerce | ✅ | 📋 Paste-form | orders, inventory | Cloud SaaS commerce. |
 | OpenCart | ✅ | 📋 Paste-form | orders, inventory | Free OSS platform. |
 | Custom Website | ✅ | 📋 Webhook + HMAC | webhook, hmac validation, field mapping | Same adapter as `CUSTOM_WEBHOOK`. |
-| Offline / Retail Store | ⏳ | — | manual | No API. Manual order entry only. |
-| POS System | ⏳ | — | manual | No API. CSV import or manual entry. |
+| Offline / Retail Store | ✅ | 📝 Manual | manual | No API. Connect once; enter orders via New Order form. |
+| POS System | ✅ | 📝 Manual | manual | No API. CSV import or manual entry. |
 
 ---
 
@@ -122,9 +124,9 @@ For setup steps see [INTEGRATIONS.md](INTEGRATIONS.md).
 
 | Channel | Status | Connection | Features | Notes |
 |---|:---:|:---:|---|---|
-| B2B Portal | ⏳ | 📋 Webhook | webhook, manual | Skeleton. Receives via webhook, no UI yet. |
-| Wholesale Channel | ⏳ | — | manual | Manual orders only. |
-| Distributor | ⏳ | — | manual | Manual orders only. |
+| B2B Portal | ✅ | 📋 Webhook | webhook, manual | Receives orders via webhook (CustomWebhook adapter). Optional HMAC secret. |
+| Wholesale Channel | ✅ | 📝 Manual | manual | No API. Record bulk wholesale orders via New Order form. |
+| Distributor | ✅ | 📝 Manual | manual | No API. Record distributor orders via New Order form. |
 
 ---
 
@@ -133,7 +135,7 @@ For setup steps see [INTEGRATIONS.md](INTEGRATIONS.md).
 | Channel | Status | Connection | Features | Notes |
 |---|:---:|:---:|---|---|
 | Custom Webhook | ✅ | 📋 Webhook + HMAC | webhook, hmac validation, field mapping | Universal receiver. POST `/api/v1/channels/:id/webhook` with `x-omnistock-signature` HMAC-SHA256 header. |
-| Other | ⏳ | — | manual | Catch-all for anything not in the catalog. |
+| Other | ✅ | 📝 Manual | manual | Catch-all for one-off / experimental channels. Manual order entry. |
 
 ---
 

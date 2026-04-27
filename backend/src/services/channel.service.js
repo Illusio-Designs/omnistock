@@ -65,6 +65,11 @@ const {
   WhatsAppBusinessAdapter,
 } = require('./channels/social');
 
+const { ManualAdapter } = require('./channels/manual');
+
+// Channels with no external API — backed by ManualAdapter (no-op).
+const MANUAL_TYPES = new Set(['OFFLINE', 'POS', 'WHOLESALE', 'DISTRIBUTOR', 'OTHER']);
+
 // ── Channel type → category map ──────────────────────────────────────────────
 
 const CHANNEL_CATEGORY = {
@@ -109,6 +114,12 @@ function getCategoryForType(type) {
 
 function getAdapter(channel) {
   let creds = channel.credentials;
+
+  // Manual channels (OFFLINE/POS/WHOLESALE/DISTRIBUTOR/OTHER) need no
+  // credentials — return a no-op adapter immediately.
+  if (MANUAL_TYPES.has(channel.type)) {
+    return new ManualAdapter(creds || {});
+  }
 
   // CUSTOM_WEBHOOK works without credentials (signature validation optional)
   const webhookTypes = ['CUSTOM_WEBHOOK', 'WEBSITE', 'B2B_PORTAL'];
@@ -173,8 +184,7 @@ function getAdapter(channel) {
       // Custom website uses the webhook adapter
       return new CustomWebhookAdapter(creds || {});
 
-    case 'OFFLINE': case 'POS':
-      throw new Error(`${channel.type}: manual channel — no external API connection needed.`);
+    // OFFLINE/POS handled above by MANUAL_TYPES early-return.
 
     // ── SOCIAL ────────────────────────────────────────────
     case 'INSTAGRAM':         return new InstagramAdapter(creds);
@@ -185,8 +195,7 @@ function getAdapter(channel) {
     case 'B2B_PORTAL':
       return new CustomWebhookAdapter(creds || {});
 
-    case 'WHOLESALE': case 'DISTRIBUTOR':
-      throw new Error(`${channel.type}: manual channel — enter orders manually or import via CSV.`);
+    // WHOLESALE/DISTRIBUTOR handled above by MANUAL_TYPES early-return.
 
     // ── CUSTOM ────────────────────────────────────────────
     case 'CUSTOM_WEBHOOK':

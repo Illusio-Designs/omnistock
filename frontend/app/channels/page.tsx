@@ -93,6 +93,7 @@ type CatalogEntry = {
   status: 'connected' | 'available' | 'not_available';
   integrated: boolean;
   requiresApproval?: boolean;
+  manualOnly?: boolean;
   features?: string[];
   applyUrl?: string;
   docsUrl?: string;
@@ -495,6 +496,12 @@ function ConnectModal({
               </a>
             )}{' '}
             before connecting.
+          </div>
+        )}
+
+        {entry.manualOnly && (
+          <div className="bg-sky-50 border border-sky-200 text-sky-800 text-xs rounded-xl p-3">
+            ℹ️ This is a <span className="font-semibold">manual channel</span>. No external API to connect — once added, enter orders against it via the New Order form.
           </div>
         )}
 
