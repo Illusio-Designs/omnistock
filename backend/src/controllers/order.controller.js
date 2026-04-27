@@ -54,7 +54,11 @@ const getOrders = async (req, res) => {
     if (risk) where.rtoRiskLevel = String(risk).toUpperCase();
     if (needsApproval === 'true') where.needsApproval = true;
     else if (needsApproval === 'false') where.needsApproval = false;
-    if (fulfillment) where.fulfillmentType = String(fulfillment).toUpperCase();
+    if (fulfillment) {
+      // Comma-separated list → OR match (e.g. fulfillment=CHANNEL,DROPSHIP)
+      const types = String(fulfillment).toUpperCase().split(',').map(s => s.trim()).filter(Boolean);
+      where.fulfillmentType = types.length > 1 ? { in: types } : types[0];
+    }
     if (completeness) where.dataCompleteness = String(completeness).toUpperCase();
 
     const [orders, total] = await Promise.all([

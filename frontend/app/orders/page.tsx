@@ -6,9 +6,9 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { orderApi, customerApi, channelApi } from '@/lib/api';
 import { formatCurrency, formatDateTime, ORDER_STATUS_COLORS } from '@/lib/utils';
 import {
-  Button, Badge, Card, Modal, Input, Textarea, Select, Pagination, Tooltip, Loader,
+  Button, Badge, Card, Modal, Input, Textarea, Select, Pagination, Tooltip, Loader, Tabs,
 } from '@/components/ui';
-import { AlertTriangle, CheckCircle2, Package, Plus, Star, Trash2, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Package, Plus, Star, Trash2, XCircle, Zap, Hand, Layers } from 'lucide-react';
 import Link from 'next/link';
 
 const STATUSES = [
@@ -36,23 +36,32 @@ const riskVariant = (l?: string) => {
   return 'slate' as const;
 };
 
+type FulfillmentTab = 'all' | 'auto' | 'manual';
+const FULFILLMENT_PARAM: Record<FulfillmentTab, string | undefined> = {
+  all: undefined,
+  auto: 'CHANNEL,DROPSHIP',
+  manual: 'SELF',
+};
+
 export default function OrdersPage() {
   const qc = useQueryClient();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [status, setStatus] = useState('');
   const [risk, setRisk] = useState('');
+  const [fulfillmentTab, setFulfillmentTab] = useState<FulfillmentTab>('all');
   const [reviewResult, setReviewResult] = useState<{ id: string; type: 'success' | 'error'; message: string } | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['orders', page, pageSize, status, risk],
+    queryKey: ['orders', page, pageSize, status, risk, fulfillmentTab],
     queryFn: () => orderApi.list({
       page,
       limit: pageSize,
       status: status || undefined,
       risk: risk && risk !== 'APPROVAL' ? risk : undefined,
       needsApproval: risk === 'APPROVAL' ? 'true' : undefined,
+      fulfillment: FULFILLMENT_PARAM[fulfillmentTab],
     }).then(r => r.data),
   });
 
@@ -89,6 +98,17 @@ export default function OrdersPage() {
             New Order
           </Button>
         </div>
+
+        {/* Fulfillment tabs */}
+        <Tabs<FulfillmentTab>
+          value={fulfillmentTab}
+          onChange={(k) => { setFulfillmentTab(k); setPage(1); }}
+          items={[
+            { key: 'all',    label: 'All Orders',    icon: <Layers size={14} /> },
+            { key: 'auto',   label: 'Auto Fulfill',  icon: <Zap size={14} /> },
+            { key: 'manual', label: 'Manual',        icon: <Hand size={14} /> },
+          ]}
+        />
 
         {/* Filters */}
         <div className="flex gap-3 flex-wrap">
