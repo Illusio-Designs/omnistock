@@ -103,10 +103,17 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
   MEESHO: {
     type: 'MEESHO',
     name: 'Meesho Supplier Panel',
-    description: 'Meesho supplier-side API.',
+    description: 'Meesho supplier-side API. Authenticated by a single API key in the meesho-api-key header.',
+    docsUrl: 'https://supplier.meesho.com',
+    steps: [
+      'Sign in to Meesho Supplier Panel (https://supplier.meesho.com)',
+      'Settings → Developer → Generate API Key',
+      'Copy the key immediately — Meesho only shows it once',
+      'Paste below and click Test & Save',
+      'Tip: in dev, paste `stub` to use a built-in mock that returns sample data',
+    ],
     fields: [
-      { key: 'supplierId',  label: 'Supplier ID',  kind: 'text',     required: true, help: 'Meesho Supplier Panel → Profile → Business Details. Numeric ID shown under your store name.' },
-      { key: 'apiKey',      label: 'API Key',      kind: 'password', required: true, secret: true, help: 'Meesho Supplier Panel → Settings → Developer → Generate API Key. Copy immediately, shown once.' },
+      { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true, help: 'Meesho Supplier Panel → Settings → Developer → Generate API Key. Or use `stub` in dev to mock the response.' },
     ],
   },
 

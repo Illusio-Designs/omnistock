@@ -3,21 +3,62 @@ const axios = require('axios');
 // Credentials shape: { apiKey: "your_meesho_api_key" }
 // Get your API key: Meesho Supplier Portal → Settings → API Integration
 // Apply for API access at: https://supplier.meesho.com
+//
+// Dev stub: pass apiKey="stub" while NODE_ENV !== 'production' to short-circuit
+// every API call with deterministic fake data. Useful for end-to-end UI testing
+// without a real Meesho supplier account.
 
 const BASE = 'https://supplier.meesho.com/api/v3';
 
+function isStubMode(apiKey) {
+  return process.env.NODE_ENV !== 'production' && (apiKey || '').toLowerCase() === 'stub';
+}
+
+const STUB_ORDERS = [
+  {
+    channelOrderId: 'MSH-STUB-1001',
+    channelOrderNumber: 'MSH-STUB-1001',
+    customer: { name: 'Riya Sharma (stub)', email: null, phone: '+91 90000 11111' },
+    shippingAddress: { line1: '12 MG Road', line2: '', city: 'Bangalore', state: 'Karnataka', pincode: '560001', country: 'India' },
+    items: [{ channelSku: 'STUB-SKU-A', name: 'Cotton Kurta — Blue (M)', qty: 1, unitPrice: 499, discount: 0, tax: 0 }],
+    subtotal: 499, shippingCharge: 0, tax: 0, total: 499, discount: 0,
+    paymentMethod: 'Meesho', paymentStatus: 'PAID', status: 'PENDING',
+    orderedAt: new Date(Date.now() - 1000 * 60 * 60 * 6),
+  },
+  {
+    channelOrderId: 'MSH-STUB-1002',
+    channelOrderNumber: 'MSH-STUB-1002',
+    customer: { name: 'Arjun Mehta (stub)', email: null, phone: '+91 90000 22222' },
+    shippingAddress: { line1: '47 Park Street', line2: 'Flat 3B', city: 'Kolkata', state: 'West Bengal', pincode: '700016', country: 'India' },
+    items: [
+      { channelSku: 'STUB-SKU-B', name: 'Denim Jacket — Black (L)', qty: 1, unitPrice: 1299, discount: 100, tax: 0 },
+      { channelSku: 'STUB-SKU-C', name: 'Plain Tee — White (L)', qty: 2, unitPrice: 299, discount: 0, tax: 0 },
+    ],
+    subtotal: 1797, shippingCharge: 0, tax: 0, total: 1697, discount: 100,
+    paymentMethod: 'Meesho', paymentStatus: 'PAID', status: 'PENDING',
+    orderedAt: new Date(Date.now() - 1000 * 60 * 60 * 36),
+  },
+];
+
 class MeeshoAdapter {
   constructor(credentials) {
-    this.client = axios.create({
-      baseURL: BASE,
-      headers: {
-        'meesho-api-key': credentials.apiKey,
-        'Content-Type': 'application/json',
-      },
-    });
+    this.apiKey = credentials.apiKey;
+    this.stub = isStubMode(this.apiKey);
+    if (!this.stub) {
+      this.client = axios.create({
+        baseURL: BASE,
+        headers: {
+          'meesho-api-key': credentials.apiKey,
+          'Content-Type': 'application/json',
+        },
+      });
+    }
   }
 
   async testConnection() {
+    if (this.stub) {
+      return { success: true, totalOrders: STUB_ORDERS.length, stub: true, message: 'Meesho stub mode (NODE_ENV=development).' };
+    }
     // Fetch first page of orders to verify the key works
     const { data } = await this.client.get('/orders/v3', {
       params: { page: 1, pageSize: 1 },
@@ -27,6 +68,11 @@ class MeeshoAdapter {
 
   // sinceDate: ISO string or null
   async fetchOrders(sinceDate) {
+    if (this.stub) {
+      // Filter by sinceDate if provided to mimic real behavior
+      const cutoff = sinceDate ? new Date(sinceDate).getTime() : 0;
+      return STUB_ORDERS.filter(o => o.orderedAt.getTime() >= cutoff);
+    }
     const allOrders = [];
     let page = 1;
     const pageSize = 25;
@@ -48,6 +94,9 @@ class MeeshoAdapter {
 
   // Meesho inventory update — updates available stock for a sub_sku
   async updateInventoryLevel(sku, quantity) {
+    if (this.stub) {
+      return { updated: true, sku, stub: true, quantity };
+    }
     await this.client.put('/listings/update', {
       listings: [{ sub_sku_id: sku, inventory: quantity }],
     });
@@ -56,6 +105,7 @@ class MeeshoAdapter {
 
   // Create manifest for a list of sub_order_nos before shipping
   async createManifest(subOrderNos) {
+    if (this.stub) return { stub: true, manifestId: `MFT-STUB-${Date.now()}`, orderCount: subOrderNos.length };
     const { data } = await this.client.post('/orders/manifest/create', {
       order_ids: subOrderNos,
     });
@@ -64,11 +114,13 @@ class MeeshoAdapter {
 
   // Download shipping label PDF (returns URL or base64)
   async getLabel(subOrderNo) {
+    if (this.stub) return { stub: true, url: `https://example.com/stub-label-${subOrderNo}.pdf` };
     const { data } = await this.client.get(`/orders/${subOrderNo}/label`);
     return data;
   }
 
   async updateListing(sku, fields) {
+    if (this.stub) return { channel: 'MEESHO', sku, stub: true, fields };
     const update = { sub_sku_id: sku };
     if (fields.qty !== undefined) update.inventory = fields.qty;
     if (fields.price !== undefined) update.price = fields.price;
@@ -79,6 +131,7 @@ class MeeshoAdapter {
   }
 
   async requestReview(subOrderNo) {
+    if (this.stub) return { channel: 'MEESHO', orderId: subOrderNo, stub: true, message: 'Review request stubbed.' };
     const { data } = await this.client.post(`/orders/${subOrderNo}/review-request`, {});
     return { channel: 'MEESHO', orderId: subOrderNo, response: data };
   }
