@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Package, Warehouse, ShoppingCart, TrendingUp,
   Users, Store, Truck, FileText, BarChart2, Settings, LogOut,
   Building2, Plug, HelpCircle, Sparkles, PanelLeftClose, PanelLeftOpen, X,
-  Wallet, UserCog, Palette,
+  Wallet, UserCog, Palette, ChevronDown,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useUIStore } from '@/store/ui.store';
@@ -80,7 +80,7 @@ export function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const { logout, tenant, isPlatformAdmin } = useAuthStore();
-  const { sidebarCollapsed, toggleSidebar, mobileSidebarOpen, setMobileSidebar } = useUIStore();
+  const { sidebarCollapsed, toggleSidebar, mobileSidebarOpen, setMobileSidebar, navGroupCollapsed, toggleNavGroup } = useUIStore();
 
   // Live counts for nav badges (only on tenant nav, not platform admin nav)
   const [counts, setCounts] = useState<{ orders?: number; channels?: number }>({});
@@ -203,21 +203,45 @@ export function Sidebar({
         )}
 
         {/* ── Nav ────────────────────────────────────────── */}
-        <nav className="flex-1 px-3 py-2 space-y-4 overflow-y-auto overflow-x-hidden">
-          {navGroups.map((group) => (
+        <nav className="flex-1 px-3 py-2 space-y-3 overflow-y-auto overflow-x-hidden">
+          {navGroups.map((group) => {
+            // Auto-expand the group containing the active route, even if user
+            // previously collapsed it. Otherwise honor the persisted state.
+            const containsActive = group.items.some(
+              (it) => pathname === it.href || pathname.startsWith(it.href + '/')
+            );
+            const collapsed = !containsActive && !!navGroupCollapsed[group.label];
+
+            return (
             <div key={group.label}>
-              <div
+              {/* Group header: button on expanded sidebar, hidden on collapsed (icon-only) */}
+              <button
+                type="button"
+                onClick={() => toggleNavGroup(group.label)}
                 className={cn(
-                  'px-3 mb-1.5 text-[10px] font-bold tracking-widest uppercase text-slate-400',
+                  'w-full flex items-center justify-between px-3 mb-1 text-[10px] font-bold tracking-widest uppercase text-slate-400 hover:text-slate-700 transition-colors',
                   c && 'lg:hidden'
                 )}
+                aria-expanded={!collapsed}
               >
-                {group.label}
-              </div>
-              {/* Collapsed separator */}
+                <span>{group.label}</span>
+                <ChevronDown
+                  size={12}
+                  className={cn(
+                    'transition-transform duration-200 text-slate-400',
+                    collapsed && '-rotate-90'
+                  )}
+                />
+              </button>
+              {/* Collapsed (icon-only sidebar) separator */}
               <div className={cn('hidden h-px bg-slate-100 mx-3 mb-1', c && 'lg:block')} />
 
-              <div className="space-y-0.5">
+              <div className={cn(
+                'space-y-0.5 overflow-hidden transition-all duration-200',
+                collapsed ? 'max-h-0 opacity-0' : 'max-h-[600px] opacity-100',
+                // When the sidebar is icon-only (lg+ collapsed), always show items regardless of group collapse
+                c && 'lg:max-h-[600px] lg:opacity-100'
+              )}>
                 {group.items.map((item) => {
                   const { label, href, icon: Icon } = item;
                   const badge = (item as any).badge as number | undefined;
@@ -280,7 +304,8 @@ export function Sidebar({
                 })}
               </div>
             </div>
-          ))}
+            );
+          })}
         </nav>
 
         {/* ── Upgrade card ────────────────────────────────────── */}
