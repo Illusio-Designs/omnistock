@@ -337,9 +337,18 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
   ZEPTO: {
     type: 'ZEPTO',
     name: 'Zepto',
+    description: 'Zepto seller API (Bearer token + X-Seller-Id header). API access is partnership-gated.',
+    docsUrl: 'https://sell.zeptonow.com',
+    steps: [
+      'Apply for seller access at https://sell.zeptonow.com',
+      'Once onboarded, ask your Zepto category manager for an API key',
+      'Find your Seller ID in the Zepto Seller Portal → Account → Profile',
+      'Paste both below and click Test & Save',
+      'Tip: in dev, paste `stub` as the API key to use a built-in mock that returns sample data',
+    ],
     fields: [
-      { key: 'merchantId', label: 'Merchant ID', kind: 'text',     required: true, help: 'Zepto Brand Portal → Account → Brand Profile. Listed as Brand/Vendor Code.' },
-      { key: 'apiKey',     label: 'API Key',     kind: 'password', required: true, secret: true, help: 'Provided by your Zepto category manager — email partnerships@zepto.co.in to request.' },
+      { key: 'apiKey',   label: 'API Key',   kind: 'password', required: true, secret: true, help: 'Provided by your Zepto category manager — email partnerships@zepto.co.in to request. Or use `stub` in dev to mock the response.' },
+      { key: 'sellerId', label: 'Seller ID', kind: 'text',     required: true, help: 'Zepto Seller Portal → Account → Profile. Numeric/alphanumeric ID assigned at onboarding.' },
     ],
   },
 
