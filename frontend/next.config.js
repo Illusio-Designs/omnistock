@@ -21,7 +21,7 @@ const nextConfig = {
       },
     ];
   },
-  poweredBy: false,
+  poweredByHeader: false,
 };
 
 module.exports = nextConfig;
