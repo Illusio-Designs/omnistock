@@ -110,10 +110,9 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
       'Settings → Developer → Generate API Key',
       'Copy the key immediately — Meesho only shows it once',
       'Paste below and click Test & Save',
-      'Tip: in dev, paste `stub` to use a built-in mock that returns sample data',
     ],
     fields: [
-      { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true, help: 'Meesho Supplier Panel → Settings → Developer → Generate API Key. Or use `stub` in dev to mock the response.' },
+      { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true, help: 'Meesho Supplier Panel → Settings → Developer → Generate API Key. Shown only once at creation time.' },
     ],
   },
 
@@ -344,10 +343,9 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
       'Once onboarded, ask your Zepto category manager for an API key',
       'Find your Seller ID in the Zepto Seller Portal → Account → Profile',
       'Paste both below and click Test & Save',
-      'Tip: in dev, paste `stub` as the API key to use a built-in mock that returns sample data',
     ],
     fields: [
-      { key: 'apiKey',   label: 'API Key',   kind: 'password', required: true, secret: true, help: 'Provided by your Zepto category manager — email partnerships@zepto.co.in to request. Or use `stub` in dev to mock the response.' },
+      { key: 'apiKey',   label: 'API Key',   kind: 'password', required: true, secret: true, help: 'Provided by your Zepto category manager — email partnerships@zepto.co.in to request.' },
       { key: 'sellerId', label: 'Seller ID', kind: 'text',     required: true, help: 'Zepto Seller Portal → Account → Profile. Numeric/alphanumeric ID assigned at onboarding.' },
     ],
   },
