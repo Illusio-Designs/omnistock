@@ -18,15 +18,15 @@ async function getAppCredentials(creds) {
 // { clientId, clientSecret, refreshToken, sellerId, webhookSecret? }
 //
 // Smart Biz has NO separate API — it uses Amazon SP-API with MCF endpoints.
-// Two ways orders reach OmniStock:
+// Two ways orders reach Uniflo:
 //   1. WEBHOOK  → Smart Biz pushes order to POST /api/v1/channels/:id/webhook
-//   2. POLL     → OmniStock fetches MCF fulfillment orders from SP-API
+//   2. POLL     → Uniflo fetches MCF fulfillment orders from SP-API
 //
 // Setup steps:
 //   1. Log in to sellercentral.amazon.in → Apps & Services → Develop Apps
 //   2. Create an SP-API application and note clientId + clientSecret
 //   3. Authorize the app → get refreshToken
-//   4. In Smart Biz dashboard, set your OmniStock webhook URL
+//   4. In Smart Biz dashboard, set your Uniflo webhook URL
 //   5. Connect via POST /api/v1/channels/:id/connect with credentials above
 
 const LWA_URL = 'https://api.amazon.com/auth/o2/token';
@@ -262,7 +262,7 @@ class AmazonSmartBizAdapter {
     );
   }
 
-  // Parse an incoming Smart Biz webhook body → OmniStock raw order format
+  // Parse an incoming Smart Biz webhook body → Uniflo raw order format
   parseWebhook(body) {
     const o = body;
     return {

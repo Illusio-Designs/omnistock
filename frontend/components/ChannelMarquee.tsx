@@ -1,6 +1,6 @@
 'use client';
 
-// ── Every single channel supported by OmniStock ──────────────────────────
+// ── Every single channel supported by Uniflo ──────────────────────────
 // Keep this in sync with backend/src/data/channel-catalog.js
 export const ALL_CHANNELS = [
   // ECOM

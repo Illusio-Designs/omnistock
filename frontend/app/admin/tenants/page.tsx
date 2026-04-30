@@ -38,7 +38,7 @@ export default function AdminTenantsPage() {
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold text-slate-900">Tenants</h1>
-      <p className="text-slate-500 mt-1">All businesses signed up to OmniStock.</p>
+      <p className="text-slate-500 mt-1">All businesses signed up to Uniflo.</p>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mt-6">
         <table className="w-full text-sm">

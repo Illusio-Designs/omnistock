@@ -136,7 +136,7 @@ export default function LoginScreen() {
               Welcome back
             </Text>
             <Text className="text-slate-400 text-base mt-2 font-medium">
-              Sign in to your OmniStock account
+              Sign in to your Uniflo account
             </Text>
           </View>
 

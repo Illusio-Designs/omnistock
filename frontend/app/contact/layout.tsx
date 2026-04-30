@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Contact — OmniStock',
+  title: 'Contact — Uniflo',
   description:
-    'Get in touch with the OmniStock team. Sales inquiries, support, partnerships.',
+    'Get in touch with the Uniflo team. Sales inquiries, support, partnerships.',
   openGraph: {
-    title: 'Contact — OmniStock',
+    title: 'Contact — Uniflo',
     description:
-      'Get in touch with the OmniStock team. Sales inquiries, support, partnerships.',
+      'Get in touch with the Uniflo team. Sales inquiries, support, partnerships.',
   },
 };
 

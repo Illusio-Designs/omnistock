@@ -1,6 +1,6 @@
-# OmniStock Mobile
+# Uniflo Mobile
 
-Expo (React Native) companion app for OmniStock. Mirrors the authenticated areas
+Expo (React Native) companion app for Uniflo. Mirrors the authenticated areas
 of the web frontend — public/marketing pages (landing, about, pricing, features,
 solutions, help, contact, resources) are intentionally excluded.
 

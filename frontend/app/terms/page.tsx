@@ -2,8 +2,8 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Terms of Service — OmniStock',
-  description: 'Terms and conditions for using the OmniStock platform.',
+  title: 'Terms of Service — Uniflo',
+  description: 'Terms and conditions for using the Uniflo platform.',
 };
 
 export default function TermsPage() {
@@ -16,11 +16,11 @@ export default function TermsPage() {
 
           <div className="mt-10 prose prose-slate prose-sm max-w-none space-y-8">
             <Section title="1. Acceptance of Terms">
-              By accessing or using OmniStock (&quot;the Service&quot;), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service. These terms apply to all users, including tenants, team members, and visitors.
+              By accessing or using Uniflo (&quot;the Service&quot;), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service. These terms apply to all users, including tenants, team members, and visitors.
             </Section>
 
             <Section title="2. Description of Service">
-              OmniStock is a multi-tenant SaaS platform for multi-channel inventory management, order management, and commerce operations. The Service includes web applications, APIs, integrations with third-party marketplaces and logistics providers, and related support.
+              Uniflo is a multi-tenant SaaS platform for multi-channel inventory management, order management, and commerce operations. The Service includes web applications, APIs, integrations with third-party marketplaces and logistics providers, and related support.
             </Section>
 
             <Section title="3. Account Registration">
@@ -55,14 +55,14 @@ export default function TermsPage() {
 
             <Section title="6. Data Ownership">
               <ul className="list-disc pl-5 space-y-2 mt-3">
-                <li><strong>Your Data:</strong> You retain all ownership rights to the data you upload to OmniStock. We do not claim ownership of your business data.</li>
+                <li><strong>Your Data:</strong> You retain all ownership rights to the data you upload to Uniflo. We do not claim ownership of your business data.</li>
                 <li><strong>License:</strong> You grant us a limited license to process, store, and transmit your data solely to provide the Service.</li>
                 <li><strong>Export:</strong> You may export all your data at any time via the dashboard or REST API.</li>
               </ul>
             </Section>
 
             <Section title="7. Third-Party Integrations">
-              The Service connects to third-party marketplaces (Amazon, Flipkart, etc.) and logistics providers. These integrations are governed by their respective terms. OmniStock is not responsible for third-party service outages, API changes, or policy updates.
+              The Service connects to third-party marketplaces (Amazon, Flipkart, etc.) and logistics providers. These integrations are governed by their respective terms. Uniflo is not responsible for third-party service outages, API changes, or policy updates.
             </Section>
 
             <Section title="8. Service Availability">
@@ -70,7 +70,7 @@ export default function TermsPage() {
             </Section>
 
             <Section title="9. Limitation of Liability">
-              To the maximum extent permitted by law, OmniStock shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, data, or business opportunities arising from use of the Service.
+              To the maximum extent permitted by law, Uniflo shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, data, or business opportunities arising from use of the Service.
             </Section>
 
             <Section title="10. Termination">
@@ -82,7 +82,7 @@ export default function TermsPage() {
             </Section>
 
             <Section title="11. Intellectual Property">
-              The OmniStock name, logo, and all related trademarks, designs, and software are our intellectual property. You may not use our branding without prior written consent.
+              The Uniflo name, logo, and all related trademarks, designs, and software are our intellectual property. You may not use our branding without prior written consent.
             </Section>
 
             <Section title="12. Governing Law">
@@ -96,7 +96,7 @@ export default function TermsPage() {
             <Section title="14. Contact">
               For questions about these Terms, contact us at:
               <div className="mt-3 space-y-1">
-                <p>Email: <a href="mailto:hello@omnistock.in" className="text-emerald-600 hover:underline">hello@omnistock.in</a></p>
+                <p>Email: <a href="mailto:hello@uniflo.in" className="text-emerald-600 hover:underline">hello@uniflo.in</a></p>
                 <p>Address: Bangalore, Karnataka, India</p>
               </div>
             </Section>

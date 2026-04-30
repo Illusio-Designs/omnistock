@@ -4,7 +4,7 @@ require('dotenv').config();
 const isProd = process.env.NODE_ENV === 'production';
 
 const origins = isProd
-  ? ['https://omnistock.vercel.app']
+  ? ['https://uniflo.vercel.app']
   : [
       'http://localhost:3000',
       'http://localhost:3001',

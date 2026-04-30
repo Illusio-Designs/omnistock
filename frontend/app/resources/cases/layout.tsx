@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Case Studies — OmniStock',
+  title: 'Case Studies — Uniflo',
   description:
-    'How real brands grew GMV with OmniStock. Read success stories from D2C, fashion, and grocery.',
+    'How real brands grew GMV with Uniflo. Read success stories from D2C, fashion, and grocery.',
   openGraph: {
-    title: 'Case Studies — OmniStock',
+    title: 'Case Studies — Uniflo',
     description:
-      'How real brands grew GMV with OmniStock. Read success stories from D2C, fashion, and grocery.',
+      'How real brands grew GMV with Uniflo. Read success stories from D2C, fashion, and grocery.',
   },
 };
 

@@ -71,7 +71,7 @@ export interface SidebarProps {
 
 export function Sidebar({
   groups,
-  brandName = 'OmniStock',
+  brandName = 'Uniflo',
   brandSubtitle,
   showUpgradeCard = true,
 }: SidebarProps = {}) {

@@ -1,6 +1,6 @@
-# OmniStock Integration Setup Guide
+# Uniflo Integration Setup Guide
 
-This guide lists every channel OmniStock supports, where to register the developer app, what credentials you need, and where to paste them.
+This guide lists every channel Uniflo supports, where to register the developer app, what credentials you need, and where to paste them.
 
 > 📋 **Looking for the full channel matrix?** See [CHANNELS.md](CHANNELS.md) — every supported channel grouped by category, with status (integrated / not yet), connection type (OAuth / paste-form), and what's deliberately not included.
 
@@ -9,7 +9,7 @@ Two types of integrations:
 | Type | How it works | Example |
 |---|---|---|
 | **Platform OAuth** | Founder registers **one** public app with the provider. Every seller clicks **Authorize** — no paste forms. | Amazon, Shopify, Flipkart, Meta |
-| **Per-seller API key** | Each seller generates their own keys in the provider's dashboard and pastes them into OmniStock. | Shiprocket, Delhivery, WooCommerce, Meesho, Nykaa |
+| **Per-seller API key** | Each seller generates their own keys in the provider's dashboard and pastes them into Uniflo. | Shiprocket, Delhivery, WooCommerce, Meesho, Nykaa |
 
 Platform OAuth apps are configured **once** at **Admin → Settings** (`/admin/settings`). Per-seller API keys are entered by each tenant at **Dashboard → Channels → Connect**.
 
@@ -17,7 +17,7 @@ Platform OAuth apps are configured **once** at **Admin → Settings** (`/admin/s
 
 ## How the multi-tenant OAuth model works (concrete example: Amazon)
 
-You as the founder register **one** Amazon SP-API "Public App" for the entire OmniStock platform. Every tenant uses *that one app* — they never register their own with Amazon. Each tenant's authorization produces a per-tenant `refreshToken` that's stored encrypted, scoped to their tenant only.
+You as the founder register **one** Amazon SP-API "Public App" for the entire Uniflo platform. Every tenant uses *that one app* — they never register their own with Amazon. Each tenant's authorization produces a per-tenant `refreshToken` that's stored encrypted, scoped to their tenant only.
 
 ### Founder does once
 
@@ -25,7 +25,7 @@ You as the founder register **one** Amazon SP-API "Public App" for the entire Om
 |---|---|---|
 | Register the Amazon SP-API app in Seller Central | https://sellercentral.amazon.com/sellingpartner/developerconsole | Get **LWA Client ID** + **Client Secret** |
 | Whitelist OAuth redirect URL | Same console | `https://YOUR-DOMAIN/api/v1/oauth/amazon/callback` |
-| Paste credentials in OmniStock | `/admin/settings` → Amazon SP-API tab | Saved as `amazon.clientId`, `amazon.clientSecret` (encrypted) |
+| Paste credentials in Uniflo | `/admin/settings` → Amazon SP-API tab | Saved as `amazon.clientId`, `amazon.clientSecret` (encrypted) |
 
 That's it for the founder. The credentials live in the `settings` table and are read by `backend/src/services/channels/ecom/amazon.js` whenever ANY tenant makes a call.
 
@@ -34,10 +34,10 @@ That's it for the founder. The credentials live in the `settings` table and are 
 | Step | Where | Result |
 |---|---|---|
 | Click "Connect Amazon" | `/channels` → Amazon → Connect | Redirects to Amazon's consent screen |
-| Approve the OmniStock app | Amazon's screen (NOT OmniStock) | Returns to OmniStock with an authorization code |
-| OmniStock exchanges the code for a `refreshToken` | Automatic, via the callback URL above | Stored encrypted on the tenant's `channel` row alongside their `sellerId` and `region` |
+| Approve the Uniflo app | Amazon's screen (NOT Uniflo) | Returns to Uniflo with an authorization code |
+| Uniflo exchanges the code for a `refreshToken` | Automatic, via the callback URL above | Stored encrypted on the tenant's `channel` row alongside their `sellerId` and `region` |
 
-When OmniStock makes an API call for **tenant X**, the adapter assembles:
+When Uniflo makes an API call for **tenant X**, the adapter assembles:
 ```
 Founder's clientId  +  Founder's clientSecret  +  Tenant X's refreshToken  →  Amazon access token
 ```
@@ -57,7 +57,7 @@ For channels in §4, the founder does NOT register an app. Each tenant generates
 
 ---
 
-## Quick reference — OmniStock admin paths
+## Quick reference — Uniflo admin paths
 
 | What | Where |
 |---|---|
@@ -97,7 +97,7 @@ After you finish Part 1, sellers can sign up and self-onboard via Part 2.
 1. Create an Amazon developer account (different from a seller account) at https://developer.amazonservices.com/
 2. Go to **Apps & Services → Develop Apps** → **Add new app client**
 3. Fill in:
-   - **App name**: `OmniStock`
+   - **App name**: `Uniflo`
    - **API type**: `SP API`
    - **Roles needed**: `Product Listing`, `Inventory and Order Tracking`, `Direct-to-Consumer Shipping`, `Buyer Communication` (for Solicitations / review requests), `Multi-Channel Fulfillment` (for MCF)
 4. Register redirect URI:
@@ -111,7 +111,7 @@ After you finish Part 1, sellers can sign up and self-onboard via Part 2.
    - **LWA Client Secret** — shown once, save immediately
 6. Submit your app for review. Amazon takes **2–4 weeks** to approve a public SP-API app. Draft apps work on your own seller account immediately.
 
-### Where to paste in OmniStock
+### Where to paste in Uniflo
 
 **Admin → Settings → Amazon**:
 
@@ -124,7 +124,7 @@ After you finish Part 1, sellers can sign up and self-onboard via Part 2.
 
 ### What sellers see
 
-Each seller goes to **Channels → Amazon Smart Biz → Connect** → picks their region → clicks **Authorize with Amazon Smart Biz**. A popup opens Seller Central, they approve, and the popup auto-closes. OmniStock stores per-seller `{ sellerId, refreshToken, region }` encrypted.
+Each seller goes to **Channels → Amazon Smart Biz → Connect** → picks their region → clicks **Authorize with Amazon Smart Biz**. A popup opens Seller Central, they approve, and the popup auto-closes. Uniflo stores per-seller `{ sellerId, refreshToken, region }` encrypted.
 
 ### Docs
 
@@ -146,7 +146,7 @@ Each seller goes to **Channels → Amazon Smart Biz → Connect** → picks thei
 1. Create a Partner account at https://partners.shopify.com
 2. **Apps → Create app → Create app manually**
 3. Fill in:
-   - **App name**: `OmniStock`
+   - **App name**: `Uniflo`
    - **App URL**: `https://YOUR-DOMAIN/channels`
    - **Allowed redirection URLs**: `https://YOUR-DOMAIN/api/v1/oauth/shopify/callback`
 4. Configure **Admin API scopes**: `read_products, write_products, read_inventory, write_inventory, read_orders, write_orders, read_fulfillments, write_fulfillments, read_customers`
@@ -171,7 +171,7 @@ Each seller goes to **Channels → Amazon Smart Biz → Connect** → picks thei
 - Admin API: https://shopify.dev/docs/api/admin-rest
 - Webhooks: https://shopify.dev/docs/apps/build/webhooks
 
-> **Status**: Shopify OAuth flow in OmniStock is **pending** — the settings slot exists but the `/oauth/shopify/start` + `/callback` routes are not yet wired. Sellers currently use the per-store paste form.
+> **Status**: Shopify OAuth flow in Uniflo is **pending** — the settings slot exists but the `/oauth/shopify/start` + `/callback` routes are not yet wired. Sellers currently use the per-store paste form.
 
 ---
 
@@ -307,7 +307,7 @@ Also set `NEXT_PUBLIC_GOOGLE_CLIENT_ID` in `frontend/.env.local` so the browser-
 | `razorpay.keySecret`     | Key Secret |
 | `razorpay.webhookSecret` | Webhook secret you generated |
 
-Leave all three blank during development — OmniStock runs in **stub mode** and the billing flow works without real charges.
+Leave all three blank during development — Uniflo runs in **stub mode** and the billing flow works without real charges.
 
 ### Docs
 
@@ -340,9 +340,9 @@ Leave all three blank during development — OmniStock runs in **stub mode** and
 | `smtp.port` | `587` |
 | `smtp.user` | Your SMTP username / access key |
 | `smtp.pass` | Your SMTP password / secret |
-| `smtp.from` | `OmniStock <no-reply@yourdomain.com>` |
+| `smtp.from` | `Uniflo <no-reply@yourdomain.com>` |
 
-Leave blank → OmniStock logs every email to the console (dev stub mode).
+Leave blank → Uniflo logs every email to the console (dev stub mode).
 
 ---
 
@@ -350,10 +350,10 @@ Leave blank → OmniStock logs every email to the console (dev stub mode).
 # PART 2 — PER-SELLER SETUP (each tenant does this themselves)
 # ════════════════════════════════════════════════════════════
 
-Each tenant logs into their OmniStock dashboard and connects channels they actually sell on. There are two flavors:
+Each tenant logs into their Uniflo dashboard and connects channels they actually sell on. There are two flavors:
 
 - **OAuth channels** (Amazon, Shopify, Flipkart, Meta) — tenant clicks "Authorize", goes through the provider's consent screen, comes back. They never paste secrets — your founder app from Part 1 handles it.
-- **Paste-form channels** (everything in §4 below) — tenant generates their own keys in the channel's seller portal and pastes them into OmniStock.
+- **Paste-form channels** (everything in §4 below) — tenant generates their own keys in the channel's seller portal and pastes them into Uniflo.
 
 The Connect modal on `/channels/<id>` shows each required field. Hover the **?** icon next to any field to see exactly where to find that credential in the channel's seller portal.
 
@@ -595,7 +595,7 @@ Each tenant enters their own credentials at **Dashboard → Channels → pick ch
 
 ## 4.6 Custom Webhook (any system you own)
 
-Use this when you have your own platform that should POST orders to OmniStock.
+Use this when you have your own platform that should POST orders to Uniflo.
 
 **Fields**: `webhookSecret` (any long random string you pick)
 
@@ -606,7 +606,7 @@ POST https://YOUR-DOMAIN/api/v1/webhooks/channels/<channelId>
 
 **Signing** (required): HMAC-SHA256 of the raw request body with your `webhookSecret`, sent in the header:
 ```
-x-omnistock-signature: <hex digest>
+x-uniflo-signature: <hex digest>
 ```
 
 **Payload shape**: see [backend/src/services/channels/ownstore/custom-webhook.js](../backend/src/services/channels/ownstore/custom-webhook.js) `parseWebhook()` — accepts a fairly flexible JSON format (channelOrderId, items[], customer, shippingAddress, total, etc.).
@@ -615,12 +615,12 @@ x-omnistock-signature: <hex digest>
 
 # 5. Webhook URLs summary
 
-Every seller's channel has its own public webhook endpoint. Paste the URL from OmniStock → Channel detail → Connect modal into the external system's webhook settings.
+Every seller's channel has its own public webhook endpoint. Paste the URL from Uniflo → Channel detail → Connect modal into the external system's webhook settings.
 
 | Use case | URL pattern |
 |---|---|
 | Per-channel order webhook (Smart Biz, Shopify, CUSTOM_WEBHOOK, etc.) | `POST /api/v1/webhooks/channels/<channelId>` |
-| Razorpay → OmniStock payments | `POST /api/v1/payments/webhook` |
+| Razorpay → Uniflo payments | `POST /api/v1/payments/webhook` |
 | Amazon OAuth redirect | `GET  /api/v1/oauth/amazon/callback` |
 | (Pending) Shopify OAuth redirect | `GET  /api/v1/oauth/shopify/callback` |
 | (Pending) Flipkart OAuth redirect | `GET  /api/v1/oauth/flipkart/callback` |
@@ -653,7 +653,7 @@ SMTP_HOST=email-smtp.us-east-1.amazonaws.com
 SMTP_PORT=587
 SMTP_USER=AKIAxxxxxx
 SMTP_PASS=xxxxxxxxxxxxx
-SMTP_FROM=OmniStock <no-reply@example.com>
+SMTP_FROM=Uniflo <no-reply@example.com>
 ```
 
 **Recommended**: in production, use the database (Admin → Settings) rather than .env — rotation, audit, and multi-node deploys all get easier because you're not editing config files and restarting processes.

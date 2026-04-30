@@ -275,7 +275,7 @@ const SETTINGS_CATALOG = [
   { key: 'smtp.port', category: 'smtp', label: 'SMTP Port', isSecret: false },
   { key: 'smtp.user', category: 'smtp', label: 'SMTP User', isSecret: false },
   { key: 'smtp.pass', category: 'smtp', label: 'SMTP Password', isSecret: true },
-  { key: 'smtp.from', category: 'smtp', label: 'From Address', isSecret: false, description: 'Display name and email, e.g. OmniStock <no-reply@example.com>' },
+  { key: 'smtp.from', category: 'smtp', label: 'From Address', isSecret: false, description: 'Display name and email, e.g. Uniflo <no-reply@example.com>' },
 
   // Google OAuth (sign-in)
   { key: 'google.clientId',     category: 'google', label: 'Google Client ID',      isSecret: false },

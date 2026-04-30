@@ -184,7 +184,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 items-start mb-12">
             <div className="lg:col-span-3" data-reveal="left">
               <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
-                Why OmniStock
+                Why Uniflo
               </div>
               <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 leading-tight">
                 The Commerce Challenge<br />
@@ -377,7 +377,7 @@ export default function LandingPage() {
                 <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
                   <Globe size={14} className="text-emerald-600" />
                 </div>
-                hello@omnistock.in
+                hello@uniflo.in
               </div>
             </div>
             <Link

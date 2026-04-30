@@ -1,11 +1,11 @@
-# OmniStock Channel Inventory
+# Uniflo Channel Inventory
 
 Complete list of every channel registered in [`backend/src/data/channel-catalog.js`](../backend/src/data/channel-catalog.js).
 
 **Status legend:**
 - ✅ **Integrated** — adapter is built, sellers can connect today
 - 🔐 **OAuth** — founder registers ONE app at `/admin/settings`, sellers click "Authorize"
-- 📋 **Paste-form** — each seller generates keys in the channel's portal and pastes them into OmniStock
+- 📋 **Paste-form** — each seller generates keys in the channel's portal and pastes them into Uniflo
 - 📝 **Manual** — no external API; tenant connects once, then records orders via the New Order form
 - ⚠️ **Approval required** — channel requires a partnership / seller approval before API access is granted
 
@@ -134,7 +134,7 @@ For setup steps see [INTEGRATIONS.md](INTEGRATIONS.md).
 
 | Channel | Status | Connection | Features | Notes |
 |---|:---:|:---:|---|---|
-| Custom Webhook | ✅ | 📋 Webhook + HMAC | webhook, hmac validation, field mapping | Universal receiver. POST `/api/v1/channels/:id/webhook` with `x-omnistock-signature` HMAC-SHA256 header. |
+| Custom Webhook | ✅ | 📋 Webhook + HMAC | webhook, hmac validation, field mapping | Universal receiver. POST `/api/v1/channels/:id/webhook` with `x-uniflo-signature` HMAC-SHA256 header. |
 | Other | ✅ | 📝 Manual | manual | Catch-all for one-off / experimental channels. Manual order entry. |
 
 ---

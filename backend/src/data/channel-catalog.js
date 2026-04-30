@@ -1,4 +1,4 @@
-// Master catalog of every channel OmniStock supports.
+// Master catalog of every channel Uniflo supports.
 // `integrated`  → adapter is built and working
 // `comingSoon`  → planned, adapter not yet built
 // `requiresApproval` → needs seller/partner approval from the platform
@@ -714,7 +714,7 @@ const CATALOG = [
       { key: 'webhookSecret', label: 'Webhook Secret (HMAC-SHA256)', type: 'password', required: false },
       { key: 'fieldMap',      label: 'Field Map (JSON)',              type: 'textarea', required: false },
     ],
-    note: 'Point your system to POST /api/v1/channels/:id/webhook. If a secret is set, send x-omnistock-signature header with hex HMAC-SHA256 of the raw body.',
+    note: 'Point your system to POST /api/v1/channels/:id/webhook. If a secret is set, send x-uniflo-signature header with hex HMAC-SHA256 of the raw body.',
   },
   {
     type: 'OTHER',

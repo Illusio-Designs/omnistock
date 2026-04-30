@@ -37,7 +37,7 @@ async function handleIncomingWebhook(channelId, req, res) {
   if (typeof adapter.validateWebhookSignature === 'function') {
     const rawBody = JSON.stringify(req.body);
     const sig =
-      req.headers['x-omnistock-signature'] ||
+      req.headers['x-uniflo-signature'] ||
       req.headers['x-hub-signature-256'] || // Meta / FB / Insta / WhatsApp
       req.headers['x-shopify-hmac-sha256'] ||
       req.headers['x-amz-signature'] ||

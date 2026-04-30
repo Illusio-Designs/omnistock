@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "OmniStock",
-    "slug": "omnistock",
-    "scheme": "omnistock",
+    "name": "Uniflo",
+    "slug": "uniflo",
+    "scheme": "uniflo",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "ios": { "supportsTablet": true, "bundleIdentifier": "com.omnistock.app" },
-    "android": { "package": "com.omnistock.app" },
+    "ios": { "supportsTablet": true, "bundleIdentifier": "com.uniflo.app" },
+    "android": { "package": "com.uniflo.app" },
     "web": { "bundler": "metro" },
     "plugins": ["expo-router", "expo-secure-store"],
     "extra": {

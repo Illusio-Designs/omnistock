@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Features — OmniStock',
+  title: 'Features — Uniflo',
   description:
     'Explore 50+ features including multi-channel sync, real-time inventory, smart reconciliation, returns management, and more.',
   openGraph: {
-    title: 'Features — OmniStock',
+    title: 'Features — Uniflo',
     description:
       'Explore 50+ features including multi-channel sync, real-time inventory, smart reconciliation, returns management, and more.',
   },

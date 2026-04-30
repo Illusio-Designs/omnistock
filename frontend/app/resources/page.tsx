@@ -35,7 +35,7 @@ export default function ResourcesPage() {
             Learn. Build. <span className="gradient-text">Scale.</span>
           </h1>
           <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto">
-            Guides, tutorials, case studies, and product updates — everything you need to succeed with OmniStock.
+            Guides, tutorials, case studies, and product updates — everything you need to succeed with Uniflo.
           </p>
         </div>
       </section>

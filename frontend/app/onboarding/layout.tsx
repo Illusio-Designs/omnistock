@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Get Started — OmniStock',
+  title: 'Get Started — Uniflo',
   description:
-    'Create your OmniStock account and connect your first channel in minutes.',
+    'Create your Uniflo account and connect your first channel in minutes.',
   robots: { index: false, follow: false },
   openGraph: {
-    title: 'Get Started — OmniStock',
+    title: 'Get Started — Uniflo',
     description:
-      'Create your OmniStock account and connect your first channel in minutes.',
+      'Create your Uniflo account and connect your first channel in minutes.',
   },
 };
 

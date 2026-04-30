@@ -97,7 +97,7 @@ export function ConnectChannelModal({
       const top  = window.screenY + (window.innerHeight - h) / 2;
       popupRef.current = window.open(
         url,
-        'omnistock-oauth',
+        'uniflo-oauth',
         `width=${w},height=${h},left=${left},top=${top}`
       );
       if (!popupRef.current) {

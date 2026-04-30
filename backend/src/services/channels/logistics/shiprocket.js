@@ -65,7 +65,7 @@ class ShiprocketAdapter {
     }));
   }
 
-  // Create a forward shipment for an OmniStock order
+  // Create a forward shipment for an Uniflo order
   async createShipment(order, channel, warehouseAddress) {
     const payload = {
       order_id: order.orderNumber,

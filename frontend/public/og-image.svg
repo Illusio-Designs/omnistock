@@ -8,6 +8,6 @@
   <rect width="1200" height="630" fill="url(#bg)"/>
   <rect x="60" y="60" width="1080" height="510" rx="24" fill="white" fill-opacity="0.08"/>
   <path d="M540 240L480 270l60 30 60-30-60-30zM480 330l60 30 60-30M480 300l60 30 60-30" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <text x="600" y="410" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="56" fill="white">OmniStock</text>
+  <text x="600" y="410" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="56" fill="white">Uniflo</text>
   <text x="600" y="460" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="400" font-size="22" fill="white" fill-opacity="0.8">Multi-channel Inventory &amp; Order Management</text>
 </svg>

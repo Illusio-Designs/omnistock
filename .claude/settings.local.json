@@ -78,7 +78,12 @@
       "Bash(npx eslint *)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(kill 37743)",
+      "Bash(grep -rIl --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=dist --exclude='package-lock.json' -i 'omnistock' .)",
+      "Read(//tmp/**)",
+      "Bash(xargs perl *)",
+      "Bash(git -C /Users/Development/GitHub/omnistock diff --stat)"
     ],
     "additionalDirectories": [
       "\\tmp"
