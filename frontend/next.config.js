@@ -22,6 +22,16 @@ const nextConfig = {
     ];
   },
   poweredByHeader: false,
+  // Memory tuning — webpack's persistent file cache gzips bundles to disk
+  // every compile. On low-RAM / low-pagefile Windows boxes this triggers
+  // RangeError: Array buffer allocation failed in node:zlib. Switching to
+  // in-memory cache trades cold-start speed for working dev sessions.
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.cache = { type: 'memory' };
+    }
+    return config;
+  },
 };
 
 module.exports = nextConfig;
