@@ -101,7 +101,7 @@ export function Tooltip({ content, children, side = 'top', delay = 150, classNam
             pointerEvents: 'none',
           }}
           className={cn(
-            'px-2.5 py-1.5 text-[11px] font-semibold text-white bg-slate-900 rounded-md shadow-xl',
+            'px-2.5 py-1.5 text-[11px] font-semibold text-white bg-[#0B1220] rounded-md shadow-xl',
             wrap ? 'max-w-xs leading-snug whitespace-normal break-words' : 'whitespace-nowrap',
             'animate-fade-in',
             transformClass,

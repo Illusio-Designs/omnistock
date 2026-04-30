@@ -59,7 +59,7 @@ export default function AdminTicketDetailPage() {
 
       <div className="flex items-start justify-between gap-4 flex-wrap mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{ticket.subject}</h1>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent">{ticket.subject}</h1>
           <div className="flex items-center gap-2 flex-wrap mt-2 text-xs">
             <span className="font-mono text-slate-500">#{ticket.id.slice(0, 8)}</span>
             <span className="font-bold text-slate-700">{ticket.tenant?.businessName}</span>

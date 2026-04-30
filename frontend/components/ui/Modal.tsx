@@ -37,12 +37,12 @@ export function Modal({ open, onClose, title, description, children, footer, siz
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B1220]/60 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     >
       <div
         className={cn(
-          'w-full bg-white rounded-3xl shadow-2xl shadow-slate-900/20 overflow-hidden animate-slide-up',
+          'w-full bg-white rounded-3xl shadow-2xl shadow-[#0B1220]/30 overflow-hidden animate-slide-up',
           SIZES[size]
         )}
         onClick={(e) => e.stopPropagation()}

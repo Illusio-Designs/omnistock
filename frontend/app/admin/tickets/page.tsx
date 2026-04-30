@@ -36,7 +36,7 @@ export default function AdminTicketsPage() {
     <div className="p-8">
       <div className="mb-6 flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent flex items-center gap-2">
             <LifeBuoy size={24} className="text-emerald-600" /> Support tickets
           </h1>
           <p className="text-slate-500 mt-1">All open and closed tickets across every tenant.</p>

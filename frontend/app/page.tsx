@@ -72,7 +72,7 @@ export default function LandingPage() {
             {heroBadge}
           </div>
 
-          <h1 className="mt-6 text-5xl md:text-7xl font-bold tracking-tight text-slate-900 leading-[1.1] max-w-4xl mx-auto animate-slide-up">
+          <h1 className="mt-6 text-5xl md:text-7xl font-bold tracking-tight bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent leading-[1.1] max-w-4xl mx-auto animate-slide-up">
             {hero?.title || 'Data-Driven Commerce'}<br />
             <span className="gradient-text">{hero?.subtitle || 'Powered by AI'}</span>
           </h1>
@@ -91,7 +91,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href={ctaSecondary.href}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-full transition-all group"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#0B1220] hover:bg-[#0B1220]/90 text-white text-sm font-semibold rounded-full transition-all group"
             >
               <Play size={12} fill="white" className="group-hover:scale-125 transition-transform" /> {ctaSecondary.label}
             </Link>
@@ -301,7 +301,7 @@ export default function LandingPage() {
                     className={`mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all hover:-translate-y-0.5 ${
                       highlight
                         ? 'bg-white text-emerald-700 hover:bg-emerald-50'
-                        : 'bg-slate-900 text-white hover:bg-slate-800'
+                        : 'bg-[#0B1220] text-white hover:bg-[#0B1220]/90'
                     }`}
                   >
                     Get Started <ArrowRight size={12} />
@@ -503,8 +503,8 @@ function DashboardMockup() {
           <div className="flex items-center justify-center h-20 mt-2">
             <div className="relative w-16 h-16">
               <svg className="w-16 h-16 -rotate-90" viewBox="0 0 36 36">
-                <circle cx="18" cy="18" r="16" fill="none" stroke="#d1fae5" strokeWidth="4" />
-                <circle cx="18" cy="18" r="16" fill="none" stroke="#10b981" strokeWidth="4" strokeDasharray="68 100" strokeLinecap="round" />
+                <circle cx="18" cy="18" r="16" fill="none" stroke="#D8F8EC" strokeWidth="4" />
+                <circle cx="18" cy="18" r="16" fill="none" stroke="#06D4B8" strokeWidth="4" strokeDasharray="68 100" strokeLinecap="round" />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-900">
                 68%

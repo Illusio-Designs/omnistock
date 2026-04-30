@@ -51,7 +51,7 @@ export default function ChannelRequestsPage() {
             <ArrowLeft size={18} />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Channel Requests</h1>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent">Channel Requests</h1>
             <p className="text-sm text-gray-500 mt-1">{requests?.length || 0} total requests</p>
           </div>
         </div>

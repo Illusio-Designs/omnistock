@@ -147,12 +147,12 @@ export default function BillingPage() {
     <DashboardLayout>
       <div className="p-6 max-w-6xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Billing & Subscription</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent">Billing & Subscription</h1>
           <p className="text-slate-500 mt-1">Manage your plan, usage and pay-as-you-go.</p>
         </div>
 
         {/* Current plan */}
-        <div className="bg-gradient-to-br from-slate-900 to-emerald-900 text-white p-6 rounded-3xl shadow-xl">
+        <div className="bg-gradient-to-br from-[#0B1220] to-emerald-600 text-white p-6 rounded-3xl shadow-xl">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
               <div className="text-xs uppercase tracking-wider text-emerald-300 font-bold">Current plan</div>

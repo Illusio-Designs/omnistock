@@ -79,7 +79,7 @@ export default function LoginPage() {
             <span className="font-bold text-lg text-slate-900">Uniflo</span>
           </Link>
 
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Welcome back</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent tracking-tight">Welcome back</h1>
           <p className="text-sm text-slate-500 mt-1">Sign in to continue to your dashboard</p>
 
           <form onSubmit={handleLogin} className="mt-8 space-y-4">
@@ -155,7 +155,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right: marketing panel */}
-      <div className="hidden lg:flex flex-1 relative overflow-hidden bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700">
+      <div className="hidden lg:flex flex-1 relative overflow-hidden bg-gradient-to-br from-[#0B1220] via-[#0B1220] to-emerald-600">
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-white/10 blur-3xl -translate-y-1/3 translate-x-1/4" />
         <div className="absolute bottom-0 left-1/4 w-96 h-96 rounded-full bg-emerald-300/20 blur-3xl translate-y-1/2" />
 

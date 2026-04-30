@@ -35,7 +35,7 @@ export default function UiKitPage() {
     <DashboardLayout>
       <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">UI Kit</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent tracking-tight">UI Kit</h1>
           <p className="text-slate-500 mt-1">
             Live, interactive showcase of every shared component in <code>@/components/ui</code>.
             Use this page when designing new screens to see what's available.

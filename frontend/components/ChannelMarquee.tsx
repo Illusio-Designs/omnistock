@@ -18,6 +18,10 @@ export const ALL_CHANNELS = [
   { name: 'LimeRoad',        category: 'ECOM',      color: 'from-lime-500 to-green-600',       logo: '/logos/limeroad.png' },
   { name: 'eBay',            category: 'ECOM',      color: 'from-red-500 to-yellow-500',       logo: '/logos/ebay.png' },
   { name: 'Etsy',            category: 'ECOM',      color: 'from-orange-500 to-rose-500',      logo: '/logos/etsy.svg' },
+  { name: 'FirstCry',        category: 'ECOM',      color: 'from-pink-500 to-rose-500',        logo: '/logos/firstcry.png' },
+  { name: 'Pepperfry',       category: 'ECOM',      color: 'from-amber-500 to-orange-600',     logo: '/logos/pepperfry.png' },
+  { name: 'Croma',           category: 'ECOM',      color: 'from-emerald-600 to-teal-700',     logo: '/logos/croma.png' },
+  { name: 'Tata Neu',        category: 'ECOM',      color: 'from-violet-500 to-indigo-600',    logo: '/logos/tataneu.png' },
   // QUICKCOM
   { name: 'Blinkit',         category: 'QUICKCOM',  color: 'from-yellow-400 to-amber-500',     logo: '/logos/blinkit.png' },
   { name: 'Zepto',           category: 'QUICKCOM',  color: 'from-violet-500 to-purple-600',    logo: '/logos/zepto.png' },

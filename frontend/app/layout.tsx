@@ -16,7 +16,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://uniflo.vercel.app'
 
 // ── Viewport (separate export in Next 14+) ──
 export const viewport: Viewport = {
-  themeColor: '#059669',
+  themeColor: '#06D4B8',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,

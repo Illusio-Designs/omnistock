@@ -57,8 +57,11 @@ export default function DashboardPage() {
         {/* ── Welcome header ────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
-              Welcome back 👋
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+              <span className="bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent">
+                Welcome back
+              </span>{' '}
+              <span aria-hidden>👋</span>
             </h1>
             <p className="text-sm text-slate-500 mt-1">
               Monitor and control what happens with your commerce today.
@@ -234,8 +237,8 @@ export default function DashboardPage() {
                 <AreaChart data={CHART_DATA} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorEarnings" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                      <stop offset="0%" stopColor="#06D4B8" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#06D4B8" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
@@ -245,7 +248,7 @@ export default function DashboardPage() {
                     contentStyle={{ backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', boxShadow: '0 4px 20px rgba(15,23,42,0.08)', fontSize: 12, fontWeight: 600 }}
                     formatter={(v: number) => [`$${v.toLocaleString()}`, 'Earnings']}
                   />
-                  <Area type="monotone" dataKey="earnings" stroke="#10b981" strokeWidth={2.5} fill="url(#colorEarnings)" activeDot={{ r: 6, fill: '#10b981', stroke: 'white', strokeWidth: 3 }} />
+                  <Area type="monotone" dataKey="earnings" stroke="#06D4B8" strokeWidth={2.5} fill="url(#colorEarnings)" activeDot={{ r: 6, fill: '#06D4B8', stroke: 'white', strokeWidth: 3 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

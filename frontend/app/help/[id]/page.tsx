@@ -94,7 +94,7 @@ export default function TicketDetailPage() {
     return (
       <DashboardLayout>
         <div className="text-center py-24">
-          <h1 className="text-2xl font-bold text-slate-900">Ticket not found</h1>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent">Ticket not found</h1>
           <Link href="/help" className="inline-flex items-center gap-1.5 mt-4 text-emerald-600 font-bold">
             <ArrowLeft size={14} /> Back to help
           </Link>
@@ -114,7 +114,7 @@ export default function TicketDetailPage() {
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0">
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{ticket.subject}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent tracking-tight">{ticket.subject}</h1>
             <div className="flex items-center gap-2 flex-wrap mt-2">
               <span className="text-xs font-mono font-bold text-slate-500">#{ticket.id.slice(0, 8)}</span>
               <Badge variant={ticket.status === 'OPEN' ? 'rose' : ticket.status === 'PENDING' ? 'amber' : 'emerald'}>

@@ -7,12 +7,12 @@
     --background: 248 250 250;
     --foreground: 15 23 42;
 
-    /* Brand — emerald/green system */
-    --brand:         160 84% 39%;   /* emerald-600 */
-    --brand-2:       158 64% 52%;   /* emerald-500 */
-    --brand-3:       152 76% 44%;   /* green-500 */
-    --brand-soft:    152 81% 96%;   /* emerald-50 */
-    --brand-ring:    158 64% 52%;
+    /* Brand — Uniflo teal/cyan system */
+    --brand:         170 94% 43%;   /* #06D4B8 brand teal */
+    --brand-2:       189 94% 43%;   /* #06B6D4 brand cyan */
+    --brand-3:       170 90% 55%;   /* lighter brand teal */
+    --brand-soft:    170 65% 96%;   /* very light teal bg */
+    --brand-ring:    170 94% 43%;
 
     --accent-mint:   158 75% 55%;
     --accent-amber:  38  95% 60%;
@@ -34,29 +34,29 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-image:
-      radial-gradient(circle at 10% 10%, rgba(16, 185, 129, 0.05), transparent 40%),
-      radial-gradient(circle at 90% 90%, rgba(52, 211, 153, 0.04), transparent 40%);
+      radial-gradient(circle at 10% 10%, rgba(6, 212, 184, 0.05), transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(6, 182, 212, 0.04), transparent 40%);
     background-attachment: fixed;
   }
 
   * { border-color: hsl(var(--border)); }
 
   ::selection {
-    background: hsl(160 84% 39% / 0.18);
-    color: hsl(160 84% 25%);
+    background: hsl(170 94% 43% / 0.18);
+    color: hsl(189 94% 25%);
   }
 
   /* Premium scrollbars */
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, rgba(16, 185, 129, 0.35), rgba(5, 150, 105, 0.35));
+    background: linear-gradient(180deg, rgba(6, 212, 184, 0.35), rgba(6, 182, 212, 0.35));
     border-radius: 10px;
     border: 2px solid transparent;
     background-clip: padding-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, rgba(16, 185, 129, 0.6), rgba(5, 150, 105, 0.6));
+    background: linear-gradient(180deg, rgba(6, 212, 184, 0.6), rgba(6, 182, 212, 0.6));
     background-clip: padding-box;
     border: 2px solid transparent;
   }
@@ -71,7 +71,7 @@
   }
 
   .card-premium {
-    @apply bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_20px_rgba(15,23,42,0.04)] hover:shadow-[0_8px_32px_rgba(16,185,129,0.08)] transition-all duration-300;
+    @apply bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_20px_rgba(15,23,42,0.04)] hover:shadow-[0_8px_32px_rgba(6,212,184,0.08)] transition-all duration-300;
   }
 
   .btn-primary {
@@ -108,7 +108,7 @@
   }
 
   .gradient-text {
-    @apply bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-[#06D4B8] via-[#06B6D4] to-[#0891b2] bg-clip-text text-transparent;
   }
 }
 

@@ -40,7 +40,7 @@ export default function FeaturesPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 uppercase tracking-wider mb-4">
             <Sparkles size={12} /> Features
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-slate-900 leading-tight">
+          <h1 className="text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent leading-tight">
             Everything you need to<br />
             <span className="gradient-text">run commerce.</span>
           </h1>

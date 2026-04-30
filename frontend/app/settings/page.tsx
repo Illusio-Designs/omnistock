@@ -133,7 +133,7 @@ export default function SettingsPage() {
     <DashboardLayout>
       <div className="space-y-5 animate-slide-up max-w-5xl">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Settings</h1>
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent tracking-tight">Settings</h1>
           <p className="text-sm text-slate-500 mt-1">Manage your account and workspace</p>
         </div>
 

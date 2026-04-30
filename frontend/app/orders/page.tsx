@@ -91,7 +91,7 @@ export default function OrdersPage() {
       <div className="space-y-5 animate-slide-up">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Orders</h1>
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent tracking-tight">Orders</h1>
             <p className="text-sm text-slate-500 mt-1">{data?.total || 0} total orders</p>
           </div>
           <Button leftIcon={<Plus size={15} />} onClick={() => setModalOpen(true)}>

@@ -83,7 +83,12 @@
       "Bash(grep -rIl --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=dist --exclude='package-lock.json' -i 'omnistock' .)",
       "Read(//tmp/**)",
       "Bash(xargs perl *)",
-      "Bash(git -C /Users/Development/GitHub/omnistock diff --stat)"
+      "Bash(git -C /Users/Development/GitHub/omnistock diff --stat)",
+      "Bash(xargs -0 perl -pi -e 'if \\(/<h1[\\\\s>]/\\) { s/\\\\btext-slate-900\\\\b/bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent/g; s/\\\\btext-gray-900\\\\b/bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent/g; }')",
+      "Bash(perl -pi -e 's/#10b981/#06D4B8/gi; s/#059669/#06D4B8/g; s/#34d399/#2BD5B6/gi; s/#d1fae5/#D8F8EC/g; s/#0d9488/#06B6D4/g' app/layout.tsx app/page.tsx app/dashboard/page.tsx public/favicon.svg public/og-image.svg)",
+      "Bash(perl -pi -e ' *)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(echo \"tsc-exit:$?\")"
     ],
     "additionalDirectories": [
       "\\tmp"

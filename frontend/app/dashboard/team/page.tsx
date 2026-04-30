@@ -20,7 +20,7 @@ export default function TeamPage() {
   return (
     <DashboardLayout>
       <div className="p-6 max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-slate-900">Team</h1>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent">Team</h1>
         <p className="text-slate-500 mt-1">Manage users and role-based access.</p>
 
         <div className="mt-6">

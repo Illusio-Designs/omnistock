@@ -15,6 +15,20 @@ const config: Config = {
         sans: ['var(--font-jakarta)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       colors: {
+        // Brand override: every existing `emerald-*` class now renders in the
+        // Uniflo teal/cyan palette without touching component code.
+        emerald: {
+          50:  '#F0FCF8',
+          100: '#D8F8EC',
+          200: '#A8F0DA',
+          300: '#6CE5C7',
+          400: '#2BD5B6',
+          500: '#06D4B8', // brand teal
+          600: '#04AB94', // brand teal — hover/dark
+          700: '#077F70',
+          800: '#0A5A50',
+          900: '#0B3D38',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

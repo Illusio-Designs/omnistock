@@ -166,7 +166,7 @@ export default function PricingPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 uppercase tracking-wider mb-4">
             <Sparkles size={12} /> Simple Pricing
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-slate-900 leading-tight">
+          <h1 className="text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent leading-tight">
             Pick a plan. <span className="gradient-text">Scale fearlessly.</span>
           </h1>
           <p className="mt-5 text-lg text-slate-600 max-w-2xl mx-auto">
@@ -208,7 +208,7 @@ export default function PricingPage() {
               key={plan.name}
               className={`relative rounded-3xl p-8 ${
                 plan.highlight
-                  ? 'bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 text-white shadow-2xl shadow-emerald-500/30 scale-[1.02] border border-white/10'
+                  ? 'bg-gradient-to-br from-[#0B1220] via-[#0B1220] to-emerald-600 text-white shadow-2xl shadow-emerald-500/30 scale-[1.02] border border-white/10'
                   : 'bg-white border border-slate-200 shadow-[0_2px_20px_rgba(15,15,30,0.04)]'
               }`}
             >
@@ -250,7 +250,7 @@ export default function PricingPage() {
                 className={`mt-6 flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl font-bold text-sm transition-all ${
                   plan.highlight
                     ? 'bg-white text-emerald-700 hover:bg-emerald-50 shadow-lg'
-                    : 'bg-slate-900 text-white hover:bg-slate-800'
+                    : 'bg-[#0B1220] text-white hover:bg-[#0B1220]/90'
                 }`}
               >
                 {plan.cta} <ArrowRight size={14} />

@@ -37,7 +37,7 @@ function renderMarkdown(md: string): string {
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-emerald-600 underline hover:text-emerald-700">$1</a>');
 
   for (const line of lines) {
-    if (/^#{1}\s+/.test(line)) { if (inList) { out.push('</ul>'); inList = false; } out.push(`<h1 class="text-3xl font-bold mt-8 mb-4 text-slate-900">${inline(line.replace(/^#\s+/, ''))}</h1>`); continue; }
+    if (/^#{1}\s+/.test(line)) { if (inList) { out.push('</ul>'); inList = false; } out.push(`<h1 class="text-3xl font-bold mt-8 mb-4 bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent">${inline(line.replace(/^#\s+/, ''))}</h1>`); continue; }
     if (/^#{2}\s+/.test(line)) { if (inList) { out.push('</ul>'); inList = false; } out.push(`<h2 class="text-2xl font-bold mt-6 mb-3 text-slate-900">${inline(line.replace(/^##\s+/, ''))}</h2>`); continue; }
     if (/^#{3}\s+/.test(line)) { if (inList) { out.push('</ul>'); inList = false; } out.push(`<h3 class="text-xl font-bold mt-5 mb-2 text-slate-900">${inline(line.replace(/^###\s+/, ''))}</h3>`); continue; }
     if (/^[-*]\s+/.test(line)) {
@@ -93,7 +93,7 @@ export default function BlogPostPage() {
     return (
       <PublicLayout>
         <div className="max-w-2xl mx-auto px-6 py-32 text-center">
-          <h1 className="text-3xl font-bold text-slate-900">Post not found</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent">Post not found</h1>
           <p className="text-slate-500 mt-2">This article doesn't exist or was unpublished.</p>
           <Link href="/resources/blog" className="inline-flex items-center gap-2 mt-6 px-5 py-2.5 bg-emerald-600 text-white rounded-full font-bold hover:bg-emerald-700">
             <ArrowLeft size={14} /> Back to blog
@@ -122,7 +122,7 @@ export default function BlogPostPage() {
           </div>
         )}
 
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 leading-tight">
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent leading-tight">
           {post.title}
         </h1>
 

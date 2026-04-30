@@ -85,7 +85,7 @@ export default function ChannelDetailPage() {
               <ArrowLeft size={18} />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{channel.name}</h1>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent">{channel.name}</h1>
               <p className="text-sm text-gray-500">
                 {channel.type} · {channel.category} · Last sync: {lastSync}
               </p>

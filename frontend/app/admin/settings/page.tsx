@@ -83,7 +83,7 @@ export default function AdminSettingsPage() {
   return (
     <div className="p-8">
       <div className="mb-2">
-        <h1 className="text-3xl font-bold text-slate-900">Platform Settings</h1>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent">Platform Settings</h1>
         <p className="text-slate-500 mt-1">
           Configure integration credentials and runtime options. Values are encrypted at rest and cached for 60 seconds.
         </p>

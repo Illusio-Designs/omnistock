@@ -43,13 +43,15 @@ function OnboardingInner() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50">
+    <div className="min-h-screen relative bg-gradient-to-br from-slate-50 via-emerald-50/60 to-white">
+      <div className="pointer-events-none absolute -top-40 -left-32 w-[480px] h-[480px] rounded-full bg-[#0B1220]/[0.05] blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-40 -right-32 w-[480px] h-[480px] rounded-full bg-[#06D4B8]/[0.10] blur-3xl" />
       <div className="max-w-3xl mx-auto px-6 py-16">
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 uppercase tracking-wider">
             <Sparkles size={12} /> Get Started
           </div>
-          <h1 className="text-4xl font-bold mt-3 text-slate-900">Set up your business</h1>
+          <h1 className="text-4xl font-bold mt-3 bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent">Set up your business</h1>
           <p className="text-slate-600 mt-2">14-day free trial. No credit card required.</p>
         </div>
 

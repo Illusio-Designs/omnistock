@@ -6,7 +6,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { channelApi } from '@/lib/api';
 import {
   Plug, CheckCircle2, Circle, Clock, ExternalLink, Inbox, Sparkles, Lock,
-  ShoppingBag, Zap, Truck, Globe, MessageCircle, Building2, Boxes, ChevronRight, HelpCircle,
+  ShoppingBag, Zap, Truck, Globe, MessageCircle, Building2, Boxes, ChevronRight, HelpCircle, Mail,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
@@ -18,6 +18,17 @@ import { Avatar } from '@/components/ui/Avatar';
 import { getSchemaForType } from '@/lib/channel-schemas';
 
 const CATEGORY_ORDER = ['ECOM', 'QUICKCOM', 'LOGISTICS', 'OWNSTORE', 'SOCIAL', 'B2B', 'CUSTOM'];
+
+// Channel types whose logo file doesn't match the auto-derived slug —
+// either the brand reuses an existing logo, or the file extension isn't .png.
+const LOGO_OVERRIDES: Record<string, string> = {
+  AMAZON_SMARTBIZ:   '/logos/amazon.png',
+  BB_NOW:            '/logos/bigbasket.png',
+  SWIGGY_INSTAMART:  '/logos/swiggy.png',
+  PAYTM_MALL:        '/logos/paytm.png',
+  WHATSAPP_BUSINESS: '/logos/whatsapp.png',
+  ETSY:              '/logos/etsy.svg',
+};
 
 const CATEGORY_META: Record<string, {
   label: string;
@@ -31,57 +42,57 @@ const CATEGORY_META: Record<string, {
     label: 'E-commerce Marketplaces',
     tagline: 'Biggest players — Amazon, Flipkart, Myntra & more',
     icon: ShoppingBag,
-    gradient: 'from-violet-500 to-indigo-600',
-    bgGradient: 'from-violet-50 via-white to-indigo-50',
-    ringColor: 'ring-violet-200/60',
+    gradient: 'from-emerald-500 to-emerald-600',
+    bgGradient: 'from-emerald-50 via-white to-emerald-50',
+    ringColor: 'ring-emerald-200/60',
   },
   QUICKCOM: {
     label: 'Quick Commerce',
     tagline: '10-minute delivery — Blinkit, Zepto, Swiggy Instamart',
     icon: Zap,
-    gradient: 'from-amber-500 to-orange-600',
-    bgGradient: 'from-amber-50 via-white to-orange-50',
-    ringColor: 'ring-amber-200/60',
+    gradient: 'from-emerald-500 to-emerald-600',
+    bgGradient: 'from-emerald-50 via-white to-emerald-50',
+    ringColor: 'ring-emerald-200/60',
   },
   LOGISTICS: {
     label: 'Logistics & Shipping',
     tagline: 'Couriers & aggregators — ship with one click',
     icon: Truck,
-    gradient: 'from-sky-500 to-blue-600',
-    bgGradient: 'from-sky-50 via-white to-blue-50',
-    ringColor: 'ring-sky-200/60',
+    gradient: 'from-emerald-500 to-emerald-600',
+    bgGradient: 'from-emerald-50 via-white to-emerald-50',
+    ringColor: 'ring-emerald-200/60',
   },
   OWNSTORE: {
     label: 'Own Store Platforms',
     tagline: 'Your D2C website — Shopify, WooCommerce, Magento',
     icon: Globe,
-    gradient: 'from-emerald-500 to-teal-600',
-    bgGradient: 'from-emerald-50 via-white to-teal-50',
+    gradient: 'from-emerald-500 to-emerald-600',
+    bgGradient: 'from-emerald-50 via-white to-emerald-50',
     ringColor: 'ring-emerald-200/60',
   },
   SOCIAL: {
     label: 'Social Commerce',
     tagline: 'Sell where your customers hang out',
     icon: MessageCircle,
-    gradient: 'from-pink-500 to-fuchsia-600',
-    bgGradient: 'from-pink-50 via-white to-fuchsia-50',
-    ringColor: 'ring-pink-200/60',
+    gradient: 'from-emerald-500 to-emerald-600',
+    bgGradient: 'from-emerald-50 via-white to-emerald-50',
+    ringColor: 'ring-emerald-200/60',
   },
   B2B: {
     label: 'B2B Channels',
     tagline: 'Wholesale, distributors, bulk orders',
     icon: Building2,
-    gradient: 'from-indigo-500 to-purple-600',
-    bgGradient: 'from-indigo-50 via-white to-purple-50',
-    ringColor: 'ring-indigo-200/60',
+    gradient: 'from-emerald-500 to-emerald-600',
+    bgGradient: 'from-emerald-50 via-white to-emerald-50',
+    ringColor: 'ring-emerald-200/60',
   },
   CUSTOM: {
     label: 'Custom & Webhooks',
     tagline: 'Universal receivers for any system',
     icon: Sparkles,
-    gradient: 'from-rose-500 to-pink-600',
-    bgGradient: 'from-rose-50 via-white to-pink-50',
-    ringColor: 'ring-rose-200/60',
+    gradient: 'from-emerald-500 to-emerald-600',
+    bgGradient: 'from-emerald-50 via-white to-emerald-50',
+    ringColor: 'ring-emerald-200/60',
   },
 };
 
@@ -90,7 +101,7 @@ type CatalogEntry = {
   category: string;
   name: string;
   tagline?: string;
-  status: 'connected' | 'available' | 'not_available';
+  status: 'connected' | 'available' | 'not_available' | 'plan_locked';
   integrated: boolean;
   requiresApproval?: boolean;
   manualOnly?: boolean;
@@ -132,9 +143,9 @@ export default function ChannelsPage() {
     <DashboardLayout>
       <div className="space-y-6 animate-slide-up">
         {/* Hero */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 p-8 md:p-10 text-white shadow-2xl shadow-emerald-500/25">
-          <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-white/10 blur-3xl -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-1/3 w-72 h-72 rounded-full bg-emerald-300/20 blur-3xl translate-y-1/2" />
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B1220] via-[#0B1220] to-emerald-600 p-8 md:p-10 text-white shadow-2xl shadow-emerald-500/25">
+          <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-emerald-400/20 blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-1/3 w-72 h-72 rounded-full bg-cyan-400/15 blur-3xl translate-y-1/2" />
 
           <div className="relative flex items-end justify-between flex-wrap gap-6">
             <div className="max-w-xl">
@@ -143,7 +154,7 @@ export default function ChannelsPage() {
               </div>
               <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight">
                 Sell everywhere.<br />
-                <span className="bg-gradient-to-r from-white to-emerald-100 bg-clip-text text-transparent">Ship anything.</span>
+                <span className="bg-gradient-to-r from-white to-emerald-300 bg-clip-text text-transparent">Ship anything.</span>
               </h1>
               <p className="text-white/80 text-sm md:text-base mt-3 leading-relaxed">
                 Connect to {summary.total}+ marketplaces, quick-commerce, logistics, social shops and D2C platforms — all from one dashboard.
@@ -319,12 +330,11 @@ function CategorySection({
       </div>
 
       {/* Channel grid */}
-      <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-3">
         {entries.map(entry => (
           <ChannelCard
             key={entry.type}
             entry={entry}
-            categoryGradient={meta.gradient}
             onConnect={() => onConnect(entry)}
             onRequest={() => onRequest(entry)}
           />
@@ -335,103 +345,145 @@ function CategorySection({
 }
 
 function ChannelCard({
-  entry, categoryGradient, onConnect, onRequest,
+  entry, onConnect, onRequest,
 }: {
   entry: CatalogEntry;
-  categoryGradient: string;
   onConnect: () => void;
   onRequest: () => void;
 }) {
-  const STATUS_BADGES: Record<string, { icon: any; text: string; bg: string }> = {
-    connected:     { icon: CheckCircle2, text: 'Connected',   bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    available:     { icon: Circle,       text: 'Available',   bg: 'bg-sky-50 text-sky-700 border-sky-200' },
-    plan_locked:   { icon: Lock,         text: 'Upgrade plan',bg: 'bg-slate-100 text-slate-600 border-slate-200' },
-    not_available: { icon: Clock,        text: 'Coming Soon', bg: 'bg-amber-50 text-amber-700 border-amber-200' },
+  const STATUS_PILLS: Record<string, { text: string; className: string }> = {
+    connected:     { text: 'Connected',    className: 'bg-emerald-50 text-emerald-700' },
+    available:     { text: 'Available',    className: 'bg-sky-50 text-sky-700' },
+    plan_locked:   { text: 'Upgrade Plan', className: 'bg-slate-100 text-slate-600' },
+    not_available: { text: 'Coming Soon',  className: 'bg-amber-50 text-amber-700' },
   };
-  const statusBadge = STATUS_BADGES[entry.status] || STATUS_BADGES.not_available;
-  const StatusIcon = statusBadge.icon;
+  const pill = STATUS_PILLS[entry.status] || STATUS_PILLS.not_available;
+  const connectedCount = entry.connectedChannels?.length || 0;
+
+  // Logo file lives in /public/logos/<slug>.png — derive slug from the type, with
+  // explicit overrides for types whose slug doesn't match the filename or whose
+  // file is .svg. onError fallback substitutes a brand-gradient initial avatar.
+  const logoSlug = (entry.type || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const logoUrl = LOGO_OVERRIDES[entry.type] ?? `/logos/${logoSlug}.png`;
+
+  // Single circular action on the right — visual weight reflects the call-to-action.
+  const renderAction = () => {
+    if (entry.status === 'connected' && entry.connectedChannels?.[0]) {
+      return (
+        <Link
+          href={`/channels/${entry.connectedChannels[0].id}`}
+          className="w-12 h-12 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30 flex-shrink-0 transition-colors"
+          aria-label="Manage channel"
+        >
+          <ChevronRight size={18} />
+        </Link>
+      );
+    }
+    if (entry.status === 'available') {
+      return (
+        <button
+          onClick={onConnect}
+          className="w-12 h-12 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30 flex-shrink-0 transition-colors"
+          aria-label="Connect channel"
+        >
+          <Plug size={16} />
+        </button>
+      );
+    }
+    if (entry.status === 'plan_locked') {
+      return (
+        <Link
+          href="/dashboard/billing"
+          className="w-12 h-12 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center flex-shrink-0 transition-colors"
+          aria-label="Upgrade plan"
+        >
+          <Lock size={16} />
+        </Link>
+      );
+    }
+    if (entry.pendingRequest) {
+      return (
+        <div
+          className="w-12 h-12 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center flex-shrink-0"
+          title={`Request ${entry.pendingRequest.status.toLowerCase()}`}
+        >
+          <Clock size={16} />
+        </div>
+      );
+    }
+    return (
+      <button
+        onClick={onRequest}
+        className="w-12 h-12 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center flex-shrink-0 transition-colors"
+        aria-label="Request channel"
+      >
+        <Mail size={16} />
+      </button>
+    );
+  };
 
   return (
-    <div className="group relative bg-white rounded-2xl border border-slate-200/70 p-5 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 flex flex-col">
-      {entry.status === 'connected' && (
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-400/5 to-transparent pointer-events-none" />
-      )}
-
-      {/* Header */}
-      <div className="relative flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <Avatar name={entry.name} size="md" gradient={categoryGradient} className="shadow-md" />
-          <div className="min-w-0 flex-1">
-            <h3 className="font-bold text-slate-900 text-sm leading-tight truncate">{entry.name}</h3>
-            <p className="text-[10px] text-slate-400 mt-0.5 font-semibold uppercase tracking-wider truncate">{entry.type}</p>
-          </div>
-        </div>
+    <div className="group bg-white rounded-2xl border border-slate-200/70 p-4 flex items-center gap-4 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
+      {/* Logo */}
+      <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={logoUrl}
+          alt={entry.name}
+          width={128}
+          height={128}
+          loading="lazy"
+          decoding="async"
+          className="w-full h-full object-contain p-1.5"
+          style={{ imageRendering: 'auto' }}
+          onError={(e) => {
+            const el = e.currentTarget as HTMLImageElement;
+            const div = document.createElement('div');
+            div.className = 'w-full h-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-base font-bold';
+            div.textContent = (entry.name || '?').slice(0, 2).toUpperCase();
+            el.replaceWith(div);
+          }}
+        />
       </div>
 
-      {/* Status & tagline */}
-      <div className="relative mb-3">
-        <span className={`badge border ${statusBadge.bg} mb-2`}>
-          <StatusIcon size={10} /> {statusBadge.text}
-        </span>
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <h3 className="font-bold text-slate-900 text-base leading-tight truncate">{entry.name}</h3>
+          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${pill.className}`}>
+            {pill.text}
+            {entry.status === 'connected' && connectedCount > 1 && ` · ${connectedCount}`}
+          </span>
+        </div>
         {entry.tagline && (
-          <p className="text-xs text-slate-600 leading-relaxed mt-2 line-clamp-2">{entry.tagline}</p>
+          <p className="text-sm text-slate-500 leading-snug line-clamp-2">{entry.tagline}</p>
         )}
-      </div>
-
-      {entry.features && entry.features.length > 0 && (
-        <div className="relative flex flex-wrap gap-1 mb-3">
-          {entry.features.slice(0, 3).map(f => (
-            <span key={f} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold rounded uppercase tracking-wide">
-              {f}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {entry.pendingRequest && (
-        <div className="relative text-[10px] bg-amber-50 text-amber-700 border border-amber-200 rounded-md px-2 py-1 mb-2 font-semibold">
-          ⏳ Request {entry.pendingRequest.status.toLowerCase()}
-        </div>
-      )}
-
-      {/* Action buttons */}
-      <div className="relative mt-auto pt-3 border-t border-slate-100 flex items-center gap-1.5">
-        {entry.status === 'connected' && entry.connectedChannels?.[0] ? (
-          <Link
-            href={`/channels/${entry.connectedChannels[0].id}`}
-            className="flex-1 text-center px-3 py-2 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 flex items-center justify-center gap-1 transition-colors"
-          >
-            Manage <ChevronRight size={12} />
-          </Link>
-        ) : entry.status === 'available' ? (
-          <button
-            onClick={onConnect}
-            className={`flex-1 px-3 py-2 bg-gradient-to-r ${categoryGradient} text-white text-xs font-bold rounded-lg shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-1`}
-          >
-            <Plug size={12} /> Connect
-          </button>
-        ) : (
-          !entry.pendingRequest && (
-            <button
-              onClick={onRequest}
-              className="flex-1 px-3 py-2 bg-white border border-amber-300 text-amber-700 text-xs font-bold rounded-lg hover:bg-amber-50 transition-all flex items-center justify-center gap-1"
+        <div className="flex items-center gap-2 mt-1.5">
+          {entry.applyUrl && entry.status !== 'connected' && (
+            <a
+              href={entry.applyUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-emerald-600 transition-colors"
+              onClick={(e) => e.stopPropagation()}
             >
-              Request
-            </button>
-          )
-        )}
-        {entry.applyUrl && (
-          <a
-            href={entry.applyUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors flex-shrink-0"
-            title="Apply for seller access"
-          >
-            <ExternalLink size={12} />
-          </a>
-        )}
+              Apply for access <ExternalLink size={10} />
+            </a>
+          )}
+          {entry.features && entry.features.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {entry.features.slice(0, 3).map((f) => (
+                <span key={f} className="px-1.5 py-0.5 bg-slate-50 text-slate-500 text-[9px] font-bold rounded uppercase tracking-wide">
+                  {f}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Action */}
+      {renderAction()}
     </div>
   );
 }

@@ -4,6 +4,7 @@ Complete list of every channel registered in [`backend/src/data/channel-catalog.
 
 **Status legend:**
 - ✅ **Integrated** — adapter is built, sellers can connect today
+- 🚧 **Pending backend** — listed in the catalog (`integrated: false`); UI shows it as "Coming Soon" until the adapter ships
 - 🔐 **OAuth** — founder registers ONE app at `/admin/settings`, sellers click "Authorize"
 - 📋 **Paste-form** — each seller generates keys in the channel's portal and pastes them into Uniflo
 - 📝 **Manual** — no external API; tenant connects once, then records orders via the New Order form

@@ -75,13 +75,13 @@ export function PublicNav() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/85 border-b border-slate-200/60">
+    <header className="sticky top-0 z-40 backdrop-blur-xl bg-[#0B1220]/85 border-b border-white/10">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/50 transition-shadow">
             <Sparkles size={16} className="text-white" />
           </div>
-          <span className="font-bold text-lg tracking-tight text-slate-900">Uniflo</span>
+          <span className="font-bold text-lg tracking-tight text-white">Uniflo</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
@@ -121,29 +121,29 @@ export function PublicNav() {
         </nav>
 
         <div className="hidden md:flex items-center gap-2">
-          <Link href="/login" className="btn-ghost">Log in</Link>
+          <Link href="/login" className="px-3 py-2 text-sm font-semibold text-white/70 hover:text-white rounded-lg hover:bg-white/10 transition-colors">Log in</Link>
           <Link href="/onboarding" className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full shadow-md shadow-emerald-500/20 transition-colors">
             Get Started <ArrowRight size={13} />
           </Link>
         </div>
 
-        <button className="md:hidden p-2" onClick={() => setOpen(!open)}>
+        <button className="md:hidden p-2 text-white/70 hover:text-white" onClick={() => setOpen(!open)}>
           {open ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
       {open && (
-        <div className="md:hidden border-t border-slate-200 bg-white px-6 py-4 space-y-1 max-h-[80vh] overflow-y-auto">
+        <div className="md:hidden border-t border-white/10 bg-[#0B1220] px-6 py-4 space-y-1 max-h-[80vh] overflow-y-auto">
           {groups.main.map((m) => (
-            <Link key={m.id} href={m.href || '#'} onClick={() => setOpen(false)} className="block px-3 py-2 text-sm font-semibold text-slate-700 rounded-lg hover:bg-slate-100">
+            <Link key={m.id} href={m.href || '#'} onClick={() => setOpen(false)} className="block px-3 py-2 text-sm font-semibold text-white/80 rounded-lg hover:bg-white/10">
               {m.title}
             </Link>
           ))}
           {groups.solutions.length > 0 && <MobileGroup label="Solutions" items={groups.solutions} onClick={() => setOpen(false)} />}
           {groups.resources.length > 0 && <MobileGroup label="Resources" items={groups.resources} onClick={() => setOpen(false)} />}
           {groups.company.length > 0 && <MobileGroup label="Company" items={groups.company} onClick={() => setOpen(false)} />}
-          <div className="flex gap-2 pt-3 border-t border-slate-100">
-            <Link href="/login" className="btn-secondary flex-1 justify-center">Log in</Link>
+          <div className="flex gap-2 pt-3 border-t border-white/10">
+            <Link href="/login" className="flex-1 justify-center inline-flex items-center px-4 py-2.5 text-sm font-semibold text-white/80 rounded-xl bg-white/10 hover:bg-white/15 transition-colors">Log in</Link>
             <Link href="/onboarding" className="btn-primary flex-1 justify-center">Get Started</Link>
           </div>
         </div>
@@ -159,7 +159,7 @@ function NavLinkRow({ href, current, children }: { href: string; current: string
       href={href}
       className={cn(
         'px-4 py-2 text-sm font-semibold rounded-lg transition-colors',
-        active ? 'text-slate-900 bg-slate-100' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+        active ? 'text-white bg-white/10' : 'text-white/70 hover:text-white hover:bg-white/10'
       )}
     >
       {children}
@@ -181,7 +181,7 @@ function Dropdown({
       <button
         className={cn(
           'flex items-center gap-1 px-4 py-2 text-sm font-semibold rounded-lg transition-colors',
-          active ? 'text-slate-900 bg-slate-100' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+          active ? 'text-white bg-white/10' : 'text-white/70 hover:text-white hover:bg-white/10'
         )}
       >
         {label} <ChevronDown size={13} className={cn('transition-transform', active && 'rotate-180')} />
@@ -228,7 +228,7 @@ function MobileGroup({
 }) {
   return (
     <details className="group">
-      <summary className="flex items-center justify-between px-3 py-2 text-sm font-semibold text-slate-700 rounded-lg hover:bg-slate-100 cursor-pointer list-none">
+      <summary className="flex items-center justify-between px-3 py-2 text-sm font-semibold text-white/80 rounded-lg hover:bg-white/10 cursor-pointer list-none">
         {label}
         <ChevronDown size={14} className="group-open:rotate-180 transition-transform" />
       </summary>
@@ -238,7 +238,7 @@ function MobileGroup({
             key={i.id}
             href={i.href || '#'}
             onClick={onClick}
-            className="block px-3 py-2 text-xs text-slate-600 rounded-lg hover:bg-slate-100"
+            className="block px-3 py-2 text-xs text-white/70 rounded-lg hover:bg-white/10"
           >
             {i.title}
           </Link>
@@ -265,21 +265,21 @@ export function PublicFooter() {
   }, []);
 
   return (
-    <footer className="border-t border-slate-200 bg-white">
+    <footer className="border-t border-white/10 bg-[#0B1220] text-white">
       <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-2 md:grid-cols-6 gap-8">
         <div className="col-span-2">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 flex items-center justify-center shadow-md shadow-emerald-500/30">
               <Sparkles size={16} className="text-white" />
             </div>
-            <span className="font-bold text-base text-slate-900">Uniflo</span>
+            <span className="font-bold text-base text-white">Uniflo</span>
           </Link>
-          <p className="text-sm text-slate-500 mt-4 max-w-sm leading-relaxed">
+          <p className="text-sm text-white/60 mt-4 max-w-sm leading-relaxed">
             One platform for all your channels. Sell everywhere, ship anything, grow faster.
           </p>
           <div className="flex items-center gap-2 mt-5">
             {[Twitter, Linkedin, Github].map((Icon, i) => (
-              <a key={i} href="#" className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors">
+              <a key={i} href="#" className="w-9 h-9 flex items-center justify-center rounded-lg text-white/50 hover:text-emerald-300 hover:bg-emerald-500/15 transition-colors">
                 <Icon size={15} />
               </a>
             ))}
@@ -291,7 +291,7 @@ export function PublicFooter() {
         <FooterCol title="Resources" items={groups.resources} />
         <FooterCol title="Company"   items={groups.company} />
       </div>
-      <div className="border-t border-slate-100 py-6 px-6 text-center text-xs text-slate-500">
+      <div className="border-t border-white/10 py-6 px-6 text-center text-xs text-white/50">
         © {new Date().getFullYear()} Uniflo. Built for the next generation of commerce.
       </div>
     </footer>
@@ -302,11 +302,11 @@ function FooterCol({ title, items }: { title: string; items: NavLink[] }) {
   if (!items.length) return null;
   return (
     <div>
-      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">{title}</h4>
+      <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">{title}</h4>
       <ul className="space-y-2">
         {items.map((l) => (
           <li key={l.id}>
-            <Link href={l.href || '#'} className="text-sm text-slate-500 hover:text-emerald-600 transition-colors">
+            <Link href={l.href || '#'} className="text-sm text-white/60 hover:text-emerald-300 transition-colors">
               {l.title}
             </Link>
           </li>

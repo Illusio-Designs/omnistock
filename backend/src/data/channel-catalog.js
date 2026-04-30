@@ -211,6 +211,62 @@ const CATALOG = [
     applyUrl: 'https://www.etsy.com/developers',
     docsUrl:  'https://developers.etsy.com/documentation',
   },
+  {
+    type: 'FIRSTCRY',
+    category: 'ECOM',
+    name: 'FirstCry',
+    tagline: "India's largest baby, kids & maternity store",
+    integrated: false,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'sellerId', label: 'Seller ID', type: 'text',     required: true },
+      { key: 'apiKey',   label: 'API Key',   type: 'password', required: true },
+    ],
+    applyUrl: 'https://supplier.firstcry.com',
+  },
+  {
+    type: 'PEPPERFRY',
+    category: 'ECOM',
+    name: 'Pepperfry',
+    tagline: 'Online furniture & home décor marketplace',
+    integrated: false,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'sellerId', label: 'Seller ID', type: 'text',     required: true },
+      { key: 'apiKey',   label: 'API Key',   type: 'password', required: true },
+    ],
+    applyUrl: 'https://merchant.pepperfry.com',
+  },
+  {
+    type: 'CROMA',
+    category: 'ECOM',
+    name: 'Croma',
+    tagline: 'Tata-backed consumer electronics marketplace',
+    integrated: false,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'sellerId', label: 'Seller ID', type: 'text',     required: true },
+      { key: 'apiKey',   label: 'API Key',   type: 'password', required: true },
+    ],
+    applyUrl: 'https://www.croma.com',
+  },
+  {
+    type: 'TATA_NEU',
+    category: 'ECOM',
+    name: 'Tata Neu',
+    tagline: 'Tata Group super-app for everyday shopping',
+    integrated: false,
+    requiresApproval: true,
+    features: ['orders', 'inventory'],
+    credentialsSchema: [
+      { key: 'sellerId', label: 'Seller ID', type: 'text',     required: true },
+      { key: 'apiKey',   label: 'API Key',   type: 'password', required: true },
+    ],
+    applyUrl: 'https://www.tataneu.com',
+  },
 
   // ═══════════════════════════════════════════════════════════════
   // QUICKCOM — Quick Commerce

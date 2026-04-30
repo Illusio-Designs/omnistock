@@ -20,7 +20,7 @@ export default function AdminOverview() {
 
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold text-slate-900">Platform Overview</h1>
+      <h1 className="text-3xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent">Platform Overview</h1>
       <p className="text-slate-500 mt-1">SaaS-wide metrics across all tenants.</p>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">

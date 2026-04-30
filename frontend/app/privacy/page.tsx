@@ -11,7 +11,7 @@ export default function PrivacyPage() {
     <PublicLayout>
       <section className="py-20">
         <div className="max-w-3xl mx-auto px-6">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900">Privacy Policy</h1>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent">Privacy Policy</h1>
           <p className="mt-3 text-sm text-slate-500">Last updated: April 2026</p>
 
           <div className="mt-10 prose prose-slate prose-sm max-w-none space-y-8">
