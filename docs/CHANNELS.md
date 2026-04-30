@@ -16,22 +16,22 @@ For setup steps see [INTEGRATIONS.md](INTEGRATIONS.md).
 
 ## Totals
 
-| Category | Total | Integrated | Manual-only | API-driven |
-|---|---:|---:|---:|---:|
-| E-commerce marketplaces | 14 | 14 | 0 | 14 |
-| Quick commerce | 4 | 4 | 0 | 4 |
-| Logistics & shipping | 16 | 16 | 0 | 16 |
-| Own-store / D2C | 9 | 9 | 2 | 7 |
-| Social commerce | 3 | 3 | 0 | 3 |
-| B2B | 3 | 3 | 2 | 1 |
-| Custom | 2 | 2 | 1 | 1 |
-| **Total** | **51** | **51** | **5** | **46** |
+| Category | Total | Integrated | Pending backend | Manual-only | API-driven |
+|---|---:|---:|---:|---:|---:|
+| E-commerce marketplaces | 18 | 14 | 4 | 0 | 18 |
+| Quick commerce | 4 | 4 | 0 | 0 | 4 |
+| Logistics & shipping | 16 | 16 | 0 | 0 | 16 |
+| Own-store / D2C | 9 | 9 | 0 | 2 | 7 |
+| Social commerce | 3 | 3 | 0 | 0 | 3 |
+| B2B | 3 | 3 | 0 | 2 | 1 |
+| Custom | 2 | 2 | 0 | 1 | 1 |
+| **Total** | **55** | **51** | **4** | **5** | **50** |
 
-> **All 51 channels are now connectable.** 46 sync via real APIs; 5 are manual-only channels backed by a no-op adapter (Offline, POS, Wholesale, Distributor, Other) — tenants connect them once, then record orders via the New Order form.
+> **51 channels are connectable today; 4 e-commerce marketplaces are listed as Pending backend** — they appear in the catalog so tenants discover them and can request access, but the adapter still needs to be built before they can sync.
 
 ---
 
-## 1. E-commerce marketplaces (14)
+## 1. E-commerce marketplaces (18)
 
 | Channel | Status | Connection | Approval | Features | Notes |
 |---|:---:|:---:|:---:|---|---|
@@ -49,6 +49,10 @@ For setup steps see [INTEGRATIONS.md](INTEGRATIONS.md).
 | LimeRoad | ✅ | 📋 Paste-form | ⚠️ | orders, inventory | Fashion + lifestyle. |
 | eBay | ✅ | 📋 Paste-form | — | orders, inventory | OAuth flow planned. |
 | Etsy | ✅ | 📋 Paste-form | — | orders, inventory | Open API v3. |
+| FirstCry | 🚧 | 📋 Paste-form | ⚠️ | orders, inventory | India's largest baby, kids & maternity store. **Adapter pending.** Logo: `firstcry.png`. |
+| Pepperfry | 🚧 | 📋 Paste-form | ⚠️ | orders, inventory | Online furniture & home décor marketplace. **Adapter pending.** Logo: `pepperfry.png`. |
+| Croma | 🚧 | 📋 Paste-form | ⚠️ | orders, inventory | Tata-backed consumer electronics retailer. **Adapter pending.** Logo: `croma.png`. |
+| Tata Neu | 🚧 | 📋 Paste-form | ⚠️ | orders, inventory | Tata Group super-app. **Adapter pending.** Logo: `tataneu.png`. |
 
 ---
 
@@ -167,4 +171,4 @@ These are intentionally **not** in the catalog right now:
 
 ---
 
-_Last updated: 2026-04-27_
+_Last updated: 2026-04-30_
