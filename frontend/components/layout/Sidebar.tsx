@@ -79,7 +79,7 @@ export function Sidebar({
   const isDefaultNav = !groups;
   const pathname = usePathname();
   const router = useRouter();
-  const { logout, tenant, isPlatformAdmin } = useAuthStore();
+  const { logout, tenant, plan, isPlatformAdmin } = useAuthStore();
   const { sidebarCollapsed, toggleSidebar, mobileSidebarOpen, setMobileSidebar, navGroupCollapsed, toggleNavGroup } = useUIStore();
 
   // Live counts for nav badges (only on tenant nav, not platform admin nav)
@@ -308,25 +308,59 @@ export function Sidebar({
           })}
         </nav>
 
-        {/* ── Upgrade card ────────────────────────────────────── */}
-        {showUpgradeCard && (
-          <div className={cn('px-3 mb-3', c && 'lg:hidden')}>
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 p-4 text-white shadow-lg shadow-emerald-500/30">
-              <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 blur-xl" />
-              <div className="relative">
-                <div className="flex items-center gap-1.5 text-sm font-bold">
-                  Upgrade Pro! <span>✨</span>
+        {/* ── Upgrade / Plan card ────────────────────────────────────── */}
+        {showUpgradeCard && (() => {
+          const PLAN_TIERS = ['STANDARD', 'PROFESSIONAL', 'BUSINESS', 'ENTERPRISE'] as const;
+          const PLAN_LABELS: Record<string, string> = {
+            STANDARD: 'Standard',
+            PROFESSIONAL: 'Professional',
+            BUSINESS: 'Business',
+            ENTERPRISE: 'Enterprise',
+          };
+          const currentCode = (plan?.code || '').toUpperCase();
+          const currentIdx = PLAN_TIERS.indexOf(currentCode as any);
+          const nextCode = currentIdx >= 0 && currentIdx < PLAN_TIERS.length - 1
+            ? PLAN_TIERS[currentIdx + 1]
+            : null;
+          // On the top tier (Enterprise) — show a flat "you're on Enterprise" pill instead of an upgrade card
+          if (!nextCode) {
+            return (
+              <div className={cn('px-3 mb-3', c && 'lg:hidden')}>
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-emerald-800">
+                  <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider">
+                    <Sparkles size={12} /> Enterprise plan
+                  </div>
+                  <p className="text-[11px] mt-1 text-emerald-700/80 leading-snug">
+                    Top tier — every feature unlocked.
+                  </p>
                 </div>
-                <p className="text-xs text-white/80 mt-1 leading-snug">
-                  Higher productivity with better features
-                </p>
-                <button className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-white text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-50 transition-colors">
-                  <Sparkles size={12} /> Upgrade
-                </button>
+              </div>
+            );
+          }
+          return (
+            <div className={cn('px-3 mb-3', c && 'lg:hidden')}>
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 p-4 text-white shadow-lg shadow-emerald-500/30">
+                <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 blur-xl" />
+                <div className="relative">
+                  <div className="flex items-center gap-1.5 text-sm font-bold">
+                    Upgrade to {PLAN_LABELS[nextCode]} <span>✨</span>
+                  </div>
+                  <p className="text-xs text-white/80 mt-1 leading-snug">
+                    {currentCode
+                      ? `You're on ${PLAN_LABELS[currentCode] || currentCode}. Unlock more features and limits.`
+                      : 'Higher productivity with better features.'}
+                  </p>
+                  <Link
+                    href="/dashboard/billing"
+                    className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-white text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-50 transition-colors"
+                  >
+                    <Sparkles size={12} /> View plans
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* ── Log out ────────────────────────────────────── */}
         <div className="px-3 py-3 border-t border-slate-100">
