@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192 --max-semi-space-size=128\" next dev",
-    "dev:webpack": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192 --max-semi-space-size=128\" next dev",
-    "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192 --max-semi-space-size=128\" next build",
+    "dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096 --max-semi-space-size=64\" next dev",
+    "dev:turbo": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" next dev --turbo",
+    "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096 --max-semi-space-size=64\" next build",
     "start": "next start",
     "lint": "next lint"
   },
