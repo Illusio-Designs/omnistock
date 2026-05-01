@@ -12,7 +12,7 @@ const jakarta = Plus_Jakarta_Sans({
   display: 'swap',
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://uniflo.vercel.app';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://omnistock.vercel.app';
 
 // ── Viewport (separate export in Next 14+) ──
 export const viewport: Viewport = {
@@ -25,8 +25,8 @@ export const viewport: Viewport = {
 // ── Global metadata ──
 const FALLBACK: Metadata = {
   title: {
-    default: 'Uniflo — Multi-channel Inventory & Order Management',
-    template: '%s | Uniflo',
+    default: 'Omnistock — Multi-channel Inventory & Order Management',
+    template: '%s | Omnistock',
   },
   description: 'One platform for all your channels. Manage inventory, orders, returns and reconciliation across Amazon, Flipkart, Shopify and 50+ channels.',
   keywords: [
@@ -34,9 +34,9 @@ const FALLBACK: Metadata = {
     'OMS', 'WMS', 'Amazon', 'Flipkart', 'Shopify', 'returns management',
     'reconciliation', 'D2C', 'warehouse management', 'SaaS ERP',
   ],
-  authors: [{ name: 'Uniflo', url: SITE_URL }],
-  creator: 'Uniflo',
-  publisher: 'Uniflo',
+  authors: [{ name: 'Omnistock', url: SITE_URL }],
+  creator: 'Omnistock',
+  publisher: 'Omnistock',
   metadataBase: new URL(SITE_URL),
   alternates: {
     canonical: '/',
@@ -45,21 +45,21 @@ const FALLBACK: Metadata = {
     type: 'website',
     locale: 'en_IN',
     url: SITE_URL,
-    siteName: 'Uniflo',
-    title: 'Uniflo — Multi-channel Inventory & Order Management',
+    siteName: 'Omnistock',
+    title: 'Omnistock — Multi-channel Inventory & Order Management',
     description: 'Manage inventory, orders, returns and reconciliation across 50+ channels from one platform.',
     images: [
       {
         url: `${SITE_URL}/og-image.svg`,
         width: 1200,
         height: 630,
-        alt: 'Uniflo — Everything Commerce',
+        alt: 'Omnistock — Everything Commerce',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Uniflo — Multi-channel Commerce Platform',
+    title: 'Omnistock — Multi-channel Commerce Platform',
     description: 'Manage inventory, orders, returns and reconciliation across 50+ channels.',
     images: [`${SITE_URL}/og-image.svg`],
   },
@@ -104,7 +104,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'SoftwareApplication',
-              name: 'Uniflo',
+              name: 'Omnistock',
               applicationCategory: 'BusinessApplication',
               operatingSystem: 'Web',
               url: SITE_URL,

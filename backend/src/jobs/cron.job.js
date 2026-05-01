@@ -1,6 +1,6 @@
-// Unified cron runner for Uniflo operational jobs.
+// Unified cron runner for Omnistock operational jobs.
 //
-// Runs periodically to keep channels in sync with Uniflo. Each job is
+// Runs periodically to keep channels in sync with Omnistock. Each job is
 // idempotent and logs its own results.
 //
 // Jobs:

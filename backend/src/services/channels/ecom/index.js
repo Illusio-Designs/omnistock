@@ -13,4 +13,5 @@ module.exports = {
   LimeRoadAdapter:  require('./limeroad'),
   EbayAdapter:      require('./ebay'),
   EtsyAdapter:      require('./etsy'),
+  ...require('./pending'),
 };

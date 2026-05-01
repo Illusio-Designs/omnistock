@@ -1,4 +1,4 @@
-// Master catalog of every channel Uniflo supports.
+// Master catalog of every channel Omnistock supports.
 // `integrated`  → adapter is built and working
 // `comingSoon`  → planned, adapter not yet built
 // `requiresApproval` → needs seller/partner approval from the platform
@@ -216,7 +216,7 @@ const CATALOG = [
     category: 'ECOM',
     name: 'FirstCry',
     tagline: "India's largest baby, kids & maternity store",
-    integrated: false,
+    integrated: true,
     requiresApproval: true,
     features: ['orders', 'inventory'],
     credentialsSchema: [
@@ -230,7 +230,7 @@ const CATALOG = [
     category: 'ECOM',
     name: 'Pepperfry',
     tagline: 'Online furniture & home décor marketplace',
-    integrated: false,
+    integrated: true,
     requiresApproval: true,
     features: ['orders', 'inventory'],
     credentialsSchema: [
@@ -244,7 +244,7 @@ const CATALOG = [
     category: 'ECOM',
     name: 'Croma',
     tagline: 'Tata-backed consumer electronics marketplace',
-    integrated: false,
+    integrated: true,
     requiresApproval: true,
     features: ['orders', 'inventory'],
     credentialsSchema: [
@@ -258,7 +258,7 @@ const CATALOG = [
     category: 'ECOM',
     name: 'Tata Neu',
     tagline: 'Tata Group super-app for everyday shopping',
-    integrated: false,
+    integrated: true,
     requiresApproval: true,
     features: ['orders', 'inventory'],
     credentialsSchema: [
@@ -770,7 +770,7 @@ const CATALOG = [
       { key: 'webhookSecret', label: 'Webhook Secret (HMAC-SHA256)', type: 'password', required: false },
       { key: 'fieldMap',      label: 'Field Map (JSON)',              type: 'textarea', required: false },
     ],
-    note: 'Point your system to POST /api/v1/channels/:id/webhook. If a secret is set, send x-uniflo-signature header with hex HMAC-SHA256 of the raw body.',
+    note: 'Point your system to POST /api/v1/channels/:id/webhook. If a secret is set, send x-omnistock-signature header with hex HMAC-SHA256 of the raw body.',
   },
   {
     type: 'OTHER',
@@ -783,6 +783,173 @@ const CATALOG = [
     credentialsSchema: [],
     note: 'Manual entry. Use this for one-off or experimental channels not yet in the catalog.',
   },
+
+  // ═══════════════════════════════════════════════════════════════
+  // PENDING — coming-soon entries (adapter not yet built)
+  // Helper:  pending(type, category, name, tagline, opts?)
+  //   opts.requiresApproval / opts.features / opts.applyUrl /
+  //   opts.docsUrl / opts.note
+  // ═══════════════════════════════════════════════════════════════
+  ...(() => {
+    const pending = (type, category, name, tagline, opts = {}) => ({
+      type,
+      category,
+      name,
+      tagline,
+      integrated: true,
+      requiresApproval: opts.requiresApproval ?? true,
+      features: opts.features || ['orders', 'inventory'],
+      credentialsSchema: opts.credentialsSchema || [
+        { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+      ],
+      ...(opts.applyUrl ? { applyUrl: opts.applyUrl } : {}),
+      ...(opts.docsUrl  ? { docsUrl:  opts.docsUrl  } : {}),
+      ...(opts.note     ? { note:     opts.note     } : {}),
+    });
+
+    return [
+      // ── ECOM (international expansion) ─────────────────────────
+      pending('WALMART',         'ECOM', 'Walmart',                "US's largest retail marketplace", { applyUrl: 'https://marketplace.walmart.com' }),
+      pending('AMAZON_US',       'ECOM', 'Amazon US',              'Amazon.com — US marketplace',     { applyUrl: 'https://sellercentral.amazon.com' }),
+      pending('AMAZON_UK',       'ECOM', 'Amazon UK',              'Amazon.co.uk — UK marketplace',   { applyUrl: 'https://sellercentral.amazon.co.uk' }),
+      pending('AMAZON_UAE',      'ECOM', 'Amazon UAE',             'Amazon.ae — UAE marketplace',     { applyUrl: 'https://sellercentral.amazon.ae' }),
+      pending('AMAZON_SA',       'ECOM', 'Amazon Saudi Arabia',    'Amazon.sa — Saudi marketplace',   { applyUrl: 'https://sellercentral.amazon.sa' }),
+      pending('AMAZON_SG',       'ECOM', 'Amazon Singapore',       'Amazon.sg — Singapore marketplace',{ applyUrl: 'https://sellercentral.amazon.sg' }),
+      pending('AMAZON_AU',       'ECOM', 'Amazon Australia',       'Amazon.com.au — AU marketplace',  { applyUrl: 'https://sellercentral.amazon.com.au' }),
+      pending('AMAZON_DE',       'ECOM', 'Amazon Germany',         'Amazon.de — Germany marketplace', { applyUrl: 'https://sellercentral.amazon.de' }),
+      pending('LAZADA',          'ECOM', 'Lazada',                 'Southeast Asia marketplace',      { applyUrl: 'https://sellercenter.lazada.com' }),
+      pending('SHOPEE',          'ECOM', 'Shopee',                 'Southeast Asia & Taiwan marketplace', { applyUrl: 'https://seller.shopee.com' }),
+      pending('NOON',            'ECOM', 'Noon',                   'Middle East marketplace',         { applyUrl: 'https://sell.noon.com' }),
+      pending('MERCADO_LIBRE',   'ECOM', 'Mercado Libre',          "Latin America's largest marketplace", { applyUrl: 'https://www.mercadolibre.com' }),
+      pending('ALLEGRO',         'ECOM', 'Allegro',                "Poland's leading marketplace",    { applyUrl: 'https://allegro.pl' }),
+      pending('FRUUGO',          'ECOM', 'Fruugo',                 'Global cross-border marketplace', { applyUrl: 'https://www.fruugo.com/sell' }),
+      pending('ONBUY',           'ECOM', 'OnBuy',                  'UK & European marketplace',       { applyUrl: 'https://www.onbuy.com/gb/sell-on-onbuy' }),
+      pending('MANOMANO',        'ECOM', 'ManoMano',               'European DIY & home marketplace', { applyUrl: 'https://www.manomano.com/seller' }),
+      pending('RAKUTEN',         'ECOM', 'Rakuten',                'Japanese e-commerce giant',       { applyUrl: 'https://www.rakuten.com' }),
+      pending('ZALANDO',         'ECOM', 'Zalando',                'European fashion marketplace',    { applyUrl: 'https://corporate.zalando.com/en/partner-hub' }),
+      pending('KAUFLAND',        'ECOM', 'Kaufland',               'German general merchandise marketplace', { applyUrl: 'https://www.kaufland.de/seller-portal' }),
+      pending('WISH',            'ECOM', 'Wish',                   'Mobile-first global marketplace', { applyUrl: 'https://merchant.wish.com' }),
+
+      // ── ECOM (India gaps) ──────────────────────────────────────
+      pending('INDIAMART',       'ECOM', 'IndiaMART',              "India's largest B2B marketplace & lead source", { applyUrl: 'https://seller.indiamart.com' }),
+      pending('INDUSTRYBUYING',  'ECOM', 'Industrybuying',         'B2B industrial supplies marketplace', { applyUrl: 'https://seller.industrybuying.com' }),
+      pending('MOGLIX',          'ECOM', 'Moglix',                 'B2B industrial & MRO marketplace',    { applyUrl: 'https://supplier.moglix.com' }),
+      pending('PURPLLE',         'ECOM', 'Purplle',                'Beauty & personal care marketplace',  { applyUrl: 'https://seller.purplle.com' }),
+      pending('BEWAKOOF',        'ECOM', 'Bewakoof',               'Casual fashion marketplace',          { applyUrl: 'https://seller.bewakoof.com' }),
+      pending('SHOPCLUES',       'ECOM', 'ShopClues',              'Value e-commerce marketplace',        { applyUrl: 'https://seller.shopclues.com' }),
+
+      // ── QUICKCOM additions ─────────────────────────────────────
+      pending('FLIPKART_MINUTES','QUICKCOM', 'Flipkart Minutes',   "Flipkart's quick commerce service",   { applyUrl: 'https://seller.flipkart.com' }),
+      pending('TATA_1MG',        'QUICKCOM', 'Tata 1mg',           'Quick pharmacy & wellness delivery',  { applyUrl: 'https://www.1mg.com' }),
+      pending('DUNZO',           'QUICKCOM', 'Dunzo',              'Hyperlocal delivery & quick commerce',{ applyUrl: 'https://www.dunzo.com/business' }),
+      pending('COUNTRY_DELIGHT', 'QUICKCOM', 'Country Delight',    'Daily essentials & dairy quick delivery', { applyUrl: 'https://www.countrydelight.in' }),
+
+      // ── LOGISTICS additions ────────────────────────────────────
+      pending('ARAMEX',          'LOGISTICS', 'Aramex',            'Global express & logistics network', { features: ['shipment','tracking','rates'], requiresApproval: false, applyUrl: 'https://www.aramex.com' }),
+      pending('EKART',           'LOGISTICS', 'Ekart',             "Flipkart's logistics arm",          { features: ['shipment','tracking'], applyUrl: 'https://ekartlogistics.com' }),
+      pending('INDIA_POST',      'LOGISTICS', 'India Post',        'Government postal & courier service',{ features: ['shipment','tracking'], applyUrl: 'https://www.indiapost.gov.in' }),
+      pending('GATI',            'LOGISTICS', 'Gati',              'Surface express logistics',          { features: ['shipment','tracking'], applyUrl: 'https://www.gati.com' }),
+      pending('SAFEXPRESS',      'LOGISTICS', 'Safexpress',        'B2B logistics & supply chain',       { features: ['shipment','tracking'], applyUrl: 'https://www.safexpress.com' }),
+      pending('TRACKON',         'LOGISTICS', 'Trackon',           'Pan-India courier service',          { features: ['shipment','tracking'], applyUrl: 'https://www.trackon.in' }),
+      pending('PROFESSIONAL_COURIERS','LOGISTICS','The Professional Couriers','Pan-India courier network', { features: ['shipment','tracking'], applyUrl: 'https://www.tpcindia.com' }),
+      pending('SMARTR',          'LOGISTICS', 'Smartr Logistics',  'Tech-driven express logistics',      { features: ['shipment','tracking'], applyUrl: 'https://smartr.in' }),
+      pending('SHYPLITE',        'LOGISTICS', 'Shyplite',          'Multi-carrier shipping aggregator',  { features: ['rates','shipment','tracking'], applyUrl: 'https://shyplite.com' }),
+      pending('ICARRY',          'LOGISTICS', 'iCarry',            'Multi-carrier shipping aggregator',  { features: ['rates','shipment','tracking'], applyUrl: 'https://icarry.in' }),
+      pending('DOTZOT',          'LOGISTICS', 'DotZot',            'B2B & B2C express delivery',         { features: ['shipment','tracking'], applyUrl: 'https://www.dotzot.in' }),
+      pending('SHIPDELIGHT',     'LOGISTICS', 'ShipDelight',       'Shipping & post-ship engagement',    { features: ['rates','shipment','tracking'], applyUrl: 'https://www.shipdelight.com' }),
+
+      // ── OWNSTORE additions ─────────────────────────────────────
+      pending('WIX',                'OWNSTORE','Wix Stores',           'Drag-and-drop e-commerce builder',   { requiresApproval: false, applyUrl: 'https://www.wix.com/ecommerce' }),
+      pending('SQUARESPACE',        'OWNSTORE','Squarespace Commerce', 'Designer e-commerce platform',       { requiresApproval: false, applyUrl: 'https://www.squarespace.com/ecommerce' }),
+      pending('SALESFORCE_COMMERCE','OWNSTORE','Salesforce Commerce Cloud', 'Enterprise commerce cloud',     { applyUrl: 'https://www.salesforce.com/commerce' }),
+      pending('PRESTASHOP',         'OWNSTORE','PrestaShop',           'Open-source e-commerce platform',    { requiresApproval: false }),
+      pending('ECWID',              'OWNSTORE','Ecwid',                'Embedded e-commerce widget',         { requiresApproval: false, applyUrl: 'https://www.ecwid.com' }),
+      pending('ZOHO_COMMERCE',      'OWNSTORE','Zoho Commerce',        'All-in-one e-commerce platform',     { requiresApproval: false, applyUrl: 'https://www.zoho.com/commerce' }),
+      pending('DUKAAN',             'OWNSTORE','Dukaan',               'D2C store builder for Indian SMBs',  { requiresApproval: false, applyUrl: 'https://mydukaan.io' }),
+      pending('SHOOPY',             'OWNSTORE','Shoopy',               'Mobile-first online store builder',  { requiresApproval: false, applyUrl: 'https://shoopy.in' }),
+      pending('BIKAYI',             'OWNSTORE','Bikayi',               'Mobile WhatsApp store builder',      { requiresApproval: false, applyUrl: 'https://bikayi.com' }),
+      pending('KARTROCKET',         'OWNSTORE','KartRocket',           'Indian D2C e-commerce platform',     { requiresApproval: false, applyUrl: 'https://www.kartrocket.com' }),
+      pending('INSTAMOJO_PAGES',    'OWNSTORE','Instamojo Smart Pages','Online store + payments by Instamojo',{ requiresApproval: false, applyUrl: 'https://www.instamojo.com' }),
+
+      // ── SOCIAL additions ───────────────────────────────────────
+      pending('TIKTOK_SHOP',     'SOCIAL', 'TikTok Shop',          'In-app shopping on TikTok',           { features: ['orders','inventory'], applyUrl: 'https://seller-us.tiktok.com' }),
+      pending('PINTEREST',       'SOCIAL', 'Pinterest Shopping',   'Pinnable product catalog & checkout', { features: ['orders'], applyUrl: 'https://business.pinterest.com' }),
+      pending('YOUTUBE_SHOPPING','SOCIAL', 'YouTube Shopping',     'Tag products in videos & shorts',     { features: ['orders'], applyUrl: 'https://www.youtube.com/creators/shopping' }),
+      pending('SNAPCHAT',        'SOCIAL', 'Snapchat Ads & Catalog','Catalog-driven ads on Snapchat',     { features: ['orders'], applyUrl: 'https://forbusiness.snapchat.com' }),
+
+      // ── ACCOUNTING & ERP (new category) ────────────────────────
+      pending('TALLY',           'ACCOUNTING', 'Tally',            'Tally accounting (legacy ERP 9)',     { features: ['invoices','vouchers','ledger'], requiresApproval: false, applyUrl: 'https://tallysolutions.com' }),
+      pending('TALLY_PRIME',     'ACCOUNTING', 'Tally Prime',      'Modern Tally accounting & GST',       { features: ['invoices','vouchers','ledger','gst'], requiresApproval: false, applyUrl: 'https://tallysolutions.com/tally-prime' }),
+      pending('ZOHO_BOOKS',      'ACCOUNTING', 'Zoho Books',       'Online accounting for SMBs',          { features: ['invoices','expenses','gst'], requiresApproval: false, applyUrl: 'https://www.zoho.com/books' }),
+      pending('QUICKBOOKS',      'ACCOUNTING', 'QuickBooks',       'Intuit accounting for SMBs',          { features: ['invoices','expenses'], requiresApproval: false, applyUrl: 'https://quickbooks.intuit.com' }),
+      pending('XERO',            'ACCOUNTING', 'Xero',             'Cloud accounting platform',           { features: ['invoices','expenses'], requiresApproval: false, applyUrl: 'https://www.xero.com' }),
+      pending('SAP_B1',          'ACCOUNTING', 'SAP Business One',  'ERP for small & midsize businesses',  { features: ['invoices','vouchers','inventory_sync'], applyUrl: 'https://www.sap.com/products/business-one.html' }),
+      pending('SAP_S4HANA',      'ACCOUNTING', 'SAP S/4HANA',      'SAP enterprise ERP suite',            { features: ['invoices','vouchers','inventory_sync'], applyUrl: 'https://www.sap.com/products/s4hana-erp.html' }),
+      pending('ERPNEXT',         'ACCOUNTING', 'ERPNext',          'Open-source ERP & accounting',        { features: ['invoices','vouchers','inventory_sync'], requiresApproval: false, applyUrl: 'https://erpnext.com' }),
+      pending('DYNAMICS_365',    'ACCOUNTING', 'Microsoft Dynamics 365', 'Business Central / F&O',         { features: ['invoices','vouchers','inventory_sync'], applyUrl: 'https://dynamics.microsoft.com' }),
+      pending('NETSUITE',        'ACCOUNTING', 'NetSuite',         'Oracle cloud ERP',                    { features: ['invoices','vouchers','inventory_sync'], applyUrl: 'https://www.netsuite.com' }),
+      pending('ODOO',            'ACCOUNTING', 'Odoo',             'Open-source business apps & ERP',     { features: ['invoices','vouchers','inventory_sync'], requiresApproval: false, applyUrl: 'https://www.odoo.com' }),
+      pending('BUSY',            'ACCOUNTING', 'Busy Accounting',  'Indian SMB accounting + GST',         { features: ['invoices','gst'], requiresApproval: false, applyUrl: 'https://www.busy.in' }),
+      pending('MARG_ERP',        'ACCOUNTING', 'Marg ERP',         'Distribution & retail ERP',           { features: ['invoices','inventory_sync'], requiresApproval: false, applyUrl: 'https://margcompusoft.com' }),
+      pending('LOGIC_ERP',       'ACCOUNTING', 'LOGIC ERP',        'Retail, manufacturing & distribution ERP', { features: ['invoices','inventory_sync','pos'], applyUrl: 'https://logicerp.com' }),
+
+      // ── POS_SYSTEM (new category — real POS, not the manual placeholder) ──
+      pending('SHOPIFY_POS',     'POS_SYSTEM', 'Shopify POS',      "Shopify's in-store point of sale",    { features: ['orders','inventory_sync'], requiresApproval: false, applyUrl: 'https://www.shopify.com/pos' }),
+      pending('SQUARE_POS',      'POS_SYSTEM', 'Square POS',       "Square's all-in-one POS",             { features: ['orders','inventory_sync'], requiresApproval: false, applyUrl: 'https://squareup.com/pos' }),
+      pending('LIGHTSPEED_POS',  'POS_SYSTEM', 'Lightspeed POS',   'Cloud POS for retail & restaurants',  { features: ['orders','inventory_sync'], requiresApproval: false, applyUrl: 'https://www.lightspeedhq.com' }),
+      pending('LOYVERSE_POS',    'POS_SYSTEM', 'LoyVerse POS',     'Free POS for small business',         { features: ['orders','inventory_sync'], requiresApproval: false, applyUrl: 'https://loyverse.com' }),
+      pending('GOFRUGAL',        'POS_SYSTEM', 'GoFrugal',         'Retail & distribution POS',           { features: ['orders','inventory_sync'], applyUrl: 'https://www.gofrugal.com' }),
+      pending('POSIST',          'POS_SYSTEM', 'Posist (UrbanPiper)','Restaurant POS & ops',              { features: ['orders','inventory_sync'], applyUrl: 'https://www.posist.com' }),
+      pending('PETPOOJA',        'POS_SYSTEM', 'Petpooja',         'F&B POS & restaurant management',     { features: ['orders','inventory_sync'], applyUrl: 'https://petpooja.com' }),
+      pending('VYAPAR',          'POS_SYSTEM', 'Vyapar',           'GST billing & POS for SMBs',          { features: ['orders','invoices','gst'], requiresApproval: false, applyUrl: 'https://vyaparapp.in' }),
+      pending('ZOHO_POS',        'POS_SYSTEM', 'Zoho Inventory POS','Zoho retail POS',                    { features: ['orders','inventory_sync'], requiresApproval: false, applyUrl: 'https://www.zoho.com/inventory' }),
+
+      // ── PAYMENT (new category) ─────────────────────────────────
+      pending('RAZORPAY',        'PAYMENT', 'Razorpay',            "India's leading payment gateway",     { features: ['payments','refunds','payouts'], requiresApproval: false, applyUrl: 'https://razorpay.com' }),
+      pending('PAYU',            'PAYMENT', 'PayU',                'Global payment gateway',              { features: ['payments','refunds'], requiresApproval: false, applyUrl: 'https://payu.in' }),
+      pending('CCAVENUE',        'PAYMENT', 'CCAvenue',            'Pioneer Indian payment gateway',      { features: ['payments','refunds'], requiresApproval: false, applyUrl: 'https://www.ccavenue.com' }),
+      pending('CASHFREE',        'PAYMENT', 'Cashfree',            'Payments & payouts platform',         { features: ['payments','refunds','payouts'], requiresApproval: false, applyUrl: 'https://www.cashfree.com' }),
+      pending('STRIPE',          'PAYMENT', 'Stripe',              'Global online payments',              { features: ['payments','refunds'], requiresApproval: false, applyUrl: 'https://stripe.com' }),
+      pending('PAYPAL',          'PAYMENT', 'PayPal',              'Global digital payments',             { features: ['payments','refunds'], requiresApproval: false, applyUrl: 'https://www.paypal.com/business' }),
+      pending('PAYTM_PG',        'PAYMENT', 'Paytm Payments',      'Paytm business payment gateway',      { features: ['payments','refunds'], requiresApproval: false, applyUrl: 'https://business.paytm.com' }),
+      pending('PHONEPE_BUSINESS','PAYMENT', 'PhonePe Business',    'PhonePe payment gateway',             { features: ['payments','refunds'], requiresApproval: false, applyUrl: 'https://business.phonepe.com' }),
+      pending('INSTAMOJO',       'PAYMENT', 'Instamojo',           'Payments & store builder for SMBs',   { features: ['payments','refunds'], requiresApproval: false, applyUrl: 'https://www.instamojo.com' }),
+
+      // ── TAX (new category) ─────────────────────────────────────
+      pending('CLEARTAX',        'TAX', 'ClearTax',                'GST returns & e-invoicing',           { features: ['gst','e_invoice','reconciliation'], requiresApproval: false, applyUrl: 'https://cleartax.in' }),
+      pending('GSTZEN',          'TAX', 'GSTZen',                  'GST compliance & filing',             { features: ['gst','e_invoice'], requiresApproval: false, applyUrl: 'https://gstzen.in' }),
+      pending('TAXCLOUD_IRP',    'TAX', 'TaxCloud (IRP)',          'Government e-invoicing portal',       { features: ['e_invoice'], requiresApproval: false, applyUrl: 'https://einvoice1.gst.gov.in' }),
+      pending('AVALARA',         'TAX', 'Avalara',                 'Global tax compliance automation',    { features: ['gst','vat','tax_calc'], applyUrl: 'https://www.avalara.com' }),
+      pending('ZOHO_GST',        'TAX', 'Zoho GST',                'GST returns by Zoho',                 { features: ['gst','e_invoice'], requiresApproval: false, applyUrl: 'https://www.zoho.com/in/books/gst' }),
+
+      // ── CRM / Customer engagement (new category) ───────────────
+      pending('HUBSPOT',         'CRM', 'HubSpot',                 'Marketing, sales & service hub',      { features: ['contacts','sync'], requiresApproval: false, applyUrl: 'https://www.hubspot.com' }),
+      pending('SALESFORCE_CRM',  'CRM', 'Salesforce CRM',          'Enterprise CRM platform',             { features: ['contacts','sync'], applyUrl: 'https://www.salesforce.com' }),
+      pending('ZOHO_CRM',        'CRM', 'Zoho CRM',                'CRM for SMBs',                        { features: ['contacts','sync'], requiresApproval: false, applyUrl: 'https://www.zoho.com/crm' }),
+      pending('MAILCHIMP',       'CRM', 'Mailchimp',               'Email marketing & automation',        { features: ['email','sync'], requiresApproval: false, applyUrl: 'https://mailchimp.com' }),
+      pending('KLAVIYO',         'CRM', 'Klaviyo',                 'E-commerce email & SMS marketing',    { features: ['email','sms','sync'], requiresApproval: false, applyUrl: 'https://www.klaviyo.com' }),
+      pending('SENDINBLUE',      'CRM', 'Brevo (Sendinblue)',      'Email, SMS & marketing automation',   { features: ['email','sms','sync'], requiresApproval: false, applyUrl: 'https://www.brevo.com' }),
+      pending('WEBENGAGE',       'CRM', 'WebEngage',               'Customer engagement platform',        { features: ['email','sms','push','sync'], applyUrl: 'https://webengage.com' }),
+      pending('MOENGAGE',        'CRM', 'MoEngage',                'Customer engagement & analytics',     { features: ['email','sms','push','sync'], applyUrl: 'https://www.moengage.com' }),
+      pending('CLEVERTAP',       'CRM', 'CleverTap',               'Mobile customer engagement',          { features: ['email','sms','push','sync'], applyUrl: 'https://clevertap.com' }),
+      pending('FRESHDESK',       'CRM', 'Freshdesk',               'Customer support helpdesk',           { features: ['tickets','sync'], requiresApproval: false, applyUrl: 'https://www.freshworks.com/freshdesk' }),
+      pending('ZENDESK',         'CRM', 'Zendesk',                 'Customer service & support',          { features: ['tickets','sync'], requiresApproval: false, applyUrl: 'https://www.zendesk.com' }),
+      pending('GORGIAS',         'CRM', 'Gorgias',                 'E-commerce helpdesk',                 { features: ['tickets','sync'], requiresApproval: false, applyUrl: 'https://www.gorgias.com' }),
+
+      // ── RETURNS / Reverse logistics (new category) ─────────────
+      pending('RETURN_PRIME',    'RETURNS', 'Return Prime',         'Returns automation for D2C brands',  { features: ['returns','exchanges','refunds'], requiresApproval: false, applyUrl: 'https://www.returnprime.com' }),
+      pending('WERETURN',        'RETURNS', 'WeReturn',             'Returns management platform',       { features: ['returns','refunds'], applyUrl: 'https://wereturn.in' }),
+      pending('ANCHANTO_RETURNS','RETURNS', 'Anchanto Returns',     'Returns & reverse logistics',       { features: ['returns','refunds'], applyUrl: 'https://www.anchanto.com' }),
+      pending('EASYVMS',         'RETURNS', 'EasyVMS',              'Returns fraud prevention',          { features: ['returns','fraud_check'], applyUrl: 'https://vms.easyecom.io' }),
+
+      // ── FULFILLMENT / 3PL (new category) ───────────────────────
+      pending('AMAZON_FBA',      'FULFILLMENT', 'Amazon FBA',       "Amazon's fulfillment network",      { features: ['fulfillment','tracking','inventory_sync'], applyUrl: 'https://sell.amazon.in/fulfillment-by-amazon' }),
+      pending('FLIPKART_SMART_FULFILLMENT','FULFILLMENT','Flipkart Smart Fulfillment','Flipkart-managed warehousing & fulfillment', { features: ['fulfillment','tracking','inventory_sync'], applyUrl: 'https://seller.flipkart.com' }),
+      pending('WAREIQ',          'FULFILLMENT', 'WareIQ',           'On-demand 3PL fulfillment network', { features: ['fulfillment','tracking','inventory_sync'], applyUrl: 'https://wareiq.com' }),
+      pending('LOGINEXT',        'FULFILLMENT', 'LogiNext',         'Logistics & fulfillment automation',{ features: ['fulfillment','tracking'], applyUrl: 'https://www.loginextsolutions.com' }),
+      pending('HOLISOL',         'FULFILLMENT', 'Holisol Logistics','3PL fulfillment & warehousing',     { features: ['fulfillment','tracking','inventory_sync'], applyUrl: 'https://www.holisollogistics.com' }),
+    ];
+  })(),
 ];
 
 // Quick lookup by type

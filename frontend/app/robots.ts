@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://uniflo.vercel.app';
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://omnistock.vercel.app';
 
 export default function robots(): MetadataRoute.Robots {
   return {

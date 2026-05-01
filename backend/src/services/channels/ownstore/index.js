@@ -6,4 +6,5 @@ module.exports = {
   BigCommerceAdapter:    require('./bigcommerce'),
   OpenCartAdapter:       require('./opencart'),
   CustomWebhookAdapter:  require('./custom-webhook'),
+  ...require('./pending'),
 };

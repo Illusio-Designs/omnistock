@@ -15,4 +15,5 @@ module.exports = {
   ShipwayAdapter:      require('./shipway'),
   NimbusPostAdapter:   require('./nimbuspost'),
   ClickPostAdapter:    require('./clickpost'),
+  ...require('./pending'),
 };

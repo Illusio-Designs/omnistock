@@ -25,7 +25,7 @@ export const useUIStore = create<UIState>()(
         })),
     }),
     {
-      name: 'uniflo-ui',
+      name: 'omnistock-ui',
       partialize: (s) => ({
         sidebarCollapsed: s.sidebarCollapsed,
         navGroupCollapsed: s.navGroupCollapsed,

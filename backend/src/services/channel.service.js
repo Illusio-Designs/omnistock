@@ -6,64 +6,98 @@ const { resolveFulfillmentType, assessCompleteness } = require('./fulfillment.se
 
 // ── Adapters grouped by category ────────────────────────────────────────────
 
-const {
-  AmazonAdapter,
-  FlipkartAdapter,
-  MeeshoAdapter,
-  MyntraAdapter,
-  NykaaAdapter,
-  AjioAdapter,
-  TataCliqAdapter,
-  SnapdealAdapter,
-  GlowRoadAdapter,
-  JioMartAdapter,
-  PaytmMallAdapter,
-  LimeRoadAdapter,
-  EbayAdapter,
-  EtsyAdapter,
-} = require('./channels/ecom');
+const ecomAdapters     = require('./channels/ecom');
+const quickcomAdapters = require('./channels/quickcom');
+const logisticsAdapters= require('./channels/logistics');
+const ownstoreAdapters = require('./channels/ownstore');
+const socialAdapters   = require('./channels/social');
+const accountingAdapters = require('./channels/accounting');
+const posSystemAdapters  = require('./channels/pos-system');
+const paymentAdapters    = require('./channels/payment');
+const taxAdapters        = require('./channels/tax');
+const crmAdapters        = require('./channels/crm');
+const returnsAdapters    = require('./channels/returns');
+const fulfillmentAdapters= require('./channels/fulfillment');
 
 const {
-  BlinkitAdapter,
-  ZeptoAdapter,
-  SwiggyInstamartAdapter,
-  BBNowAdapter,
-} = require('./channels/quickcom');
+  AmazonAdapter, FlipkartAdapter, MeeshoAdapter, MyntraAdapter,
+  NykaaAdapter, AjioAdapter, TataCliqAdapter, SnapdealAdapter,
+  GlowRoadAdapter, JioMartAdapter, PaytmMallAdapter, LimeRoadAdapter,
+  EbayAdapter, EtsyAdapter,
+  // Pending → real ECOM
+  WalmartAdapter, AmazonUSAdapter, AmazonUKAdapter, AmazonUAEAdapter,
+  AmazonSAAdapter, AmazonSGAdapter, AmazonAUAdapter, AmazonDEAdapter,
+  LazadaAdapter, ShopeeAdapter, NoonAdapter, MercadoLibreAdapter,
+  AllegroAdapter, FruugoAdapter, OnBuyAdapter, ManoManoAdapter,
+  RakutenAdapter, ZalandoAdapter, KauflandAdapter, WishAdapter,
+  IndiaMartAdapter, IndustryBuyingAdapter, MoglixAdapter, PurppleAdapter,
+  BewakoofAdapter, ShopCluesAdapter,
+  FirstCryAdapter, PepperfryAdapter, CromaAdapter, TataNeuAdapter,
+} = ecomAdapters;
 
 const {
-  ShiprocketAdapter,
-  DelhiveryAdapter,
-  FshipAdapter,
-  EcomExpressAdapter,
-  XpressbeesAdapter,
-  ShadowfaxAdapter,
-  BlueDartAdapter,
-  DTDCAdapter,
-  FedExAdapter,
-  DHLAdapter,
-  UPSAdapter,
-  IThinkAdapter,
-  PickrrAdapter,
-  ShipwayAdapter,
-  NimbusPostAdapter,
-  ClickPostAdapter,
-} = require('./channels/logistics');
+  BlinkitAdapter, ZeptoAdapter, SwiggyInstamartAdapter, BBNowAdapter,
+  FlipkartMinutesAdapter, Tata1mgAdapter, DunzoAdapter, CountryDelightAdapter,
+} = quickcomAdapters;
 
 const {
-  ShopifyAdapter,
-  WooCommerceAdapter,
-  AmazonSmartBizAdapter,
-  MagentoAdapter,
-  BigCommerceAdapter,
-  OpenCartAdapter,
-  CustomWebhookAdapter,
-} = require('./channels/ownstore');
+  ShiprocketAdapter, DelhiveryAdapter, FshipAdapter, EcomExpressAdapter,
+  XpressbeesAdapter, ShadowfaxAdapter, BlueDartAdapter, DTDCAdapter,
+  FedExAdapter, DHLAdapter, UPSAdapter, IThinkAdapter,
+  PickrrAdapter, ShipwayAdapter, NimbusPostAdapter, ClickPostAdapter,
+  AramexAdapter, EkartAdapter, IndiaPostAdapter, GatiAdapter,
+  SafexpressAdapter, TrackonAdapter, ProfessionalCouriersAdapter, SmartrAdapter,
+  ShypliteAdapter, ICarryAdapter, DotZotAdapter, ShipDelightAdapter,
+} = logisticsAdapters;
 
 const {
-  InstagramAdapter,
-  FacebookAdapter,
-  WhatsAppBusinessAdapter,
-} = require('./channels/social');
+  ShopifyAdapter, WooCommerceAdapter, AmazonSmartBizAdapter, MagentoAdapter,
+  BigCommerceAdapter, OpenCartAdapter, CustomWebhookAdapter,
+  WixAdapter, SquarespaceAdapter, SalesforceCommerceAdapter, PrestaShopAdapter,
+  EcwidAdapter, ZohoCommerceAdapter, DukaanAdapter, ShoopyAdapter,
+  BikayiAdapter, KartRocketAdapter, InstamojoPagesAdapter,
+} = ownstoreAdapters;
+
+const {
+  InstagramAdapter, FacebookAdapter, WhatsAppBusinessAdapter,
+  TikTokShopAdapter, PinterestAdapter, YouTubeShoppingAdapter, SnapchatAdapter,
+} = socialAdapters;
+
+const {
+  TallyAdapter, TallyPrimeAdapter, ZohoBooksAdapter, QuickBooksAdapter,
+  XeroAdapter, SapB1Adapter, SapS4HanaAdapter, ERPNextAdapter,
+  Dynamics365Adapter, NetSuiteAdapter, OdooAdapter, BusyAdapter,
+  MargAdapter, LogicErpAdapter,
+} = accountingAdapters;
+
+const {
+  ShopifyPosAdapter, SquarePosAdapter, LightspeedPosAdapter, LoyVersePosAdapter,
+  GoFrugalAdapter, PosistAdapter, PetpoojaAdapter, VyaparAdapter, ZohoPosAdapter,
+} = posSystemAdapters;
+
+const {
+  RazorpayAdapter, PayUAdapter, CCAvenueAdapter, CashfreeAdapter, StripeAdapter,
+  PayPalAdapter, PaytmPgAdapter, PhonePeAdapter, InstamojoAdapter,
+} = paymentAdapters;
+
+const {
+  ClearTaxAdapter, GSTZenAdapter, TaxCloudIRPAdapter, AvalaraAdapter, ZohoGstAdapter,
+} = taxAdapters;
+
+const {
+  HubSpotAdapter, SalesforceCrmAdapter, ZohoCrmAdapter, MailchimpAdapter,
+  KlaviyoAdapter, BrevoAdapter, WebEngageAdapter, MoEngageAdapter,
+  CleverTapAdapter, FreshdeskAdapter, ZendeskAdapter, GorgiasAdapter,
+} = crmAdapters;
+
+const {
+  ReturnPrimeAdapter, WeReturnAdapter, AnchantoReturnsAdapter, EasyVMSAdapter,
+} = returnsAdapters;
+
+const {
+  AmazonFbaAdapter, FlipkartSmartFulfillmentAdapter,
+  WareIQAdapter, LogiNextAdapter, HolisolAdapter,
+} = fulfillmentAdapters;
 
 const { ManualAdapter } = require('./channels/manual');
 
@@ -73,37 +107,93 @@ const MANUAL_TYPES = new Set(['OFFLINE', 'POS', 'WHOLESALE', 'DISTRIBUTOR', 'OTH
 // ── Channel type → category map ──────────────────────────────────────────────
 
 const CHANNEL_CATEGORY = {
-  // ECOM — Indian marketplaces
+  // ECOM — Indian + global marketplaces
   AMAZON: 'ECOM', FLIPKART: 'ECOM', MYNTRA: 'ECOM', MEESHO: 'ECOM',
   SNAPDEAL: 'ECOM', PAYTM_MALL: 'ECOM', NYKAA: 'ECOM', AJIO: 'ECOM',
   TATA_CLIQ: 'ECOM', GLOWROAD: 'ECOM', JIOMART: 'ECOM',
   LIMEROAD: 'ECOM', EBAY: 'ECOM', ETSY: 'ECOM',
+  WALMART: 'ECOM', AMAZON_US: 'ECOM', AMAZON_UK: 'ECOM', AMAZON_UAE: 'ECOM',
+  AMAZON_SA: 'ECOM', AMAZON_SG: 'ECOM', AMAZON_AU: 'ECOM', AMAZON_DE: 'ECOM',
+  LAZADA: 'ECOM', SHOPEE: 'ECOM', NOON: 'ECOM', MERCADO_LIBRE: 'ECOM',
+  ALLEGRO: 'ECOM', FRUUGO: 'ECOM', ONBUY: 'ECOM', MANOMANO: 'ECOM',
+  RAKUTEN: 'ECOM', ZALANDO: 'ECOM', KAUFLAND: 'ECOM', WISH: 'ECOM',
+  INDIAMART: 'ECOM', INDUSTRYBUYING: 'ECOM', MOGLIX: 'ECOM', PURPLLE: 'ECOM',
+  BEWAKOOF: 'ECOM', SHOPCLUES: 'ECOM',
+  FIRSTCRY: 'ECOM', PEPPERFRY: 'ECOM', CROMA: 'ECOM', TATA_NEU: 'ECOM',
 
-  // QUICKCOM — 10-min delivery
+  // QUICKCOM
   BLINKIT: 'QUICKCOM', ZEPTO: 'QUICKCOM',
   SWIGGY_INSTAMART: 'QUICKCOM', BB_NOW: 'QUICKCOM',
+  FLIPKART_MINUTES: 'QUICKCOM', TATA_1MG: 'QUICKCOM',
+  DUNZO: 'QUICKCOM', COUNTRY_DELIGHT: 'QUICKCOM',
 
-  // LOGISTICS — shipping aggregators & couriers
+  // LOGISTICS
   SHIPROCKET: 'LOGISTICS', DELHIVERY: 'LOGISTICS', FSHIP: 'LOGISTICS',
   BLUEDART: 'LOGISTICS', DTDC: 'LOGISTICS', ECOMEXPRESS: 'LOGISTICS',
   XPRESSBEES: 'LOGISTICS', SHADOWFAX: 'LOGISTICS',
   FEDEX: 'LOGISTICS', DHL: 'LOGISTICS', UPS: 'LOGISTICS', ITHINK: 'LOGISTICS',
   PICKRR: 'LOGISTICS', SHIPWAY: 'LOGISTICS', NIMBUSPOST: 'LOGISTICS', CLICKPOST: 'LOGISTICS',
+  ARAMEX: 'LOGISTICS', EKART: 'LOGISTICS', INDIA_POST: 'LOGISTICS',
+  GATI: 'LOGISTICS', SAFEXPRESS: 'LOGISTICS', TRACKON: 'LOGISTICS',
+  PROFESSIONAL_COURIERS: 'LOGISTICS', SMARTR: 'LOGISTICS',
+  SHYPLITE: 'LOGISTICS', ICARRY: 'LOGISTICS', DOTZOT: 'LOGISTICS', SHIPDELIGHT: 'LOGISTICS',
 
-  // OWNSTORE — own website / store platforms
+  // OWNSTORE
   AMAZON_SMARTBIZ: 'OWNSTORE',
   SHOPIFY: 'OWNSTORE', WOOCOMMERCE: 'OWNSTORE', MAGENTO: 'OWNSTORE',
   BIGCOMMERCE: 'OWNSTORE', OPENCART: 'OWNSTORE',
   WEBSITE: 'OWNSTORE', OFFLINE: 'OWNSTORE', POS: 'OWNSTORE',
+  WIX: 'OWNSTORE', SQUARESPACE: 'OWNSTORE', SALESFORCE_COMMERCE: 'OWNSTORE',
+  PRESTASHOP: 'OWNSTORE', ECWID: 'OWNSTORE', ZOHO_COMMERCE: 'OWNSTORE',
+  DUKAAN: 'OWNSTORE', SHOOPY: 'OWNSTORE', BIKAYI: 'OWNSTORE',
+  KARTROCKET: 'OWNSTORE', INSTAMOJO_PAGES: 'OWNSTORE',
 
   // SOCIAL
   INSTAGRAM: 'SOCIAL', FACEBOOK: 'SOCIAL', WHATSAPP_BUSINESS: 'SOCIAL',
+  TIKTOK_SHOP: 'SOCIAL', PINTEREST: 'SOCIAL',
+  YOUTUBE_SHOPPING: 'SOCIAL', SNAPCHAT: 'SOCIAL',
 
   // B2B
   B2B_PORTAL: 'B2B', WHOLESALE: 'B2B', DISTRIBUTOR: 'B2B',
 
   // CUSTOM
   CUSTOM_WEBHOOK: 'CUSTOM', OTHER: 'CUSTOM',
+
+  // ACCOUNTING
+  TALLY: 'ACCOUNTING', TALLY_PRIME: 'ACCOUNTING', ZOHO_BOOKS: 'ACCOUNTING',
+  QUICKBOOKS: 'ACCOUNTING', XERO: 'ACCOUNTING', SAP_B1: 'ACCOUNTING',
+  SAP_S4HANA: 'ACCOUNTING', ERPNEXT: 'ACCOUNTING', DYNAMICS_365: 'ACCOUNTING',
+  NETSUITE: 'ACCOUNTING', ODOO: 'ACCOUNTING', BUSY: 'ACCOUNTING',
+  MARG_ERP: 'ACCOUNTING', LOGIC_ERP: 'ACCOUNTING',
+
+  // POS_SYSTEM
+  SHOPIFY_POS: 'POS_SYSTEM', SQUARE_POS: 'POS_SYSTEM',
+  LIGHTSPEED_POS: 'POS_SYSTEM', LOYVERSE_POS: 'POS_SYSTEM',
+  GOFRUGAL: 'POS_SYSTEM', POSIST: 'POS_SYSTEM',
+  PETPOOJA: 'POS_SYSTEM', VYAPAR: 'POS_SYSTEM', ZOHO_POS: 'POS_SYSTEM',
+
+  // PAYMENT
+  RAZORPAY: 'PAYMENT', PAYU: 'PAYMENT', CCAVENUE: 'PAYMENT',
+  CASHFREE: 'PAYMENT', STRIPE: 'PAYMENT', PAYPAL: 'PAYMENT',
+  PAYTM_PG: 'PAYMENT', PHONEPE_BUSINESS: 'PAYMENT', INSTAMOJO: 'PAYMENT',
+
+  // TAX
+  CLEARTAX: 'TAX', GSTZEN: 'TAX', TAXCLOUD_IRP: 'TAX',
+  AVALARA: 'TAX', ZOHO_GST: 'TAX',
+
+  // CRM
+  HUBSPOT: 'CRM', SALESFORCE_CRM: 'CRM', ZOHO_CRM: 'CRM',
+  MAILCHIMP: 'CRM', KLAVIYO: 'CRM', SENDINBLUE: 'CRM',
+  WEBENGAGE: 'CRM', MOENGAGE: 'CRM', CLEVERTAP: 'CRM',
+  FRESHDESK: 'CRM', ZENDESK: 'CRM', GORGIAS: 'CRM',
+
+  // RETURNS
+  RETURN_PRIME: 'RETURNS', WERETURN: 'RETURNS',
+  ANCHANTO_RETURNS: 'RETURNS', EASYVMS: 'RETURNS',
+
+  // FULFILLMENT
+  AMAZON_FBA: 'FULFILLMENT', FLIPKART_SMART_FULFILLMENT: 'FULFILLMENT',
+  WAREIQ: 'FULFILLMENT', LOGINEXT: 'FULFILLMENT', HOLISOL: 'FULFILLMENT',
 };
 
 function getCategoryForType(type) {
@@ -203,6 +293,149 @@ function getAdapter(channel) {
 
     case 'OTHER':
       throw new Error('OTHER: no adapter available. Use CUSTOM_WEBHOOK to receive orders via webhook.');
+
+    // ── ECOM (extended) ───────────────────────────────────
+    case 'WALMART':         return new WalmartAdapter(creds);
+    case 'AMAZON_US':       return new AmazonUSAdapter(creds);
+    case 'AMAZON_UK':       return new AmazonUKAdapter(creds);
+    case 'AMAZON_UAE':      return new AmazonUAEAdapter(creds);
+    case 'AMAZON_SA':       return new AmazonSAAdapter(creds);
+    case 'AMAZON_SG':       return new AmazonSGAdapter(creds);
+    case 'AMAZON_AU':       return new AmazonAUAdapter(creds);
+    case 'AMAZON_DE':       return new AmazonDEAdapter(creds);
+    case 'LAZADA':          return new LazadaAdapter(creds);
+    case 'SHOPEE':          return new ShopeeAdapter(creds);
+    case 'NOON':            return new NoonAdapter(creds);
+    case 'MERCADO_LIBRE':   return new MercadoLibreAdapter(creds);
+    case 'ALLEGRO':         return new AllegroAdapter(creds);
+    case 'FRUUGO':          return new FruugoAdapter(creds);
+    case 'ONBUY':           return new OnBuyAdapter(creds);
+    case 'MANOMANO':        return new ManoManoAdapter(creds);
+    case 'RAKUTEN':         return new RakutenAdapter(creds);
+    case 'ZALANDO':         return new ZalandoAdapter(creds);
+    case 'KAUFLAND':        return new KauflandAdapter(creds);
+    case 'WISH':            return new WishAdapter(creds);
+    case 'INDIAMART':       return new IndiaMartAdapter(creds);
+    case 'INDUSTRYBUYING':  return new IndustryBuyingAdapter(creds);
+    case 'MOGLIX':          return new MoglixAdapter(creds);
+    case 'PURPLLE':         return new PurppleAdapter(creds);
+    case 'BEWAKOOF':        return new BewakoofAdapter(creds || {});
+    case 'SHOPCLUES':       return new ShopCluesAdapter(creds || {});
+    case 'FIRSTCRY':        return new FirstCryAdapter(creds);
+    case 'PEPPERFRY':       return new PepperfryAdapter(creds);
+    case 'CROMA':           return new CromaAdapter(creds);
+    case 'TATA_NEU':        return new TataNeuAdapter(creds);
+
+    // ── QUICKCOM (extended) ───────────────────────────────
+    case 'FLIPKART_MINUTES': return new FlipkartMinutesAdapter(creds);
+    case 'TATA_1MG':         return new Tata1mgAdapter(creds);
+    case 'DUNZO':            return new DunzoAdapter(creds);
+    case 'COUNTRY_DELIGHT':  return new CountryDelightAdapter(creds || {});
+
+    // ── LOGISTICS (extended) ──────────────────────────────
+    case 'ARAMEX':                return new AramexAdapter(creds);
+    case 'EKART':                 return new EkartAdapter(creds);
+    case 'INDIA_POST':            return new IndiaPostAdapter(creds);
+    case 'GATI':                  return new GatiAdapter(creds);
+    case 'SAFEXPRESS':            return new SafexpressAdapter(creds);
+    case 'TRACKON':               return new TrackonAdapter(creds);
+    case 'PROFESSIONAL_COURIERS': return new ProfessionalCouriersAdapter(creds);
+    case 'SMARTR':                return new SmartrAdapter(creds);
+    case 'SHYPLITE':              return new ShypliteAdapter(creds);
+    case 'ICARRY':                return new ICarryAdapter(creds);
+    case 'DOTZOT':                return new DotZotAdapter(creds);
+    case 'SHIPDELIGHT':           return new ShipDelightAdapter(creds);
+
+    // ── OWNSTORE (extended) ───────────────────────────────
+    case 'WIX':                 return new WixAdapter(creds);
+    case 'SQUARESPACE':         return new SquarespaceAdapter(creds);
+    case 'SALESFORCE_COMMERCE': return new SalesforceCommerceAdapter(creds);
+    case 'PRESTASHOP':          return new PrestaShopAdapter(creds);
+    case 'ECWID':               return new EcwidAdapter(creds);
+    case 'ZOHO_COMMERCE':       return new ZohoCommerceAdapter(creds);
+    case 'DUKAAN':              return new DukaanAdapter(creds);
+    case 'SHOOPY':              return new ShoopyAdapter(creds);
+    case 'BIKAYI':              return new BikayiAdapter(creds);
+    case 'KARTROCKET':          return new KartRocketAdapter(creds);
+    case 'INSTAMOJO_PAGES':     return new InstamojoPagesAdapter(creds);
+
+    // ── SOCIAL (extended) ─────────────────────────────────
+    case 'TIKTOK_SHOP':       return new TikTokShopAdapter(creds);
+    case 'PINTEREST':         return new PinterestAdapter(creds);
+    case 'YOUTUBE_SHOPPING':  return new YouTubeShoppingAdapter(creds);
+    case 'SNAPCHAT':          return new SnapchatAdapter(creds);
+
+    // ── ACCOUNTING ────────────────────────────────────────
+    case 'TALLY':         return new TallyAdapter(creds);
+    case 'TALLY_PRIME':   return new TallyPrimeAdapter(creds);
+    case 'ZOHO_BOOKS':    return new ZohoBooksAdapter(creds);
+    case 'QUICKBOOKS':    return new QuickBooksAdapter(creds);
+    case 'XERO':          return new XeroAdapter(creds);
+    case 'SAP_B1':        return new SapB1Adapter(creds);
+    case 'SAP_S4HANA':    return new SapS4HanaAdapter(creds);
+    case 'ERPNEXT':       return new ERPNextAdapter(creds);
+    case 'DYNAMICS_365':  return new Dynamics365Adapter(creds);
+    case 'NETSUITE':      return new NetSuiteAdapter(creds);
+    case 'ODOO':          return new OdooAdapter(creds);
+    case 'BUSY':          return new BusyAdapter(creds);
+    case 'MARG_ERP':      return new MargAdapter(creds);
+    case 'LOGIC_ERP':     return new LogicErpAdapter(creds);
+
+    // ── POS_SYSTEM ────────────────────────────────────────
+    case 'SHOPIFY_POS':     return new ShopifyPosAdapter(creds);
+    case 'SQUARE_POS':      return new SquarePosAdapter(creds);
+    case 'LIGHTSPEED_POS':  return new LightspeedPosAdapter(creds);
+    case 'LOYVERSE_POS':    return new LoyVersePosAdapter(creds);
+    case 'GOFRUGAL':        return new GoFrugalAdapter(creds);
+    case 'POSIST':          return new PosistAdapter(creds);
+    case 'PETPOOJA':        return new PetpoojaAdapter(creds);
+    case 'VYAPAR':          return new VyaparAdapter(creds);
+    case 'ZOHO_POS':        return new ZohoPosAdapter(creds);
+
+    // ── PAYMENT ───────────────────────────────────────────
+    case 'RAZORPAY':         return new RazorpayAdapter(creds);
+    case 'PAYU':             return new PayUAdapter(creds);
+    case 'CCAVENUE':         return new CCAvenueAdapter(creds);
+    case 'CASHFREE':         return new CashfreeAdapter(creds);
+    case 'STRIPE':           return new StripeAdapter(creds);
+    case 'PAYPAL':           return new PayPalAdapter(creds);
+    case 'PAYTM_PG':         return new PaytmPgAdapter(creds);
+    case 'PHONEPE_BUSINESS': return new PhonePeAdapter(creds);
+    case 'INSTAMOJO':        return new InstamojoAdapter(creds);
+
+    // ── TAX ───────────────────────────────────────────────
+    case 'CLEARTAX':      return new ClearTaxAdapter(creds);
+    case 'GSTZEN':        return new GSTZenAdapter(creds);
+    case 'TAXCLOUD_IRP':  return new TaxCloudIRPAdapter(creds);
+    case 'AVALARA':       return new AvalaraAdapter(creds);
+    case 'ZOHO_GST':      return new ZohoGstAdapter(creds);
+
+    // ── CRM ───────────────────────────────────────────────
+    case 'HUBSPOT':         return new HubSpotAdapter(creds);
+    case 'SALESFORCE_CRM':  return new SalesforceCrmAdapter(creds);
+    case 'ZOHO_CRM':        return new ZohoCrmAdapter(creds);
+    case 'MAILCHIMP':       return new MailchimpAdapter(creds);
+    case 'KLAVIYO':         return new KlaviyoAdapter(creds);
+    case 'SENDINBLUE':      return new BrevoAdapter(creds);
+    case 'WEBENGAGE':       return new WebEngageAdapter(creds);
+    case 'MOENGAGE':        return new MoEngageAdapter(creds);
+    case 'CLEVERTAP':       return new CleverTapAdapter(creds);
+    case 'FRESHDESK':       return new FreshdeskAdapter(creds);
+    case 'ZENDESK':         return new ZendeskAdapter(creds);
+    case 'GORGIAS':         return new GorgiasAdapter(creds);
+
+    // ── RETURNS ───────────────────────────────────────────
+    case 'RETURN_PRIME':     return new ReturnPrimeAdapter(creds);
+    case 'WERETURN':         return new WeReturnAdapter(creds);
+    case 'ANCHANTO_RETURNS': return new AnchantoReturnsAdapter(creds);
+    case 'EASYVMS':          return new EasyVMSAdapter(creds);
+
+    // ── FULFILLMENT ───────────────────────────────────────
+    case 'AMAZON_FBA':                return new AmazonFbaAdapter(creds);
+    case 'FLIPKART_SMART_FULFILLMENT':return new FlipkartSmartFulfillmentAdapter(creds);
+    case 'WAREIQ':                    return new WareIQAdapter(creds);
+    case 'LOGINEXT':                  return new LogiNextAdapter(creds);
+    case 'HOLISOL':                   return new HolisolAdapter(creds);
 
     default:
       throw new Error(`No adapter for channel type: ${channel.type}`);

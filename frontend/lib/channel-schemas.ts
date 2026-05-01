@@ -38,7 +38,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     steps: [
       'Click "Authorize with Amazon" below',
       'Log in to your Amazon Seller Central account when prompted',
-      'Approve Uniflo\'s access to your inventory, orders and MCF',
+      'Approve Omnistock\'s access to your inventory, orders and MCF',
       'You\'ll be redirected back — that\'s it',
     ],
     fields: [
@@ -66,7 +66,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     steps: [
       'Click "Authorize with Amazon" below',
       'Sign in to Seller Central',
-      'Approve Uniflo\'s access scopes',
+      'Approve Omnistock\'s access scopes',
       'You\'ll be redirected back automatically',
     ],
     fields: [
@@ -94,7 +94,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     steps: [
       'Click "Authorize with Flipkart" below',
       'Sign in to Flipkart Seller Hub',
-      'Grant Uniflo access to your seller data',
+      'Grant Omnistock access to your seller data',
       'You\'ll be redirected back automatically',
     ],
     fields: [],
@@ -261,7 +261,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     type: 'SHOPIFY',
     name: 'Shopify',
     docsUrl: 'https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens/authorization-code-grant',
-    description: 'OAuth into your Shopify store. Uniflo has a public Partner app — every store installs it.',
+    description: 'OAuth into your Shopify store. Omnistock has a public Partner app — every store installs it.',
     oauth: 'shopify',
     steps: [
       'Enter your store domain (e.g. mystore.myshopify.com)',
@@ -616,11 +616,11 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
   CUSTOM_WEBHOOK: {
     type: 'CUSTOM_WEBHOOK',
     name: 'Custom Webhook',
-    description: 'Generic webhook receiver. Use when your own system pushes orders to Uniflo.',
+    description: 'Generic webhook receiver. Use when your own system pushes orders to Omnistock.',
     steps: [
       'Pick a strong HMAC secret and set it below',
       'Configure your source system to POST to /api/v1/webhooks/channels/:id',
-      'Sign the raw body with HMAC-SHA256 using your secret and send it in the x-uniflo-signature header',
+      'Sign the raw body with HMAC-SHA256 using your secret and send it in the x-omnistock-signature header',
     ],
     fields: [
       { key: 'webhookSecret', label: 'Webhook HMAC Secret', kind: 'password', required: true, secret: true, help: 'Pick any 32+ char random string. Use it in your sender to sign requests with HMAC-SHA256.' },

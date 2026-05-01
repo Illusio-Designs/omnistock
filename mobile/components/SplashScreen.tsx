@@ -103,7 +103,7 @@ export default function AnimatedSplash({ onFinish }: Props) {
         }}
       >
         <Text className="text-white text-3xl font-extrabold tracking-tight">
-          Uniflo
+          Omnistock
         </Text>
       </Animated.View>
 

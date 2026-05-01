@@ -127,7 +127,7 @@ router.get('/amazon/callback', async (req, res) => {
   const { spapi_oauth_code, selling_partner_id, state } = req.query;
 
   const parsed = verifyState(String(state || ''));
-  if (!parsed) return res.status(400).send(renderPage('Authorization failed', 'Invalid or expired state. Please retry from Uniflo.'));
+  if (!parsed) return res.status(400).send(renderPage('Authorization failed', 'Invalid or expired state. Please retry from Omnistock.'));
   if (!spapi_oauth_code) return res.status(400).send(renderPage('Authorization failed', 'Missing authorization code from Amazon.'));
 
   try {
@@ -171,7 +171,7 @@ router.get('/amazon/callback', async (req, res) => {
 
     res.send(renderPage(
       '✓ Connected',
-      `Amazon Seller account <b>${selling_partner_id}</b> linked. You can close this window and return to Uniflo.`,
+      `Amazon Seller account <b>${selling_partner_id}</b> linked. You can close this window and return to Omnistock.`,
       { autoClose: true }
     ));
   } catch (err) {

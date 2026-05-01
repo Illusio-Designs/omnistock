@@ -70,7 +70,7 @@ class DelhiveryAdapter {
           return_pin: warehouseAddress?.pincode || '',
           return_city: warehouseAddress?.city || '',
           return_phone: warehouseAddress?.phone || '',
-          return_name: warehouseAddress?.name || 'Uniflo',
+          return_name: warehouseAddress?.name || 'Omnistock',
           return_add: warehouseAddress?.line1 || '',
           return_state: warehouseAddress?.state || '',
           return_country: 'India',
@@ -80,7 +80,7 @@ class DelhiveryAdapter {
           order_date: new Date(order.orderedAt).toISOString(),
           total_amount: parseFloat(order.total),
           seller_add: warehouseAddress?.line1 || '',
-          seller_name: warehouseAddress?.name || 'Uniflo',
+          seller_name: warehouseAddress?.name || 'Omnistock',
           seller_inv: order.orderNumber,
           quantity: order.items?.reduce((s, i) => s + i.qty, 0) || 1,
           weight: 500, // grams, default

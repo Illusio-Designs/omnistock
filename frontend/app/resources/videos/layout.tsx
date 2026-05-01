@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Video Tutorials — Uniflo',
+  title: 'Video Tutorials — Omnistock',
   description:
-    'Watch setup walkthroughs, feature deep dives, and best practices for Uniflo.',
+    'Watch setup walkthroughs, feature deep dives, and best practices for Omnistock.',
   openGraph: {
-    title: 'Video Tutorials — Uniflo',
+    title: 'Video Tutorials — Omnistock',
     description:
-      'Watch setup walkthroughs, feature deep dives, and best practices for Uniflo.',
+      'Watch setup walkthroughs, feature deep dives, and best practices for Omnistock.',
   },
 };
 

@@ -130,6 +130,6 @@ export const useAuthStore = create<AuthState>()(
       },
       isPlatformAdmin: () => !!get().user?.isPlatformAdmin,
     }),
-    { name: 'uniflo-auth' }
+    { name: 'omnistock-auth' }
   )
 );

@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 require('dotenv').config();
 const prisma = require('../utils/prisma');
 
-const PLATFORM_ADMIN_EMAIL    = process.env.PLATFORM_ADMIN_EMAIL    || 'founder@uniflo.com';
+const PLATFORM_ADMIN_EMAIL    = process.env.PLATFORM_ADMIN_EMAIL    || 'founder@omnistock.com';
 const PLATFORM_ADMIN_PASSWORD = process.env.PLATFORM_ADMIN_PASSWORD || 'founder123';
 const PLATFORM_ADMIN_NAME     = process.env.PLATFORM_ADMIN_NAME     || 'Platform Founder';
 
@@ -167,7 +167,7 @@ const CONTENT = [
   { type: 'LANDING_FAQ', title: 'How secure is my data?', body: 'All credentials are encrypted at rest using AES-256-GCM encryption. Every request uses JWT authentication and HTTPS. You own your data — we never share it with third parties.' },
   { type: 'LANDING_FAQ', title: "What's the difference between Standard, Professional and Enterprise plans?", body: 'Standard suits micro-businesses with 1 facility and basic automation. Professional unlocks purchase management, 2 facilities and 9 user roles. Enterprise adds advanced warehouse ops, custom reports, API integration and vendor management.' },
   { type: 'LANDING_FAQ', title: 'How easy is it to get started?', body: 'Connect your first channel in under 5 minutes — no developers needed. Our setup wizard walks you through authentication, SKU mapping, and initial sync.' },
-  { type: 'LANDING_FAQ', title: 'Can I integrate with my existing team tools?', body: 'Yes. Uniflo offers a REST API, webhooks, and native integrations with Slack, Gmail, and popular accounting platforms.' },
+  { type: 'LANDING_FAQ', title: 'Can I integrate with my existing team tools?', body: 'Yes. Omnistock offers a REST API, webhooks, and native integrations with Slack, Gmail, and popular accounting platforms.' },
   { type: 'LANDING_FAQ', title: 'What support options are available?', body: 'Email support on all plans, priority support on Professional, and 24/7 dedicated account manager on Enterprise. Plus a full help center and community.' },
 
   // ─── Features page ─────────────────────────────────────────────
@@ -193,7 +193,7 @@ const CONTENT = [
   { type: 'SOLUTION', title: 'Fashion & apparel', icon: 'Shirt', subtitle: 'Size matrix support, season tagging, returns management, and Myntra/Ajio integration.', href: '/solutions/fashion', data: { gradient: 'from-emerald-400 to-teal-500' } },
 
   // ─── About page ────────────────────────────────────────────────
-  { type: 'ABOUT_SECTION', title: 'Our story', subtitle: 'Built by sellers, for sellers.', body: 'Uniflo was born when a team of ex-Amazon, Flipkart and Shopify engineers watched their friends — indie D2C founders — wrestle with spreadsheets, broken SDK integrations, and payment reconciliation nightmares. We decided to build the tool we wished existed when we were the ones drowning in ops.', icon: 'Heart' },
+  { type: 'ABOUT_SECTION', title: 'Our story', subtitle: 'Built by sellers, for sellers.', body: 'Omnistock was born when a team of ex-Amazon, Flipkart and Shopify engineers watched their friends — indie D2C founders — wrestle with spreadsheets, broken SDK integrations, and payment reconciliation nightmares. We decided to build the tool we wished existed when we were the ones drowning in ops.', icon: 'Heart' },
   { type: 'ABOUT_SECTION', title: 'Our mission', subtitle: "Make multi-channel commerce boringly reliable.", body: 'Sellers shouldn\'t lose sleep over oversells, missed payouts or stock discrepancies. We automate the tedious parts so you can focus on what matters: building great products and serving customers.', icon: 'Target' },
   { type: 'ABOUT_VALUE', title: 'Seller-first', icon: 'Users', subtitle: 'Every feature ships because a real seller asked for it. No vanity metrics, no theoretical use cases.' },
   { type: 'ABOUT_VALUE', title: 'Radical transparency', icon: 'Eye', subtitle: 'Open pricing, open roadmap, open API. No sales calls required to see what you\'re buying.' },
@@ -214,14 +214,14 @@ const CONTENT = [
   { type: 'HELP_CATEGORY', title: 'API & webhooks', icon: 'Code', subtitle: 'REST API reference, webhook payloads, authentication.', href: '/resources/help?topic=api' },
   { type: 'HELP_FAQ', title: 'How do I connect my first channel?', body: 'Go to Dashboard > Channels > pick a channel > click Connect. For Amazon use the one-click OAuth flow; for other channels paste your API credentials.', category: 'getting-started' },
   { type: 'HELP_FAQ', title: 'Why are my orders not syncing?', body: 'Check the channel detail page — any sync errors show up in a red banner. Common causes: expired credentials, IP whitelisting, or rate limits. Click Test Connection to diagnose.', category: 'orders' },
-  { type: 'HELP_FAQ', title: 'How do SKU mappings work?', body: 'Each channel listing maps a marketplace SKU to your Uniflo variant. When an order arrives, we look up the mapping to find the right variant and decrement the right inventory row.', category: 'channels' },
+  { type: 'HELP_FAQ', title: 'How do SKU mappings work?', body: 'Each channel listing maps a marketplace SKU to your Omnistock variant. When an order arrives, we look up the mapping to find the right variant and decrement the right inventory row.', category: 'channels' },
   { type: 'HELP_FAQ', title: 'What happens when I hit my plan limit?', body: 'If pay-as-you-go is enabled, extra orders/SKUs are billed at your plan\'s overage rate. Otherwise you\'ll be blocked until you upgrade or the next billing period starts.', category: 'billing' },
   { type: 'HELP_FAQ', title: 'How do I upgrade or downgrade my plan?', body: 'Dashboard > Billing > click the target plan > complete checkout. Upgrades take effect immediately; downgrades apply at the next billing cycle.', category: 'billing' },
   { type: 'HELP_FAQ', title: 'Can I export my data?', body: 'Yes — every table page has a CSV export button. For bulk or automated exports, use the REST API with an API key from Settings.', category: 'api' },
 
   // ─── Resources ─────────────────────────────────────────────────
   { type: 'RESOURCE_TILE', title: 'Blog', icon: 'FileText', subtitle: 'Growth playbooks, product updates, industry insights.', href: '/resources/blog', data: { gradient: 'from-emerald-400 to-teal-600' } },
-  { type: 'RESOURCE_TILE', title: 'Case studies', icon: 'Award', subtitle: 'How real brands grew GMV 3x with Uniflo.', href: '/resources/cases', data: { gradient: 'from-emerald-500 to-green-600' } },
+  { type: 'RESOURCE_TILE', title: 'Case studies', icon: 'Award', subtitle: 'How real brands grew GMV 3x with Omnistock.', href: '/resources/cases', data: { gradient: 'from-emerald-500 to-green-600' } },
   { type: 'RESOURCE_TILE', title: 'Video tutorials', icon: 'Play', subtitle: 'Watch setup walkthroughs and feature deep dives.', href: '/resources/videos', data: { gradient: 'from-teal-400 to-emerald-600' } },
   { type: 'RESOURCE_TILE', title: 'Help center', icon: 'HelpCircle', subtitle: 'Searchable knowledge base and FAQs.', href: '/resources/help', data: { gradient: 'from-green-400 to-teal-600' } },
   { type: 'VIDEO', title: 'Getting started in 5 minutes', subtitle: 'End-to-end tour of onboarding, your first channel, and first order sync.', data: { duration: '5:12', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', level: 'Beginner' } },
@@ -229,9 +229,9 @@ const CONTENT = [
   { type: 'VIDEO', title: 'Multi-warehouse inventory', subtitle: 'How to set up multiple warehouses, transfer stock, and enable smart routing.', data: { duration: '9:22', url: '', level: 'Intermediate' } },
   { type: 'VIDEO', title: 'Returns management', subtitle: 'Handling returns across every marketplace with automated reconciliation.', data: { duration: '6:15', url: '', level: 'Intermediate' } },
   { type: 'VIDEO', title: 'Custom reports with the API', subtitle: 'Use the REST API to build custom dashboards in your BI tool of choice.', data: { duration: '11:30', url: '', level: 'Advanced' } },
-  { type: 'CASE_STUDY', title: 'Bloom & Bee: 3x GMV in 6 months', subtitle: 'How a D2C beauty brand moved from spreadsheets to unified operations.', body: 'Bloom & Bee was selling on Amazon, Nykaa and Shopify with three separate spreadsheets. After switching to Uniflo they saw a 3x increase in GMV, 60% less time on reconciliation, and zero oversells in 6 months.', data: { industry: 'Beauty', region: 'India', metric: '3x GMV' } },
+  { type: 'CASE_STUDY', title: 'Bloom & Bee: 3x GMV in 6 months', subtitle: 'How a D2C beauty brand moved from spreadsheets to unified operations.', body: 'Bloom & Bee was selling on Amazon, Nykaa and Shopify with three separate spreadsheets. After switching to Omnistock they saw a 3x increase in GMV, 60% less time on reconciliation, and zero oversells in 6 months.', data: { industry: 'Beauty', region: 'India', metric: '3x GMV' } },
   { type: 'CASE_STUDY', title: 'NorthStar Apparel: Unified fashion ops', subtitle: 'Running 8,000 SKUs across 12 channels with 2 warehouse staff.', body: 'NorthStar Apparel scaled from 400 SKUs to 8,000 without adding warehouse headcount, thanks to barcoding, FIFO picking and automated reconciliation.', data: { industry: 'Fashion', region: 'India', metric: '20x SKUs' } },
-  { type: 'CASE_STUDY', title: 'GreenLeaf Organics: Quick commerce launch', subtitle: 'Going live on Blinkit, Zepto and Swiggy Instamart in 3 weeks.', body: 'GreenLeaf Organics used Uniflo\'s quick-commerce integrations to launch on Blinkit, Zepto and Swiggy Instamart simultaneously, syncing inventory across all three without manual intervention.', data: { industry: 'Grocery', region: 'India', metric: '3 channels in 3 weeks' } },
+  { type: 'CASE_STUDY', title: 'GreenLeaf Organics: Quick commerce launch', subtitle: 'Going live on Blinkit, Zepto and Swiggy Instamart in 3 weeks.', body: 'GreenLeaf Organics used Omnistock\'s quick-commerce integrations to launch on Blinkit, Zepto and Swiggy Instamart simultaneously, syncing inventory across all three without manual intervention.', data: { industry: 'Grocery', region: 'India', metric: '3 channels in 3 weeks' } },
 
   // ─── Landing hero ────────────────────────────────────────────────
   { type: 'HERO', title: 'Data-Driven Commerce', subtitle: 'Powered by AI', body: 'Effortlessly manage every channel, uncover trends, and make smarter decisions in minutes — not weeks.', data: { badge: 'Now connecting 50+ channels', ctaPrimary: { label: 'Try for Free', href: '/onboarding' }, ctaSecondary: { label: 'Schedule a Demo', href: '/contact' } } },
@@ -248,7 +248,7 @@ const CONTENT = [
   { type: 'NAV_LINK', category: 'solutions', title: 'Returns & Refunds', href: '/solutions#returns', icon: 'RotateCcw', subtitle: 'Automated RMA workflows' },
   { type: 'NAV_LINK', category: 'solutions', title: 'Reports & Analytics', href: '/solutions#analytics', icon: 'BarChart3', subtitle: 'AI-powered business insights' },
   { type: 'NAV_LINK', category: 'resources', title: 'Blog', href: '/resources/blog', icon: 'BookOpen', subtitle: 'Commerce tips & trends' },
-  { type: 'NAV_LINK', category: 'resources', title: 'Case Studies', href: '/resources/cases', icon: 'FileText', subtitle: 'How brands grew with Uniflo' },
+  { type: 'NAV_LINK', category: 'resources', title: 'Case Studies', href: '/resources/cases', icon: 'FileText', subtitle: 'How brands grew with Omnistock' },
   { type: 'NAV_LINK', category: 'resources', title: 'Help Center', href: '/resources/help', icon: 'HelpCircle', subtitle: 'Guides & documentation' },
   { type: 'NAV_LINK', category: 'resources', title: 'Webinars', href: '/resources/videos', icon: 'Video', subtitle: 'Live product demos' },
   { type: 'NAV_LINK', category: 'company', title: 'About', href: '/about', icon: 'Sparkles', subtitle: 'Our mission & story' },
@@ -331,10 +331,10 @@ async function run() {
     update: {},
     create: {
       path: '/',
-      title: 'Uniflo — Multi-channel Inventory & Order Management',
-      description: 'Uniflo is an EasyEcom-style ERP for D2C, marketplaces and warehouses. Manage inventory, orders, returns and reconciliation in one place.',
+      title: 'Omnistock — Multi-channel Inventory & Order Management',
+      description: 'Omnistock is an EasyEcom-style ERP for D2C, marketplaces and warehouses. Manage inventory, orders, returns and reconciliation in one place.',
       keywords: 'inventory management, OMS, WMS, multi-channel, returns, reconciliation',
-      ogTitle: 'Uniflo — Run your entire ecommerce backend',
+      ogTitle: 'Omnistock — Run your entire ecommerce backend',
       robots: 'index,follow',
     },
   });
@@ -343,7 +343,7 @@ async function run() {
     update: {},
     create: {
       path: '/pricing',
-      title: 'Pricing — Uniflo',
+      title: 'Pricing — Omnistock',
       description: 'Standard, Professional and Enterprise plans. Pay-as-you-go available.',
       robots: 'index,follow',
     },
@@ -352,19 +352,19 @@ async function run() {
 
   // Blog
   await prisma.blogPost.upsert({
-    where: { slug: 'welcome-to-uniflo' },
+    where: { slug: 'welcome-to-omnistock' },
     update: {},
     create: {
-      slug: 'welcome-to-uniflo',
-      title: 'Welcome to Uniflo',
-      excerpt: 'A quick tour of what Uniflo can do for your ecommerce operations.',
-      content: '# Welcome\n\nUniflo helps you run inventory, orders and returns across every channel.',
-      authorName: 'Uniflo Team',
+      slug: 'welcome-to-omnistock',
+      title: 'Welcome to Omnistock',
+      excerpt: 'A quick tour of what Omnistock can do for your ecommerce operations.',
+      content: '# Welcome\n\nOmnistock helps you run inventory, orders and returns across every channel.',
+      authorName: 'Omnistock Team',
       tags: [],
       status: 'PUBLISHED',
       publishedAt: new Date(),
-      metaTitle: 'Welcome to Uniflo',
-      metaDescription: 'Quick tour of Uniflo features.',
+      metaTitle: 'Welcome to Omnistock',
+      metaDescription: 'Quick tour of Omnistock features.',
     },
   });
   console.log('  [seed] blog post');
