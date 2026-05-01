@@ -99,6 +99,36 @@ async function initDb() {
     }
   }
 
+  // Enum extensions — additive only (safe to re-run)
+  // Extends `category` on channels & channel_requests with new pending categories.
+  const enumExtensions = [
+    {
+      table: 'channels',
+      column: 'category',
+      ddl: "ENUM('ECOM','QUICKCOM','LOGISTICS','OWNSTORE','SOCIAL','B2B','CUSTOM','ACCOUNTING','POS_SYSTEM','PAYMENT','TAX','CRM','RETURNS','FULFILLMENT') NOT NULL DEFAULT 'ECOM'",
+    },
+    {
+      table: 'channel_requests',
+      column: 'category',
+      ddl: "ENUM('ECOM','QUICKCOM','LOGISTICS','OWNSTORE','SOCIAL','B2B','CUSTOM','ACCOUNTING','POS_SYSTEM','PAYMENT','TAX','CRM','RETURNS','FULFILLMENT') NOT NULL DEFAULT 'CUSTOM'",
+    },
+  ];
+  for (const m of enumExtensions) {
+    try {
+      const [rows] = await db.raw(
+        "SELECT COLUMN_TYPE FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?",
+        [m.table, m.column]
+      );
+      const current = Array.isArray(rows) ? rows[0]?.COLUMN_TYPE : rows?.COLUMN_TYPE;
+      if (current && !current.toUpperCase().includes('ACCOUNTING')) {
+        await db.raw(`ALTER TABLE \`${m.table}\` MODIFY COLUMN \`${m.column}\` ${m.ddl}`);
+        console.log(`[initDb] enum extended: ${m.table}.${m.column}`);
+      }
+    } catch (e) {
+      console.warn(`[initDb] enum extension ${m.table}.${m.column} skipped:`, e.message);
+    }
+  }
+
   // 2. Check if seed already ran — if all key tables have data, skip
   const [planRows] = await db.raw("SELECT COUNT(*) as cnt FROM `plans`").catch(() => [{ cnt: 0 }]);
   const [contentRows] = await db.raw("SELECT COUNT(*) as cnt FROM `public_content`").catch(() => [{ cnt: 0 }]);
