@@ -4,13 +4,13 @@
   "description": "Omnistock ERP Backend - Node.js + Express + Knex + MySQL",
   "main": "src/index.js",
   "scripts": {
-    "dev": "nodemon src/index.js",
-    "start": "node src/index.js",
-    "billing:run": "node src/jobs/billing.job.js",
-    "cron:run": "node src/jobs/cron.job.js",
-    "seed": "node src/scripts/seed.js",
-    "test:backend": "node src/scripts/test.js",
-    "test:backend:server": "DISABLE_RATE_LIMIT=true node src/index.js"
+    "dev": "nodemon --exec \"node --disable-warning=DEP0040\" src/index.js",
+    "start": "node --disable-warning=DEP0040 src/index.js",
+    "billing:run": "node --disable-warning=DEP0040 src/jobs/billing.job.js",
+    "cron:run": "node --disable-warning=DEP0040 src/jobs/cron.job.js",
+    "seed": "node --disable-warning=DEP0040 src/scripts/seed.js",
+    "test:backend": "node --disable-warning=DEP0040 src/scripts/test.js",
+    "test:backend:server": "DISABLE_RATE_LIMIT=true node --disable-warning=DEP0040 src/index.js"
   },
   "dependencies": {
     "axios": "^1.7.0",

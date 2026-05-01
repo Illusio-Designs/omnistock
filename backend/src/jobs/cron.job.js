@@ -50,15 +50,17 @@ async function syncChannelOrders() {
       }
       await prisma.channel.update({
         where: { id: ch.id },
-        data: { lastSyncAt: new Date(), lastSyncError: null },
+        data: { lastSyncAt: new Date(), syncError: null },
       });
       results.channelsProcessed++;
     } catch (err) {
       results.errors.push(`${ch.name} (${ch.type}): ${err.message}`);
       await prisma.channel.update({
         where: { id: ch.id },
-        data: { lastSyncError: err.message },
-      }).catch(() => {});
+        data: { syncError: err.message },
+      }).catch((dbErr) => {
+        console.error(`[cron] failed to record syncError for ${ch.id}:`, dbErr.message);
+      });
     }
   }
   return results;
@@ -160,6 +162,7 @@ async function runAllJobs() {
 // In-process scheduler — kicks off intervals when the backend boots.
 // Guarded so multi-instance deployments don't double-run (set CRON_LEADER=true on one node).
 let _started = false;
+const _intervals = [];
 function start() {
   if (_started) return;
   if (process.env.DISABLE_CRON === 'true') {
@@ -185,10 +188,18 @@ function start() {
     reviewMin: reviewInterval,
   });
 
-  setInterval(() => syncChannelOrders().catch((e) => console.error('[cron] syncChannelOrders:', e.message)), minutes(orderSyncInterval));
-  setInterval(() => pushInventoryToAll().catch((e) => console.error('[cron] pushInventoryToAll:', e.message)), minutes(inventoryInterval));
-  setInterval(() => pollShipmentStatus().catch((e) => console.error('[cron] pollShipmentStatus:', e.message)), minutes(trackingInterval));
-  setInterval(() => processReviewQueue({}).catch((e) => console.error('[cron] processReviewQueue:', e.message)), minutes(reviewInterval));
+  _intervals.push(
+    setInterval(() => syncChannelOrders().catch((e) => console.error('[cron] syncChannelOrders:', e.message)), minutes(orderSyncInterval)),
+    setInterval(() => pushInventoryToAll().catch((e) => console.error('[cron] pushInventoryToAll:', e.message)), minutes(inventoryInterval)),
+    setInterval(() => pollShipmentStatus().catch((e) => console.error('[cron] pollShipmentStatus:', e.message)), minutes(trackingInterval)),
+    setInterval(() => processReviewQueue({}).catch((e) => console.error('[cron] processReviewQueue:', e.message)), minutes(reviewInterval)),
+  );
+}
+
+function stop() {
+  for (const id of _intervals) clearInterval(id);
+  _intervals.length = 0;
+  _started = false;
 }
 
 if (require.main === module) {
@@ -199,6 +210,7 @@ if (require.main === module) {
 
 module.exports = {
   start,
+  stop,
   runAllJobs,
   syncChannelOrders,
   pushInventoryToAll,

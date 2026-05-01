@@ -63,15 +63,17 @@ async function handleIncomingWebhook(channelId, req, res) {
     const result = await importOrders(channel.id, [rawOrder], { tenantId: channel.tenantId });
     await prisma.channel.update({
       where: { id: channel.id },
-      data: { lastSyncAt: new Date(), lastSyncError: null },
+      data: { lastSyncAt: new Date(), syncError: null },
     });
     return res.json({ received: true, ...result });
   } catch (err) {
     console.error(`[webhook] ${channel.type} (${channel.id}):`, err.message);
     await prisma.channel.update({
       where: { id: channel.id },
-      data: { lastSyncError: err.message },
-    }).catch(() => {});
+      data: { syncError: err.message },
+    }).catch((dbErr) => {
+      console.error(`[webhook] failed to record syncError for ${channel.id}:`, dbErr.message);
+    });
     return res.status(400).json({ error: err.message });
   }
   } catch (outer) {

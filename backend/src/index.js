@@ -132,19 +132,46 @@ app.use((err, _req, res, _next) => {
     console.error('[initDb] failed:', err.message);
     process.exit(1);
   }
+
+  let server = null;
   // LiteSpeed (lsnode.js) calls listen() automatically — skip in that environment
   if (!process.env.LSNODE_ROOT) {
-    app.listen(PORT, () => {
+    server = app.listen(PORT, () => {
       console.log(`Omnistock API running on http://localhost:${PORT}`);
     });
   }
 
   // Start background jobs (channel sync, inventory push, tracking, review queue)
+  const cron = require('./jobs/cron.job');
   try {
-    require('./jobs/cron.job').start();
+    cron.start();
   } catch (err) {
     console.error('[cron] failed to start:', err.message);
   }
+
+  // Graceful shutdown — release the port and clear cron timers so nodemon
+  // restarts (or PM2/Docker stops) don't leave zombies hogging :5001.
+  let shuttingDown = false;
+  const shutdown = (signal) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`[shutdown] received ${signal} — stopping cron + closing server`);
+    try { cron.stop(); } catch {}
+    if (server) {
+      server.close(() => {
+        console.log('[shutdown] server closed');
+        process.exit(0);
+      });
+      // Force-exit if the server doesn't close within 4s (open keep-alive
+      // connections can otherwise stall nodemon's restart).
+      setTimeout(() => process.exit(0), 4000).unref();
+    } else {
+      process.exit(0);
+    }
+  };
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT',  () => shutdown('SIGINT'));
+  process.on('SIGUSR2', () => shutdown('SIGUSR2')); // nodemon's default restart signal
 })();
 
 module.exports = app;

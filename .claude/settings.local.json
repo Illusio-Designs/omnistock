@@ -101,7 +101,9 @@
       "Bash(curl -s -o /dev/null -w \"root: %{http_code}\\\\n\" http://localhost:5001/api/v1/public/stats)",
       "Bash(curl -sS -o /tmp/stats.json -w \"HTTP %{http_code}\\\\n\" http://localhost:5001/api/v1/public/stats)",
       "Bash(curl -sS http://localhost:5001/api/v1/channels/catalog/WALMART -H \"Authorization: Bearer dev:illusiodesigns@gmail.com\" -H \"Content-Type: application/json\")",
-      "Bash(curl -sS -o /tmp/cat.json -w \"HTTP %{http_code}\\\\n\" -H \"Authorization: Bearer dev:illusiodesigns@gmail.com\" \"http://localhost:5001/api/v1/channels/catalog/WALMART\")"
+      "Bash(curl -sS -o /tmp/cat.json -w \"HTTP %{http_code}\\\\n\" -H \"Authorization: Bearer dev:illusiodesigns@gmail.com\" \"http://localhost:5001/api/v1/channels/catalog/WALMART\")",
+      "Bash(node -e \"const s = require\\('/Users/Development/GitHub/omnistock/backend/src/config/schema.sql.js'\\); const cm = s.match\\(/CREATE TABLE IF NOT EXISTS \\\\`channels\\\\`[^;]+/i\\); console.log\\(cm ? cm[0] : 'no channels table'\\);\")",
+      "Bash(kill -9 31961)"
     ],
     "additionalDirectories": [
       "\\tmp"
