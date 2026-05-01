@@ -204,6 +204,7 @@ export const publicApi = {
   seo: (path: string) => api.get('/public/seo', { params: { path } }),
   sitemap: () => api.get('/public/sitemap'),
   stats: () => api.get('/public/stats'),
+  integrations: () => api.get('/public/integrations'),
   content: (type: string) => api.get('/public/content', { params: { type } }),
   tracking: () => api.get('/public/tracking'),
   maintenance: () => api.get('/public/maintenance'),

@@ -106,7 +106,9 @@
       "Bash(kill -9 31961)",
       "Bash(node --disable-warning=DEP0040 -e \"require\\('punycode'\\); console.log\\('done'\\);\")",
       "Bash(NODE_OPTIONS='--disable-warning=DEP0040' node -e \"require\\('punycode'\\); console.log\\('done'\\);\")",
-      "Bash(node --no-deprecation -e \"require\\('punycode'\\); console.log\\('done'\\);\")"
+      "Bash(node --no-deprecation -e \"require\\('punycode'\\); console.log\\('done'\\);\")",
+      "Bash(curl -sS -o /tmp/intg.json -w \"HTTP %{http_code}\\\\n\" http://localhost:5001/api/v1/public/integrations)",
+      "Bash(node -e \"const d = JSON.parse\\(require\\('fs'\\).readFileSync\\('/tmp/intg.json','utf8'\\)\\); console.log\\('summary:', d.summary, '| categories:', [...new Set\\(d.items.map\\(i => i.category\\)\\)].join\\(','\\)\\);\")"
     ],
     "additionalDirectories": [
       "\\tmp"

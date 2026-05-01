@@ -16,6 +16,36 @@ router.get('/content', async (req, res) => {
   res.json(items);
 });
 
+// Public, unauthenticated channel catalog used by the marketing site's
+// /integrations page. Stripped of per-tenant info (connectedChannels,
+// pendingRequest, plan); credentialsSchema also omitted to keep the
+// payload small.
+router.get('/integrations', (_req, res) => {
+  try {
+    const items = (CATALOG || []).map((c) => ({
+      type: c.type,
+      category: c.category,
+      name: c.name,
+      tagline: c.tagline,
+      integrated: !!c.integrated,
+      comingSoon: !!c.comingSoon,
+      requiresApproval: !!c.requiresApproval,
+      manualOnly: !!c.manualOnly,
+      features: c.features || [],
+      applyUrl: c.applyUrl || null,
+      docsUrl: c.docsUrl || null,
+    }));
+    const summary = {
+      total: items.length,
+      live: items.filter((c) => c.integrated && !c.comingSoon).length,
+      comingSoon: items.filter((c) => c.comingSoon).length,
+    };
+    res.json({ summary, items });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Platform-wide marketing stats for the landing page.
 // All numbers are real aggregates — channel count comes from the integration
 // catalog, orders/tenants come from the DB.

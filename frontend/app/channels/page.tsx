@@ -17,6 +17,7 @@ import { Select } from '@/components/ui/Select';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { Avatar } from '@/components/ui/Avatar';
 import { getSchemaForType } from '@/lib/channel-schemas';
+import { domainFor, logoDevUrl, iconHorseUrl, googleFaviconUrl, getChannelInitials } from '@/lib/channel-logos';
 
 const CATEGORY_ORDER = [
   'ECOM', 'QUICKCOM', 'LOGISTICS', 'OWNSTORE', 'SOCIAL', 'B2B',
@@ -423,11 +424,10 @@ function ChannelCard({
   const pill = STATUS_PILLS[entry.status] || STATUS_PILLS.not_available;
   const connectedCount = entry.connectedChannels?.length || 0;
 
-  // Logo file lives in /public/logos/<slug>.png — derive slug from the type, with
-  // explicit overrides for types whose slug doesn't match the filename or whose
-  // file is .svg. onError fallback substitutes a brand-gradient initial avatar.
-  const logoSlug = (entry.type || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  const logoUrl = LOGO_OVERRIDES[entry.type] ?? `/logos/${logoSlug}.png`;
+  // Logo strategy (matches /integrations and the home-page marquee): if a
+  // bundled PNG exists in LOGO_OVERRIDES, prefer it; otherwise resolve a
+  // brand domain and walk logo.dev → icon.horse → google favicon → gradient
+  // initials. No PNG files need to live in /public/logos for new channels.
 
   // Single circular action on the right — visual weight reflects the call-to-action.
   const renderAction = () => {
@@ -488,26 +488,7 @@ function ChannelCard({
   return (
     <div className="group bg-white rounded-2xl border border-slate-200/70 p-4 flex items-center gap-4 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
       {/* Logo */}
-      <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={logoUrl}
-          alt={entry.name}
-          width={128}
-          height={128}
-          loading="lazy"
-          decoding="async"
-          className="w-full h-full object-contain p-1.5"
-          style={{ imageRendering: 'auto' }}
-          onError={(e) => {
-            const el = e.currentTarget as HTMLImageElement;
-            const div = document.createElement('div');
-            div.className = 'w-full h-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-base font-bold';
-            div.textContent = (entry.name || '?').slice(0, 2).toUpperCase();
-            el.replaceWith(div);
-          }}
-        />
-      </div>
+      <ChannelCardLogo type={entry.type} name={entry.name} />
 
       {/* Content */}
       <div className="flex-1 min-w-0">
@@ -723,5 +704,55 @@ function Field({
       value={value}
       onChange={(e) => onChange(e.target.value)}
     />
+  );
+}
+
+// Logo component used by ChannelCard. Tries (in order):
+//   1. Bundled override PNG in LOGO_OVERRIDES (e.g. /logos/amazon.png)
+//   2. logo.dev — brand-grade CDN keyed by domain
+//   3. icon.horse — favicon CDN
+//   4. Google favicon — last resort
+//   5. Gradient-initials avatar — pure CSS, never errors
+function ChannelCardLogo({ type, name }: { type: string; name: string }) {
+  const override = LOGO_OVERRIDES[type];
+  // Stage 0..3 represents which remote source to try; -1 means we already
+  // succeeded on the override; 4 means fallback to gradient initials.
+  const [stage, setStage] = useState<-1 | 0 | 1 | 2 | 3 | 4>(override ? -1 : 0);
+  const domain = useMemo(() => domainFor(type, name), [type, name]);
+
+  const remoteSrc =
+    stage === 0 ? logoDevUrl(domain)
+    : stage === 1 ? iconHorseUrl(domain)
+    : stage === 2 ? googleFaviconUrl(domain)
+    : null;
+
+  return (
+    <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+      {stage === 4 ? (
+        <div className="w-full h-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-base font-bold">
+          {getChannelInitials(name)}
+        </div>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={stage === -1 && override ? override : (remoteSrc as string)}
+          alt={name}
+          width={128}
+          height={128}
+          loading="lazy"
+          decoding="async"
+          referrerPolicy="no-referrer"
+          className="w-full h-full object-contain p-1.5"
+          style={{ imageRendering: 'auto' }}
+          onError={() => {
+            // -1 (override) → 0 (logo.dev), then walk the chain to 4 (initials)
+            setStage((s) => {
+              if (s === -1) return 0;
+              return Math.min(4, (s as number) + 1) as 0 | 1 | 2 | 3 | 4;
+            });
+          }}
+        />
+      )}
+    </div>
   );
 }

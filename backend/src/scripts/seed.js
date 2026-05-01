@@ -239,6 +239,7 @@ const CONTENT = [
   // ─── Navigation ────────────────────────────────────────────────
   { type: 'NAV_LINK', category: 'main', title: 'Home', href: '/' },
   { type: 'NAV_LINK', category: 'main', title: 'Features', href: '/features' },
+  { type: 'NAV_LINK', category: 'main', title: 'Integrations', href: '/integrations' },
   { type: 'NAV_LINK', category: 'main', title: 'Pricing', href: '/pricing' },
   { type: 'NAV_LINK', category: 'solutions', title: 'Multi-channel Selling', href: '/solutions#multichannel', icon: 'Globe', subtitle: 'Sell on Amazon, Flipkart, Myntra & 56+ more' },
   { type: 'NAV_LINK', category: 'solutions', title: 'Inventory Management', href: '/solutions#inventory', icon: 'Package', subtitle: 'Real-time stock across every warehouse' },

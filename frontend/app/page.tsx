@@ -161,7 +161,7 @@ export default function LandingPage() {
             <span className="gradient-text">Connected out of the box.</span>
           </h2>
           <p className="mt-4 text-slate-600 max-w-xl mx-auto">
-            Amazon to Zepto, Shopify to WhatsApp — hover to pause and explore every integration.
+            India to LATAM, Southeast Asia to Europe — hover to pause and explore every integration.
           </p>
           {stats?.comingSoonCount ? (
             <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
@@ -174,9 +174,49 @@ export default function LandingPage() {
           <ChannelMarquee />
         </div>
 
+        {/* ── Global reach by region ─────────────────────────────────── */}
+        <div className="max-w-6xl mx-auto px-6 mt-14" data-reveal="rise">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 uppercase tracking-wider mb-3">
+              <Globe size={12} /> Global Reach
+            </div>
+            <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
+              Sell across every continent — from one dashboard.
+            </h3>
+            <p className="mt-2 text-slate-600 max-w-2xl mx-auto text-sm">
+              One platform plugs into the dominant marketplaces in every region. Pick the markets you serve — the integrations are already built in.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { flag: '🇮🇳', region: 'India',           channels: ['Amazon.in', 'Flipkart', 'Myntra', 'Meesho', 'Nykaa', 'Ajio', 'Tata Cliq', 'JioMart', 'Blinkit', 'Zepto', 'Swiggy Instamart', 'BB Now'] },
+              { flag: '🇸🇬', region: 'Southeast Asia',  channels: ['Lazada', 'Shopee', 'TikTok Shop', 'Amazon SG', 'Amazon AU'] },
+              { flag: '🇺🇸', region: 'North America',  channels: ['Amazon US', 'Walmart', 'eBay', 'Etsy', 'Shopify', 'BigCommerce'] },
+              { flag: '🇩🇪', region: 'Europe',          channels: ['Amazon UK', 'Amazon DE', 'Zalando', 'Allegro', 'Kaufland', 'OnBuy', 'ManoMano', 'Fruugo'] },
+              { flag: '🇧🇷', region: 'Latin America',   channels: ['Mercado Libre (8 markets)', 'Shopee BR/MX/CO/CL'] },
+              { flag: '🇦🇪', region: 'Middle East',     channels: ['Amazon UAE', 'Amazon Saudi Arabia', 'Noon (UAE/KSA/Egypt)'] },
+            ].map((r) => (
+              <div key={r.region} className="rounded-2xl bg-white border border-slate-200 p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-2xl" aria-hidden>{r.flag}</span>
+                  <h4 className="font-bold text-slate-900">{r.region}</h4>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {r.channels.map((c) => (
+                    <span key={c} className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-semibold">
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="max-w-4xl mx-auto px-6 text-center mt-10" data-reveal="zoom">
           <Link
-            href="/dashboard/channels"
+            href="/integrations"
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full shadow-md shadow-emerald-500/20 hover:shadow-lg hover:-translate-y-0.5 transition-all"
           >
             Browse All Integrations <ArrowRight size={13} />

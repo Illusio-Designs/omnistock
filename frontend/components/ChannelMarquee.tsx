@@ -58,6 +58,20 @@ export const ALL_CHANNELS = [
   { name: 'Instagram',        category: 'SOCIAL',    color: 'from-pink-500 via-purple-500 to-orange-500', key: 'instagram', domain: 'instagram.com' },
   { name: 'Facebook',         category: 'SOCIAL',    color: 'from-blue-500 to-indigo-600',      key: 'facebook',     domain: 'facebook.com' },
   { name: 'WhatsApp',         category: 'SOCIAL',    color: 'from-green-400 to-emerald-500',    key: 'whatsapp',     domain: 'whatsapp.com' },
+  // GLOBAL ECOM — international marketplaces (adapter code shipped, awaiting smoke-test)
+  { name: 'Walmart',          category: 'ECOM',      color: 'from-blue-500 to-yellow-400',      key: 'walmart',      domain: 'walmart.com' },
+  { name: 'Lazada',           category: 'ECOM',      color: 'from-blue-500 to-orange-500',      key: 'lazada',       domain: 'lazada.com' },
+  { name: 'Shopee',           category: 'ECOM',      color: 'from-orange-500 to-red-500',       key: 'shopee',       domain: 'shopee.com' },
+  { name: 'Noon',             category: 'ECOM',      color: 'from-yellow-400 to-amber-500',     key: 'noon',         domain: 'noon.com' },
+  { name: 'Mercado Libre',    category: 'ECOM',      color: 'from-yellow-400 to-orange-500',    key: 'mercadolibre', domain: 'mercadolibre.com' },
+  { name: 'Allegro',          category: 'ECOM',      color: 'from-orange-500 to-red-600',       key: 'allegro',      domain: 'allegro.pl' },
+  { name: 'Fruugo',           category: 'ECOM',      color: 'from-violet-500 to-purple-600',    key: 'fruugo',       domain: 'fruugo.com' },
+  { name: 'OnBuy',            category: 'ECOM',      color: 'from-indigo-500 to-blue-600',      key: 'onbuy',        domain: 'onbuy.com' },
+  { name: 'ManoMano',         category: 'ECOM',      color: 'from-amber-500 to-yellow-600',     key: 'manomano',     domain: 'manomano.com' },
+  { name: 'Rakuten',          category: 'ECOM',      color: 'from-red-500 to-rose-600',         key: 'rakuten',      domain: 'rakuten.co.jp' },
+  { name: 'Zalando',          category: 'ECOM',      color: 'from-orange-400 to-pink-500',      key: 'zalando',      domain: 'zalando.com' },
+  { name: 'Kaufland',         category: 'ECOM',      color: 'from-red-600 to-rose-700',         key: 'kaufland',     domain: 'kaufland.com' },
+  { name: 'Wish',             category: 'ECOM',      color: 'from-emerald-500 to-teal-600',     key: 'wish',         domain: 'wish.com' },
 ];
 
 function getInitials(name: string) {
