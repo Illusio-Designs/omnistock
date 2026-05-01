@@ -14,5 +14,8 @@ module.exports = {
   EbayAdapter:      require('./ebay'),
   EtsyAdapter:      require('./etsy'),
   WalmartAdapter:   require('./walmart'),
+  LazadaAdapter:    require('./lazada'),
+  ShopeeAdapter:    require('./shopee'),
+  NoonAdapter:      require('./noon'),
   ...require('./pending'),
 };

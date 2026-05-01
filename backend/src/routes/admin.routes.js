@@ -264,6 +264,16 @@ const SETTINGS_CATALOG = [
   { key: 'walmart.clientId',     category: 'walmart', label: 'Walmart Client ID',     isSecret: false, description: 'Solution Provider app client ID from https://developer.walmart.com.' },
   { key: 'walmart.clientSecret', category: 'walmart', label: 'Walmart Client Secret', isSecret: true  },
 
+  // Lazada Open Platform app (SG/TH/PH/MY/VN/ID)
+  { key: 'lazada.appKey',      category: 'lazada', label: 'Lazada App Key',      isSecret: false, description: 'App key from https://open.lazada.com/apps.' },
+  { key: 'lazada.appSecret',   category: 'lazada', label: 'Lazada App Secret',   isSecret: true  },
+  { key: 'lazada.redirectUri', category: 'lazada', label: 'OAuth Redirect URI',  isSecret: false, description: 'Must match the redirect URI registered in Lazada Open Platform.' },
+
+  // Shopee Open Platform app (SEA + LATAM)
+  { key: 'shopee.partnerId',   category: 'shopee', label: 'Shopee Partner ID',   isSecret: false, description: 'Numeric partner ID from https://open.shopee.com.' },
+  { key: 'shopee.partnerKey',  category: 'shopee', label: 'Shopee Partner Key',  isSecret: true  },
+  { key: 'shopee.redirectUri', category: 'shopee', label: 'OAuth Redirect URI',  isSecret: false, description: 'Must match the redirect URI registered in Shopee Open Platform.' },
+
   // Meta (Facebook/Instagram/WhatsApp)
   { key: 'meta.appId',        category: 'meta', label: 'Meta App ID',          isSecret: false },
   { key: 'meta.appSecret',    category: 'meta', label: 'Meta App Secret',      isSecret: true  },

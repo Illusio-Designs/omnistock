@@ -26,103 +26,14 @@ const AmazonSGAdapter  = buildAmazonRegion('SG');
 const AmazonAUAdapter  = buildAmazonRegion('AU');
 const AmazonDEAdapter  = buildAmazonRegion('DE');
 
-// ───────────────────────────── Lazada ───────────────────────────────────────
-// docs: https://open.lazada.com/apps/doc/api
-class LazadaAdapter extends BaseAdapter {
-  constructor(creds) {
-    super(creds);
-    this.client = axios.create({ baseURL: 'https://api.lazada.sg/rest', headers: { 'Content-Type': 'application/json' } });
-    this.appKey = creds.appKey;
-    this.accessToken = creds.accessToken;
-  }
-  _signedParams(extra = {}) {
-    return { app_key: this.appKey, access_token: this.accessToken, timestamp: Date.now(), sign_method: 'sha256', ...extra };
-  }
-  async fetchOrders(sinceDate) {
-    const { data } = await this.client.get('/orders/get', {
-      params: this._signedParams({ created_after: sinceDate, limit: 50, status: 'pending' }),
-    });
-    return (data?.data?.orders || []).map(o => this._transformOrder(o));
-  }
-  async updateInventoryLevel(sku, qty) {
-    await this.client.post('/product/price_quantity/update', null, {
-      params: this._signedParams({ payload: JSON.stringify({ Request: { Product: { Skus: { Sku: [{ SellerSku: sku, Quantity: qty }] } } } }) }),
-    });
-    return { updated: true, sku, qty };
-  }
-  _transformOrder(o) {
-    return makeOrderShape({
-      channelOrderId: o.order_id, channelOrderNumber: o.order_number,
-      customer: { name: o.customer_first_name + ' ' + (o.customer_last_name || '') },
-      shippingAddress: {
-        line1: o.address_shipping?.address1, city: o.address_shipping?.city,
-        state: o.address_shipping?.address3, pincode: o.address_shipping?.post_code,
-        country: o.address_shipping?.country,
-      },
-      total: parseFloat(o.price || 0), orderedAt: new Date(o.created_at),
-      paymentMethod: o.payment_method,
-    });
-  }
-}
+// Lazada now lives in its own file (founder-app OAuth, multi-region, signed requests).
+const LazadaAdapter = require('./lazada');
 
-// ───────────────────────────── Shopee ───────────────────────────────────────
-// docs: https://open.shopee.com/documents
-class ShopeeAdapter extends BaseAdapter {
-  constructor(creds) {
-    super(creds);
-    this.client = axios.create({ baseURL: 'https://partner.shopeemobile.com/api/v2' });
-    this.partnerId = creds.partnerId;
-    this.shopId = creds.shopId;
-    this.accessToken = creds.accessToken;
-  }
-  async fetchOrders(sinceDate) {
-    const ts = Math.floor(Date.now() / 1000);
-    const since = sinceDate ? Math.floor(new Date(sinceDate).getTime() / 1000) : ts - 86400;
-    const { data } = await this.client.get('/order/get_order_list', {
-      params: { partner_id: this.partnerId, shop_id: this.shopId, access_token: this.accessToken, timestamp: ts, time_range_field: 'create_time', time_from: since, time_to: ts, page_size: 50, order_status: 'UNPAID' },
-    });
-    const list = data?.response?.order_list || [];
-    return list.map(o => this._transformOrder(o));
-  }
-  async updateInventoryLevel(sku, qty) {
-    await this.client.post('/product/update_stock', { item_sku: sku, stock: qty }, { params: { partner_id: this.partnerId, shop_id: this.shopId, access_token: this.accessToken, timestamp: Math.floor(Date.now()/1000) } });
-    return { updated: true, sku, qty };
-  }
-  _transformOrder(o) {
-    return makeOrderShape({
-      channelOrderId: o.order_sn, total: parseFloat(o.total_amount || 0),
-      orderedAt: new Date((o.create_time || 0) * 1000),
-      shippingAddress: { line1: o.recipient_address?.full_address, country: o.recipient_address?.region },
-    });
-  }
-}
+// Shopee now lives in its own file (founder-app OAuth, signed requests).
+const ShopeeAdapter = require('./shopee');
 
-// ───────────────────────────── Noon ─────────────────────────────────────────
-// docs: https://docs.noon.partners/
-class NoonAdapter extends BaseAdapter {
-  constructor(creds) {
-    super(creds);
-    this.client = axios.create({
-      baseURL: 'https://api.noon.partners/v1',
-      headers: { Authorization: `KEY ${creds.apiKey}`, 'X-Partner-Code': creds.partnerCode, 'Content-Type': 'application/json' },
-    });
-  }
-  async fetchOrders(sinceDate) {
-    const { data } = await this.client.get('/orders', { params: { status: 'placed', limit: 50, since: sinceDate } });
-    return (data?.orders || []).map(o => this._transformOrder(o));
-  }
-  async updateInventoryLevel(sku, qty) {
-    await this.client.post('/inventory/update', { sku, quantity: qty });
-    return { updated: true, sku, qty };
-  }
-  _transformOrder(o) {
-    return makeOrderShape({
-      channelOrderId: o.order_nr, total: parseFloat(o.total_amount || 0),
-      orderedAt: new Date(o.created_at), paymentMethod: o.payment_method,
-      shippingAddress: { line1: o.shipping_address?.line1, city: o.shipping_address?.city, country: o.shipping_address?.country_code },
-    });
-  }
-}
+// Noon now lives in its own file (per-merchant API key, multi-region).
+const NoonAdapter = require('./noon');
 
 // ───────────────────────────── Mercado Libre ────────────────────────────────
 // docs: https://developers.mercadolibre.com.ar/en_us/orders-management

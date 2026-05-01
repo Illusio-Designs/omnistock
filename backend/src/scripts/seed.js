@@ -160,10 +160,10 @@ const CONTENT = [
   // ─── Landing page: Feature Tools ───────────────────────────────
   { type: 'LANDING_FEATURE_TOOL', title: 'AI-Powered Insights', subtitle: 'Leverage cutting-edge AI to uncover hidden patterns and trends in your data, helping you make smarter, data-driven decisions with ease.', data: { visual: 'chart' } },
   { type: 'LANDING_FEATURE_TOOL', title: 'Real-Time Visibility', subtitle: 'Interact with dynamic charts, graphs, and dashboards that update in real-time, offering instant clarity and actionable insights.', data: { visual: 'bar', highlight: true } },
-  { type: 'LANDING_FEATURE_TOOL', title: 'Easy Integration', subtitle: 'Seamlessly connect with 57+ tools like Amazon, Flipkart, Shopify and more — smooth data flow across all your favorite platforms.', data: { visual: 'network' } },
+  { type: 'LANDING_FEATURE_TOOL', title: 'Easy Integration', subtitle: 'Seamlessly connect with 56+ tools like Amazon, Flipkart, Shopify and more — smooth data flow across all your favorite platforms.', data: { visual: 'network' } },
 
   // ─── Landing page: FAQs ────────────────────────────────────────
-  { type: 'LANDING_FAQ', title: 'What types of channels can I connect?', body: 'Over 57+ channels including Amazon, Flipkart, Myntra, Meesho, Nykaa, Blinkit, Zepto, Swiggy Instamart, BB Now, Shopify, WooCommerce, Magento, and 16 logistics providers like Shiprocket, Delhivery, iThink, Pickrr, NimbusPost, and ClickPost.' },
+  { type: 'LANDING_FAQ', title: 'What types of channels can I connect?', body: 'Over 56+ channels including Amazon, Flipkart, Myntra, Meesho, Nykaa, Blinkit, Zepto, Swiggy Instamart, BB Now, Shopify, WooCommerce, Magento, and 16 logistics providers like Shiprocket, Delhivery, iThink, Pickrr, NimbusPost, and ClickPost.' },
   { type: 'LANDING_FAQ', title: 'How secure is my data?', body: 'All credentials are encrypted at rest using AES-256-GCM encryption. Every request uses JWT authentication and HTTPS. You own your data — we never share it with third parties.' },
   { type: 'LANDING_FAQ', title: "What's the difference between Standard, Professional and Enterprise plans?", body: 'Standard suits micro-businesses with 1 facility and basic automation. Professional unlocks purchase management, 2 facilities and 9 user roles. Enterprise adds advanced warehouse ops, custom reports, API integration and vendor management.' },
   { type: 'LANDING_FAQ', title: 'How easy is it to get started?', body: 'Connect your first channel in under 5 minutes — no developers needed. Our setup wizard walks you through authentication, SKU mapping, and initial sync.' },
@@ -203,11 +203,11 @@ const CONTENT = [
   { type: 'ABOUT_TIMELINE', title: '2023 Q4', subtitle: '100 paying brands. Added Flipkart, Myntra, Meesho.', data: { year: '2023' } },
   { type: 'ABOUT_TIMELINE', title: '2024 Q3', subtitle: 'Launched quick-commerce integrations (Blinkit, Zepto).', data: { year: '2024' } },
   { type: 'ABOUT_TIMELINE', title: '2025 Q2', subtitle: 'Crossed 1M orders processed. Launched AI forecasting.', data: { year: '2025' } },
-  { type: 'ABOUT_TIMELINE', title: '2026 Q1', subtitle: 'Public multi-tenant SaaS launch with 57+ channel integrations.', data: { year: '2026' } },
+  { type: 'ABOUT_TIMELINE', title: '2026 Q1', subtitle: 'Public multi-tenant SaaS launch with 56+ channel integrations.', data: { year: '2026' } },
 
   // ─── Help center ───────────────────────────────────────────────
   { type: 'HELP_CATEGORY', title: 'Getting started', icon: 'Rocket', subtitle: 'Account setup, onboarding wizard, first channel connection.', href: '/resources/help?topic=getting-started' },
-  { type: 'HELP_CATEGORY', title: 'Channels & integrations', icon: 'Plug', subtitle: 'Connecting Amazon, Shopify, Shiprocket and 57+ channels.', href: '/resources/help?topic=channels' },
+  { type: 'HELP_CATEGORY', title: 'Channels & integrations', icon: 'Plug', subtitle: 'Connecting Amazon, Shopify, Shiprocket and 56+ channels.', href: '/resources/help?topic=channels' },
   { type: 'HELP_CATEGORY', title: 'Orders & fulfilment', icon: 'ShoppingCart', subtitle: 'Syncing orders, printing labels, managing returns.', href: '/resources/help?topic=orders' },
   { type: 'HELP_CATEGORY', title: 'Inventory & warehouses', icon: 'Warehouse', subtitle: 'Stock adjustments, transfers, cycle counts, low-stock alerts.', href: '/resources/help?topic=inventory' },
   { type: 'HELP_CATEGORY', title: 'Billing & subscriptions', icon: 'CreditCard', subtitle: 'Plans, upgrades, invoices, pay-as-you-go metering.', href: '/resources/help?topic=billing' },
@@ -234,13 +234,13 @@ const CONTENT = [
   { type: 'CASE_STUDY', title: 'GreenLeaf Organics: Quick commerce launch', subtitle: 'Going live on Blinkit, Zepto and Swiggy Instamart in 3 weeks.', body: 'GreenLeaf Organics used Omnistock\'s quick-commerce integrations to launch on Blinkit, Zepto and Swiggy Instamart simultaneously, syncing inventory across all three without manual intervention.', data: { industry: 'Grocery', region: 'India', metric: '3 channels in 3 weeks' } },
 
   // ─── Landing hero ────────────────────────────────────────────────
-  { type: 'HERO', title: 'Data-Driven Commerce', subtitle: 'Powered by AI', body: 'Effortlessly manage every channel, uncover trends, and make smarter decisions in minutes — not weeks.', data: { badge: 'Now connecting 57+ channels', ctaPrimary: { label: 'Try for Free', href: '/onboarding' }, ctaSecondary: { label: 'Schedule a Demo', href: '/contact' } } },
+  { type: 'HERO', title: 'Data-Driven Commerce', subtitle: 'Powered by AI', body: 'Effortlessly manage every channel, uncover trends, and make smarter decisions in minutes — not weeks.', data: { badge: 'Now connecting 56+ channels', ctaPrimary: { label: 'Try for Free', href: '/onboarding' }, ctaSecondary: { label: 'Schedule a Demo', href: '/contact' } } },
 
   // ─── Navigation ────────────────────────────────────────────────
   { type: 'NAV_LINK', category: 'main', title: 'Home', href: '/' },
   { type: 'NAV_LINK', category: 'main', title: 'Features', href: '/features' },
   { type: 'NAV_LINK', category: 'main', title: 'Pricing', href: '/pricing' },
-  { type: 'NAV_LINK', category: 'solutions', title: 'Multi-channel Selling', href: '/solutions#multichannel', icon: 'Globe', subtitle: 'Sell on Amazon, Flipkart, Myntra & 57+ more' },
+  { type: 'NAV_LINK', category: 'solutions', title: 'Multi-channel Selling', href: '/solutions#multichannel', icon: 'Globe', subtitle: 'Sell on Amazon, Flipkart, Myntra & 56+ more' },
   { type: 'NAV_LINK', category: 'solutions', title: 'Inventory Management', href: '/solutions#inventory', icon: 'Package', subtitle: 'Real-time stock across every warehouse' },
   { type: 'NAV_LINK', category: 'solutions', title: 'Order Management', href: '/solutions#orders', icon: 'ShoppingCart', subtitle: 'Unified inbox for every order' },
   { type: 'NAV_LINK', category: 'solutions', title: 'Warehouse Operations', href: '/solutions#warehouse', icon: 'Warehouse', subtitle: 'Pick, pack, ship from any location' },

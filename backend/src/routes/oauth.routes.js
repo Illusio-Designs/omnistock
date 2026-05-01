@@ -46,22 +46,63 @@ function verifyState(state) {
 // AUTHENTICATED — seller kicks off the flow from the Channels UI
 // ══════════════════════════════════════════════════════════════════════════
 
-// GET /api/v1/oauth/amazon/start?channelId=xxx&region=IN
+// Channel types we treat as Amazon-OAuth-compatible. AMAZON_<REGION> variants
+// inherit region from their type so callers don't need to pass it explicitly.
+const AMAZON_TYPE_TO_REGION = {
+  AMAZON:           'IN',
+  AMAZON_SMARTBIZ:  'IN',
+  AMAZON_US:        'US',
+  AMAZON_UK:        'UK',
+  AMAZON_UAE:       'AE',
+  AMAZON_SA:        'SA',
+  AMAZON_SG:        'SG',
+  AMAZON_AU:        'AU',
+  AMAZON_DE:        'DE',
+};
+
+// Seller Central consent host per region. Falls back to .in for unknown regions.
+const AMAZON_CONSENT_HOST = {
+  IN: 'https://sellercentral.amazon.in',
+  US: 'https://sellercentral.amazon.com',
+  CA: 'https://sellercentral.amazon.ca',
+  MX: 'https://sellercentral.amazon.com.mx',
+  UK: 'https://sellercentral.amazon.co.uk',
+  DE: 'https://sellercentral.amazon.de',
+  FR: 'https://sellercentral.amazon.fr',
+  IT: 'https://sellercentral.amazon.it',
+  ES: 'https://sellercentral.amazon.es',
+  AE: 'https://sellercentral.amazon.ae',
+  SA: 'https://sellercentral.amazon.sa',
+  AU: 'https://sellercentral.amazon.com.au',
+  SG: 'https://sellercentral.amazon.sg',
+  JP: 'https://sellercentral.amazon.co.jp',
+  // Legacy alias
+  EU: 'https://sellercentral.amazon.co.uk',
+};
+
+// GET /api/v1/oauth/amazon/start?channelId=xxx[&region=IN]
 // Returns the Amazon Seller Central consent URL the frontend should open.
 router.get('/amazon/start',
   authenticate, requireTenant, requirePermission('channels.update'),
   async (req, res) => {
     try {
-      const { channelId, region = 'IN' } = req.query;
+      const { channelId } = req.query;
       if (!channelId) return res.status(400).json({ error: 'channelId required' });
 
       const channel = await prisma.channel.findFirst({
         where: { id: String(channelId), tenantId: req.tenant.id },
       });
       if (!channel) return res.status(404).json({ error: 'Channel not found' });
-      if (!['AMAZON', 'AMAZON_SMARTBIZ'].includes(channel.type)) {
-        return res.status(400).json({ error: 'Channel is not Amazon' });
+
+      // Region is derived from the channel type for AMAZON_<REGION> variants;
+      // for the generic AMAZON / AMAZON_SMARTBIZ types, accept ?region=… and
+      // default to IN for back-compat.
+      const inferredRegion = AMAZON_TYPE_TO_REGION[channel.type];
+      if (!inferredRegion) {
+        return res.status(400).json({ error: `Channel type ${channel.type} is not Amazon-OAuth compatible` });
       }
+      const isGeneric = channel.type === 'AMAZON' || channel.type === 'AMAZON_SMARTBIZ';
+      const region = isGeneric ? String(req.query.region || inferredRegion) : inferredRegion;
 
       const [appId, redirectUri] = await Promise.all([
         settings.get('amazon.appId'),
@@ -78,12 +119,7 @@ router.get('/amazon/start',
         exp: Date.now() + STATE_TTL_MS,
       });
 
-      // Amazon Seller Central consent URL (region-aware host)
-      const consentHost = {
-        IN: 'https://sellercentral.amazon.in',
-        US: 'https://sellercentral.amazon.com',
-        EU: 'https://sellercentral.amazon.co.uk',
-      }[region] || 'https://sellercentral.amazon.in';
+      const consentHost = AMAZON_CONSENT_HOST[region] || AMAZON_CONSENT_HOST.IN;
 
       const url = `${consentHost}/apps/authorize/consent?` +
         new URLSearchParams({
@@ -93,7 +129,7 @@ router.get('/amazon/start',
           version: 'beta', // remove once app is published live
         }).toString();
 
-      res.json({ url, state });
+      res.json({ url, state, region });
     } catch (err) {
       console.error('[oauth/amazon/start]', err);
       res.status(500).json({ error: err.message });
@@ -349,6 +385,211 @@ router.get('/shopify/callback', async (req, res) => {
       });
     } catch {}
     res.status(500).send(renderPage('Authorization failed', err.response?.data?.error_description || err.message));
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// LAZADA — Open Platform OAuth 2.0 (Southeast Asia)
+// ══════════════════════════════════════════════════════════════════════════
+
+const LazadaAdapter = require('../services/channels/ecom/lazada');
+
+router.get('/lazada/start',
+  authenticate, requireTenant, requirePermission('channels.update'),
+  async (req, res) => {
+    try {
+      const { channelId } = req.query;
+      const region = String(req.query.region || 'SG').toUpperCase();
+      if (!channelId) return res.status(400).json({ error: 'channelId required' });
+      if (!LazadaAdapter.REGION_HOSTS[region]) {
+        return res.status(400).json({ error: `Unsupported Lazada region "${region}". Use one of: SG, TH, PH, MY, VN, ID.` });
+      }
+
+      const channel = await prisma.channel.findFirst({
+        where: { id: String(channelId), tenantId: req.tenant.id },
+      });
+      if (!channel) return res.status(404).json({ error: 'Channel not found' });
+      if (channel.type !== 'LAZADA') return res.status(400).json({ error: 'Channel is not Lazada' });
+
+      const [appKey, redirectUri] = await Promise.all([
+        settings.get('lazada.appKey'),
+        settings.get('lazada.redirectUri'),
+      ]);
+      if (!appKey) return res.status(400).json({ error: 'lazada.appKey not set in Admin → Settings' });
+      if (!redirectUri) return res.status(400).json({ error: 'lazada.redirectUri not set in Admin → Settings' });
+
+      const state = signState({
+        provider: 'lazada',
+        channelId: channel.id,
+        tenantId: req.tenant.id,
+        region,
+        nonce: crypto.randomBytes(8).toString('hex'),
+        exp: Date.now() + STATE_TTL_MS,
+      });
+
+      const url = `https://auth.lazada.com/oauth/authorize?` +
+        new URLSearchParams({
+          response_type: 'code',
+          force_auth: 'true',
+          redirect_uri: redirectUri,
+          client_id: appKey,
+          state,
+        }).toString();
+
+      res.json({ url, state, region });
+    } catch (err) {
+      console.error('[oauth/lazada/start]', err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// GET /api/v1/oauth/lazada/callback?code=...&state=...
+router.get('/lazada/callback', async (req, res) => {
+  const { code, state } = req.query;
+  const parsed = verifyState(String(state || ''));
+  if (!parsed) return res.status(400).send(renderPage('Authorization failed', 'Invalid or expired state.'));
+  if (parsed.provider !== 'lazada') return res.status(400).send(renderPage('Authorization failed', 'State/provider mismatch.'));
+  if (!code) return res.status(400).send(renderPage('Authorization failed', 'Missing authorization code.'));
+
+  try {
+    const adapter = new LazadaAdapter({ region: parsed.region || 'SG' });
+    const tokens = await adapter.exchangeAuthCode(String(code));
+
+    const channel = await prisma.channel.findFirst({
+      where: { id: parsed.channelId, tenantId: parsed.tenantId },
+    });
+    if (!channel) throw new Error('Channel no longer exists');
+
+    await prisma.channel.update({
+      where: { id: channel.id },
+      data: {
+        credentials: encryptCredentials({
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresAt: tokens.expiresAt,
+          refreshExpiresAt: tokens.refreshExpiresAt,
+          region: parsed.region || 'SG',
+          country: tokens.country || null,
+          account: tokens.account || null,
+        }),
+        syncError: null,
+        lastSyncAt: null,
+      },
+    });
+
+    res.send(renderPage(
+      '✓ Connected',
+      `Lazada (${tokens.country || parsed.region}) seller <b>${tokens.account || 'account'}</b> linked. You can close this window.`,
+      { autoClose: true }
+    ));
+  } catch (err) {
+    console.error('[oauth/lazada/callback]', err.response?.data || err.message);
+    try {
+      await prisma.channel.update({
+        where: { id: parsed.channelId },
+        data: { syncError: err.response?.data?.message || err.message },
+      });
+    } catch {}
+    res.status(500).send(renderPage('Authorization failed', err.response?.data?.message || err.message));
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// SHOPEE — Open Platform OAuth (multi-region, signed callback)
+// ══════════════════════════════════════════════════════════════════════════
+
+const ShopeeAdapter = require('../services/channels/ecom/shopee');
+
+router.get('/shopee/start',
+  authenticate, requireTenant, requirePermission('channels.update'),
+  async (req, res) => {
+    try {
+      const { channelId } = req.query;
+      const region = String(req.query.region || 'SG').toUpperCase();
+      if (!channelId) return res.status(400).json({ error: 'channelId required' });
+      if (!ShopeeAdapter.REGION_NAMES[region]) {
+        return res.status(400).json({ error: `Unsupported Shopee region "${region}".` });
+      }
+
+      const channel = await prisma.channel.findFirst({
+        where: { id: String(channelId), tenantId: req.tenant.id },
+      });
+      if (!channel) return res.status(404).json({ error: 'Channel not found' });
+      if (channel.type !== 'SHOPEE') return res.status(400).json({ error: 'Channel is not Shopee' });
+
+      const redirectUriBase = await settings.get('shopee.redirectUri');
+      if (!redirectUriBase) return res.status(400).json({ error: 'shopee.redirectUri not set in Admin → Settings' });
+
+      // Shopee needs the redirect URL to be an exact match registered in their
+      // dashboard. We append our signed `state` as a query param so the
+      // callback can pin the channel + tenant + region.
+      const state = signState({
+        provider: 'shopee',
+        channelId: channel.id,
+        tenantId: req.tenant.id,
+        region,
+        nonce: crypto.randomBytes(8).toString('hex'),
+        exp: Date.now() + STATE_TTL_MS,
+      });
+      const sep = redirectUriBase.includes('?') ? '&' : '?';
+      const redirectUri = `${redirectUriBase}${sep}state=${encodeURIComponent(state)}`;
+
+      const url = await ShopeeAdapter.buildAuthorizeUrl(redirectUri);
+      res.json({ url, state, region });
+    } catch (err) {
+      console.error('[oauth/shopee/start]', err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// Shopee redirects back with ?code=...&shop_id=... (and our signed state).
+router.get('/shopee/callback', async (req, res) => {
+  const { code, shop_id, state } = req.query;
+  const parsed = verifyState(String(state || ''));
+  if (!parsed) return res.status(400).send(renderPage('Authorization failed', 'Invalid or expired state.'));
+  if (parsed.provider !== 'shopee') return res.status(400).send(renderPage('Authorization failed', 'State/provider mismatch.'));
+  if (!code || !shop_id) return res.status(400).send(renderPage('Authorization failed', 'Missing code or shop_id.'));
+
+  try {
+    const adapter = new ShopeeAdapter({ region: parsed.region || 'SG', shopId: shop_id });
+    const tokens = await adapter.exchangeAuthCode(String(code), String(shop_id));
+
+    const channel = await prisma.channel.findFirst({
+      where: { id: parsed.channelId, tenantId: parsed.tenantId },
+    });
+    if (!channel) throw new Error('Channel no longer exists');
+
+    await prisma.channel.update({
+      where: { id: channel.id },
+      data: {
+        credentials: encryptCredentials({
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresAt: tokens.expiresAt,
+          shopId: String(shop_id),
+          region: parsed.region || 'SG',
+        }),
+        syncError: null,
+        lastSyncAt: null,
+      },
+    });
+
+    res.send(renderPage(
+      '✓ Connected',
+      `Shopee shop <b>${shop_id}</b> (${parsed.region}) linked. You can close this window.`,
+      { autoClose: true }
+    ));
+  } catch (err) {
+    console.error('[oauth/shopee/callback]', err.response?.data || err.message);
+    try {
+      await prisma.channel.update({
+        where: { id: parsed.channelId },
+        data: { syncError: err.response?.data?.message || err.message },
+      });
+    } catch {}
+    res.status(500).send(renderPage('Authorization failed', err.response?.data?.message || err.message));
   }
 });
 

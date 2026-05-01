@@ -28,7 +28,7 @@ const FALLBACK: Metadata = {
     default: 'Omnistock — Multi-channel Inventory & Order Management',
     template: '%s | Omnistock',
   },
-  description: 'One platform for all your channels. Manage inventory, orders, returns and reconciliation across Amazon, Flipkart, Shopify and 57+ channels.',
+  description: 'One platform for all your channels. Manage inventory, orders, returns and reconciliation across Amazon, Flipkart, Shopify and 56+ channels.',
   keywords: [
     'inventory management', 'order management', 'multi-channel', 'ecommerce',
     'OMS', 'WMS', 'Amazon', 'Flipkart', 'Shopify', 'returns management',
@@ -47,7 +47,7 @@ const FALLBACK: Metadata = {
     url: SITE_URL,
     siteName: 'Omnistock',
     title: 'Omnistock — Multi-channel Inventory & Order Management',
-    description: 'Manage inventory, orders, returns and reconciliation across 57+ channels from one platform.',
+    description: 'Manage inventory, orders, returns and reconciliation across 56+ channels from one platform.',
     images: [
       {
         url: `${SITE_URL}/og-image.svg`,
@@ -60,7 +60,7 @@ const FALLBACK: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Omnistock — Multi-channel Commerce Platform',
-    description: 'Manage inventory, orders, returns and reconciliation across 57+ channels.',
+    description: 'Manage inventory, orders, returns and reconciliation across 56+ channels.',
     images: [`${SITE_URL}/og-image.svg`],
   },
   robots: {

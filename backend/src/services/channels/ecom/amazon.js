@@ -11,13 +11,41 @@ const settings = require('../../settings.service');
 // per tenant still work — per-tenant values win over platform settings.
 // Docs: https://developer-docs.amazon.com/sp-api/
 
-const ENDPOINTS = {
-  IN: 'https://sellingpartnerapi-eu.amazon.com',
-  US: 'https://sellingpartnerapi-na.amazon.com',
-  EU: 'https://sellingpartnerapi-eu.amazon.com',
+// Per-region SP-API host + marketplace ID. Sources:
+//   https://developer-docs.amazon.com/sp-api/docs/sp-api-endpoints
+//   https://developer-docs.amazon.com/sp-api/docs/marketplace-ids
+const REGION_CONFIG = {
+  IN: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A21TJRUUN4KGV' },
+  US: { endpoint: 'https://sellingpartnerapi-na.amazon.com', marketplaceId: 'ATVPDKIKX0DER' },
+  CA: { endpoint: 'https://sellingpartnerapi-na.amazon.com', marketplaceId: 'A2EUQ1WTGCTBG2' },
+  MX: { endpoint: 'https://sellingpartnerapi-na.amazon.com', marketplaceId: 'A1AM78C64UM0Y8' },
+  BR: { endpoint: 'https://sellingpartnerapi-na.amazon.com', marketplaceId: 'A2Q3Y263D00KWC' },
+  UK: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A1F83G8C2ARO7P' },
+  DE: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A1PA6795UKMFR9' },
+  FR: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A13V1IB3VIYZZH' },
+  IT: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'APJ6JRA9NG5V4'  },
+  ES: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A1RKKUPIHCS9HS' },
+  NL: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A1805IZSGTT6HS' },
+  SE: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A2NODRKZP88ZB9' },
+  PL: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A1C3SOZRARQ6R3' },
+  TR: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A33AVAJ2PDY3EV' },
+  AE: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A2VIGQ35RCS4UG' },
+  SA: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A17E79C6D8DWNP' },
+  EG: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'ARBP9OOSHTCHU'  },
+  ZA: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'AE08WJ6YKNBMC'  },
+  JP: { endpoint: 'https://sellingpartnerapi-fe.amazon.com', marketplaceId: 'A1VC38T7YXB528' },
+  AU: { endpoint: 'https://sellingpartnerapi-fe.amazon.com', marketplaceId: 'A39IBJ37TRP1C6' },
+  SG: { endpoint: 'https://sellingpartnerapi-fe.amazon.com', marketplaceId: 'A19VAU5U5O7RUS' },
+  // Legacy aliases — historic creds may pass region: 'EU' or 'NA'
+  EU: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A1F83G8C2ARO7P' },
+  NA: { endpoint: 'https://sellingpartnerapi-na.amazon.com', marketplaceId: 'ATVPDKIKX0DER' },
 };
 
 const LWA_URL = 'https://api.amazon.com/auth/o2/token';
+
+function getRegionConfig(region) {
+  return REGION_CONFIG[region] || REGION_CONFIG.IN;
+}
 
 async function getAppCredentials(creds) {
   const clientId     = creds.clientId     || (await settings.get('amazon.clientId'));
@@ -30,8 +58,11 @@ async function getAppCredentials(creds) {
 
 class AmazonAdapter {
   constructor(credentials) {
-    this.creds = credentials;
-    this.endpoint = ENDPOINTS[credentials.region || 'IN'];
+    this.creds = credentials || {};
+    this.region = this.creds.region || 'IN';
+    const cfg = getRegionConfig(this.region);
+    this.endpoint = cfg.endpoint;
+    this.marketplaceId = cfg.marketplaceId;
     this._accessToken = null;
     this._tokenExpiry = null;
   }
@@ -71,7 +102,7 @@ class AmazonAdapter {
 
   async fetchOrders(sinceDate) {
     const params = {
-      MarketplaceIds: 'A21TJRUUN4KGV', // Amazon.in marketplace ID
+      MarketplaceIds: this.marketplaceId,
       OrderStatuses: 'Unshipped,PartiallyShipped,Shipped,Pending',
     };
     if (sinceDate) params.CreatedAfter = sinceDate;
@@ -91,7 +122,7 @@ class AmazonAdapter {
       {},
       {
         headers: { 'x-amz-access-token': token, 'Content-Type': 'application/json' },
-        params: { marketplaceIds: 'A21TJRUUN4KGV' },
+        params: { marketplaceIds: this.marketplaceId },
       }
     );
     return { channel: 'AMAZON', orderId: amazonOrderId, response: data };
@@ -130,7 +161,7 @@ class AmazonAdapter {
       { productType: 'PRODUCT', patches },
       {
         headers: { 'x-amz-access-token': token, 'Content-Type': 'application/json' },
-        params: { marketplaceIds: 'A21TJRUUN4KGV' },
+        params: { marketplaceIds: this.marketplaceId },
       }
     );
     return { channel: 'AMAZON', sku, submissionId: data.submissionId, status: data.status };

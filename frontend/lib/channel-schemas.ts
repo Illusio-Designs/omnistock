@@ -25,7 +25,7 @@ export interface ChannelSchema {
   fields: ChannelField[];
   // OAuth flow — tenant clicks "Authorize" instead of pasting credentials.
   // Set to a provider key when the platform owns the OAuth app.
-  oauth?: 'amazon' | 'shopify' | 'flipkart' | 'meta';
+  oauth?: 'amazon' | 'shopify' | 'flipkart' | 'meta' | 'lazada' | 'shopee';
 }
 
 export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
@@ -648,61 +648,165 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
       ] },
     ],
   },
-  AMAZON_US: { type: 'AMAZON_US', name: 'Amazon US', docsUrl: 'https://sellercentral.amazon.com', fields: [
-    { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },
-    { key: 'clientId', label: 'LWA Client ID', kind: 'text', required: true },
-    { key: 'clientSecret', label: 'LWA Client Secret', kind: 'password', required: true, secret: true },
-    { key: 'refreshToken', label: 'Refresh Token', kind: 'password', required: true, secret: true },
-  ]},
-  AMAZON_UK: { type: 'AMAZON_UK', name: 'Amazon UK', docsUrl: 'https://sellercentral.amazon.co.uk', fields: [
-    { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },
-    { key: 'clientId', label: 'LWA Client ID', kind: 'text', required: true },
-    { key: 'clientSecret', label: 'LWA Client Secret', kind: 'password', required: true, secret: true },
-    { key: 'refreshToken', label: 'Refresh Token', kind: 'password', required: true, secret: true },
-  ]},
-  AMAZON_UAE: { type: 'AMAZON_UAE', name: 'Amazon UAE', fields: [
-    { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },
-    { key: 'clientId', label: 'LWA Client ID', kind: 'text', required: true },
-    { key: 'clientSecret', label: 'LWA Client Secret', kind: 'password', required: true, secret: true },
-    { key: 'refreshToken', label: 'Refresh Token', kind: 'password', required: true, secret: true },
-  ]},
-  AMAZON_SA: { type: 'AMAZON_SA', name: 'Amazon Saudi Arabia', fields: [
-    { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },
-    { key: 'clientId', label: 'LWA Client ID', kind: 'text', required: true },
-    { key: 'clientSecret', label: 'LWA Client Secret', kind: 'password', required: true, secret: true },
-    { key: 'refreshToken', label: 'Refresh Token', kind: 'password', required: true, secret: true },
-  ]},
-  AMAZON_SG: { type: 'AMAZON_SG', name: 'Amazon Singapore', fields: [
-    { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },
-    { key: 'clientId', label: 'LWA Client ID', kind: 'text', required: true },
-    { key: 'clientSecret', label: 'LWA Client Secret', kind: 'password', required: true, secret: true },
-    { key: 'refreshToken', label: 'Refresh Token', kind: 'password', required: true, secret: true },
-  ]},
-  AMAZON_AU: { type: 'AMAZON_AU', name: 'Amazon Australia', fields: [
-    { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },
-    { key: 'clientId', label: 'LWA Client ID', kind: 'text', required: true },
-    { key: 'clientSecret', label: 'LWA Client Secret', kind: 'password', required: true, secret: true },
-    { key: 'refreshToken', label: 'Refresh Token', kind: 'password', required: true, secret: true },
-  ]},
-  AMAZON_DE: { type: 'AMAZON_DE', name: 'Amazon Germany', fields: [
-    { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },
-    { key: 'clientId', label: 'LWA Client ID', kind: 'text', required: true },
-    { key: 'clientSecret', label: 'LWA Client Secret', kind: 'password', required: true, secret: true },
-    { key: 'refreshToken', label: 'Refresh Token', kind: 'password', required: true, secret: true },
-  ]},
-  LAZADA: { type: 'LAZADA', name: 'Lazada', docsUrl: 'https://open.lazada.com', fields: [
-    { key: 'appKey', label: 'App Key', kind: 'text', required: true },
-    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
-  ]},
-  SHOPEE: { type: 'SHOPEE', name: 'Shopee', docsUrl: 'https://open.shopee.com', fields: [
-    { key: 'partnerId', label: 'Partner ID', kind: 'text', required: true },
-    { key: 'shopId', label: 'Shop ID', kind: 'text', required: true },
-    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
-  ]},
-  NOON: { type: 'NOON', name: 'Noon', docsUrl: 'https://docs.noon.partners', fields: [
-    { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true },
-    { key: 'partnerCode', label: 'Partner Code', kind: 'text', required: true },
-  ]},
+  AMAZON_US: {
+    type: 'AMAZON_US',
+    name: 'Amazon US',
+    docsUrl: 'https://sellercentral.amazon.com',
+    description: 'Connect your Amazon.com (US) seller account via the platform SP-API app.',
+    oauth: 'amazon',
+    steps: [
+      'Click "Authorize with Amazon" below',
+      'Log in to your Amazon.com Seller Central account when prompted',
+      'Approve Uniflo\'s access to your inventory and orders',
+      'You\'ll be redirected back automatically',
+    ],
+    fields: [],
+  },
+  AMAZON_UK: {
+    type: 'AMAZON_UK', name: 'Amazon UK', docsUrl: 'https://sellercentral.amazon.co.uk',
+    description: 'Connect your Amazon.co.uk seller account via the platform SP-API app.',
+    oauth: 'amazon',
+    steps: [
+      'Click "Authorize with Amazon" below',
+      'Log in to your Amazon UK Seller Central account when prompted',
+      'Approve Uniflo\'s access to your inventory and orders',
+      'You\'ll be redirected back automatically',
+    ],
+    fields: [],
+  },
+  AMAZON_UAE: {
+    type: 'AMAZON_UAE', name: 'Amazon UAE', docsUrl: 'https://sellercentral.amazon.ae',
+    description: 'Connect your Amazon.ae seller account via the platform SP-API app.',
+    oauth: 'amazon',
+    steps: [
+      'Click "Authorize with Amazon" below',
+      'Log in to your Amazon UAE Seller Central account when prompted',
+      'Approve Uniflo\'s access to your inventory and orders',
+      'You\'ll be redirected back automatically',
+    ],
+    fields: [],
+  },
+  AMAZON_SA: {
+    type: 'AMAZON_SA', name: 'Amazon Saudi Arabia', docsUrl: 'https://sellercentral.amazon.sa',
+    description: 'Connect your Amazon.sa seller account via the platform SP-API app.',
+    oauth: 'amazon',
+    steps: [
+      'Click "Authorize with Amazon" below',
+      'Log in to your Amazon Saudi Arabia Seller Central account when prompted',
+      'Approve Uniflo\'s access to your inventory and orders',
+      'You\'ll be redirected back automatically',
+    ],
+    fields: [],
+  },
+  AMAZON_SG: {
+    type: 'AMAZON_SG', name: 'Amazon Singapore', docsUrl: 'https://sellercentral.amazon.sg',
+    description: 'Connect your Amazon.sg seller account via the platform SP-API app.',
+    oauth: 'amazon',
+    steps: [
+      'Click "Authorize with Amazon" below',
+      'Log in to your Amazon Singapore Seller Central account when prompted',
+      'Approve Uniflo\'s access to your inventory and orders',
+      'You\'ll be redirected back automatically',
+    ],
+    fields: [],
+  },
+  AMAZON_AU: {
+    type: 'AMAZON_AU', name: 'Amazon Australia', docsUrl: 'https://sellercentral.amazon.com.au',
+    description: 'Connect your Amazon.com.au seller account via the platform SP-API app.',
+    oauth: 'amazon',
+    steps: [
+      'Click "Authorize with Amazon" below',
+      'Log in to your Amazon Australia Seller Central account when prompted',
+      'Approve Uniflo\'s access to your inventory and orders',
+      'You\'ll be redirected back automatically',
+    ],
+    fields: [],
+  },
+  AMAZON_DE: {
+    type: 'AMAZON_DE', name: 'Amazon Germany', docsUrl: 'https://sellercentral.amazon.de',
+    description: 'Connect your Amazon.de seller account via the platform SP-API app.',
+    oauth: 'amazon',
+    steps: [
+      'Click "Authorize with Amazon" below',
+      'Log in to your Amazon Germany Seller Central account when prompted',
+      'Approve Uniflo\'s access to your inventory and orders',
+      'You\'ll be redirected back automatically',
+    ],
+    fields: [],
+  },
+  LAZADA: {
+    type: 'LAZADA',
+    name: 'Lazada',
+    docsUrl: 'https://open.lazada.com/apps/doc/api',
+    description: 'Connect your Lazada seller account for any of the SEA marketplaces (SG, TH, PH, MY, VN, ID).',
+    oauth: 'lazada',
+    steps: [
+      'Pick the Lazada country your seller account is registered in',
+      'Click "Authorize with Lazada" below',
+      'Log in to Lazada Seller Center when prompted',
+      'You\'ll be redirected back automatically',
+    ],
+    fields: [
+      { key: 'region', label: 'Country', kind: 'select', required: true, options: [
+        { value: 'SG', label: 'Singapore' },
+        { value: 'TH', label: 'Thailand' },
+        { value: 'PH', label: 'Philippines' },
+        { value: 'MY', label: 'Malaysia' },
+        { value: 'VN', label: 'Vietnam' },
+        { value: 'ID', label: 'Indonesia' },
+      ] },
+    ],
+  },
+  SHOPEE: {
+    type: 'SHOPEE',
+    name: 'Shopee',
+    docsUrl: 'https://open.shopee.com/documents?module=63&type=2&id=51',
+    description: 'Connect your Shopee shop in any of the SEA / Taiwan / LATAM markets.',
+    oauth: 'shopee',
+    steps: [
+      'Pick the country your Shopee shop is registered in',
+      'Click "Authorize with Shopee" below',
+      'Log in to Shopee Seller Center and pick the shop to connect',
+      'You\'ll be redirected back automatically',
+    ],
+    fields: [
+      { key: 'region', label: 'Country', kind: 'select', required: true, options: [
+        { value: 'SG', label: 'Singapore' },
+        { value: 'MY', label: 'Malaysia' },
+        { value: 'TH', label: 'Thailand' },
+        { value: 'ID', label: 'Indonesia' },
+        { value: 'VN', label: 'Vietnam' },
+        { value: 'PH', label: 'Philippines' },
+        { value: 'TW', label: 'Taiwan' },
+        { value: 'BR', label: 'Brazil' },
+        { value: 'MX', label: 'Mexico' },
+        { value: 'CO', label: 'Colombia' },
+        { value: 'CL', label: 'Chile' },
+        { value: 'PL', label: 'Poland' },
+      ] },
+    ],
+  },
+  NOON: {
+    type: 'NOON',
+    name: 'Noon',
+    docsUrl: 'https://docs.noon.partners/',
+    description: 'Connect your Noon seller account (UAE, KSA, or Egypt). Each merchant uses their own API key — no platform OAuth.',
+    steps: [
+      'Sign in to Noon Partners (https://partners.noon.com)',
+      'Open Settings → API and generate an API key',
+      'Copy the partner code from your account profile',
+      'Pick the country your seller account is registered in',
+    ],
+    fields: [
+      { key: 'apiKey',      label: 'API Key',      kind: 'password', required: true, secret: true, help: 'Noon Partners → Settings → API.' },
+      { key: 'partnerCode', label: 'Partner Code', kind: 'text',     required: true, help: 'Noon Partners → Account.' },
+      { key: 'region',      label: 'Country',      kind: 'select',   required: true, options: [
+        { value: 'AE', label: 'United Arab Emirates' },
+        { value: 'SA', label: 'Saudi Arabia' },
+        { value: 'EG', label: 'Egypt' },
+      ] },
+    ],
+  },
   MERCADO_LIBRE: { type: 'MERCADO_LIBRE', name: 'Mercado Libre', fields: [
     { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
     { key: 'userId', label: 'Seller User ID', kind: 'text', required: true },

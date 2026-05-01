@@ -71,7 +71,9 @@ export function ConnectChannelModal({
       let url = '';
       const provider = schema.oauth;
       if (provider === 'amazon') {
-        const res = await oauthApi.amazonStart(channelId, values.region || 'IN');
+        // For AMAZON_<REGION> variants the backend infers region from channel type;
+        // only the generic AMAZON / AMAZON_SMARTBIZ types need this passed.
+        const res = await oauthApi.amazonStart(channelId, values.region);
         url = res.data.url;
       } else if (provider === 'shopify') {
         if (!values.shop) {
@@ -86,6 +88,14 @@ export function ConnectChannelModal({
         url = res.data.url;
       } else if (provider === 'meta') {
         const res = await oauthApi.metaStart(channelId);
+        url = res.data.url;
+      } else if (provider === 'lazada') {
+        const region = String(values.region || 'SG');
+        const res = await oauthApi.lazadaStart(channelId, region);
+        url = res.data.url;
+      } else if (provider === 'shopee') {
+        const region = String(values.region || 'SG');
+        const res = await oauthApi.shopeeStart(channelId, region);
         url = res.data.url;
       } else {
         throw new Error(`OAuth provider ${provider} not implemented yet`);

@@ -170,13 +170,13 @@ export default function LoginPage() {
               for every channel.
             </h2>
             <p className="mt-4 text-white/80 text-base max-w-md leading-relaxed">
-              Amazon, Flipkart, Blinkit, Shopify & 57+ more — manage orders, inventory, shipping, and reviews in one beautiful dashboard.
+              Amazon, Flipkart, Blinkit, Shopify & 56+ more — manage orders, inventory, shipping, and reviews in one beautiful dashboard.
             </p>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             {[
-              { value: '57+',  label: 'Channels' },
+              { value: '56+',  label: 'Channels' },
               { value: '14d',  label: 'Free trial' },
               { value: '99.9%', label: 'Uptime' },
             ].map((s) => (

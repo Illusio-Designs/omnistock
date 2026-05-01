@@ -87,14 +87,18 @@ export const billingApi = {
 
 // ── OAuth (per-seller channel authorization) ──────────────────────
 export const oauthApi = {
-  amazonStart:  (channelId: string, region: string) =>
-    api.get('/oauth/amazon/start', { params: { channelId, region } }),
+  amazonStart:  (channelId: string, region?: string) =>
+    api.get('/oauth/amazon/start', { params: { channelId, ...(region ? { region } : {}) } }),
   shopifyStart: (channelId: string, shop: string) =>
     api.get('/oauth/shopify/start', { params: { channelId, shop } }),
   flipkartStart: (channelId: string) =>
     api.get('/oauth/flipkart/start', { params: { channelId } }),
   metaStart: (channelId: string) =>
     api.get('/oauth/meta/start', { params: { channelId } }),
+  lazadaStart: (channelId: string, region: string) =>
+    api.get('/oauth/lazada/start', { params: { channelId, region } }),
+  shopeeStart: (channelId: string, region: string) =>
+    api.get('/oauth/shopee/start', { params: { channelId, region } }),
   // Generic poll endpoint — works for every provider
   status: (provider: string, channelId: string) =>
     api.get(`/oauth/${provider}/status`, { params: { channelId } }),

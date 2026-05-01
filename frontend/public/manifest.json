@@ -1,7 +1,7 @@
 {
   "name": "Omnistock — Multi-channel Commerce Platform",
   "short_name": "Omnistock",
-  "description": "Manage inventory, orders, returns and reconciliation across 57+ channels.",
+  "description": "Manage inventory, orders, returns and reconciliation across 56+ channels.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
