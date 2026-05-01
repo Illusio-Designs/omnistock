@@ -7,6 +7,7 @@ import { channelApi } from '@/lib/api';
 import {
   Plug, CheckCircle2, Circle, Clock, ExternalLink, Inbox, Sparkles, Lock,
   ShoppingBag, Zap, Truck, Globe, MessageCircle, Building2, Boxes, ChevronRight, HelpCircle, Mail,
+  Calculator, ScanLine, CreditCard, Receipt, Users, Undo2, Warehouse,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
@@ -17,7 +18,11 @@ import { Tooltip } from '@/components/ui/Tooltip';
 import { Avatar } from '@/components/ui/Avatar';
 import { getSchemaForType } from '@/lib/channel-schemas';
 
-const CATEGORY_ORDER = ['ECOM', 'QUICKCOM', 'LOGISTICS', 'OWNSTORE', 'SOCIAL', 'B2B', 'CUSTOM'];
+const CATEGORY_ORDER = [
+  'ECOM', 'QUICKCOM', 'LOGISTICS', 'OWNSTORE', 'SOCIAL', 'B2B',
+  'ACCOUNTING', 'POS_SYSTEM', 'PAYMENT', 'TAX', 'CRM', 'RETURNS', 'FULFILLMENT',
+  'CUSTOM',
+];
 
 // Channel types whose logo file doesn't match the auto-derived slug —
 // either the brand reuses an existing logo, or the file extension isn't .png.
@@ -90,6 +95,62 @@ const CATEGORY_META: Record<string, {
     label: 'Custom & Webhooks',
     tagline: 'Universal receivers for any system',
     icon: Sparkles,
+    gradient: 'from-emerald-500 to-emerald-600',
+    bgGradient: 'from-emerald-50 via-white to-emerald-50',
+    ringColor: 'ring-emerald-200/60',
+  },
+  ACCOUNTING: {
+    label: 'Accounting & ERP',
+    tagline: 'Tally, Zoho Books, QuickBooks, SAP & more',
+    icon: Calculator,
+    gradient: 'from-emerald-500 to-emerald-600',
+    bgGradient: 'from-emerald-50 via-white to-emerald-50',
+    ringColor: 'ring-emerald-200/60',
+  },
+  POS_SYSTEM: {
+    label: 'POS Systems',
+    tagline: 'Shopify POS, Square, Lightspeed, GoFrugal & more',
+    icon: ScanLine,
+    gradient: 'from-emerald-500 to-emerald-600',
+    bgGradient: 'from-emerald-50 via-white to-emerald-50',
+    ringColor: 'ring-emerald-200/60',
+  },
+  PAYMENT: {
+    label: 'Payment Gateways',
+    tagline: 'Razorpay, Stripe, PayU, Cashfree & more',
+    icon: CreditCard,
+    gradient: 'from-emerald-500 to-emerald-600',
+    bgGradient: 'from-emerald-50 via-white to-emerald-50',
+    ringColor: 'ring-emerald-200/60',
+  },
+  TAX: {
+    label: 'Tax & GST Compliance',
+    tagline: 'ClearTax, GSTZen, IRP, Avalara & more',
+    icon: Receipt,
+    gradient: 'from-emerald-500 to-emerald-600',
+    bgGradient: 'from-emerald-50 via-white to-emerald-50',
+    ringColor: 'ring-emerald-200/60',
+  },
+  CRM: {
+    label: 'CRM & Marketing',
+    tagline: 'HubSpot, Zoho CRM, Klaviyo, Mailchimp & more',
+    icon: Users,
+    gradient: 'from-emerald-500 to-emerald-600',
+    bgGradient: 'from-emerald-50 via-white to-emerald-50',
+    ringColor: 'ring-emerald-200/60',
+  },
+  RETURNS: {
+    label: 'Returns & Reverse Logistics',
+    tagline: 'Return Prime, WeReturn, EasyVMS & more',
+    icon: Undo2,
+    gradient: 'from-emerald-500 to-emerald-600',
+    bgGradient: 'from-emerald-50 via-white to-emerald-50',
+    ringColor: 'ring-emerald-200/60',
+  },
+  FULFILLMENT: {
+    label: 'Fulfillment & 3PL',
+    tagline: 'Amazon FBA, WareIQ, LogiNext & more',
+    icon: Warehouse,
     gradient: 'from-emerald-500 to-emerald-600',
     bgGradient: 'from-emerald-50 via-white to-emerald-50',
     ringColor: 'ring-emerald-200/60',

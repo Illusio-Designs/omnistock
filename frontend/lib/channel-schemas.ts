@@ -626,6 +626,442 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
       { key: 'webhookSecret', label: 'Webhook HMAC Secret', kind: 'password', required: true, secret: true, help: 'Pick any 32+ char random string. Use it in your sender to sign requests with HMAC-SHA256.' },
     ],
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ECOM — international expansion
+  // ─────────────────────────────────────────────────────────────────────────
+  WALMART: {
+    type: 'WALMART', name: 'Walmart Marketplace', docsUrl: 'https://developer.walmart.com',
+    fields: [{ key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true }],
+  },
+  AMAZON_US: { type: 'AMAZON_US', name: 'Amazon US', docsUrl: 'https://sellercentral.amazon.com', fields: [
+    { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },
+    { key: 'clientId', label: 'LWA Client ID', kind: 'text', required: true },
+    { key: 'clientSecret', label: 'LWA Client Secret', kind: 'password', required: true, secret: true },
+    { key: 'refreshToken', label: 'Refresh Token', kind: 'password', required: true, secret: true },
+  ]},
+  AMAZON_UK: { type: 'AMAZON_UK', name: 'Amazon UK', docsUrl: 'https://sellercentral.amazon.co.uk', fields: [
+    { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },
+    { key: 'clientId', label: 'LWA Client ID', kind: 'text', required: true },
+    { key: 'clientSecret', label: 'LWA Client Secret', kind: 'password', required: true, secret: true },
+    { key: 'refreshToken', label: 'Refresh Token', kind: 'password', required: true, secret: true },
+  ]},
+  AMAZON_UAE: { type: 'AMAZON_UAE', name: 'Amazon UAE', fields: [
+    { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },
+    { key: 'clientId', label: 'LWA Client ID', kind: 'text', required: true },
+    { key: 'clientSecret', label: 'LWA Client Secret', kind: 'password', required: true, secret: true },
+    { key: 'refreshToken', label: 'Refresh Token', kind: 'password', required: true, secret: true },
+  ]},
+  AMAZON_SA: { type: 'AMAZON_SA', name: 'Amazon Saudi Arabia', fields: [
+    { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },
+    { key: 'clientId', label: 'LWA Client ID', kind: 'text', required: true },
+    { key: 'clientSecret', label: 'LWA Client Secret', kind: 'password', required: true, secret: true },
+    { key: 'refreshToken', label: 'Refresh Token', kind: 'password', required: true, secret: true },
+  ]},
+  AMAZON_SG: { type: 'AMAZON_SG', name: 'Amazon Singapore', fields: [
+    { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },
+    { key: 'clientId', label: 'LWA Client ID', kind: 'text', required: true },
+    { key: 'clientSecret', label: 'LWA Client Secret', kind: 'password', required: true, secret: true },
+    { key: 'refreshToken', label: 'Refresh Token', kind: 'password', required: true, secret: true },
+  ]},
+  AMAZON_AU: { type: 'AMAZON_AU', name: 'Amazon Australia', fields: [
+    { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },
+    { key: 'clientId', label: 'LWA Client ID', kind: 'text', required: true },
+    { key: 'clientSecret', label: 'LWA Client Secret', kind: 'password', required: true, secret: true },
+    { key: 'refreshToken', label: 'Refresh Token', kind: 'password', required: true, secret: true },
+  ]},
+  AMAZON_DE: { type: 'AMAZON_DE', name: 'Amazon Germany', fields: [
+    { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },
+    { key: 'clientId', label: 'LWA Client ID', kind: 'text', required: true },
+    { key: 'clientSecret', label: 'LWA Client Secret', kind: 'password', required: true, secret: true },
+    { key: 'refreshToken', label: 'Refresh Token', kind: 'password', required: true, secret: true },
+  ]},
+  LAZADA: { type: 'LAZADA', name: 'Lazada', docsUrl: 'https://open.lazada.com', fields: [
+    { key: 'appKey', label: 'App Key', kind: 'text', required: true },
+    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  SHOPEE: { type: 'SHOPEE', name: 'Shopee', docsUrl: 'https://open.shopee.com', fields: [
+    { key: 'partnerId', label: 'Partner ID', kind: 'text', required: true },
+    { key: 'shopId', label: 'Shop ID', kind: 'text', required: true },
+    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  NOON: { type: 'NOON', name: 'Noon', docsUrl: 'https://docs.noon.partners', fields: [
+    { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true },
+    { key: 'partnerCode', label: 'Partner Code', kind: 'text', required: true },
+  ]},
+  MERCADO_LIBRE: { type: 'MERCADO_LIBRE', name: 'Mercado Libre', fields: [
+    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
+    { key: 'userId', label: 'Seller User ID', kind: 'text', required: true },
+  ]},
+  ALLEGRO: { type: 'ALLEGRO', name: 'Allegro', fields: [
+    { key: 'accessToken', label: 'OAuth Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  FRUUGO: { type: 'FRUUGO', name: 'Fruugo', fields: [
+    { key: 'username', label: 'Username', kind: 'text', required: true },
+    { key: 'password', label: 'Password', kind: 'password', required: true, secret: true },
+  ]},
+  ONBUY: { type: 'ONBUY', name: 'OnBuy', fields: [
+    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  MANOMANO: { type: 'MANOMANO', name: 'ManoMano', fields: [
+    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  RAKUTEN: { type: 'RAKUTEN', name: 'Rakuten', fields: [
+    { key: 'serviceSecret', label: 'Service Secret', kind: 'password', required: true, secret: true },
+    { key: 'licenseKey', label: 'License Key', kind: 'password', required: true, secret: true },
+  ]},
+  ZALANDO: { type: 'ZALANDO', name: 'Zalando', fields: [
+    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
+    { key: 'merchantId', label: 'Merchant ID', kind: 'text', required: true },
+  ]},
+  KAUFLAND: { type: 'KAUFLAND', name: 'Kaufland', fields: [
+    { key: 'clientKey', label: 'Client Key', kind: 'text', required: true },
+    { key: 'secretKey', label: 'Secret Key', kind: 'password', required: true, secret: true },
+    { key: 'storefront', label: 'Storefront', kind: 'select', required: true, options: [{ value: 'de', label: 'Germany (kaufland.de)' }, { value: 'cz', label: 'Czechia (kaufland.cz)' }, { value: 'sk', label: 'Slovakia (kaufland.sk)' }] },
+  ]},
+  WISH: { type: 'WISH', name: 'Wish', fields: [
+    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  INDIAMART: { type: 'INDIAMART', name: 'IndiaMART', fields: [
+    { key: 'crmKey', label: 'CRM Key (glusr_crm_key)', kind: 'password', required: true, secret: true },
+  ]},
+  INDUSTRYBUYING: { type: 'INDUSTRYBUYING', name: 'Industrybuying', fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  MOGLIX:        { type: 'MOGLIX',        name: 'Moglix',        fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  PURPLLE:       { type: 'PURPLLE',       name: 'Purplle',       fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  BEWAKOOF:  { type: 'BEWAKOOF',  name: 'Bewakoof',  description: 'No public seller API — uses Omnistock webhook receiver. Configure your portal/3PL to POST orders here.', fields: [{ key: 'webhookSecret', label: 'Webhook HMAC Secret', kind: 'password', required: false, secret: true }] },
+  SHOPCLUES: { type: 'SHOPCLUES', name: 'ShopClues', description: 'Webhook receiver — configure your portal to POST orders.', fields: [{ key: 'webhookSecret', label: 'Webhook HMAC Secret', kind: 'password', required: false, secret: true }] },
+  FIRSTCRY:  { type: 'FIRSTCRY',  name: 'FirstCry',  fields: [{ key: 'sellerId', label: 'Seller ID', kind: 'text', required: true }, { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  PEPPERFRY: { type: 'PEPPERFRY', name: 'Pepperfry', fields: [{ key: 'sellerId', label: 'Seller ID', kind: 'text', required: true }, { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  CROMA:     { type: 'CROMA',     name: 'Croma',     fields: [{ key: 'sellerId', label: 'Seller ID', kind: 'text', required: true }, { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  TATA_NEU:  { type: 'TATA_NEU',  name: 'Tata Neu',  fields: [{ key: 'sellerId', label: 'Seller ID', kind: 'text', required: true }, { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // QUICKCOM extensions
+  // ─────────────────────────────────────────────────────────────────────────
+  FLIPKART_MINUTES: { type: 'FLIPKART_MINUTES', name: 'Flipkart Minutes', fields: [
+    { key: 'appId', label: 'App ID', kind: 'text', required: true },
+    { key: 'appSecret', label: 'App Secret', kind: 'password', required: true, secret: true },
+  ]},
+  TATA_1MG: { type: 'TATA_1MG', name: 'Tata 1mg', fields: [
+    { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true },
+    { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },
+  ]},
+  DUNZO: { type: 'DUNZO', name: 'Dunzo', fields: [
+    { key: 'clientId', label: 'Client ID', kind: 'text', required: true },
+    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  COUNTRY_DELIGHT: { type: 'COUNTRY_DELIGHT', name: 'Country Delight', description: 'Webhook receiver.', fields: [
+    { key: 'webhookSecret', label: 'Webhook HMAC Secret', kind: 'password', required: false, secret: true },
+  ]},
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // LOGISTICS extensions
+  // ─────────────────────────────────────────────────────────────────────────
+  ARAMEX: { type: 'ARAMEX', name: 'Aramex', fields: [
+    { key: 'username', label: 'Username', kind: 'text', required: true },
+    { key: 'password', label: 'Password', kind: 'password', required: true, secret: true },
+    { key: 'accountNumber', label: 'Account Number', kind: 'text', required: true },
+    { key: 'accountPin', label: 'Account PIN', kind: 'password', required: true, secret: true },
+  ]},
+  EKART:                 { type: 'EKART',                 name: 'Ekart',                 fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }, { key: 'merchantId', label: 'Merchant ID', kind: 'text', required: true }] },
+  INDIA_POST:            { type: 'INDIA_POST',            name: 'India Post',            description: 'Tracking only — shipments are booked at counters.', fields: [{ key: 'licenseKey', label: 'License Key', kind: 'password', required: true, secret: true }] },
+  GATI:                  { type: 'GATI',                  name: 'Gati',                  fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  SAFEXPRESS:            { type: 'SAFEXPRESS',            name: 'Safexpress',            fields: [{ key: 'username', label: 'Username', kind: 'text', required: true }, { key: 'password', label: 'Password', kind: 'password', required: true, secret: true }] },
+  TRACKON:               { type: 'TRACKON',               name: 'Trackon',               fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  PROFESSIONAL_COURIERS: { type: 'PROFESSIONAL_COURIERS', name: 'The Professional Couriers', fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  SMARTR:                { type: 'SMARTR',                name: 'Smartr Logistics',      fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  SHYPLITE:              { type: 'SHYPLITE',              name: 'Shyplite',              fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  ICARRY:                { type: 'ICARRY',                name: 'iCarry',                fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  DOTZOT:                { type: 'DOTZOT',                name: 'DotZot',                fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  SHIPDELIGHT:           { type: 'SHIPDELIGHT',           name: 'ShipDelight',           fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // OWNSTORE extensions
+  // ─────────────────────────────────────────────────────────────────────────
+  WIX: { type: 'WIX', name: 'Wix Stores', fields: [
+    { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true },
+    { key: 'siteId', label: 'Wix Site ID', kind: 'text', required: true },
+  ]},
+  SQUARESPACE: { type: 'SQUARESPACE', name: 'Squarespace Commerce', fields: [
+    { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true },
+  ]},
+  SALESFORCE_COMMERCE: { type: 'SALESFORCE_COMMERCE', name: 'Salesforce Commerce Cloud', fields: [
+    { key: 'shortCode', label: 'Short Code', kind: 'text', required: true, help: 'From your B2C Commerce instance URL.' },
+    { key: 'siteId', label: 'Site ID', kind: 'text', required: true },
+    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  PRESTASHOP: { type: 'PRESTASHOP', name: 'PrestaShop', fields: [
+    { key: 'storeUrl', label: 'Store URL', kind: 'url', required: true },
+    { key: 'apiKey', label: 'Webservice API Key', kind: 'password', required: true, secret: true },
+  ]},
+  ECWID: { type: 'ECWID', name: 'Ecwid', fields: [
+    { key: 'storeId', label: 'Store ID', kind: 'text', required: true },
+    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  ZOHO_COMMERCE: { type: 'ZOHO_COMMERCE', name: 'Zoho Commerce', fields: [
+    { key: 'accessToken', label: 'OAuth Access Token', kind: 'password', required: true, secret: true },
+    { key: 'organizationId', label: 'Organization ID', kind: 'text', required: true },
+  ]},
+  DUKAAN:           { type: 'DUKAAN',           name: 'Dukaan',           fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  SHOOPY:           { type: 'SHOOPY',           name: 'Shoopy',           fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  BIKAYI:           { type: 'BIKAYI',           name: 'Bikayi',           fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  KARTROCKET:       { type: 'KARTROCKET',       name: 'KartRocket',       fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  INSTAMOJO_PAGES:  { type: 'INSTAMOJO_PAGES',  name: 'Instamojo Pages',  fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SOCIAL extensions
+  // ─────────────────────────────────────────────────────────────────────────
+  TIKTOK_SHOP: { type: 'TIKTOK_SHOP', name: 'TikTok Shop', fields: [
+    { key: 'appKey', label: 'App Key', kind: 'text', required: true },
+    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
+    { key: 'shopId', label: 'Shop ID', kind: 'text', required: true },
+  ]},
+  PINTEREST: { type: 'PINTEREST', name: 'Pinterest Shopping', fields: [
+    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  YOUTUBE_SHOPPING: { type: 'YOUTUBE_SHOPPING', name: 'YouTube Shopping', fields: [
+    { key: 'accessToken', label: 'OAuth Access Token', kind: 'password', required: true, secret: true },
+    { key: 'merchantId', label: 'Google Merchant ID', kind: 'text', required: true },
+  ]},
+  SNAPCHAT: { type: 'SNAPCHAT', name: 'Snapchat', fields: [
+    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
+    { key: 'catalogId', label: 'Catalog ID', kind: 'text', required: true },
+  ]},
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ACCOUNTING & ERP
+  // ─────────────────────────────────────────────────────────────────────────
+  TALLY: { type: 'TALLY', name: 'Tally ERP 9', description: 'Tally listens on a local TCP port (default 9000). Make sure Tally is running on the host you specify.', fields: [
+    { key: 'host', label: 'Tally Host', kind: 'text', required: true, placeholder: 'localhost' },
+    { key: 'port', label: 'Port', kind: 'text', required: true, placeholder: '9000' },
+    { key: 'companyName', label: 'Company Name', kind: 'text', required: true },
+  ]},
+  TALLY_PRIME: { type: 'TALLY_PRIME', name: 'Tally Prime', description: 'Tally Prime listens on a local TCP port (default 9000).', fields: [
+    { key: 'host', label: 'Tally Host', kind: 'text', required: true, placeholder: 'localhost' },
+    { key: 'port', label: 'Port', kind: 'text', required: true, placeholder: '9000' },
+    { key: 'companyName', label: 'Company Name', kind: 'text', required: true },
+  ]},
+  ZOHO_BOOKS: { type: 'ZOHO_BOOKS', name: 'Zoho Books', fields: [
+    { key: 'accessToken', label: 'OAuth Access Token', kind: 'password', required: true, secret: true },
+    { key: 'organizationId', label: 'Organization ID', kind: 'text', required: true },
+  ]},
+  QUICKBOOKS: { type: 'QUICKBOOKS', name: 'QuickBooks', fields: [
+    { key: 'realmId', label: 'Company (Realm) ID', kind: 'text', required: true },
+    { key: 'accessToken', label: 'OAuth Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  XERO: { type: 'XERO', name: 'Xero', fields: [
+    { key: 'tenantId', label: 'Xero Tenant ID', kind: 'text', required: true },
+    { key: 'accessToken', label: 'OAuth Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  SAP_B1: { type: 'SAP_B1', name: 'SAP Business One', fields: [
+    { key: 'serviceLayerUrl', label: 'Service Layer URL', kind: 'url', required: true },
+    { key: 'sessionId', label: 'B1 Session ID', kind: 'password', required: true, secret: true },
+  ]},
+  SAP_S4HANA: { type: 'SAP_S4HANA', name: 'SAP S/4HANA', fields: [
+    { key: 'baseUrl', label: 'OData Base URL', kind: 'url', required: true },
+    { key: 'username', label: 'Username', kind: 'text', required: true },
+    { key: 'password', label: 'Password', kind: 'password', required: true, secret: true },
+  ]},
+  ERPNEXT: { type: 'ERPNEXT', name: 'ERPNext', fields: [
+    { key: 'siteUrl', label: 'Site URL', kind: 'url', required: true },
+    { key: 'apiKey', label: 'API Key', kind: 'text', required: true },
+    { key: 'apiSecret', label: 'API Secret', kind: 'password', required: true, secret: true },
+  ]},
+  DYNAMICS_365: { type: 'DYNAMICS_365', name: 'Microsoft Dynamics 365', fields: [
+    { key: 'tenantId', label: 'Tenant ID', kind: 'text', required: true },
+    { key: 'environment', label: 'Environment', kind: 'text', required: true },
+    { key: 'companyId', label: 'Company ID', kind: 'text', required: true },
+    { key: 'accessToken', label: 'OAuth Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  NETSUITE: { type: 'NETSUITE', name: 'NetSuite', fields: [
+    { key: 'accountId', label: 'Account ID', kind: 'text', required: true },
+    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  ODOO: { type: 'ODOO', name: 'Odoo', fields: [
+    { key: 'url', label: 'Odoo URL', kind: 'url', required: true },
+    { key: 'database', label: 'Database', kind: 'text', required: true },
+    { key: 'uid', label: 'User ID', kind: 'text', required: true },
+    { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true },
+  ]},
+  BUSY:      { type: 'BUSY',      name: 'Busy Accounting', fields: [{ key: 'host', label: 'Host', kind: 'text', required: true, placeholder: 'localhost' }, { key: 'port', label: 'Port', kind: 'text', placeholder: '8080' }, { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  MARG_ERP:  { type: 'MARG_ERP',  name: 'Marg ERP',        fields: [{ key: 'serverUrl', label: 'Server URL', kind: 'url', required: true }, { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  LOGIC_ERP: { type: 'LOGIC_ERP', name: 'LOGIC ERP',       fields: [{ key: 'serverUrl', label: 'Server URL', kind: 'url', required: true }, { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // POS_SYSTEM
+  // ─────────────────────────────────────────────────────────────────────────
+  SHOPIFY_POS: { type: 'SHOPIFY_POS', name: 'Shopify POS', fields: [
+    { key: 'shopUrl', label: 'Shop URL (e.g. mystore.myshopify.com)', kind: 'text', required: true },
+    { key: 'accessToken', label: 'Admin API Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  SQUARE_POS: { type: 'SQUARE_POS', name: 'Square POS', fields: [
+    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
+    { key: 'locationId', label: 'Location ID', kind: 'text', required: true },
+  ]},
+  LIGHTSPEED_POS: { type: 'LIGHTSPEED_POS', name: 'Lightspeed POS', fields: [
+    { key: 'accountId', label: 'Account ID', kind: 'text', required: true },
+    { key: 'accessToken', label: 'OAuth Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  LOYVERSE_POS:  { type: 'LOYVERSE_POS',  name: 'LoyVerse POS', fields: [{ key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true }] },
+  GOFRUGAL: { type: 'GOFRUGAL', name: 'GoFrugal', fields: [
+    { key: 'serverUrl', label: 'Server URL', kind: 'url', required: true },
+    { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true },
+  ]},
+  POSIST:    { type: 'POSIST',    name: 'Posist',    fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  PETPOOJA: { type: 'PETPOOJA', name: 'Petpooja', fields: [
+    { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true },
+    { key: 'restaurantId', label: 'Restaurant ID', kind: 'text', required: true },
+  ]},
+  VYAPAR:    { type: 'VYAPAR',    name: 'Vyapar',    fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  ZOHO_POS: { type: 'ZOHO_POS', name: 'Zoho Inventory POS', fields: [
+    { key: 'accessToken', label: 'OAuth Access Token', kind: 'password', required: true, secret: true },
+    { key: 'organizationId', label: 'Organization ID', kind: 'text', required: true },
+  ]},
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PAYMENT
+  // ─────────────────────────────────────────────────────────────────────────
+  RAZORPAY: { type: 'RAZORPAY', name: 'Razorpay', fields: [
+    { key: 'keyId', label: 'Key ID', kind: 'text', required: true },
+    { key: 'keySecret', label: 'Key Secret', kind: 'password', required: true, secret: true },
+    { key: 'webhookSecret', label: 'Webhook Secret', kind: 'password', secret: true },
+  ]},
+  PAYU: { type: 'PAYU', name: 'PayU', fields: [
+    { key: 'merchantKey', label: 'Merchant Key', kind: 'text', required: true },
+    { key: 'salt', label: 'Salt', kind: 'password', required: true, secret: true },
+  ]},
+  CCAVENUE: { type: 'CCAVENUE', name: 'CCAvenue', fields: [
+    { key: 'merchantId', label: 'Merchant ID', kind: 'text', required: true },
+    { key: 'workingKey', label: 'Working Key', kind: 'password', required: true, secret: true },
+    { key: 'accessCode', label: 'Access Code', kind: 'password', required: true, secret: true },
+  ]},
+  CASHFREE: { type: 'CASHFREE', name: 'Cashfree', fields: [
+    { key: 'clientId', label: 'Client ID', kind: 'text', required: true },
+    { key: 'clientSecret', label: 'Client Secret', kind: 'password', required: true, secret: true },
+  ]},
+  STRIPE: { type: 'STRIPE', name: 'Stripe', fields: [
+    { key: 'secretKey', label: 'Secret Key', kind: 'password', required: true, secret: true },
+    { key: 'webhookSecret', label: 'Webhook Secret', kind: 'password', secret: true },
+  ]},
+  PAYPAL: { type: 'PAYPAL', name: 'PayPal', fields: [
+    { key: 'clientId', label: 'Client ID', kind: 'text', required: true },
+    { key: 'clientSecret', label: 'Client Secret', kind: 'password', required: true, secret: true },
+    { key: 'live', label: 'Environment', kind: 'select', required: true, options: [{ value: 'false', label: 'Sandbox' }, { value: 'true', label: 'Live' }] },
+  ]},
+  PAYTM_PG: { type: 'PAYTM_PG', name: 'Paytm Payments', fields: [
+    { key: 'mid', label: 'Merchant ID', kind: 'text', required: true },
+    { key: 'merchantKey', label: 'Merchant Key', kind: 'password', required: true, secret: true },
+    { key: 'live', label: 'Environment', kind: 'select', required: true, options: [{ value: 'false', label: 'Staging' }, { value: 'true', label: 'Production' }] },
+  ]},
+  PHONEPE_BUSINESS: { type: 'PHONEPE_BUSINESS', name: 'PhonePe Business', fields: [
+    { key: 'merchantId', label: 'Merchant ID', kind: 'text', required: true },
+    { key: 'saltKey', label: 'Salt Key', kind: 'password', required: true, secret: true },
+    { key: 'saltIndex', label: 'Salt Index', kind: 'text', placeholder: '1' },
+    { key: 'live', label: 'Environment', kind: 'select', required: true, options: [{ value: 'false', label: 'Sandbox' }, { value: 'true', label: 'Live' }] },
+  ]},
+  INSTAMOJO: { type: 'INSTAMOJO', name: 'Instamojo', fields: [
+    { key: 'apiKey', label: 'API Key', kind: 'text', required: true },
+    { key: 'authToken', label: 'Auth Token', kind: 'password', required: true, secret: true },
+  ]},
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TAX
+  // ─────────────────────────────────────────────────────────────────────────
+  CLEARTAX: { type: 'CLEARTAX', name: 'ClearTax', fields: [
+    { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true },
+    { key: 'authToken', label: 'Auth Token', kind: 'password', required: true, secret: true },
+  ]},
+  GSTZEN: { type: 'GSTZEN', name: 'GSTZen', fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  TAXCLOUD_IRP: { type: 'TAXCLOUD_IRP', name: 'TaxCloud (Government IRP)', fields: [
+    { key: 'clientId', label: 'Client ID', kind: 'text', required: true },
+    { key: 'clientSecret', label: 'Client Secret', kind: 'password', required: true, secret: true },
+    { key: 'gstin', label: 'GSTIN', kind: 'text', required: true },
+    { key: 'username', label: 'IRP Username', kind: 'text', required: true },
+    { key: 'authToken', label: 'Auth Token', kind: 'password', required: true, secret: true },
+  ]},
+  AVALARA: { type: 'AVALARA', name: 'Avalara', fields: [
+    { key: 'accountId', label: 'Account ID', kind: 'text', required: true },
+    { key: 'licenseKey', label: 'License Key', kind: 'password', required: true, secret: true },
+  ]},
+  ZOHO_GST: { type: 'ZOHO_GST', name: 'Zoho GST', fields: [
+    { key: 'accessToken', label: 'OAuth Access Token', kind: 'password', required: true, secret: true },
+    { key: 'organizationId', label: 'Organization ID', kind: 'text', required: true },
+  ]},
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CRM
+  // ─────────────────────────────────────────────────────────────────────────
+  HUBSPOT:        { type: 'HUBSPOT',        name: 'HubSpot',        fields: [{ key: 'accessToken', label: 'Private App Token', kind: 'password', required: true, secret: true }] },
+  SALESFORCE_CRM: { type: 'SALESFORCE_CRM', name: 'Salesforce CRM', fields: [
+    { key: 'instanceUrl', label: 'Instance URL', kind: 'url', required: true },
+    { key: 'accessToken', label: 'OAuth Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  ZOHO_CRM:   { type: 'ZOHO_CRM',   name: 'Zoho CRM',   fields: [{ key: 'accessToken', label: 'OAuth Access Token', kind: 'password', required: true, secret: true }] },
+  MAILCHIMP: { type: 'MAILCHIMP', name: 'Mailchimp', fields: [
+    { key: 'apiKey', label: 'API Key (suffix is your DC)', kind: 'password', required: true, secret: true },
+    { key: 'audienceId', label: 'Audience (List) ID', kind: 'text', required: true },
+  ]},
+  KLAVIYO:    { type: 'KLAVIYO',    name: 'Klaviyo',    fields: [{ key: 'privateKey', label: 'Private API Key', kind: 'password', required: true, secret: true }] },
+  SENDINBLUE: { type: 'SENDINBLUE', name: 'Brevo (Sendinblue)', fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  WEBENGAGE: { type: 'WEBENGAGE', name: 'WebEngage', fields: [
+    { key: 'licenseCode', label: 'License Code', kind: 'text', required: true },
+    { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true },
+  ]},
+  MOENGAGE: { type: 'MOENGAGE', name: 'MoEngage', fields: [
+    { key: 'appId', label: 'App ID', kind: 'text', required: true },
+    { key: 'dataApiKey', label: 'Data API Key', kind: 'password', required: true, secret: true },
+    { key: 'dataCenter', label: 'Data Center', kind: 'text', placeholder: '01' },
+  ]},
+  CLEVERTAP: { type: 'CLEVERTAP', name: 'CleverTap', fields: [
+    { key: 'accountId', label: 'Account ID', kind: 'text', required: true },
+    { key: 'passcode', label: 'Passcode', kind: 'password', required: true, secret: true },
+  ]},
+  FRESHDESK: { type: 'FRESHDESK', name: 'Freshdesk', fields: [
+    { key: 'domain', label: 'Subdomain (xxx.freshdesk.com)', kind: 'text', required: true },
+    { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true },
+  ]},
+  ZENDESK: { type: 'ZENDESK', name: 'Zendesk', fields: [
+    { key: 'subdomain', label: 'Subdomain (xxx.zendesk.com)', kind: 'text', required: true },
+    { key: 'email', label: 'Account Email', kind: 'text', required: true },
+    { key: 'apiToken', label: 'API Token', kind: 'password', required: true, secret: true },
+  ]},
+  GORGIAS: { type: 'GORGIAS', name: 'Gorgias', fields: [
+    { key: 'subdomain', label: 'Subdomain (xxx.gorgias.com)', kind: 'text', required: true },
+    { key: 'username', label: 'Account Email', kind: 'text', required: true },
+    { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true },
+  ]},
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RETURNS
+  // ─────────────────────────────────────────────────────────────────────────
+  RETURN_PRIME: { type: 'RETURN_PRIME', name: 'Return Prime', fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  WERETURN:     { type: 'WERETURN',     name: 'WeReturn',     fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  ANCHANTO_RETURNS: { type: 'ANCHANTO_RETURNS', name: 'Anchanto Returns', fields: [
+    { key: 'subdomain', label: 'Subdomain', kind: 'text', required: true },
+    { key: 'tenantId', label: 'Tenant ID', kind: 'text', required: true },
+    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
+  ]},
+  EASYVMS: { type: 'EASYVMS', name: 'EasyVMS', fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // FULFILLMENT
+  // ─────────────────────────────────────────────────────────────────────────
+  AMAZON_FBA: { type: 'AMAZON_FBA', name: 'Amazon FBA', description: 'Same SP-API credentials as your Amazon Seller account; FBA modules are scoped server-side.', fields: [
+    { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },
+    { key: 'clientId', label: 'LWA Client ID', kind: 'text', required: true },
+    { key: 'clientSecret', label: 'LWA Client Secret', kind: 'password', required: true, secret: true },
+    { key: 'refreshToken', label: 'Refresh Token', kind: 'password', required: true, secret: true },
+  ]},
+  FLIPKART_SMART_FULFILLMENT: { type: 'FLIPKART_SMART_FULFILLMENT', name: 'Flipkart Smart Fulfillment', fields: [
+    { key: 'appId', label: 'App ID', kind: 'text', required: true },
+    { key: 'appSecret', label: 'App Secret', kind: 'password', required: true, secret: true },
+  ]},
+  WAREIQ:   { type: 'WAREIQ',   name: 'WareIQ',           fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
+  LOGINEXT: { type: 'LOGINEXT', name: 'LogiNext',         fields: [
+    { key: 'accountId', label: 'Account ID', kind: 'text', required: true },
+    { key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true },
+  ]},
+  HOLISOL:  { type: 'HOLISOL',  name: 'Holisol Logistics', fields: [{ key: 'apiKey', label: 'API Key', kind: 'password', required: true, secret: true }] },
 };
 
 export function getSchemaForType(type: string): ChannelSchema | null {
