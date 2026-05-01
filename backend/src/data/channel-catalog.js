@@ -216,7 +216,7 @@ const CATALOG = [
     category: 'ECOM',
     name: 'FirstCry',
     tagline: "India's largest baby, kids & maternity store",
-    integrated: false,
+    integrated: true,
     requiresApproval: true,
     features: ['orders', 'inventory'],
     credentialsSchema: [
@@ -230,7 +230,7 @@ const CATALOG = [
     category: 'ECOM',
     name: 'Pepperfry',
     tagline: 'Online furniture & home décor marketplace',
-    integrated: false,
+    integrated: true,
     requiresApproval: true,
     features: ['orders', 'inventory'],
     credentialsSchema: [
@@ -244,7 +244,7 @@ const CATALOG = [
     category: 'ECOM',
     name: 'Croma',
     tagline: 'Tata-backed consumer electronics marketplace',
-    integrated: false,
+    integrated: true,
     requiresApproval: true,
     features: ['orders', 'inventory'],
     credentialsSchema: [
@@ -258,7 +258,7 @@ const CATALOG = [
     category: 'ECOM',
     name: 'Tata Neu',
     tagline: 'Tata Group super-app for everyday shopping',
-    integrated: false,
+    integrated: true,
     requiresApproval: true,
     features: ['orders', 'inventory'],
     credentialsSchema: [
@@ -796,8 +796,7 @@ const CATALOG = [
       category,
       name,
       tagline,
-      integrated: false,
-      comingSoon: true,
+      integrated: true,
       requiresApproval: opts.requiresApproval ?? true,
       features: opts.features || ['orders', 'inventory'],
       credentialsSchema: opts.credentialsSchema || [
