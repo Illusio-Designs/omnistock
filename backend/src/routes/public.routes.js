@@ -25,11 +25,14 @@ router.get('/stats', async (_req, res) => {
       prisma.order.count(),
       prisma.tenant.count({ where: { status: { in: ['ACTIVE', 'TRIAL'] } } }),
     ]);
-    const channelsCount = (CATALOG || []).filter((c) => c.integrated).length;
-    const logisticsCount = (CATALOG || []).filter((c) => c.integrated && c.category === 'LOGISTICS').length;
+    const live = (CATALOG || []).filter((c) => c.integrated && !c.comingSoon);
+    const channelsCount = live.length;
+    const logisticsCount = live.filter((c) => c.category === 'LOGISTICS').length;
+    const comingSoonCount = (CATALOG || []).filter((c) => c.comingSoon).length;
     res.json({
       channelsCount,
       logisticsCount,
+      comingSoonCount,
       totalOrders,
       totalTenants,
     });

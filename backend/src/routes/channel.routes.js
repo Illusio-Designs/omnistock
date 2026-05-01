@@ -99,7 +99,7 @@ router.get('/catalog', requirePermission('channels.read'), async (req, res) => {
       let status;
       if (connected.length > 0) status = 'connected';
       else if (!allowedByPlan) status = 'plan_locked';
-      else if (entry.integrated) status = 'available';
+      else if (entry.integrated && !entry.comingSoon) status = 'available';
       else status = 'not_available';
 
       return {
@@ -148,7 +148,7 @@ router.get('/catalog/:type', requirePermission('channels.read'), async (req, res
 
     let status;
     if (connected.length > 0) status = 'connected';
-    else if (entry.integrated) status = 'available';
+    else if (entry.integrated && !entry.comingSoon) status = 'available';
     else status = 'not_available';
 
     res.json({ ...entry, status, connectedChannels: connected, pendingRequest: pendingRequest || null });

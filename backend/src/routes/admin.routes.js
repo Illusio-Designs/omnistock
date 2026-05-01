@@ -260,6 +260,10 @@ const SETTINGS_CATALOG = [
   { key: 'flipkart.appSecret',    category: 'flipkart', label: 'Flipkart App Secret',  isSecret: true  },
   { key: 'flipkart.redirectUri',  category: 'flipkart', label: 'OAuth Redirect URI',   isSecret: false },
 
+  // Walmart Marketplace Solution Provider app (US/CA/MX)
+  { key: 'walmart.clientId',     category: 'walmart', label: 'Walmart Client ID',     isSecret: false, description: 'Solution Provider app client ID from https://developer.walmart.com.' },
+  { key: 'walmart.clientSecret', category: 'walmart', label: 'Walmart Client Secret', isSecret: true  },
+
   // Meta (Facebook/Instagram/WhatsApp)
   { key: 'meta.appId',        category: 'meta', label: 'Meta App ID',          isSecret: false },
   { key: 'meta.appSecret',    category: 'meta', label: 'Meta App Secret',      isSecret: true  },

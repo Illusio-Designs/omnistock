@@ -1,8 +1,13 @@
-// Master catalog of every channel Omnistock supports.
-// `integrated`  → adapter is built and working
-// `comingSoon`  → planned, adapter not yet built
+// Master catalog of every channel Uniflo supports.
+// `integrated`  → adapter file exists in the codebase
+// `comingSoon`  → adapter exists but has NOT been smoke-tested against live
+//                  seller credentials yet — do not advertise as production-ready
 // `requiresApproval` → needs seller/partner approval from the platform
 // `credentialsSchema` → fields the frontend shows in the "Connect" form
+//
+// Public stats endpoint (`/api/v1/public/stats`) reports two counts:
+//   channelsCount     = integrated && !comingSoon  (production-ready)
+//   comingSoonCount   = comingSoon                  (on the roadmap)
 
 const CATALOG = [
 
@@ -327,6 +332,20 @@ const CATALOG = [
       { key: 'vendorId',  label: 'Vendor ID',  type: 'text',     required: true },
     ],
     applyUrl: 'https://www.bigbasket.com/sell/',
+  },
+  {
+    type: 'COUNTRY_DELIGHT',
+    category: 'QUICKCOM',
+    name: 'Country Delight',
+    tagline: 'Daily essentials & dairy quick delivery',
+    integrated: true,
+    features: ['webhook', 'hmac_validation', 'field_mapping'],
+    credentialsSchema: [
+      { key: 'webhookSecret', label: 'Webhook Secret (HMAC-SHA256)', type: 'password', required: false },
+      { key: 'fieldMap',      label: 'Field Map (JSON)',              type: 'textarea', required: false },
+    ],
+    applyUrl: 'https://www.countrydelight.in',
+    note: 'Webhook-only: no public pull API. Country Delight\'s integration team posts orders to /api/v1/channels/:id/webhook (HMAC-SHA256 signed via webhookSecret).',
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -797,6 +816,7 @@ const CATALOG = [
       name,
       tagline,
       integrated: true,
+      comingSoon: true,
       requiresApproval: opts.requiresApproval ?? true,
       features: opts.features || ['orders', 'inventory'],
       credentialsSchema: opts.credentialsSchema || [
@@ -809,7 +829,15 @@ const CATALOG = [
 
     return [
       // ── ECOM (international expansion) ─────────────────────────
-      pending('WALMART',         'ECOM', 'Walmart',                "US's largest retail marketplace", { applyUrl: 'https://marketplace.walmart.com' }),
+      pending('WALMART',         'ECOM', 'Walmart',                "US's largest retail marketplace", {
+        applyUrl: 'https://marketplace.walmart.com',
+        docsUrl:  'https://developer.walmart.com/api/us/mp/orders',
+        credentialsSchema: [
+          { key: 'partnerId', label: 'Walmart Partner ID', type: 'text',   required: true,  help: 'Found in Seller Center → Settings → Partner Profile.' },
+          { key: 'region',    label: 'Region',             type: 'select', required: true,  options: ['US','CA','MX'], default: 'US' },
+        ],
+        note: 'Founder-app pattern. Register a Solution Provider app at https://developer.walmart.com and store walmart.clientId / walmart.clientSecret in Admin → Settings. Sellers only paste their partnerId.',
+      }),
       pending('AMAZON_US',       'ECOM', 'Amazon US',              'Amazon.com — US marketplace',     { applyUrl: 'https://sellercentral.amazon.com' }),
       pending('AMAZON_UK',       'ECOM', 'Amazon UK',              'Amazon.co.uk — UK marketplace',   { applyUrl: 'https://sellercentral.amazon.co.uk' }),
       pending('AMAZON_UAE',      'ECOM', 'Amazon UAE',             'Amazon.ae — UAE marketplace',     { applyUrl: 'https://sellercentral.amazon.ae' }),
@@ -839,10 +867,10 @@ const CATALOG = [
       pending('SHOPCLUES',       'ECOM', 'ShopClues',              'Value e-commerce marketplace',        { applyUrl: 'https://seller.shopclues.com' }),
 
       // ── QUICKCOM additions ─────────────────────────────────────
-      pending('FLIPKART_MINUTES','QUICKCOM', 'Flipkart Minutes',   "Flipkart's quick commerce service",   { applyUrl: 'https://seller.flipkart.com' }),
-      pending('TATA_1MG',        'QUICKCOM', 'Tata 1mg',           'Quick pharmacy & wellness delivery',  { applyUrl: 'https://www.1mg.com' }),
-      pending('DUNZO',           'QUICKCOM', 'Dunzo',              'Hyperlocal delivery & quick commerce',{ applyUrl: 'https://www.dunzo.com/business' }),
-      pending('COUNTRY_DELIGHT', 'QUICKCOM', 'Country Delight',    'Daily essentials & dairy quick delivery', { applyUrl: 'https://www.countrydelight.in' }),
+      // Removed DUNZO (service discontinued in 2024) — adapter retained as
+      // a no-op stub in services/channels/quickcom/pending.js for safety.
+      pending('FLIPKART_MINUTES','QUICKCOM', 'Flipkart Minutes',   "Flipkart's quick commerce service",   { applyUrl: 'https://seller.flipkart.com', note: 'Subclasses Flipkart adapter; filters orders by service_profile=QUICK_COMMERCE on the raw response. Needs Flipkart seller account with Minutes onboarding to smoke-test.' }),
+      pending('TATA_1MG',        'QUICKCOM', 'Tata 1mg',           'Quick pharmacy & wellness delivery',  { applyUrl: 'https://www.1mg.com', note: 'No public seller API — partnership-only. URL/field shapes in adapter are best-effort and may need correction once real credentials are issued.' }),
 
       // ── LOGISTICS additions ────────────────────────────────────
       pending('ARAMEX',          'LOGISTICS', 'Aramex',            'Global express & logistics network', { features: ['shipment','tracking','rates'], requiresApproval: false, applyUrl: 'https://www.aramex.com' }),

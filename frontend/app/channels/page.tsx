@@ -164,6 +164,8 @@ type CatalogEntry = {
   tagline?: string;
   status: 'connected' | 'available' | 'not_available' | 'plan_locked';
   integrated: boolean;
+  comingSoon?: boolean;
+  note?: string;
   requiresApproval?: boolean;
   manualOnly?: boolean;
   features?: string[];
@@ -511,7 +513,10 @@ function ChannelCard({
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2 mb-1">
           <h3 className="font-bold text-slate-900 text-base leading-tight truncate">{entry.name}</h3>
-          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${pill.className}`}>
+          <span
+            className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${pill.className}`}
+            title={entry.status === 'not_available' && entry.note ? entry.note : undefined}
+          >
             {pill.text}
             {entry.status === 'connected' && connectedCount > 1 && ` · ${connectedCount}`}
           </span>

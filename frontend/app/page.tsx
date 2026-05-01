@@ -26,6 +26,7 @@ export default function LandingPage() {
   const [stats, setStats] = useState<{
     channelsCount: number;
     logisticsCount: number;
+    comingSoonCount: number;
     totalOrders: number;
     totalTenants: number;
   } | null>(null);
@@ -46,7 +47,7 @@ export default function LandingPage() {
 
   const ctaPrimary = hero?.data?.ctaPrimary || { label: 'Try for Free', href: '/onboarding' };
   const ctaSecondary = hero?.data?.ctaSecondary || { label: 'Schedule a Demo', href: '/contact' };
-  const heroBadge = hero?.data?.badge || 'Now connecting 50+ channels';
+  const heroBadge = hero?.data?.badge || `Now connecting ${stats?.channelsCount ?? ALL_CHANNELS.length}+ channels`;
 
   return (
     <PublicLayout>
@@ -129,7 +130,7 @@ export default function LandingPage() {
       <section className="py-12 bg-gradient-to-b from-white via-emerald-50/30 to-white border-y border-slate-100">
         <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6" data-stagger data-reveal="fade">
           {[
-            { value: stats?.channelsCount  ?? ALL_CHANNELS.length, suffix: '+', label: 'Channels integrated' },
+            { value: stats?.channelsCount  ?? ALL_CHANNELS.length, suffix: '+', label: 'Channels live' },
             { value: stats?.logisticsCount ?? 16,                  suffix: '+', label: 'Logistics partners' },
             {
               value: stats?.totalOrders ?? 0,
@@ -156,12 +157,17 @@ export default function LandingPage() {
             <Sparkles size={12} /> Integrations
           </div>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 leading-tight">
-            <CountUp value={ALL_CHANNELS.length} suffix="+" /> channels.<br />
+            <CountUp value={stats?.channelsCount ?? ALL_CHANNELS.length} suffix="+" /> channels live.<br />
             <span className="gradient-text">Connected out of the box.</span>
           </h2>
           <p className="mt-4 text-slate-600 max-w-xl mx-auto">
             Amazon to Zepto, Shopify to WhatsApp — hover to pause and explore every integration.
           </p>
+          {stats?.comingSoonCount ? (
+            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
+              <Sparkles size={11} /> +{stats.comingSoonCount} more on the roadmap
+            </div>
+          ) : null}
         </div>
 
         <div data-reveal="fade">

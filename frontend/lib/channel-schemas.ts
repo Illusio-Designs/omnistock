@@ -631,8 +631,22 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
   // ECOM — international expansion
   // ─────────────────────────────────────────────────────────────────────────
   WALMART: {
-    type: 'WALMART', name: 'Walmart Marketplace', docsUrl: 'https://developer.walmart.com',
-    fields: [{ key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true }],
+    type: 'WALMART', name: 'Walmart Marketplace', docsUrl: 'https://developer.walmart.com/api/us/mp/orders',
+    description: 'Connect your Walmart Marketplace seller account. The platform-wide Solution Provider app handles OAuth — you only need your Partner ID.',
+    steps: [
+      'Sign in to Walmart Seller Center',
+      'Open Settings → Partner Profile and copy your Partner ID',
+      'Pick the marketplace region your account is registered in',
+      'Paste below and connect',
+    ],
+    fields: [
+      { key: 'partnerId', label: 'Walmart Partner ID', kind: 'text', required: true, placeholder: '10000xxxx', help: 'Seller Center → Settings → Partner Profile.' },
+      { key: 'region', label: 'Region', kind: 'select', required: true, options: [
+        { value: 'US', label: 'United States (walmart.com)' },
+        { value: 'CA', label: 'Canada (walmart.ca)' },
+        { value: 'MX', label: 'Mexico (walmart.com.mx)' },
+      ] },
+    ],
   },
   AMAZON_US: { type: 'AMAZON_US', name: 'Amazon US', docsUrl: 'https://sellercentral.amazon.com', fields: [
     { key: 'sellerId', label: 'Seller ID', kind: 'text', required: true },

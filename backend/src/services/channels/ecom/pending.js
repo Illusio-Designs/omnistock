@@ -7,54 +7,8 @@
 const { BaseAdapter, bearerClient, basicClient, makeOrderShape } = require('../_base');
 const axios = require('axios');
 
-// ───────────────────────────── Walmart Marketplace ──────────────────────────
-// docs: https://developer.walmart.com/api/us/mp/orders
-class WalmartAdapter extends BaseAdapter {
-  constructor(creds) {
-    super(creds);
-    this.client = bearerClient('https://marketplace.walmartapis.com/v3', creds.accessToken, {
-      'WM_SVC.NAME': 'Walmart Marketplace',
-      'WM_QOS.CORRELATION_ID': Date.now().toString(),
-      'WM_SEC.ACCESS_TOKEN': creds.accessToken,
-      Accept: 'application/json',
-    });
-  }
-  async testConnection() {
-    const { data } = await this.client.get('/orders?limit=1');
-    return { success: true, total: data?.list?.meta?.totalCount ?? 0 };
-  }
-  async fetchOrders(sinceDate) {
-    const params = { limit: 50, status: 'Created' };
-    if (sinceDate) params.createdStartDate = new Date(sinceDate).toISOString();
-    const { data } = await this.client.get('/orders', { params });
-    const orders = data?.list?.elements?.order || [];
-    return orders.map(o => this._transformOrder(o));
-  }
-  async updateInventoryLevel(sku, qty) {
-    await this.client.put(`/inventory?sku=${encodeURIComponent(sku)}`, {
-      sku, quantity: { unit: 'EACH', amount: qty },
-    });
-    return { updated: true, sku, qty };
-  }
-  _transformOrder(o) {
-    const ship = o.shippingInfo?.postalAddress || {};
-    return makeOrderShape({
-      channelOrderId: o.purchaseOrderId,
-      channelOrderNumber: o.customerOrderId,
-      customer: { name: o.shippingInfo?.postalAddress?.name, phone: o.shippingInfo?.phone },
-      shippingAddress: {
-        line1: ship.address1, line2: ship.address2, city: ship.city,
-        state: ship.state, pincode: ship.postalCode, country: ship.country || 'US',
-      },
-      items: (o.orderLines?.orderLine || []).map(l => ({
-        channelSku: l.item?.sku, name: l.item?.productName, qty: parseInt(l.orderLineQuantity?.amount || 1, 10),
-        unitPrice: parseFloat(l.charges?.charge?.[0]?.chargeAmount?.amount || 0),
-      })),
-      total: parseFloat(o.orderTotal || 0),
-      orderedAt: new Date(o.orderDate),
-    });
-  }
-}
+// Walmart now lives in its own file (founder-app pattern, settings-driven OAuth).
+const WalmartAdapter = require('./walmart');
 
 // ───────────────────────────── Amazon (other regions) ───────────────────────
 // All Amazon variants share the SP-API. Each region has its own endpoint

@@ -88,7 +88,13 @@
       "Bash(perl -pi -e 's/#10b981/#06D4B8/gi; s/#059669/#06D4B8/g; s/#34d399/#2BD5B6/gi; s/#d1fae5/#D8F8EC/g; s/#0d9488/#06B6D4/g' app/layout.tsx app/page.tsx app/dashboard/page.tsx public/favicon.svg public/og-image.svg)",
       "Bash(perl -pi -e ' *)",
       "Bash(echo \"exit:$?\")",
-      "Bash(echo \"tsc-exit:$?\")"
+      "Bash(echo \"tsc-exit:$?\")",
+      "Bash(lsof -ti:5001)",
+      "Bash(xargs kill *)",
+      "Bash(lsof -ti:3000)",
+      "Bash(awk -F: '{print $1}')",
+      "Bash(node -e \"const c = require\\('./src/services/channels/ecom'\\); const a = new c.WalmartAdapter\\({ partnerId: 'test', region: 'US' }\\); console.log\\('OK:', a.constructor.name, 'host:', a.host\\);\")",
+      "Bash(node -e \"const { CATALOG } = require\\('./src/data/channel-catalog'\\); const w = CATALOG.find\\(c => c.type === 'WALMART'\\); console.log\\(JSON.stringify\\(w, null, 2\\)\\);\")"
     ],
     "additionalDirectories": [
       "\\tmp"
