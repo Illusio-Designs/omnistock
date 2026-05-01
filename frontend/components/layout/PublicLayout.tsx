@@ -81,7 +81,7 @@ export function PublicNav() {
           <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/50 transition-shadow">
             <Sparkles size={16} className="text-white" />
           </div>
-          <span className="font-bold text-lg tracking-tight text-white">Uniflo</span>
+          <span className="font-bold text-lg tracking-tight text-white">Omnistock</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
@@ -272,7 +272,7 @@ export function PublicFooter() {
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 flex items-center justify-center shadow-md shadow-emerald-500/30">
               <Sparkles size={16} className="text-white" />
             </div>
-            <span className="font-bold text-base text-white">Uniflo</span>
+            <span className="font-bold text-base text-white">Omnistock</span>
           </Link>
           <p className="text-sm text-white/60 mt-4 max-w-sm leading-relaxed">
             One platform for all your channels. Sell everywhere, ship anything, grow faster.
@@ -292,7 +292,7 @@ export function PublicFooter() {
         <FooterCol title="Company"   items={groups.company} />
       </div>
       <div className="border-t border-white/10 py-6 px-6 text-center text-xs text-white/50">
-        © {new Date().getFullYear()} Uniflo. Built for the next generation of commerce.
+        © {new Date().getFullYear()} Omnistock. Built for the next generation of commerce.
       </div>
     </footer>
   );

@@ -3,14 +3,14 @@ const crypto = require('crypto');
 // Custom Webhook adapter — universal webhook receiver for any custom store.
 //
 // How it works:
-// 1. Uniflo exposes a webhook URL: POST /api/v1/channels/:id/webhook
+// 1. Omnistock exposes a webhook URL: POST /api/v1/channels/:id/webhook
 // 2. You configure your custom store / middleware to POST orders to it.
 // 3. This adapter validates an HMAC-SHA256 signature (optional) and
-//    normalizes the payload into Uniflo's order shape.
+//    normalizes the payload into Omnistock's order shape.
 //
 // Credentials: { webhookSecret?, fieldMap? }
 //   - webhookSecret: optional HMAC secret; if set, incoming requests must
-//                    include an `x-uniflo-signature` header = hex HMAC.
+//                    include an `x-omnistock-signature` header = hex HMAC.
 //   - fieldMap:       optional JSON mapping custom keys → canonical keys.
 //                     Example: { "customer_name": "customer.name", "total_amount": "total" }
 //
@@ -47,7 +47,7 @@ class CustomWebhookAdapter {
 
   // No outbound inventory push for generic webhooks
   async updateInventoryLevel() {
-    throw new Error('Custom Webhook is receive-only. Configure your store to pull inventory from Uniflo if needed.');
+    throw new Error('Custom Webhook is receive-only. Configure your store to pull inventory from Omnistock if needed.');
   }
 
   // Validate HMAC-SHA256 signature on raw body
@@ -64,7 +64,7 @@ class CustomWebhookAdapter {
     return crypto.timingSafeEqual(a, b);
   }
 
-  // Parse incoming webhook body into Uniflo order shape.
+  // Parse incoming webhook body into Omnistock order shape.
   // If a fieldMap is provided, apply it first.
   parseWebhook(body) {
     const src = this.fieldMap ? this._applyFieldMap(body, this.fieldMap) : body;

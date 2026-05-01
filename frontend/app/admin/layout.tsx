@@ -53,7 +53,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex min-h-screen">
       <Sidebar
         groups={ADMIN_NAV_GROUPS}
-        brandName="Uniflo"
+        brandName="Omnistock"
         brandSubtitle="Platform Admin"
         showUpgradeCard={false}
       />

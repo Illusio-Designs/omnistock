@@ -1,7 +1,7 @@
 {
-  "name": "uniflo-backend",
+  "name": "omnistock-backend",
   "version": "1.0.0",
-  "description": "Uniflo ERP Backend - Node.js + Express + Knex + MySQL",
+  "description": "Omnistock ERP Backend - Node.js + Express + Knex + MySQL",
   "main": "src/index.js",
   "scripts": {
     "dev": "nodemon src/index.js",

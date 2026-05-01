@@ -2,8 +2,8 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Privacy Policy — Uniflo',
-  description: 'How Uniflo collects, uses, and protects your data.',
+  title: 'Privacy Policy — Omnistock',
+  description: 'How Omnistock collects, uses, and protects your data.',
 };
 
 export default function PrivacyPage() {
@@ -16,7 +16,7 @@ export default function PrivacyPage() {
 
           <div className="mt-10 prose prose-slate prose-sm max-w-none space-y-8">
             <Section title="1. Introduction">
-              Uniflo (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) operates the uniflo.vercel.app website and the Uniflo SaaS platform. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Service.
+              Omnistock (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) operates the omnistock.vercel.app website and the Omnistock SaaS platform. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Service.
             </Section>
 
             <Section title="2. Information We Collect">
@@ -31,7 +31,7 @@ export default function PrivacyPage() {
 
             <Section title="3. How We Use Your Information">
               <ul className="list-disc pl-5 space-y-2 mt-3">
-                <li>Provide, operate, and maintain the Uniflo platform.</li>
+                <li>Provide, operate, and maintain the Omnistock platform.</li>
                 <li>Process transactions and send billing-related communications.</li>
                 <li>Respond to support requests and communicate service updates.</li>
                 <li>Monitor usage patterns to improve features and performance.</li>
@@ -83,7 +83,7 @@ export default function PrivacyPage() {
             <Section title="10. Contact Us">
               If you have questions about this Privacy Policy, contact us at:
               <div className="mt-3 space-y-1">
-                <p>Email: <a href="mailto:hello@uniflo.in" className="text-emerald-600 hover:underline">hello@uniflo.in</a></p>
+                <p>Email: <a href="mailto:hello@omnistock.in" className="text-emerald-600 hover:underline">hello@omnistock.in</a></p>
                 <p>Address: Bangalore, Karnataka, India</p>
               </div>
             </Section>

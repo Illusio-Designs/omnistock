@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'About — Uniflo',
+  title: 'About — Omnistock',
   description:
     'Built by sellers, for sellers. Learn about our mission to make multi-channel commerce boringly reliable.',
   openGraph: {
-    title: 'About — Uniflo',
+    title: 'About — Omnistock',
     description:
       'Built by sellers, for sellers. Learn about our mission to make multi-channel commerce boringly reliable.',
   },

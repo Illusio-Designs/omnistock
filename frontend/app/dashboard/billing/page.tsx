@@ -118,7 +118,7 @@ export default function BillingPage() {
         amount: data.order.amount,
         currency: data.order.currency,
         order_id: data.order.id,
-        name: 'Uniflo',
+        name: 'Omnistock',
         description: `${data.plan.name} plan`,
         prefill: data.prefill,
         handler: async (resp: any) => {

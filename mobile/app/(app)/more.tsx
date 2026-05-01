@@ -181,7 +181,7 @@ export default function MoreScreen() {
             <View className="flex-row items-center mb-1.5">
               <View className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2" />
               <Text className="text-[12px] text-slate-400 font-bold tracking-wide">
-                Uniflo v{APP_VERSION}
+                Omnistock v{APP_VERSION}
               </Text>
             </View>
             <Text className="text-[11px] text-slate-300 font-medium">

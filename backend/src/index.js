@@ -135,7 +135,7 @@ app.use((err, _req, res, _next) => {
   // LiteSpeed (lsnode.js) calls listen() automatically — skip in that environment
   if (!process.env.LSNODE_ROOT) {
     app.listen(PORT, () => {
-      console.log(`Uniflo API running on http://localhost:${PORT}`);
+      console.log(`Omnistock API running on http://localhost:${PORT}`);
     });
   }
 
