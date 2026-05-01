@@ -594,6 +594,316 @@ router.get('/shopee/callback', async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════
+// MERCADO LIBRE — Latin America OAuth 2.0 (multi-region consent host)
+// ══════════════════════════════════════════════════════════════════════════
+
+const MercadoLibreAdapter = require('../services/channels/ecom/mercado-libre');
+
+router.get('/mercadolibre/start',
+  authenticate, requireTenant, requirePermission('channels.update'),
+  async (req, res) => {
+    try {
+      const { channelId } = req.query;
+      const region = String(req.query.region || 'AR').toUpperCase();
+      if (!channelId) return res.status(400).json({ error: 'channelId required' });
+      if (!MercadoLibreAdapter.REGION_AUTH_HOSTS[region]) {
+        return res.status(400).json({ error: `Unsupported Mercado Libre region "${region}".` });
+      }
+
+      const channel = await prisma.channel.findFirst({
+        where: { id: String(channelId), tenantId: req.tenant.id },
+      });
+      if (!channel) return res.status(404).json({ error: 'Channel not found' });
+      if (channel.type !== 'MERCADO_LIBRE') return res.status(400).json({ error: 'Channel is not Mercado Libre' });
+
+      const [clientId, redirectUri] = await Promise.all([
+        settings.get('mercadolibre.clientId'),
+        settings.get('mercadolibre.redirectUri'),
+      ]);
+      if (!clientId)    return res.status(400).json({ error: 'mercadolibre.clientId not set in Admin → Settings' });
+      if (!redirectUri) return res.status(400).json({ error: 'mercadolibre.redirectUri not set in Admin → Settings' });
+
+      const state = signState({
+        provider: 'mercadolibre',
+        channelId: channel.id,
+        tenantId: req.tenant.id,
+        region,
+        nonce: crypto.randomBytes(8).toString('hex'),
+        exp: Date.now() + STATE_TTL_MS,
+      });
+
+      const consentHost = MercadoLibreAdapter.REGION_AUTH_HOSTS[region];
+      const url = `${consentHost}/authorization?` +
+        new URLSearchParams({
+          response_type: 'code',
+          client_id: clientId,
+          redirect_uri: redirectUri,
+          state,
+        }).toString();
+
+      res.json({ url, state, region });
+    } catch (err) {
+      console.error('[oauth/mercadolibre/start]', err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// GET /api/v1/oauth/mercadolibre/callback?code=...&state=...
+router.get('/mercadolibre/callback', async (req, res) => {
+  const { code, state } = req.query;
+  const parsed = verifyState(String(state || ''));
+  if (!parsed) return res.status(400).send(renderPage('Authorization failed', 'Invalid or expired state.'));
+  if (parsed.provider !== 'mercadolibre') return res.status(400).send(renderPage('Authorization failed', 'State/provider mismatch.'));
+  if (!code) return res.status(400).send(renderPage('Authorization failed', 'Missing authorization code.'));
+
+  try {
+    const redirectUri = await settings.get('mercadolibre.redirectUri');
+    if (!redirectUri) throw new Error('mercadolibre.redirectUri not configured');
+
+    const adapter = new MercadoLibreAdapter({ region: parsed.region || 'AR' });
+    const tokens = await adapter.exchangeAuthCode(String(code), redirectUri);
+
+    const channel = await prisma.channel.findFirst({
+      where: { id: parsed.channelId, tenantId: parsed.tenantId },
+    });
+    if (!channel) throw new Error('Channel no longer exists');
+
+    await prisma.channel.update({
+      where: { id: channel.id },
+      data: {
+        credentials: encryptCredentials({
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          userId: tokens.userId,
+          expiresAt: tokens.expiresAt,
+          region: parsed.region || 'AR',
+        }),
+        syncError: null,
+        lastSyncAt: null,
+      },
+    });
+
+    res.send(renderPage(
+      '✓ Connected',
+      `Mercado Libre seller <b>${tokens.userId}</b> (${parsed.region}) linked. You can close this window.`,
+      { autoClose: true }
+    ));
+  } catch (err) {
+    console.error('[oauth/mercadolibre/callback]', err.response?.data || err.message);
+    try {
+      await prisma.channel.update({
+        where: { id: parsed.channelId },
+        data: { syncError: err.response?.data?.message || err.message },
+      });
+    } catch {}
+    res.status(500).send(renderPage('Authorization failed', err.response?.data?.message || err.message));
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// ALLEGRO — Poland marketplace OAuth 2.0 (sandbox + prod)
+// ══════════════════════════════════════════════════════════════════════════
+
+const AllegroAdapter = require('../services/channels/ecom/allegro');
+
+router.get('/allegro/start',
+  authenticate, requireTenant, requirePermission('channels.update'),
+  async (req, res) => {
+    try {
+      const { channelId } = req.query;
+      const sandbox = String(req.query.sandbox || '').toLowerCase() === 'true';
+      if (!channelId) return res.status(400).json({ error: 'channelId required' });
+
+      const channel = await prisma.channel.findFirst({
+        where: { id: String(channelId), tenantId: req.tenant.id },
+      });
+      if (!channel) return res.status(404).json({ error: 'Channel not found' });
+      if (channel.type !== 'ALLEGRO') return res.status(400).json({ error: 'Channel is not Allegro' });
+
+      const [clientId, redirectUri] = await Promise.all([
+        settings.get('allegro.clientId'),
+        settings.get('allegro.redirectUri'),
+      ]);
+      if (!clientId)    return res.status(400).json({ error: 'allegro.clientId not set in Admin → Settings' });
+      if (!redirectUri) return res.status(400).json({ error: 'allegro.redirectUri not set in Admin → Settings' });
+
+      const state = signState({
+        provider: 'allegro',
+        channelId: channel.id,
+        tenantId: req.tenant.id,
+        sandbox,
+        nonce: crypto.randomBytes(8).toString('hex'),
+        exp: Date.now() + STATE_TTL_MS,
+      });
+
+      const authHost = sandbox ? AllegroAdapter.SANDBOX_AUTH_HOST : AllegroAdapter.PROD_AUTH_HOST;
+      const url = `${authHost}/auth/oauth/authorize?` +
+        new URLSearchParams({
+          response_type: 'code',
+          client_id: clientId,
+          redirect_uri: redirectUri,
+          state,
+        }).toString();
+
+      res.json({ url, state, sandbox });
+    } catch (err) {
+      console.error('[oauth/allegro/start]', err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.get('/allegro/callback', async (req, res) => {
+  const { code, state } = req.query;
+  const parsed = verifyState(String(state || ''));
+  if (!parsed) return res.status(400).send(renderPage('Authorization failed', 'Invalid or expired state.'));
+  if (parsed.provider !== 'allegro') return res.status(400).send(renderPage('Authorization failed', 'State/provider mismatch.'));
+  if (!code) return res.status(400).send(renderPage('Authorization failed', 'Missing authorization code.'));
+
+  try {
+    const redirectUri = await settings.get('allegro.redirectUri');
+    if (!redirectUri) throw new Error('allegro.redirectUri not configured');
+
+    const adapter = new AllegroAdapter({ sandbox: !!parsed.sandbox });
+    const tokens = await adapter.exchangeAuthCode(String(code), redirectUri);
+
+    const channel = await prisma.channel.findFirst({
+      where: { id: parsed.channelId, tenantId: parsed.tenantId },
+    });
+    if (!channel) throw new Error('Channel no longer exists');
+
+    await prisma.channel.update({
+      where: { id: channel.id },
+      data: {
+        credentials: encryptCredentials({
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresAt: tokens.expiresAt,
+          sandbox: !!parsed.sandbox,
+        }),
+        syncError: null,
+        lastSyncAt: null,
+      },
+    });
+
+    res.send(renderPage(
+      '✓ Connected',
+      `Allegro seller linked${parsed.sandbox ? ' (sandbox)' : ''}. You can close this window.`,
+      { autoClose: true }
+    ));
+  } catch (err) {
+    console.error('[oauth/allegro/callback]', err.response?.data || err.message);
+    try {
+      await prisma.channel.update({
+        where: { id: parsed.channelId },
+        data: { syncError: err.response?.data?.error_description || err.message },
+      });
+    } catch {}
+    res.status(500).send(renderPage('Authorization failed', err.response?.data?.error_description || err.message));
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// WISH — Merchant Platform OAuth 2.0
+// ══════════════════════════════════════════════════════════════════════════
+
+const WishAdapter = require('../services/channels/ecom/wish');
+
+router.get('/wish/start',
+  authenticate, requireTenant, requirePermission('channels.update'),
+  async (req, res) => {
+    try {
+      const { channelId } = req.query;
+      if (!channelId) return res.status(400).json({ error: 'channelId required' });
+
+      const channel = await prisma.channel.findFirst({
+        where: { id: String(channelId), tenantId: req.tenant.id },
+      });
+      if (!channel) return res.status(404).json({ error: 'Channel not found' });
+      if (channel.type !== 'WISH') return res.status(400).json({ error: 'Channel is not Wish' });
+
+      const [clientId, redirectUri] = await Promise.all([
+        settings.get('wish.clientId'),
+        settings.get('wish.redirectUri'),
+      ]);
+      if (!clientId)    return res.status(400).json({ error: 'wish.clientId not set in Admin → Settings' });
+      if (!redirectUri) return res.status(400).json({ error: 'wish.redirectUri not set in Admin → Settings' });
+
+      const state = signState({
+        provider: 'wish',
+        channelId: channel.id,
+        tenantId: req.tenant.id,
+        nonce: crypto.randomBytes(8).toString('hex'),
+        exp: Date.now() + STATE_TTL_MS,
+      });
+
+      const url = `https://merchant.wish.com/v3/oauth/authorize?` +
+        new URLSearchParams({
+          response_type: 'code',
+          client_id: clientId,
+          redirect_uri: redirectUri,
+          state,
+        }).toString();
+
+      res.json({ url, state });
+    } catch (err) {
+      console.error('[oauth/wish/start]', err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.get('/wish/callback', async (req, res) => {
+  const { code, state } = req.query;
+  const parsed = verifyState(String(state || ''));
+  if (!parsed) return res.status(400).send(renderPage('Authorization failed', 'Invalid or expired state.'));
+  if (parsed.provider !== 'wish') return res.status(400).send(renderPage('Authorization failed', 'State/provider mismatch.'));
+  if (!code) return res.status(400).send(renderPage('Authorization failed', 'Missing authorization code.'));
+
+  try {
+    const redirectUri = await settings.get('wish.redirectUri');
+    if (!redirectUri) throw new Error('wish.redirectUri not configured');
+
+    const adapter = new WishAdapter({});
+    const tokens = await adapter.exchangeAuthCode(String(code), redirectUri);
+
+    const channel = await prisma.channel.findFirst({
+      where: { id: parsed.channelId, tenantId: parsed.tenantId },
+    });
+    if (!channel) throw new Error('Channel no longer exists');
+
+    await prisma.channel.update({
+      where: { id: channel.id },
+      data: {
+        credentials: encryptCredentials({
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresAt: tokens.expiresAt,
+        }),
+        syncError: null,
+        lastSyncAt: null,
+      },
+    });
+
+    res.send(renderPage(
+      '✓ Connected',
+      `Wish merchant account linked. You can close this window.`,
+      { autoClose: true }
+    ));
+  } catch (err) {
+    console.error('[oauth/wish/callback]', err.response?.data || err.message);
+    try {
+      await prisma.channel.update({
+        where: { id: parsed.channelId },
+        data: { syncError: err.response?.data?.message || err.message },
+      });
+    } catch {}
+    res.status(500).send(renderPage('Authorization failed', err.response?.data?.message || err.message));
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════
 // FLIPKART — OAuth 2.0 authorization code flow
 // ══════════════════════════════════════════════════════════════════════════
 

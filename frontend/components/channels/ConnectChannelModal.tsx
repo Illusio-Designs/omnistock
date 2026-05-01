@@ -97,6 +97,17 @@ export function ConnectChannelModal({
         const region = String(values.region || 'SG');
         const res = await oauthApi.shopeeStart(channelId, region);
         url = res.data.url;
+      } else if (provider === 'mercadolibre') {
+        const region = String(values.region || 'AR');
+        const res = await oauthApi.mercadoLibreStart(channelId, region);
+        url = res.data.url;
+      } else if (provider === 'allegro') {
+        const sandbox = String(values.sandbox || 'false') === 'true';
+        const res = await oauthApi.allegroStart(channelId, sandbox);
+        url = res.data.url;
+      } else if (provider === 'wish') {
+        const res = await oauthApi.wishStart(channelId);
+        url = res.data.url;
       } else {
         throw new Error(`OAuth provider ${provider} not implemented yet`);
       }

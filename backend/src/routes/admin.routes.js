@@ -274,6 +274,21 @@ const SETTINGS_CATALOG = [
   { key: 'shopee.partnerKey',  category: 'shopee', label: 'Shopee Partner Key',  isSecret: true  },
   { key: 'shopee.redirectUri', category: 'shopee', label: 'OAuth Redirect URI',  isSecret: false, description: 'Must match the redirect URI registered in Shopee Open Platform.' },
 
+  // Mercado Libre app (AR/BR/MX/CL/CO/UY/PE/VE)
+  { key: 'mercadolibre.clientId',     category: 'mercadolibre', label: 'Mercado Libre App ID',  isSecret: false, description: 'Numeric app ID from https://developers.mercadolibre.com.' },
+  { key: 'mercadolibre.clientSecret', category: 'mercadolibre', label: 'Mercado Libre Secret', isSecret: true  },
+  { key: 'mercadolibre.redirectUri',  category: 'mercadolibre', label: 'OAuth Redirect URI',   isSecret: false, description: 'Must match the redirect URI registered in your Mercado Libre app.' },
+
+  // Allegro app (Poland)
+  { key: 'allegro.clientId',     category: 'allegro', label: 'Allegro Client ID',     isSecret: false, description: 'Client ID from https://apps.developer.allegro.pl.' },
+  { key: 'allegro.clientSecret', category: 'allegro', label: 'Allegro Client Secret', isSecret: true  },
+  { key: 'allegro.redirectUri',  category: 'allegro', label: 'OAuth Redirect URI',    isSecret: false, description: 'Must match the redirect URI registered in your Allegro app.' },
+
+  // Wish Merchant Platform app
+  { key: 'wish.clientId',     category: 'wish', label: 'Wish Client ID',     isSecret: false, description: 'Client ID from https://merchant.wish.com/api-partner.' },
+  { key: 'wish.clientSecret', category: 'wish', label: 'Wish Client Secret', isSecret: true  },
+  { key: 'wish.redirectUri',  category: 'wish', label: 'OAuth Redirect URI', isSecret: false, description: 'Must match the redirect URI registered in your Wish app.' },
+
   // Meta (Facebook/Instagram/WhatsApp)
   { key: 'meta.appId',        category: 'meta', label: 'Meta App ID',          isSecret: false },
   { key: 'meta.appSecret',    category: 'meta', label: 'Meta App Secret',      isSecret: true  },

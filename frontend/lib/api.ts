@@ -99,6 +99,12 @@ export const oauthApi = {
     api.get('/oauth/lazada/start', { params: { channelId, region } }),
   shopeeStart: (channelId: string, region: string) =>
     api.get('/oauth/shopee/start', { params: { channelId, region } }),
+  mercadoLibreStart: (channelId: string, region: string) =>
+    api.get('/oauth/mercadolibre/start', { params: { channelId, region } }),
+  allegroStart: (channelId: string, sandbox: boolean) =>
+    api.get('/oauth/allegro/start', { params: { channelId, sandbox: String(sandbox) } }),
+  wishStart: (channelId: string) =>
+    api.get('/oauth/wish/start', { params: { channelId } }),
   // Generic poll endpoint — works for every provider
   status: (provider: string, channelId: string) =>
     api.get(`/oauth/${provider}/status`, { params: { channelId } }),

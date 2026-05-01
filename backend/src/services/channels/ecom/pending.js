@@ -35,214 +35,32 @@ const ShopeeAdapter = require('./shopee');
 // Noon now lives in its own file (per-merchant API key, multi-region).
 const NoonAdapter = require('./noon');
 
-// ───────────────────────────── Mercado Libre ────────────────────────────────
-// docs: https://developers.mercadolibre.com.ar/en_us/orders-management
-class MercadoLibreAdapter extends BaseAdapter {
-  constructor(creds) {
-    super(creds);
-    this.client = bearerClient('https://api.mercadolibre.com', creds.accessToken);
-    this.userId = creds.userId;
-  }
-  async fetchOrders(sinceDate) {
-    const params = { seller: this.userId, 'order.status': 'paid', limit: 50 };
-    if (sinceDate) params['order.date_created.from'] = new Date(sinceDate).toISOString();
-    const { data } = await this.client.get('/orders/search', { params });
-    return (data?.results || []).map(o => this._transformOrder(o));
-  }
-  async updateInventoryLevel(sku, qty) {
-    // ML inventory updates go via item-specific endpoint; sku→item_id lookup is the seller's responsibility.
-    await this.client.put(`/items/${sku}`, { available_quantity: qty });
-    return { updated: true, sku, qty };
-  }
-  _transformOrder(o) {
-    return makeOrderShape({
-      channelOrderId: o.id,
-      total: parseFloat(o.total_amount || 0),
-      orderedAt: new Date(o.date_created),
-      paymentMethod: o.payments?.[0]?.payment_method_id,
-      items: (o.order_items || []).map(it => ({ channelSku: it.item?.seller_sku || it.item?.id, name: it.item?.title, qty: it.quantity, unitPrice: it.unit_price })),
-    });
-  }
-}
+// Mercado Libre now lives in its own file (founder-app OAuth, multi-region).
+const MercadoLibreAdapter = require('./mercado-libre');
 
-// ───────────────────────────── Allegro (PL) ─────────────────────────────────
-class AllegroAdapter extends BaseAdapter {
-  constructor(creds) {
-    super(creds);
-    this.client = axios.create({
-      baseURL: 'https://api.allegro.pl',
-      headers: { Authorization: `Bearer ${creds.accessToken}`, Accept: 'application/vnd.allegro.public.v1+json', 'Content-Type': 'application/vnd.allegro.public.v1+json' },
-    });
-  }
-  async fetchOrders(sinceDate) {
-    const params = { limit: 50, status: 'READY_FOR_PROCESSING' };
-    if (sinceDate) params['updatedAt.gte'] = new Date(sinceDate).toISOString();
-    const { data } = await this.client.get('/order/checkout-forms', { params });
-    return (data?.checkoutForms || []).map(o => this._transformOrder(o));
-  }
-  async updateInventoryLevel(sku, qty) {
-    await this.client.patch(`/sale/product-offers?sku=${encodeURIComponent(sku)}`, { stock: { available: qty } });
-    return { updated: true, sku, qty };
-  }
-  _transformOrder(o) {
-    return makeOrderShape({
-      channelOrderId: o.id, total: parseFloat(o.summary?.totalToPay?.amount || 0),
-      orderedAt: new Date(o.updatedAt), paymentMethod: o.payment?.type,
-      shippingAddress: { line1: o.delivery?.address?.street, city: o.delivery?.address?.city, pincode: o.delivery?.address?.zipCode, country: o.delivery?.address?.countryCode },
-    });
-  }
-}
+// Allegro now lives in its own file (founder-app OAuth, sandbox-aware).
+const AllegroAdapter = require('./allegro');
 
-// ───────────────────────────── Fruugo ───────────────────────────────────────
-class FruugoAdapter extends BaseAdapter {
-  constructor(creds) {
-    super(creds);
-    this.client = basicClient('https://www.fruugo.com/api/orders', creds.username, creds.password);
-  }
-  async fetchOrders() {
-    const { data } = await this.client.get('/orders/new');
-    return (data?.orders || []).map(o => this._transformOrder(o));
-  }
-  async updateInventoryLevel(sku, qty) {
-    await this.client.post('/inventory', { sku, stock: qty });
-    return { updated: true, sku, qty };
-  }
-  _transformOrder(o) {
-    return makeOrderShape({
-      channelOrderId: o.orderId, total: parseFloat(o.totalAmount || 0),
-      orderedAt: new Date(o.orderedAt || Date.now()),
-      shippingAddress: { line1: o.deliveryAddress?.line1, city: o.deliveryAddress?.city, pincode: o.deliveryAddress?.postcode, country: o.deliveryAddress?.country },
-    });
-  }
-}
+// Fruugo now lives in its own file (per-merchant Basic auth).
+const FruugoAdapter = require('./fruugo');
 
-// ───────────────────────────── OnBuy ────────────────────────────────────────
-class OnBuyAdapter extends BaseAdapter {
-  constructor(creds) {
-    super(creds);
-    this.client = bearerClient('https://api.onbuy.com/v2', creds.accessToken);
-  }
-  async fetchOrders() {
-    const { data } = await this.client.get('/orders', { params: { 'filter[status]': 'pending', limit: 50 } });
-    return (data?.results || []).map(o => this._transformOrder(o));
-  }
-  async updateInventoryLevel(sku, qty) {
-    await this.client.put('/listings/inventory', { sku, stock: qty });
-    return { updated: true, sku, qty };
-  }
-  _transformOrder(o) {
-    return makeOrderShape({
-      channelOrderId: o.order_id, total: parseFloat(o.total || 0),
-      orderedAt: new Date(o.purchased_at), paymentMethod: 'OnBuy',
-      shippingAddress: { line1: o.shipping_address?.line_1, city: o.shipping_address?.town, pincode: o.shipping_address?.postcode, country: o.shipping_address?.country },
-    });
-  }
-}
+// OnBuy now lives in its own file (per-seller credentials, managed access tokens).
+const OnBuyAdapter = require('./onbuy');
 
-// ───────────────────────────── ManoMano ─────────────────────────────────────
-class ManoManoAdapter extends BaseAdapter {
-  constructor(creds) {
-    super(creds);
-    this.client = bearerClient('https://www.manomano.com/api/v2', creds.accessToken);
-  }
-  async fetchOrders() {
-    const { data } = await this.client.get('/orders', { params: { state: 'TO_SHIP', limit: 50 } });
-    return (data?.orders || []).map(o => this._transformOrder(o));
-  }
-  async updateInventoryLevel(sku, qty) {
-    await this.client.post('/products/stock', { product_sku: sku, stock: qty });
-    return { updated: true, sku, qty };
-  }
-  _transformOrder(o) {
-    return makeOrderShape({
-      channelOrderId: o.order_id, total: parseFloat(o.total_amount || 0),
-      orderedAt: new Date(o.created_at),
-      shippingAddress: { line1: o.shipping_address?.address1, city: o.shipping_address?.city, country: o.shipping_address?.country },
-    });
-  }
-}
+// ManoMano now lives in its own file (per-seller API key, multi-region).
+const ManoManoAdapter = require('./manomano');
 
-// ───────────────────────────── Rakuten ──────────────────────────────────────
-class RakutenAdapter extends BaseAdapter {
-  constructor(creds) {
-    super(creds);
-    this.client = axios.create({
-      baseURL: 'https://api.rms.rakuten.co.jp/es/2.0',
-      headers: { Authorization: `ESA ${Buffer.from(creds.serviceSecret + ':' + creds.licenseKey).toString('base64')}`, 'Content-Type': 'application/json' },
-    });
-  }
-  async fetchOrders() {
-    const { data } = await this.client.post('/order/searchOrder', {
-      orderProgressList: [100, 200, 300], dateType: 1, startDatetime: new Date(Date.now() - 86400000).toISOString(),
-    });
-    return (data?.orderNumberList || []).map(id => makeOrderShape({ channelOrderId: id, total: 0 }));
-  }
-  async updateInventoryLevel(sku, qty) {
-    await this.client.post('/inventory/updateInventory', { inventoryUpdateRequestModel: { inventoryList: [{ manageNumber: sku, inventoryQuantity: qty }] } });
-    return { updated: true, sku, qty };
-  }
-}
+// Rakuten now lives in its own file (per-seller RMS credentials).
+const RakutenAdapter = require('./rakuten');
 
-// ───────────────────────────── Zalando ──────────────────────────────────────
-class ZalandoAdapter extends BaseAdapter {
-  constructor(creds) {
-    super(creds);
-    this.client = bearerClient('https://api-merchant.zalando.com/orders', creds.accessToken);
-    this.merchantId = creds.merchantId;
-  }
-  async fetchOrders() {
-    const { data } = await this.client.get('/', { params: { merchant_id: this.merchantId, status: 'NEW' } });
-    return (data?.orders || []).map(o => this._transformOrder(o));
-  }
-  async updateInventoryLevel(sku, qty) {
-    await this.client.post('/articles/stock', { article_sku: sku, stock: qty });
-    return { updated: true, sku, qty };
-  }
-  _transformOrder(o) {
-    return makeOrderShape({ channelOrderId: o.order_number, total: parseFloat(o.gross_total?.amount || 0), orderedAt: new Date(o.placed_date) });
-  }
-}
+// Zalando now lives in its own file (per-merchant zDirect client_credentials).
+const ZalandoAdapter = require('./zalando');
 
-// ───────────────────────────── Kaufland ─────────────────────────────────────
-class KauflandAdapter extends BaseAdapter {
-  constructor(creds) {
-    super(creds);
-    this.client = axios.create({
-      baseURL: 'https://sellerapi.kaufland.com/v2',
-      headers: { 'Shop-Client-Key': creds.clientKey, 'Shop-Secret-Key': creds.secretKey, 'Content-Type': 'application/json' },
-    });
-  }
-  async fetchOrders() {
-    const { data } = await this.client.get('/orders', { params: { storefront: creds => creds.storefront || 'de', ts_from: Math.floor((Date.now() - 86400000) / 1000) } });
-    return (data?.data || []).map(o => this._transformOrder(o));
-  }
-  async updateInventoryLevel(sku, qty) {
-    await this.client.patch('/units', { ean: sku, amount: qty });
-    return { updated: true, sku, qty };
-  }
-  _transformOrder(o) {
-    return makeOrderShape({ channelOrderId: o.id_order, total: parseFloat(o.payment?.amount || 0), orderedAt: new Date((o.ts_created || 0) * 1000) });
-  }
-}
+// Kaufland now lives in its own file (per-merchant, HMAC-signed requests).
+const KauflandAdapter = require('./kaufland');
 
-// ───────────────────────────── Wish ─────────────────────────────────────────
-class WishAdapter extends BaseAdapter {
-  constructor(creds) {
-    super(creds);
-    this.client = bearerClient('https://merchant.wish.com/api/v3', creds.accessToken);
-  }
-  async fetchOrders() {
-    const { data } = await this.client.get('/orders', { params: { state: 'APPROVED', limit: 50 } });
-    return (data?.results || []).map(o => this._transformOrder(o));
-  }
-  async updateInventoryLevel(sku, qty) {
-    await this.client.put(`/products/sku/${encodeURIComponent(sku)}/inventory`, { inventory: qty });
-    return { updated: true, sku, qty };
-  }
-  _transformOrder(o) {
-    return makeOrderShape({ channelOrderId: o.id, total: parseFloat(o.total || 0), orderedAt: new Date(o.placed_time) });
-  }
-}
+// Wish now lives in its own file (founder-app OAuth, 30-day refresh).
+const WishAdapter = require('./wish');
 
 // ───────────────────────────── IndiaMART ────────────────────────────────────
 // IndiaMART API is lead-focused, not order-focused. We pull leads as "orders"

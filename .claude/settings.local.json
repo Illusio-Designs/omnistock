@@ -98,7 +98,10 @@
       "Bash(curl -s -o /dev/null -w \"stats: %{http_code}\\\\n\" http://localhost:5001/api/v1/public/stats)",
       "Bash(curl -s http://localhost:5001/api/v1/public/stats)",
       "Bash(curl -s -o /dev/null -w \"health: %{http_code}\\\\n\" http://localhost:5001/health)",
-      "Bash(curl -s -o /dev/null -w \"root: %{http_code}\\\\n\" http://localhost:5001/api/v1/public/stats)"
+      "Bash(curl -s -o /dev/null -w \"root: %{http_code}\\\\n\" http://localhost:5001/api/v1/public/stats)",
+      "Bash(curl -sS -o /tmp/stats.json -w \"HTTP %{http_code}\\\\n\" http://localhost:5001/api/v1/public/stats)",
+      "Bash(curl -sS http://localhost:5001/api/v1/channels/catalog/WALMART -H \"Authorization: Bearer dev:illusiodesigns@gmail.com\" -H \"Content-Type: application/json\")",
+      "Bash(curl -sS -o /tmp/cat.json -w \"HTTP %{http_code}\\\\n\" -H \"Authorization: Bearer dev:illusiodesigns@gmail.com\" \"http://localhost:5001/api/v1/channels/catalog/WALMART\")"
     ],
     "additionalDirectories": [
       "\\tmp"

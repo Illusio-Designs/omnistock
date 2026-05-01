@@ -25,7 +25,7 @@ export interface ChannelSchema {
   fields: ChannelField[];
   // OAuth flow — tenant clicks "Authorize" instead of pasting credentials.
   // Set to a provider key when the platform owns the OAuth app.
-  oauth?: 'amazon' | 'shopify' | 'flipkart' | 'meta' | 'lazada' | 'shopee';
+  oauth?: 'amazon' | 'shopify' | 'flipkart' | 'meta' | 'lazada' | 'shopee' | 'mercadolibre' | 'allegro' | 'wish';
 }
 
 export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
@@ -807,39 +807,182 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
       ] },
     ],
   },
-  MERCADO_LIBRE: { type: 'MERCADO_LIBRE', name: 'Mercado Libre', fields: [
-    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
-    { key: 'userId', label: 'Seller User ID', kind: 'text', required: true },
-  ]},
-  ALLEGRO: { type: 'ALLEGRO', name: 'Allegro', fields: [
-    { key: 'accessToken', label: 'OAuth Access Token', kind: 'password', required: true, secret: true },
-  ]},
-  FRUUGO: { type: 'FRUUGO', name: 'Fruugo', fields: [
-    { key: 'username', label: 'Username', kind: 'text', required: true },
-    { key: 'password', label: 'Password', kind: 'password', required: true, secret: true },
-  ]},
-  ONBUY: { type: 'ONBUY', name: 'OnBuy', fields: [
-    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
-  ]},
-  MANOMANO: { type: 'MANOMANO', name: 'ManoMano', fields: [
-    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
-  ]},
-  RAKUTEN: { type: 'RAKUTEN', name: 'Rakuten', fields: [
-    { key: 'serviceSecret', label: 'Service Secret', kind: 'password', required: true, secret: true },
-    { key: 'licenseKey', label: 'License Key', kind: 'password', required: true, secret: true },
-  ]},
-  ZALANDO: { type: 'ZALANDO', name: 'Zalando', fields: [
-    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
-    { key: 'merchantId', label: 'Merchant ID', kind: 'text', required: true },
-  ]},
-  KAUFLAND: { type: 'KAUFLAND', name: 'Kaufland', fields: [
-    { key: 'clientKey', label: 'Client Key', kind: 'text', required: true },
-    { key: 'secretKey', label: 'Secret Key', kind: 'password', required: true, secret: true },
-    { key: 'storefront', label: 'Storefront', kind: 'select', required: true, options: [{ value: 'de', label: 'Germany (kaufland.de)' }, { value: 'cz', label: 'Czechia (kaufland.cz)' }, { value: 'sk', label: 'Slovakia (kaufland.sk)' }] },
-  ]},
-  WISH: { type: 'WISH', name: 'Wish', fields: [
-    { key: 'accessToken', label: 'Access Token', kind: 'password', required: true, secret: true },
-  ]},
+  MERCADO_LIBRE: {
+    type: 'MERCADO_LIBRE',
+    name: 'Mercado Libre',
+    docsUrl: 'https://developers.mercadolibre.com.ar/en_us/orders-management',
+    description: 'Connect your Mercado Libre seller account in any of the LATAM markets.',
+    oauth: 'mercadolibre',
+    steps: [
+      'Pick the country your seller account is registered in',
+      'Click "Authorize with Mercado Libre" below',
+      'Log in to Mercado Libre when prompted',
+      'You\'ll be redirected back automatically',
+    ],
+    fields: [
+      { key: 'region', label: 'Country', kind: 'select', required: true, options: [
+        { value: 'AR', label: 'Argentina' },
+        { value: 'BR', label: 'Brazil' },
+        { value: 'MX', label: 'Mexico' },
+        { value: 'CL', label: 'Chile' },
+        { value: 'CO', label: 'Colombia' },
+        { value: 'UY', label: 'Uruguay' },
+        { value: 'PE', label: 'Peru' },
+        { value: 'VE', label: 'Venezuela' },
+      ] },
+    ],
+  },
+  ALLEGRO: {
+    type: 'ALLEGRO',
+    name: 'Allegro',
+    docsUrl: 'https://developer.allegro.pl/',
+    description: "Connect your Allegro seller account (Poland's leading marketplace).",
+    oauth: 'allegro',
+    steps: [
+      'Click "Authorize with Allegro" below',
+      'Sign in to your Allegro account when prompted',
+      'Approve Uniflo\'s access to orders + inventory',
+      'You\'ll be redirected back automatically',
+    ],
+    fields: [
+      { key: 'sandbox', label: 'Use Allegro Sandbox', kind: 'select', required: false, options: [
+        { value: 'false', label: 'Production (allegro.pl)' },
+        { value: 'true',  label: 'Sandbox (allegro.pl.allegrosandbox.pl)' },
+      ], help: 'Pick sandbox while integrating; switch to production once smoke-tested.' },
+    ],
+  },
+  FRUUGO: {
+    type: 'FRUUGO',
+    name: 'Fruugo',
+    docsUrl: 'https://faq.fruugo.com/hc/en-gb/categories/360001212580-API',
+    description: 'Connect your Fruugo merchant account (global cross-border marketplace). Each retailer uses their own HTTP Basic credentials — no platform OAuth.',
+    steps: [
+      'Sign in to your Fruugo merchant dashboard',
+      'Open Settings and copy your API username and password',
+      'Paste both below',
+    ],
+    fields: [
+      { key: 'username', label: 'Fruugo Username', kind: 'text',     required: true, help: 'From your Fruugo merchant dashboard.' },
+      { key: 'password', label: 'Fruugo Password', kind: 'password', required: true, secret: true, help: 'HTTP Basic-auth password issued by Fruugo.' },
+    ],
+  },
+  ONBUY: {
+    type: 'ONBUY',
+    name: 'OnBuy',
+    docsUrl: 'https://docs.api.onbuy.com/',
+    description: 'Connect your OnBuy seller account (UK & European marketplace). Each seller uses their own consumer + secret keys.',
+    steps: [
+      'Sign in to your OnBuy seller account',
+      'Open Settings → API Access and copy the Consumer Key + Secret Key',
+      'Pick the OnBuy site (2000 = UK)',
+      'Paste below — Uniflo manages the 1-hour access tokens for you',
+    ],
+    fields: [
+      { key: 'consumerKey', label: 'OnBuy Consumer Key', kind: 'text',     required: true },
+      { key: 'secretKey',   label: 'OnBuy Secret Key',   kind: 'password', required: true, secret: true },
+      { key: 'siteId',      label: 'OnBuy Site',         kind: 'select',   required: false, options: [
+        { value: '2000', label: 'United Kingdom (2000)' },
+        { value: '2001', label: 'Site 2001' },
+        { value: '2002', label: 'Site 2002' },
+        { value: '2003', label: 'Site 2003' },
+        { value: '2004', label: 'Site 2004' },
+        { value: '2005', label: 'Site 2005' },
+      ], help: '2000 is the default OnBuy GB site.' },
+    ],
+  },
+  MANOMANO: {
+    type: 'MANOMANO',
+    name: 'ManoMano',
+    docsUrl: 'https://developer.manomano.com/',
+    description: "Connect your ManoMano seller account (Europe's DIY & home marketplace). Each seller uses their own API token — no platform OAuth.",
+    steps: [
+      'Sign in to your ManoMano seller hub',
+      'Open Developer / API Access and generate a token',
+      'Pick the country marketplace you sell on',
+      'Paste the token below',
+    ],
+    fields: [
+      { key: 'accessToken', label: 'ManoMano API Token', kind: 'password', required: true, secret: true, help: 'Generate from your ManoMano seller hub.' },
+      { key: 'region',      label: 'Country',            kind: 'select',   required: true, options: [
+        { value: 'FR', label: 'France' },
+        { value: 'UK', label: 'United Kingdom' },
+        { value: 'DE', label: 'Germany' },
+        { value: 'IT', label: 'Italy' },
+        { value: 'ES', label: 'Spain' },
+        { value: 'BE', label: 'Belgium' },
+      ] },
+    ],
+  },
+  RAKUTEN: {
+    type: 'RAKUTEN',
+    name: 'Rakuten Ichiba',
+    docsUrl: 'https://webservice.rakuten.co.jp/documentation',
+    description: "Connect your Rakuten Ichiba (Japan) seller account via Rakuten Merchant Server (RMS). Each seller pastes their own Service Secret + License Key — no platform OAuth.",
+    steps: [
+      'Sign in to R-Login (your Rakuten merchant control panel)',
+      'Open API settings and copy the Service Secret + License Key',
+      'Paste both below — Uniflo combines them into the ESA auth header',
+    ],
+    fields: [
+      { key: 'serviceSecret', label: 'Service Secret', kind: 'password', required: true, secret: true, help: 'From R-Login → API settings.' },
+      { key: 'licenseKey',    label: 'License Key',    kind: 'password', required: true, secret: true, help: 'From R-Login → API settings.' },
+    ],
+  },
+  ZALANDO: {
+    type: 'ZALANDO',
+    name: 'Zalando',
+    docsUrl: 'https://api.merchants.zalandoapis.com/docs',
+    description: 'Connect your Zalando merchant account via zDirect. Each merchant registers their own API client — no platform OAuth.',
+    steps: [
+      'Sign in to zDirect (https://zdirect.com)',
+      'Open API → Manage Clients and create a new client',
+      'Copy the client ID, client secret, and merchant ID',
+      'Paste below — Uniflo handles the OAuth client-credentials grant',
+    ],
+    fields: [
+      { key: 'clientId',     label: 'zDirect Client ID',     kind: 'text',     required: true },
+      { key: 'clientSecret', label: 'zDirect Client Secret', kind: 'password', required: true, secret: true },
+      { key: 'merchantId',   label: 'Merchant ID',           kind: 'text',     required: true, help: 'Found in zDirect under your merchant account.' },
+    ],
+  },
+  KAUFLAND: {
+    type: 'KAUFLAND',
+    name: 'Kaufland',
+    docsUrl: 'https://docs.kaufland.com/',
+    description: 'Connect your Kaufland Global Marketplace seller account. Each merchant uses their own client + secret keys — the secret only signs requests locally, never travels over the wire.',
+    steps: [
+      'Sign in to Kaufland Seller Center → Settings → API Access',
+      'Generate a Client Key + Secret Key',
+      'Pick the storefront you sell on',
+      'Paste below — Uniflo HMAC-signs every request automatically',
+    ],
+    fields: [
+      { key: 'clientKey',  label: 'Client Key', kind: 'text',     required: true },
+      { key: 'secretKey',  label: 'Secret Key', kind: 'password', required: true, secret: true, help: 'Used to HMAC-sign each request locally — never sent to any server.' },
+      { key: 'storefront', label: 'Storefront', kind: 'select',   required: true, options: [
+        { value: 'de', label: 'Germany (kaufland.de)' },
+        { value: 'at', label: 'Austria (kaufland.at)' },
+        { value: 'sk', label: 'Slovakia (kaufland.sk)' },
+        { value: 'cz', label: 'Czech Republic (kaufland.cz)' },
+        { value: 'pl', label: 'Poland (kaufland.pl)' },
+        { value: 'hr', label: 'Croatia (kaufland.hr)' },
+      ] },
+    ],
+  },
+  WISH: {
+    type: 'WISH',
+    name: 'Wish',
+    docsUrl: 'https://merchant.wish.com/documentation/api/v3',
+    description: 'Connect your Wish merchant account via the platform-wide OAuth app.',
+    oauth: 'wish',
+    steps: [
+      'Click "Authorize with Wish" below',
+      'Sign in to your Wish merchant account when prompted',
+      'Approve Uniflo\'s access to your inventory and orders',
+      'You\'ll be redirected back automatically',
+    ],
+    fields: [],
+  },
   INDIAMART: { type: 'INDIAMART', name: 'IndiaMART', fields: [
     { key: 'crmKey', label: 'CRM Key (glusr_crm_key)', kind: 'password', required: true, secret: true },
   ]},

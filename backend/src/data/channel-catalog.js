@@ -906,15 +906,85 @@ const CATALOG = [
         ],
         note: 'Per-merchant API key — no founder app needed. Each seller gets their own apiKey + partnerCode from Noon Partners and selects a country (AE/SA/EG).',
       }),
-      pending('MERCADO_LIBRE',   'ECOM', 'Mercado Libre',          "Latin America's largest marketplace", { applyUrl: 'https://www.mercadolibre.com' }),
-      pending('ALLEGRO',         'ECOM', 'Allegro',                "Poland's leading marketplace",    { applyUrl: 'https://allegro.pl' }),
-      pending('FRUUGO',          'ECOM', 'Fruugo',                 'Global cross-border marketplace', { applyUrl: 'https://www.fruugo.com/sell' }),
-      pending('ONBUY',           'ECOM', 'OnBuy',                  'UK & European marketplace',       { applyUrl: 'https://www.onbuy.com/gb/sell-on-onbuy' }),
-      pending('MANOMANO',        'ECOM', 'ManoMano',               'European DIY & home marketplace', { applyUrl: 'https://www.manomano.com/seller' }),
-      pending('RAKUTEN',         'ECOM', 'Rakuten',                'Japanese e-commerce giant',       { applyUrl: 'https://www.rakuten.com' }),
-      pending('ZALANDO',         'ECOM', 'Zalando',                'European fashion marketplace',    { applyUrl: 'https://corporate.zalando.com/en/partner-hub' }),
-      pending('KAUFLAND',        'ECOM', 'Kaufland',               'German general merchandise marketplace', { applyUrl: 'https://www.kaufland.de/seller-portal' }),
-      pending('WISH',            'ECOM', 'Wish',                   'Mobile-first global marketplace', { applyUrl: 'https://merchant.wish.com' }),
+      pending('MERCADO_LIBRE', 'ECOM', 'Mercado Libre', "Latin America's largest marketplace", {
+        applyUrl: 'https://developers.mercadolibre.com',
+        docsUrl:  'https://developers.mercadolibre.com.ar/en_us/orders-management',
+        credentialsSchema: [
+          { key: 'region', label: 'Country', type: 'select', required: true, options: ['AR','BR','MX','CL','CO','UY','PE','VE'], default: 'AR' },
+        ],
+        note: 'Founder-app pattern. Register a Mercado Libre app at https://developers.mercadolibre.com and store mercadolibre.clientId / mercadolibre.clientSecret / mercadolibre.redirectUri in Admin → Settings. One app covers all 8 LATAM markets — sellers pick a country and click Authorize, OAuth callback exchanges the code for access/refresh tokens + numeric user_id.',
+      }),
+      pending('ALLEGRO', 'ECOM', 'Allegro', "Poland's leading marketplace", {
+        applyUrl: 'https://apps.developer.allegro.pl',
+        docsUrl:  'https://developer.allegro.pl/auth/',
+        credentialsSchema: [
+          { key: 'sandbox', label: 'Use Allegro Sandbox', type: 'select', required: false, options: ['false','true'], default: 'false', help: 'Switch to sandbox to test against allegro.pl.allegrosandbox.pl.' },
+        ],
+        note: 'Founder-app pattern. Register an Allegro app at https://apps.developer.allegro.pl and store allegro.clientId / allegro.clientSecret / allegro.redirectUri in Admin → Settings. Sellers click Authorize — OAuth callback exchanges the code for a 12h access_token + sliding refresh_token. Sandbox mode (allegro.pl.allegrosandbox.pl) is supported via the toggle.',
+      }),
+      pending('FRUUGO', 'ECOM', 'Fruugo', 'Global cross-border marketplace', {
+        applyUrl: 'https://www.fruugo.com/sell',
+        docsUrl:  'https://faq.fruugo.com/hc/en-gb/categories/360001212580-API',
+        credentialsSchema: [
+          { key: 'username', label: 'Fruugo Username', type: 'text',     required: true,  help: 'From your Fruugo merchant dashboard.' },
+          { key: 'password', label: 'Fruugo Password', type: 'password', required: true,  help: 'HTTP Basic-auth password issued by Fruugo.' },
+        ],
+        note: 'Per-merchant HTTP Basic auth — no founder app. Each retailer gets credentials when onboarded by Fruugo. Adapter polls /api/orders/new and acknowledges orders so they are removed from the queue.',
+      }),
+      pending('ONBUY', 'ECOM', 'OnBuy', 'UK & European marketplace', {
+        applyUrl: 'https://www.onbuy.com/gb/sell-on-onbuy',
+        docsUrl:  'https://docs.api.onbuy.com/',
+        credentialsSchema: [
+          { key: 'consumerKey', label: 'OnBuy Consumer Key', type: 'text',     required: true },
+          { key: 'secretKey',   label: 'OnBuy Secret Key',   type: 'password', required: true },
+          { key: 'siteId',      label: 'OnBuy Site',         type: 'select',   required: false, options: ['2000','2001','2002','2003','2004','2005'], default: '2000', help: '2000 = UK; other site IDs unlock European country-specific endpoints.' },
+        ],
+        note: 'Per-seller credentials — no founder app. Adapter exchanges consumer_key + secret_key for a 1-hour access_token via /v2/auth/request-token and refreshes transparently. Site ID 2000 = OnBuy GB.',
+      }),
+      pending('MANOMANO', 'ECOM', 'ManoMano', 'European DIY & home marketplace', {
+        applyUrl: 'https://www.manomano.com/seller',
+        docsUrl:  'https://developer.manomano.com/',
+        credentialsSchema: [
+          { key: 'accessToken', label: 'ManoMano API Token', type: 'password', required: true,  help: 'Generate from your ManoMano seller hub.' },
+          { key: 'region',      label: 'Country',            type: 'select',   required: true,  options: ['FR','UK','DE','IT','ES','BE'], default: 'FR' },
+        ],
+        note: 'Per-seller API token (no founder app). Each retailer is onboarded into ManoMano and issued a bearer-style token. The X-Mano-Country header scopes calls to the chosen marketplace.',
+      }),
+      pending('RAKUTEN', 'ECOM', 'Rakuten Ichiba', 'Japanese e-commerce giant', {
+        applyUrl: 'https://www.rakuten.co.jp/ec/',
+        docsUrl:  'https://webservice.rakuten.co.jp/documentation',
+        credentialsSchema: [
+          { key: 'serviceSecret', label: 'Service Secret', type: 'password', required: true, help: 'From R-Login → API settings.' },
+          { key: 'licenseKey',    label: 'License Key',    type: 'password', required: true, help: 'From R-Login → API settings.' },
+        ],
+        note: 'Per-seller credentials (no founder app). Rakuten Merchant Server (RMS) uses ESA-scheme auth: serviceSecret + licenseKey base64-encoded into the Authorization header. Order pull is two-step (searchOrder → getOrder in chunks of 50).',
+      }),
+      pending('ZALANDO', 'ECOM', 'Zalando', 'European fashion marketplace', {
+        applyUrl: 'https://corporate.zalando.com/en/partner-hub',
+        docsUrl:  'https://api.merchants.zalandoapis.com/docs',
+        credentialsSchema: [
+          { key: 'clientId',     label: 'zDirect Client ID',     type: 'text',     required: true },
+          { key: 'clientSecret', label: 'zDirect Client Secret', type: 'password', required: true },
+          { key: 'merchantId',   label: 'Merchant ID',           type: 'text',     required: true, help: 'Found in zDirect under your merchant account.' },
+        ],
+        note: 'Per-merchant client_credentials (no founder app). Each Zalando merchant registers their own API client in zDirect and gets clientId + clientSecret + merchantId. Adapter exchanges them for short-lived bearer tokens against api.merchants.zalandoapis.com and refreshes transparently.',
+      }),
+      pending('KAUFLAND', 'ECOM', 'Kaufland', 'European general merchandise marketplace (Kaufland Global Marketplace)', {
+        applyUrl: 'https://www.kaufland.de/seller-portal',
+        docsUrl:  'https://docs.kaufland.com/',
+        credentialsSchema: [
+          { key: 'clientKey',  label: 'Client Key',  type: 'text',     required: true },
+          { key: 'secretKey',  label: 'Secret Key',  type: 'password', required: true,  help: 'Used to HMAC-sign each request — never sent over the wire.' },
+          { key: 'storefront', label: 'Storefront', type: 'select',   required: true,  options: ['de','at','sk','cz','pl','hr'], default: 'de' },
+        ],
+        note: 'Per-merchant credentials — no founder app. Each request is HMAC-SHA256 signed (Shop-Signature header). The previous adapter incorrectly sent the secret key as a header; the rewrite signs locally and only sends the signature + timestamp.',
+      }),
+      pending('WISH', 'ECOM', 'Wish', 'Mobile-first global marketplace', {
+        applyUrl: 'https://merchant.wish.com',
+        docsUrl:  'https://merchant.wish.com/documentation/api/v3',
+        credentialsSchema: [], // OAuth-driven — sellers click "Authorize with Wish"
+        note: 'Founder-app pattern. Register a Wish Merchant Platform app at https://merchant.wish.com/api-partner and store wish.clientId / wish.clientSecret / wish.redirectUri in Admin → Settings. Sellers click Authorize — OAuth callback exchanges the code for a 30-day access_token + refresh_token.',
+      }),
 
       // ── ECOM (India gaps) ──────────────────────────────────────
       pending('INDIAMART',       'ECOM', 'IndiaMART',              "India's largest B2B marketplace & lead source", { applyUrl: 'https://seller.indiamart.com' }),
