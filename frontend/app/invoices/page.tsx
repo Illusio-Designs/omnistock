@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { invoiceApi } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
+import { useFilteredBySearch } from '@/lib/useGlobalSearch';
 import { Button, Badge, Card, Pagination, Select, Tooltip, Modal, Input, Loader } from '@/components/ui';
 import { FileText, Download, Eye, Plus, Receipt, CreditCard, X } from 'lucide-react';
 
@@ -43,7 +44,10 @@ export default function InvoicesPage() {
     queryFn: () => invoiceApi.list({ page, limit: pageSize, type: type || undefined }).then(r => r.data).catch(() => ({ invoices: [], total: 0 })),
   });
 
-  const invoices = data?.invoices || data || [];
+  const allInvoices = data?.invoices || data || [];
+  const invoices = useFilteredBySearch(allInvoices, (i: any) =>
+    `${i.invoiceNumber || ''} ${i.customer?.name || ''} ${i.status || ''} ${i.type || ''}`
+  );
   const total = data?.total || invoices.length;
   const totalValue = invoices.reduce((s: number, inv: any) => s + Number(inv.total || 0), 0);
   const paidCount = invoices.filter((i: any) => i.status === 'PAID').length;

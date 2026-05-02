@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { orderApi, customerApi, channelApi } from '@/lib/api';
 import { formatCurrency, formatDateTime, ORDER_STATUS_COLORS } from '@/lib/utils';
+import { useFilteredBySearch } from '@/lib/useGlobalSearch';
 import {
   Button, Badge, Card, Modal, Input, Textarea, Select, Pagination, Tooltip, Loader, Tabs,
 } from '@/components/ui';
@@ -64,6 +65,12 @@ export default function OrdersPage() {
       fulfillment: FULFILLMENT_PARAM[fulfillmentTab],
     }).then(r => r.data),
   });
+
+  // Topbar global search — filters the visible orders by order number,
+  // customer name/email/phone, channel order id and status.
+  const filteredOrders = useFilteredBySearch(data?.orders, (o: any) =>
+    `${o.orderNumber || ''} ${o.channelOrderId || ''} ${o.customer?.name || ''} ${o.customer?.email || ''} ${o.customer?.phone || ''} ${o.status || ''}`
+  );
 
   const approveMutation = useMutation({
     mutationFn: (id: string) => orderApi.approve(id),
@@ -159,7 +166,7 @@ export default function OrdersPage() {
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
                   <tr><td colSpan={10}><Loader size="sm" /></td></tr>
-                ) : data?.orders?.length ? data.orders.map((o: any, idx: number) => (
+                ) : filteredOrders.length ? filteredOrders.map((o: any, idx: number) => (
                   <tr key={o.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="px-4 py-3 text-slate-500 font-semibold">{(page - 1) * pageSize + idx + 1}</td>
                     <td className="px-4 py-3">

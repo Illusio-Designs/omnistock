@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { vendorApi } from '@/lib/api';
+import { useFilteredBySearch } from '@/lib/useGlobalSearch';
 import {
   Button, Badge, Card, Modal, Input, Textarea, Tooltip, Checkbox, EmptyState, Avatar,
 } from '@/components/ui';
@@ -20,7 +21,10 @@ export default function VendorsPage() {
     queryFn: () => vendorApi.list().then(r => r.data),
   });
 
-  const vendors = data || [];
+  const allVendors = data || [];
+  const vendors = useFilteredBySearch(allVendors, (v: any) =>
+    `${v.name || ''} ${v.email || ''} ${v.phone || ''} ${v.gstin || ''}`
+  );
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => vendorApi.delete(id),
