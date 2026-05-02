@@ -51,7 +51,14 @@ function buildOptions(co: CheckoutResponse, name: string, description: string) {
   };
 }
 
-/** Upgrade / change subscription plan via Razorpay. */
+/**
+ * Upgrade / change subscription plan via Razorpay.
+ *
+ * `savePaymentMethod` (default true) saves the card so the backend autopay
+ * job can charge it for the next billing period. We propagate the same flag
+ * as `autoRenew` to the verify endpoint so the subscription is flagged
+ * autoRenew=true the moment the first charge succeeds.
+ */
 export async function subscribeToPlan(
   planCode: string,
   billingCycle: 'MONTHLY' | 'YEARLY' = 'MONTHLY',
@@ -76,6 +83,7 @@ export async function subscribeToPlan(
         razorpay_signature: 'stub',
         planCode,
         billingCycle,
+        autoRenew: savePaymentMethod,
       });
       Alert.alert('Plan switched (dev)', `${co.plan?.name || planCode} active.`);
       return { ok: true, dev: true };
@@ -102,8 +110,9 @@ export async function subscribeToPlan(
       razorpay_signature: result.razorpay_signature,
       planCode,
       billingCycle,
+      autoRenew: savePaymentMethod,
     });
-    Alert.alert('Subscription updated', `You're now on ${co.plan?.name || planCode}.`);
+    Alert.alert('Subscription updated', `You're now on ${co.plan?.name || planCode}${savePaymentMethod ? ' with auto-renew on' : ''}.`);
     return { ok: true };
   } catch (err: any) {
     if (err?.code === 0 || err?.code === 'PAYMENT_CANCELLED') return { ok: false, cancelled: true };

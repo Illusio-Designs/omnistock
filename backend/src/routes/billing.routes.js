@@ -154,7 +154,11 @@ router.get('/usage', async (req, res) => {
     subscription: {
       status: subscription.status,
       payAsYouGo: !!subscription.payAsYouGo,
+      autoRenew: !!subscription.autoRenew,
       currentPeriodEnd: subscription.currentPeriodEnd,
+      lastRenewalAt: subscription.lastRenewalAt,
+      lastRenewalError: subscription.lastRenewalError,
+      renewalFailureCount: subscription.renewalFailureCount,
     },
     wallet: walletInfo ? {
       balance: Number(walletInfo.balance),
@@ -212,6 +216,18 @@ router.post('/subscription/payg', requirePermission('billing.manage'), async (re
     data: { payAsYouGo: !!req.body.enabled },
   });
   invalidateUserCache(req.user.id);
+  res.json(updated);
+});
+
+// Toggle auto-renew (autopay for the plan itself). When ON, the billing job
+// charges the tenant's default saved Razorpay token at the end of each
+// billing cycle so the plan keeps running without manual checkout.
+router.post('/subscription/auto-renew', requirePermission('billing.manage'), async (req, res) => {
+  const updated = await prisma.subscription.update({
+    where: { tenantId: req.tenant.id },
+    data: { autoRenew: !!req.body.enabled, lastRenewalError: req.body.enabled ? null : undefined },
+  });
+  audit({ req, action: 'billing.auto_renew', resource: 'subscription', resourceId: updated.id, metadata: { enabled: !!req.body.enabled } });
   res.json(updated);
 });
 

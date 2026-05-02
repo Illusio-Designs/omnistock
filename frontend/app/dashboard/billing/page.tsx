@@ -119,8 +119,14 @@ export default function BillingPage() {
     if (!canManage) return;
     setLoading(true);
     try {
-      // Try real payment flow first; fall back to free switch when in stub mode
-      const { data } = await paymentApi.checkout({ planCode, billingCycle: 'MONTHLY' });
+      // Default to enabling auto-renew + save-card. The user can flip both
+      // off later via the wallet settings modal.
+      const enableAutoRenew = true;
+      const { data } = await paymentApi.checkout({
+        planCode,
+        billingCycle: 'MONTHLY',
+        savePaymentMethod: enableAutoRenew,
+      });
       if (data.order?.stub) {
         // Stub mode — no real payment gateway configured
         await paymentApi.verify({
@@ -129,6 +135,7 @@ export default function BillingPage() {
           razorpay_signature: 'stub',
           planCode,
           billingCycle: 'MONTHLY',
+          autoRenew: enableAutoRenew,
         });
         toast.success(`Switched to ${planCode} (stub)`);
         await load();
@@ -143,9 +150,13 @@ export default function BillingPage() {
         order_id: data.order.id,
         name: 'Kartriq',
         description: `${data.plan.name} plan`,
+        customer_id: data.customerId || undefined,
         prefill: data.prefill,
+        theme: { color: '#06D4B8' },
         handler: async (resp: any) => {
-          await paymentApi.verify({ ...resp, planCode, billingCycle: 'MONTHLY' });
+          await paymentApi.verify({
+            ...resp, planCode, billingCycle: 'MONTHLY', autoRenew: enableAutoRenew,
+          });
           toast.success(`Switched to ${planCode}`);
           await load();
         },
@@ -183,20 +194,51 @@ export default function BillingPage() {
                 {plan.name} <Crown size={20} className="text-amber-400" />
               </div>
               <div className="text-sm text-white/70 mt-1">
-                Status: <b>{sub.status}</b> · Renews {new Date(sub.currentPeriodEnd).toLocaleDateString()}
+                Status: <b>{sub.status}</b> · {sub.autoRenew ? 'Auto-renews' : 'Renews'} {new Date(sub.currentPeriodEnd).toLocaleDateString()}
               </div>
+              {sub.lastRenewalError ? (
+                <div className="text-xs text-amber-300 mt-1 font-bold flex items-center gap-1">
+                  <AlertCircle size={12} /> Last renewal failed: {sub.lastRenewalError}
+                </div>
+              ) : null}
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold">₹{Number(plan.monthlyPrice).toLocaleString()}<span className="text-sm font-normal text-white/60">/mo</span></div>
-              <button
-                onClick={togglePayg}
-                disabled={!canManage}
-                className={`mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold ${
-                  sub.payAsYouGo ? 'bg-emerald-400 text-slate-900' : 'bg-white/10 text-white'
-                } disabled:opacity-50`}
-              >
-                <Zap size={12} /> Pay-as-you-go {sub.payAsYouGo ? 'ON' : 'OFF'}
-              </button>
+              <div className="flex flex-col items-end gap-1.5 mt-2">
+                <button
+                  onClick={togglePayg}
+                  disabled={!canManage}
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold ${
+                    sub.payAsYouGo ? 'bg-emerald-400 text-slate-900' : 'bg-white/10 text-white'
+                  } disabled:opacity-50`}
+                >
+                  <Zap size={12} /> Pay-as-you-go {sub.payAsYouGo ? 'ON' : 'OFF'}
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!canManage) return;
+                    try {
+                      await billingApi.toggleAutoRenew(!sub.autoRenew);
+                      toast.success(`Auto-renew ${!sub.autoRenew ? 'enabled' : 'disabled'}`);
+                      await load();
+                    } catch (e: any) {
+                      toast.error(e?.response?.data?.error || 'Failed');
+                    }
+                  }}
+                  disabled={!canManage}
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold ${
+                    sub.autoRenew ? 'bg-emerald-400 text-slate-900' : 'bg-white/10 text-white'
+                  } disabled:opacity-50`}
+                  title={!sub.autoRenew && paymentMethods.filter((m: any) => m.isDefault).length === 0 ? 'Save a card on your next top-up first' : undefined}
+                >
+                  <Sparkles size={12} /> Auto-renew {sub.autoRenew ? 'ON' : 'OFF'}
+                </button>
+              </div>
+              {sub.autoRenew && paymentMethods.filter((m: any) => m.isDefault).length === 0 && (
+                <div className="text-[10px] text-amber-300 mt-1 max-w-[200px]">
+                  ⚠ No default card — auto-renew will fail until you save one
+                </div>
+              )}
             </div>
           </div>
         </div>

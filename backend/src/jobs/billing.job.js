@@ -99,6 +99,69 @@ async function snapshotInvoiceForSubscription(sub, period) {
   });
 }
 
+// Lazy-required to avoid circular imports
+function _payment() { return require('../services/payment.service'); }
+function _db() { return require('../utils/db'); }
+
+// Find the tenant's default saved Razorpay token (used for both wallet
+// auto-topup and subscription auto-renewal — same payment method, two uses).
+async function getDefaultMethod(tenantId) {
+  const db = _db();
+  const row = await db('tenant_payment_methods')
+    .where({ tenantId, isActive: 1, isDefault: 1 })
+    .whereNotNull('providerTokenId')
+    .first();
+  return row || null;
+}
+
+// Charge the saved token for the next period and roll forward on success.
+// Returns { ok, paymentId, reason } so the caller can audit.
+async function autoRenewSubscription(sub) {
+  const method = await getDefaultMethod(sub.tenantId);
+  if (!method) return { ok: false, reason: 'no default payment method' };
+
+  const amount = Number(sub.billingCycle === 'YEARLY' ? sub.plan.yearlyPrice : sub.plan.monthlyPrice);
+  if (!amount || amount <= 0) {
+    // Free plan — just roll forward without a charge
+    return { ok: true, free: true };
+  }
+
+  try {
+    const { payment } = await _payment().chargeRecurringToken({
+      token: method.providerTokenId,
+      customerId: method.providerCustomerId,
+      amount,
+      currency: sub.plan.currency || 'INR',
+      description: `${sub.plan.name} renewal (${sub.billingCycle})`,
+      notes: {
+        tenantId: sub.tenantId,
+        subscriptionId: sub.id,
+        planCode: sub.plan.code,
+        billingCycle: sub.billingCycle,
+        purpose: 'plan-renewal',
+      },
+    });
+
+    // Reset failure counter
+    await _db()('tenant_payment_methods')
+      .where({ id: method.id })
+      .update({ failureCount: 0, lastUsedAt: new Date(), updatedAt: new Date() });
+
+    return { ok: true, paymentId: payment.id };
+  } catch (err) {
+    const reason = err?.error?.description || err?.message || 'Charge failed';
+    await _db()('tenant_payment_methods')
+      .where({ id: method.id })
+      .update({
+        failureCount: _db().raw('failureCount + 1'),
+        lastFailureAt: new Date(),
+        lastFailureReason: reason,
+        updatedAt: new Date(),
+      });
+    return { ok: false, reason };
+  }
+}
+
 async function rollForwardSubscriptions() {
   const now = new Date();
   const due = await prisma.subscription.findMany({
@@ -109,34 +172,71 @@ async function rollForwardSubscriptions() {
     include: { plan: true },
   });
 
-  let rolled = 0, invoiced = 0;
+  let rolled = 0, invoiced = 0, autoRenewed = 0, autoRenewFailed = 0, pastDue = 0;
   for (const sub of due) {
     try {
-      // Snapshot an invoice for the period that just ended (skip on trial)
-      if (sub.status === 'ACTIVE') {
-        await snapshotInvoiceForSubscription(sub, periodKey(sub.currentPeriodStart));
+      const isFree = !Number(sub.billingCycle === 'YEARLY' ? sub.plan.yearlyPrice : sub.plan.monthlyPrice);
+      // Snapshot an invoice for the period that just ended (skip on trial / free)
+      let inv = null;
+      if (sub.status === 'ACTIVE' && !isFree) {
+        inv = await snapshotInvoiceForSubscription(sub, periodKey(sub.currentPeriodStart));
         invoiced++;
       }
+
+      // Auto-renew path — try to charge the saved token before extending the period.
+      let charge = null;
+      if (sub.autoRenew && !isFree) {
+        charge = await autoRenewSubscription(sub);
+
+        // Mark the invoice we just snapshotted as paid on success
+        if (charge.ok && inv && charge.paymentId) {
+          await prisma.billingInvoice.update({
+            where: { id: inv.id },
+            data: { status: 'PAID', paidAt: new Date(), providerRef: charge.paymentId },
+          }).catch(() => {});
+        }
+      }
+
+      const charged = charge && charge.ok;
+      const renewBlocked = sub.autoRenew && charge && !charge.ok;
 
       const newStart = new Date(sub.currentPeriodEnd);
       const newEnd = nextPeriodEnd(newStart, sub.billingCycle);
 
+      // Decision matrix:
+      //  TRIALING  → always roll into PAST_DUE so they're prompted to pay
+      //  ACTIVE + free                       → roll forward, stay ACTIVE
+      //  ACTIVE + autoRenew + charged        → roll forward, stay ACTIVE
+      //  ACTIVE + autoRenew + chargeFailed   → DON'T roll (give the
+      //                                         autopay job another chance
+      //                                         later); mark PAST_DUE
+      //  ACTIVE + manual (no autoRenew)      → DON'T roll forward; mark
+      //                                         PAST_DUE so the tenant
+      //                                         pays manually
+      let nextStatus = sub.status;
+      let extend = false;
+      if (sub.status === 'TRIALING') { nextStatus = 'PAST_DUE'; extend = true; }
+      else if (isFree) { nextStatus = 'ACTIVE'; extend = true; }
+      else if (charged) { nextStatus = 'ACTIVE'; extend = true; autoRenewed++; }
+      else if (renewBlocked) { nextStatus = 'PAST_DUE'; extend = false; autoRenewFailed++; }
+      else { nextStatus = 'PAST_DUE'; extend = false; pastDue++; }
+
       await prisma.subscription.update({
         where: { id: sub.id },
         data: {
-          currentPeriodStart: newStart,
-          currentPeriodEnd: newEnd,
-          // Trials transition to ACTIVE only if they have a real plan AND
-          // payment is on file — otherwise → PAST_DUE for grace period.
-          status: sub.status === 'TRIALING' ? 'PAST_DUE' : 'ACTIVE',
+          ...(extend ? { currentPeriodStart: newStart, currentPeriodEnd: newEnd } : {}),
+          status: nextStatus,
+          lastRenewalAt: charged ? new Date() : sub.lastRenewalAt,
+          lastRenewalError: renewBlocked ? charge.reason : (charged ? null : sub.lastRenewalError),
+          renewalFailureCount: charged ? 0 : (renewBlocked ? (sub.renewalFailureCount || 0) + 1 : sub.renewalFailureCount),
         },
       });
-      rolled++;
+      if (extend) rolled++;
     } catch (err) {
       console.error(`[billing.job] roll-forward failed for sub ${sub.id}:`, err.message);
     }
   }
-  return { rolled, invoiced };
+  return { rolled, invoiced, autoRenewed, autoRenewFailed, pastDue };
 }
 
 async function suspendOverdueTenants() {

@@ -115,6 +115,16 @@ export default function BillingScreen() {
       Alert.alert('Failed', err?.response?.data?.error || err.message),
   });
 
+  const autoRenewMutation = useMutation({
+    mutationFn: (enabled: boolean) => billingApi.toggleAutoRenew(enabled),
+    onSuccess: (_, enabled) => {
+      qc.invalidateQueries({ queryKey: ['billing'] });
+      Alert.alert('Saved', `Auto-renew ${enabled ? 'enabled' : 'disabled'}.`);
+    },
+    onError: (err: any) =>
+      Alert.alert('Failed', err?.response?.data?.error || err.message),
+  });
+
   // Available plans for the upgrade flow
   const { data: plansData } = useQuery({
     queryKey: ['plans'],
@@ -245,6 +255,44 @@ export default function BillingScreen() {
             <Text className="text-[13px] text-slate-600 font-bold mt-2">
               {formatCurrency(plan.monthlyPrice)} / month
             </Text>
+          ) : null}
+
+          {/* Auto-renew toggle — charges saved card at end of period */}
+          {plan.monthlyPrice > 0 ? (
+            <View className="flex-row items-center mt-3 p-3 rounded-2xl bg-slate-50">
+              <View className="flex-1">
+                <Text className="text-[13px] font-bold text-slate-900">Auto-renew</Text>
+                <Text className="text-[11px] text-slate-500 font-medium mt-0.5">
+                  {data?.subscription?.autoRenew
+                    ? `Renews on ${new Date(data?.subscription?.currentPeriodEnd).toLocaleDateString()} via saved card`
+                    : `Manual renewal — pay before ${new Date(data?.subscription?.currentPeriodEnd).toLocaleDateString()}`}
+                </Text>
+                {data?.subscription?.lastRenewalError ? (
+                  <Text className="text-[10px] text-amber-700 font-bold mt-1">
+                    ⚠ Last renewal failed: {data.subscription.lastRenewalError}
+                  </Text>
+                ) : null}
+              </View>
+              <Pressable
+                onPress={() => autoRenewMutation.mutate(!data?.subscription?.autoRenew)}
+                disabled={autoRenewMutation.isPending}
+                className={`w-12 h-7 rounded-full justify-center ${data?.subscription?.autoRenew ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                style={{ opacity: autoRenewMutation.isPending ? 0.6 : 1 }}
+              >
+                <View
+                  className={`w-6 h-6 rounded-full bg-white shadow-sm ${data?.subscription?.autoRenew ? 'self-end mr-0.5' : 'self-start ml-0.5'}`}
+                  style={{ shadowColor: '#0f172a', shadowOpacity: 0.15, shadowRadius: 2, elevation: 2 }}
+                />
+              </Pressable>
+            </View>
+          ) : null}
+
+          {data?.subscription?.autoRenew && Array.isArray(methods) && methods.filter((m: any) => m.isDefault).length === 0 ? (
+            <View className="mt-2 p-3 rounded-2xl bg-amber-50 border border-amber-200">
+              <Text className="text-[11px] text-amber-700 font-bold">
+                ⚠ Auto-renew is on but no saved card. Tick "Enable Auto Top-up" on your next wallet top-up to save one.
+              </Text>
+            </View>
           ) : null}
 
           {/* Change-plan list — opens Razorpay native modal on tap */}

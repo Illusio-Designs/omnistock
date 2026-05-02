@@ -206,7 +206,7 @@ router.post('/checkout', requirePermission('billing.manage'), async (req, res) =
 
 // ── Verify a successful plan checkout ──────────────────────────────────────
 router.post('/verify', requirePermission('billing.manage'), async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, planCode, billingCycle = 'MONTHLY' } = req.body;
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, planCode, billingCycle = 'MONTHLY', autoRenew } = req.body;
 
   const ok = await verifySignature({
     orderId: razorpay_order_id,
@@ -232,6 +232,13 @@ router.post('/verify', requirePermission('billing.manage'), async (req, res) => 
       providerSubscriptionId: razorpay_order_id,
       currentPeriodStart: new Date(),
       currentPeriodEnd: periodEnd,
+      // Auto-renew is enabled when the caller explicitly asked for it OR
+      // when they ticked "save card" so we have a token to charge later.
+      // Default to true on monthly if a token is being saved (the most common
+      // expectation for monthly subscribers).
+      ...(autoRenew !== undefined ? { autoRenew: !!autoRenew } : {}),
+      lastRenewalError: null,
+      renewalFailureCount: 0,
     },
     include: { plan: true },
   });

@@ -43,6 +43,14 @@ async function initDb() {
 
     // User profile extras
     { table: 'users', column: 'phone', ddl: 'VARCHAR(30) DEFAULT NULL' },
+
+    // Subscription auto-renew (charges saved default payment method on
+    // currentPeriodEnd). Defaults to false; flipped on when the tenant
+    // ticks "Enable Auto Top-up" during plan checkout.
+    { table: 'subscriptions', column: 'autoRenew', ddl: 'TINYINT(1) NOT NULL DEFAULT 0' },
+    { table: 'subscriptions', column: 'lastRenewalAt', ddl: 'DATETIME(3) DEFAULT NULL' },
+    { table: 'subscriptions', column: 'lastRenewalError', ddl: 'TEXT DEFAULT NULL' },
+    { table: 'subscriptions', column: 'renewalFailureCount', ddl: 'INT NOT NULL DEFAULT 0' },
   ];
 
   // Create wallet tables if they don't exist (separate from column migrations)

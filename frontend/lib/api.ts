@@ -68,6 +68,7 @@ export const billingApi = {
   changePlan: (data: { planCode: string; billingCycle?: string; payAsYouGo?: boolean }) =>
     api.post('/billing/subscription/change', data),
   togglePayg: (enabled: boolean) => api.post('/billing/subscription/payg', { enabled }),
+  toggleAutoRenew: (enabled: boolean) => api.post('/billing/subscription/auto-renew', { enabled }),
   cancel: () => api.post('/billing/subscription/cancel', {}),
   invoices: () => api.get('/billing/invoices'),
   // Wallet
