@@ -9,12 +9,14 @@ import Badge from '../../components/ui/Badge';
 import BottomSheet from '../../components/ui/BottomSheet';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
+import ChannelLogo from '../../components/ChannelLogo';
 import EmptyState from '../../components/ui/EmptyState';
 import FormInput from '../../components/ui/FormInput';
 import PageShell from '../../components/ui/PageShell';
 import SelectField from '../../components/ui/SelectField';
 import { ShimmerBox } from '../../components/ui/Shimmer';
 import { channelApi } from '../../lib/api';
+import { providerFor, startOAuth } from '../../lib/oauth';
 
 // Category metadata mirrors frontend/app/channels/page.tsx
 const CATEGORY_META: Record<string, { label: string; tagline: string; Icon: any }> = {
@@ -58,13 +60,31 @@ export default function ChannelsScreen() {
 
   const createMutation = useMutation({
     mutationFn: (body: any) => channelApi.create(body),
-    onSuccess: () => {
+    onSuccess: async (resp) => {
       qc.invalidateQueries({ queryKey: ['channels'] });
       qc.invalidateQueries({ queryKey: ['channel-catalog'] });
       qc.invalidateQueries({ queryKey: ['dashboard-channels'] });
       setShowCreate(false);
       setChName(''); setChType('');
-      Alert.alert('Success', 'Channel connected');
+
+      // If the channel uses an OAuth flow, immediately open the provider auth
+      // sheet so the user can finish onboarding without a second tap.
+      const created = resp.data;
+      const provider = created?.type ? providerFor(created.type) : null;
+      if (created?.id && provider) {
+        const { ok, reason } = await startOAuth(provider, { channelId: created.id });
+        if (ok) {
+          qc.invalidateQueries({ queryKey: ['channels'] });
+          Alert.alert('Connected', `${created.name} authorized.`);
+          return;
+        }
+        Alert.alert(
+          'Channel created',
+          reason || 'Authorize from the channel card when you are ready.'
+        );
+        return;
+      }
+      Alert.alert('Channel created', 'Open the channel to set credentials.');
     },
     onError: (err: any) => {
       if (err?.response?.status === 402) {
@@ -179,19 +199,8 @@ export default function ChannelsScreen() {
         items.map((c) => (
           <Card key={c.id} className="p-5 mb-4">
             <View className="flex-row items-center mb-3">
-              <View
-                className="w-12 h-12 rounded-2xl bg-slate-900 items-center justify-center mr-4"
-                style={{
-                  shadowColor: '#0f172a',
-                  shadowOpacity: 0.1,
-                  shadowRadius: 4,
-                  shadowOffset: { width: 0, height: 2 },
-                  elevation: 2,
-                }}
-              >
-                <Text className="text-white font-extrabold text-sm">
-                  {String(c.name || '').slice(0, 2).toUpperCase()}
-                </Text>
+              <View className="mr-4">
+                <ChannelLogo type={c.type} name={c.name} size={48} />
               </View>
               <View className="flex-1">
                 <Text className="text-[15px] font-bold text-slate-900 tracking-tight" numberOfLines={1}>
@@ -205,6 +214,28 @@ export default function ChannelsScreen() {
                 {c.isActive === false ? 'disabled' : 'active'}
               </Badge>
             </View>
+
+            {/* OAuth re-authorize, when this channel has an OAuth provider */}
+            {providerFor(c.type) ? (
+              <View className="mb-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onPress={async () => {
+                    const provider = providerFor(c.type)!;
+                    const { ok, reason } = await startOAuth(provider, { channelId: c.id });
+                    if (ok) {
+                      qc.invalidateQueries({ queryKey: ['channels'] });
+                      Alert.alert('Connected', `${c.name} authorized successfully.`);
+                    } else if (reason) {
+                      Alert.alert('OAuth incomplete', reason);
+                    }
+                  }}
+                >
+                  Authorize via OAuth
+                </Button>
+              </View>
+            ) : null}
 
             {c.lastSyncAt || c.lastSyncError ? (
               <View className="bg-slate-50 rounded-xl p-3 mb-3">

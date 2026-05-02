@@ -20,7 +20,8 @@ import Card from '../../components/ui/Card';
 import FormInput from '../../components/ui/FormInput';
 import ListRow from '../../components/ui/ListRow';
 import PageShell from '../../components/ui/PageShell';
-import { billingApi } from '../../lib/api';
+import { billingApi, planApi } from '../../lib/api';
+import { subscribeToPlan, topupWallet } from '../../lib/razorpay';
 import { formatCurrency } from '../../lib/utils';
 
 const TOPUP_PRESETS = [500, 1000, 2500, 5000];
@@ -69,7 +70,11 @@ export default function BillingScreen() {
   });
 
   const topupMutation = useMutation({
-    mutationFn: (amount: number) => billingApi.topupWallet(amount),
+    mutationFn: async (amount: number) => {
+      const res = await topupWallet(amount);
+      if (!res.ok) throw new Error('Top-up did not complete');
+      return res;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['billing'] });
       setShowTopup(false);
@@ -77,9 +82,26 @@ export default function BillingScreen() {
       Alert.alert('Success', 'Wallet topped up');
     },
     onError: (err: any) => {
-      Alert.alert('Error', err?.response?.data?.error || 'Top-up failed');
+      // Razorpay helper already shows a native alert on failure; this is a
+      // last-resort safety net.
+      if (err?.message && err.message !== 'Top-up did not complete') {
+        Alert.alert('Error', err.message);
+      }
     },
   });
+
+  // Available plans for the upgrade flow
+  const { data: plansData } = useQuery({
+    queryKey: ['plans'],
+    queryFn: async () => (await planApi.list()).data,
+  });
+
+  const onUpgrade = async (planCode: string, billingCycle: 'MONTHLY' | 'YEARLY' = 'MONTHLY') => {
+    const result = await subscribeToPlan(planCode, billingCycle);
+    if (result.ok) {
+      qc.invalidateQueries({ queryKey: ['billing'] });
+    }
+  };
 
   const plan = data?.plan;
   const used = data?.used || {};
@@ -199,6 +221,34 @@ export default function BillingScreen() {
               {formatCurrency(plan.monthlyPrice)} / month
             </Text>
           ) : null}
+
+          {/* Change-plan list — opens Razorpay native modal on tap */}
+          {Array.isArray(plansData) && plansData.length > 1 ? (
+            <View className="mt-4 pt-4 border-t border-slate-100">
+              <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                Switch plan
+              </Text>
+              {plansData
+                .filter((p: any) => p.code !== plan.code && p.isPublic !== false)
+                .map((p: any) => (
+                  <Pressable
+                    key={p.code}
+                    onPress={() => onUpgrade(p.code, 'MONTHLY')}
+                    className="flex-row items-center py-2 border-b border-slate-50 last:border-b-0"
+                  >
+                    <View className="flex-1">
+                      <Text className="text-[14px] font-bold text-slate-900">{p.name}</Text>
+                      <Text className="text-[11px] text-slate-500 font-medium">
+                        {p.tagline || p.description || ''}
+                      </Text>
+                    </View>
+                    <Text className="text-[14px] font-extrabold text-emerald-700">
+                      {formatCurrency(p.monthlyPrice)}/mo
+                    </Text>
+                  </Pressable>
+                ))}
+            </View>
+          ) : null}
         </Card>
       ) : null}
 
@@ -311,7 +361,7 @@ export default function BillingScreen() {
 
         <View className="bg-slate-50 rounded-2xl p-3 mb-5">
           <Text className="text-[11px] text-slate-500 font-medium">
-            Payments are processed securely. In production this would redirect to Razorpay / Stripe.
+            Payments are processed securely via Razorpay. In Expo Go (no native build), top-ups credit instantly without a real charge.
           </Text>
         </View>
 
