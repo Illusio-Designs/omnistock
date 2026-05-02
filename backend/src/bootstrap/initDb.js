@@ -51,6 +51,10 @@ async function initDb() {
     { table: 'subscriptions', column: 'lastRenewalAt', ddl: 'DATETIME(3) DEFAULT NULL' },
     { table: 'subscriptions', column: 'lastRenewalError', ddl: 'TEXT DEFAULT NULL' },
     { table: 'subscriptions', column: 'renewalFailureCount', ddl: 'INT NOT NULL DEFAULT 0' },
+
+    // platform_settings was originally created without createdAt; the prisma
+    // shim auto-stamps it on every insert, so existing DBs need this column.
+    { table: 'platform_settings', column: 'createdAt', ddl: 'DATETIME(3) NOT NULL DEFAULT current_timestamp(3)' },
   ];
 
   // Create wallet tables if they don't exist (separate from column migrations)
