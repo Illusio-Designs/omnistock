@@ -74,31 +74,43 @@ router.post('/webhook', async (req, res) => {
           } catch (e) { console.warn('[payment.webhook] wallet topup credit failed:', e.message); }
         }
 
-        // Persist the saved token if Razorpay returns one
-        if (tokenEntity) {
+        // Persist the saved token if Razorpay returns one. Skip when we
+        // don't have a customer_id — Razorpay rejects recurring charges
+        // without one, so the row would be unusable anyway.
+        if (tokenEntity && paymentEntity?.customer_id) {
           try {
-            const customerId = paymentEntity?.customer_id;
-            const card = paymentEntity?.card || {};
-            const upi = paymentEntity?.vpa || paymentEntity?.upi?.vpa;
-            const id = uuid();
-            await db('tenant_payment_methods').insert({
-              id,
-              tenantId,
-              provider: 'razorpay',
-              providerCustomerId: customerId || null,
-              providerTokenId: tokenEntity,
-              method: paymentEntity?.method || null,
-              brand: card.network || null,
-              last4: card.last4 || null,
-              expiryMonth: card.expiry_month || null,
-              expiryYear: card.expiry_year || null,
-              upiVpa: upi || null,
-              label: card.last4 ? `${card.network || 'Card'} •••• ${card.last4}` : (upi || 'Saved method'),
-              isDefault: 0,
-              isActive: 1,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            }).onConflict(['providerTokenId']).ignore?.() ?? null;
+            const customerId = paymentEntity.customer_id;
+            // Idempotent on (tenantId, providerTokenId) via the unique index
+            // pm_provider_token_unique. Pre-check + ER_DUP_ENTRY catch.
+            const dupe = await db('tenant_payment_methods')
+              .where({ tenantId, providerTokenId: tokenEntity }).first();
+            if (!dupe) {
+              const card = paymentEntity?.card || {};
+              const upi = paymentEntity?.vpa || paymentEntity?.upi?.vpa;
+              const id = uuid();
+              try {
+                await db('tenant_payment_methods').insert({
+                  id,
+                  tenantId,
+                  provider: 'razorpay',
+                  providerCustomerId: customerId,
+                  providerTokenId: tokenEntity,
+                  method: paymentEntity?.method || null,
+                  brand: card.network || null,
+                  last4: card.last4 || null,
+                  expiryMonth: card.expiry_month || null,
+                  expiryYear: card.expiry_year || null,
+                  upiVpa: upi || null,
+                  label: card.last4 ? `${card.network || 'Card'} •••• ${card.last4}` : (upi || 'Saved method'),
+                  isDefault: 0,
+                  isActive: 1,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                });
+              } catch (insErr) {
+                if (insErr?.code !== 'ER_DUP_ENTRY' && !/Duplicate entry/.test(insErr?.message || '')) throw insErr;
+              }
+            }
           } catch (e) { console.warn('[payment.webhook] save token failed:', e.message); }
         }
       }
@@ -345,6 +357,9 @@ router.get('/methods', requirePermission('billing.read'), async (req, res) => {
 router.post('/methods/:id/default', requirePermission('billing.manage'), async (req, res) => {
   const id = req.params.id;
   await db.transaction(async (trx) => {
+    // Lock every payment method row for this tenant so a concurrent
+    // setDefault on a different id can't both end up with isDefault=1.
+    await trx.raw('SELECT id FROM tenant_payment_methods WHERE tenantId = ? FOR UPDATE', [req.tenant.id]);
     await trx('tenant_payment_methods').where({ tenantId: req.tenant.id }).update({ isDefault: 0 });
     const updated = await trx('tenant_payment_methods')
       .where({ id, tenantId: req.tenant.id, isActive: 1 })

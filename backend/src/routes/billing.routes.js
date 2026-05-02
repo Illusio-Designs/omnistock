@@ -109,6 +109,11 @@ router.get('/usage', async (req, res) => {
   const tenantId = req.tenant.id;
   const period = new Date().toISOString().slice(0, 7);
 
+  // Load the full subscription row — req.subscription from auth middleware
+  // only carries {id, status, payAsYouGo, currentPeriodEnd}, missing the
+  // auto-renew fields. Hit the DB directly here so the API surfaces them.
+  const fullSub = await prisma.subscription.findUnique({ where: { tenantId } });
+
   const [warehouses, products, users, roles, channels, ordersMeter] = await Promise.all([
     prisma.warehouse.count({ where: { tenantId } }),
     prisma.product.count({ where: { tenantId } }),
@@ -154,11 +159,11 @@ router.get('/usage', async (req, res) => {
     subscription: {
       status: subscription.status,
       payAsYouGo: !!subscription.payAsYouGo,
-      autoRenew: !!subscription.autoRenew,
+      autoRenew: !!(fullSub?.autoRenew),
       currentPeriodEnd: subscription.currentPeriodEnd,
-      lastRenewalAt: subscription.lastRenewalAt,
-      lastRenewalError: subscription.lastRenewalError,
-      renewalFailureCount: subscription.renewalFailureCount,
+      lastRenewalAt: fullSub?.lastRenewalAt || null,
+      lastRenewalError: fullSub?.lastRenewalError || null,
+      renewalFailureCount: fullSub?.renewalFailureCount || 0,
     },
     wallet: walletInfo ? {
       balance: Number(walletInfo.balance),

@@ -88,6 +88,7 @@ async function initDb() {
       \`paymentRef\` varchar(191) DEFAULT NULL,
       \`createdAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3),
       PRIMARY KEY (\`id\`),
+      UNIQUE KEY \`wallet_txn_payment_ref_unique\` (\`tenantId\`, \`paymentRef\`),
       KEY \`wallet_txn_tenant_idx\` (\`tenantId\`, \`createdAt\`),
       KEY \`wallet_txn_wallet_idx\` (\`walletId\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
@@ -115,6 +116,7 @@ async function initDb() {
       \`createdAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3),
       \`updatedAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3) ON UPDATE current_timestamp(3),
       PRIMARY KEY (\`id\`),
+      UNIQUE KEY \`pm_provider_token_unique\` (\`tenantId\`, \`providerTokenId\`),
       KEY \`pm_tenant_idx\` (\`tenantId\`, \`isActive\`),
       KEY \`pm_default_idx\` (\`tenantId\`, \`isDefault\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
@@ -170,6 +172,43 @@ async function initDb() {
       }
     } catch (e) {
       console.warn(`[initDb] enum extension ${m.table}.${m.column} skipped:`, e.message);
+    }
+  }
+
+  // Retrofit unique constraints onto existing databases. These guard:
+  //  - wallet_transactions: idempotent paymentRef across webhook + sync verify
+  //  - tenant_payment_methods: token row uniqueness, prevents webhook dupes
+  // ALTER TABLE ADD UNIQUE is rejected by MySQL when duplicates already exist
+  // — we de-dupe first so the ALTER succeeds.
+  const uniqueIndexes = [
+    {
+      table: 'wallet_transactions',
+      name: 'wallet_txn_payment_ref_unique',
+      cols: '(`tenantId`, `paymentRef`)',
+      // Deletes older duplicates keeping the lowest id (string sort works for UUID v7-ish)
+      dedupe: "DELETE t1 FROM wallet_transactions t1 INNER JOIN wallet_transactions t2 WHERE t1.id > t2.id AND t1.tenantId = t2.tenantId AND t1.paymentRef IS NOT NULL AND t1.paymentRef = t2.paymentRef",
+    },
+    {
+      table: 'tenant_payment_methods',
+      name: 'pm_provider_token_unique',
+      cols: '(`tenantId`, `providerTokenId`)',
+      dedupe: "DELETE t1 FROM tenant_payment_methods t1 INNER JOIN tenant_payment_methods t2 WHERE t1.id > t2.id AND t1.tenantId = t2.tenantId AND t1.providerTokenId IS NOT NULL AND t1.providerTokenId = t2.providerTokenId",
+    },
+  ];
+  for (const idx of uniqueIndexes) {
+    try {
+      const [existing] = await db.raw(
+        "SELECT INDEX_NAME FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?",
+        [idx.table, idx.name]
+      );
+      const has = Array.isArray(existing) ? existing.length > 0 : !!existing;
+      if (!has) {
+        if (idx.dedupe) await db.raw(idx.dedupe).catch((e) => console.warn(`[initDb] dedupe ${idx.table} skipped:`, e.message));
+        await db.raw(`ALTER TABLE \`${idx.table}\` ADD UNIQUE KEY \`${idx.name}\` ${idx.cols}`);
+        console.log(`[initDb] unique index added: ${idx.table}.${idx.name}`);
+      }
+    } catch (e) {
+      console.warn(`[initDb] unique index ${idx.name} skipped:`, e.message);
     }
   }
 

@@ -26,42 +26,47 @@ function backoffMinutes(failureCount) {
 }
 
 async function findCandidates() {
-  // Wallets that need a top-up + have at least one default saved token.
-  const rows = await db('tenant_wallets as w')
-    .leftJoin('tenant_payment_methods as m', function () {
-      this.on('m.tenantId', '=', 'w.tenantId')
-        .andOn('m.isDefault', '=', db.raw('1'))
-        .andOn('m.isActive', '=', db.raw('1'));
-    })
+  // Step 1: wallets that need a top-up and have autopay enabled.
+  const wallets = await db('tenant_wallets as w')
     .leftJoin('tenants as t', 't.id', 'w.tenantId')
-    .leftJoin('users as u', function () {
-      this.on('u.tenantId', '=', 'w.tenantId').andOn('u.isPlatformAdmin', '=', db.raw('0'));
-    })
     .where('w.autoTopupEnabled', 1)
-    .andWhere(function () {
-      this.whereRaw('w.balance < w.autoTopupTriggerBelow');
-    })
-    .andWhere(function () {
-      this.where('m.isActive', 1).andWhere('m.providerTokenId', 'is not', null);
-    })
-    .select(
-      'w.tenantId', 'w.balance', 'w.autoTopupAmount', 'w.autoTopupTriggerBelow',
-      'm.id as methodId', 'm.providerTokenId as token', 'm.providerCustomerId as customerId',
-      'm.failureCount', 'm.lastFailureAt',
-      't.businessName', 't.ownerEmail',
-      db.raw('MIN(u.email) as ownerUserEmail'),
-    )
-    .groupBy('w.tenantId', 'w.balance', 'w.autoTopupAmount', 'w.autoTopupTriggerBelow',
-             'm.id', 'm.providerTokenId', 'm.providerCustomerId', 'm.failureCount', 'm.lastFailureAt',
-             't.businessName', 't.ownerEmail');
+    .whereRaw('w.balance < w.autoTopupTriggerBelow')
+    .select('w.tenantId', 'w.balance', 'w.autoTopupAmount', 'w.autoTopupTriggerBelow',
+            't.businessName', 't.ownerEmail');
 
-  // Apply cooldown filter in JS so we don't have to fight raw SQL.
+  if (!wallets.length) return [];
+
+  // Step 2: for each tenant fetch ONE default active method. Doing this as
+  // a separate per-row query keeps the SQL trivial and correct even when
+  // (race condition) more than one row has isDefault=1; we just take the
+  // most recently saved one.
+  const tenantIds = wallets.map((w) => w.tenantId);
+  const methods = await db('tenant_payment_methods')
+    .whereIn('tenantId', tenantIds)
+    .andWhere({ isDefault: 1, isActive: 1 })
+    .whereNotNull('providerTokenId')
+    .select('id as methodId', 'tenantId', 'providerTokenId as token',
+            'providerCustomerId as customerId', 'failureCount', 'lastFailureAt')
+    .orderBy('createdAt', 'desc');
+
+  // Pick the first default method per tenant (orderBy desc → latest).
+  const methodByTenant = new Map();
+  for (const m of methods) {
+    if (!methodByTenant.has(m.tenantId)) methodByTenant.set(m.tenantId, m);
+  }
+
   const now = Date.now();
-  return rows.filter((r) => {
-    if (!r.lastFailureAt) return true;
-    const cooldown = backoffMinutes(r.failureCount || 0) * 60_000;
-    return now - new Date(r.lastFailureAt).getTime() > cooldown;
-  });
+  const out = [];
+  for (const w of wallets) {
+    const m = methodByTenant.get(w.tenantId);
+    if (!m) continue;
+    if (m.lastFailureAt) {
+      const cooldown = backoffMinutes(m.failureCount || 0) * 60_000;
+      if (now - new Date(m.lastFailureAt).getTime() <= cooldown) continue;
+    }
+    out.push({ ...w, ...m });
+  }
+  return out;
 }
 
 async function chargeOne(row) {
@@ -69,6 +74,21 @@ async function chargeOne(row) {
   if (!amount || amount <= 0) {
     console.warn(`[autopay] tenant ${row.tenantId} has autoTopupEnabled but no autoTopupAmount`);
     return { skipped: true, reason: 'no amount configured' };
+  }
+  // Razorpay rejects recurring charges without a customer_id. If the saved
+  // method row is missing one (rare — usually a token captured before the
+  // payment.captured webhook hardened the persistence path), don't try to
+  // charge — flag the row inactive so future runs skip it cleanly.
+  if (!row.customerId) {
+    await db('tenant_payment_methods')
+      .where({ id: row.methodId })
+      .update({
+        isActive: 0,
+        lastFailureAt: new Date(),
+        lastFailureReason: 'Missing Razorpay customer_id — re-save the card',
+        updatedAt: new Date(),
+      });
+    return { skipped: true, tenantId: row.tenantId, reason: 'no customerId on saved method' };
   }
 
   try {

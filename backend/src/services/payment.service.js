@@ -127,24 +127,45 @@ async function createCustomer({ name, email, contact, notes = {} }) {
 }
 
 // ── Charge a saved token without showing the checkout sheet ─────────────────
-// Used by the autopay job to top up wallets when balance dips. Returns the
+// Used by the autopay job to top up wallets and renew plans. Returns the
 // payment object on success.
+//
+// Razorpay's recurring-charge endpoint is `POST /v1/payments/create/recurring`.
+// The official Node SDK only exposed it as `client.payments.createRecurringPayment`
+// in some versions and the body shape (e.g., `recurring: '1'` vs boolean) has
+// drifted between releases. To stay version-tolerant we feature-detect the
+// SDK method, fall back to a raw axios call, and reject up-front when
+// customer_id is missing (Razorpay requires it for recurring).
+const axios = require('axios');
+
 async function chargeRecurringToken({ token, customerId, amount, currency = 'INR', description, notes = {} }) {
   const client = await getClient();
+  const { keyId, keySecret } = await getCreds();
   const amountPaise = Math.round(Number(amount) * 100);
 
   if (!client) {
     return {
-      id: `pay_stub_${Date.now()}`,
-      order_id: `order_stub_${Date.now()}`,
-      amount: amountPaise,
-      currency,
-      status: 'captured',
-      stub: true,
+      payment: {
+        id: `pay_stub_${Date.now()}`,
+        order_id: `order_stub_${Date.now()}`,
+        amount: amountPaise,
+        currency,
+        status: 'captured',
+        stub: true,
+      },
+      order: { id: `order_stub_${Date.now()}`, amount: amountPaise, currency },
     };
   }
 
-  // 1. Create a recurring order
+  if (!customerId) {
+    throw new Error('customerId is required for recurring charges (Razorpay rejects without it)');
+  }
+  if (!token) {
+    throw new Error('token is required for recurring charges');
+  }
+
+  // 1. Create a recurring order. Razorpay needs an order to attach the
+  //    payment to even when paying via a saved token.
   const order = await client.orders.create({
     amount: amountPaise,
     currency,
@@ -152,18 +173,33 @@ async function chargeRecurringToken({ token, customerId, amount, currency = 'INR
     notes,
   });
 
-  // 2. Charge the token. Razorpay accepts customer_id + token in the payment body.
-  const payment = await client.payments.createRecurringPayment({
+  // 2. Charge the token. Two code paths depending on what the SDK exposes.
+  const body = {
     email: notes.email || undefined,
     contact: notes.contact || undefined,
     amount: amountPaise,
     currency,
     order_id: order.id,
     customer_id: customerId,
-    token: token,
-    recurring: '1',
-    description: description || 'Wallet auto top-up',
-  });
+    token,
+    recurring: true,
+    description: description || 'Recurring charge',
+  };
+  // Strip undefineds — Razorpay validates strictly.
+  for (const k of Object.keys(body)) if (body[k] === undefined) delete body[k];
+
+  let payment;
+  if (typeof client?.payments?.createRecurringPayment === 'function') {
+    payment = await client.payments.createRecurringPayment(body);
+  } else {
+    // Raw HTTP fallback for SDK versions that don't expose the helper.
+    const { data } = await axios.post(
+      'https://api.razorpay.com/v1/payments/create/recurring',
+      body,
+      { auth: { username: keyId, password: keySecret } },
+    );
+    payment = data;
+  }
 
   return { order, payment };
 }
