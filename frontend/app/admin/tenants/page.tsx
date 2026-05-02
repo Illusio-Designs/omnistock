@@ -40,7 +40,7 @@ export default function AdminTenantsPage() {
       <h1 className="text-3xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent">
         Tenants
       </h1>
-      <p className="text-slate-500 mt-1">All businesses signed up to Omnistock.</p>
+      <p className="text-slate-500 mt-1">All businesses signed up to Kartriq.</p>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mt-6">
         <table className="w-full text-sm">

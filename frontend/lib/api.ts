@@ -30,7 +30,7 @@ api.interceptors.response.use(
       const isAuth = url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/onboard') || url.includes('/auth/google');
       if (status === 401 && !isAuth) {
         localStorage.removeItem('token');
-        localStorage.removeItem('omnistock-auth');
+        localStorage.removeItem('kartriq-auth');
         window.location.href = '/login';
       } else if (status === 402 && onPlanLimitHit) {
         onPlanLimitHit(err.response.data || {});

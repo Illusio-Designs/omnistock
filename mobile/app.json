@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "Omnistock",
-    "slug": "omnistock",
-    "scheme": "omnistock",
+    "name": "Kartriq",
+    "slug": "kartriq",
+    "scheme": "kartriq",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "ios": { "supportsTablet": true, "bundleIdentifier": "com.omnistock.app" },
-    "android": { "package": "com.omnistock.app" },
+    "ios": { "supportsTablet": true, "bundleIdentifier": "com.kartriq.app" },
+    "android": { "package": "com.kartriq.app" },
     "web": { "bundler": "metro" },
     "plugins": ["expo-router", "expo-secure-store"],
     "extra": {

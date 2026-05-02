@@ -113,8 +113,8 @@ class PurppleAdapter extends BaseAdapter {
 }
 
 // ───────────────────────────── Bewakoof / ShopClues — webhook receivers ─────
-// No public seller API. These channels are created in Omnistock and the
-// seller configures their portal/3PL to POST orders to the Omnistock webhook
+// No public seller API. These channels are created in Kartriq and the
+// seller configures their portal/3PL to POST orders to the Kartriq webhook
 // endpoint. We reuse the CustomWebhookAdapter for this pattern.
 const CustomWebhookAdapter = require('../ownstore/custom-webhook');
 class BewakoofAdapter extends CustomWebhookAdapter {}

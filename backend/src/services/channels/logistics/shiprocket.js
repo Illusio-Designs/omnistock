@@ -65,7 +65,7 @@ class ShiprocketAdapter {
     }));
   }
 
-  // Create a forward shipment for an Omnistock order
+  // Create a forward shipment for an Kartriq order
   async createShipment(order, channel, warehouseAddress) {
     const payload = {
       order_id: order.orderNumber,

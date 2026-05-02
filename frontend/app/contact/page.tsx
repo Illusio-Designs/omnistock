@@ -40,7 +40,7 @@ export default function ContactPage() {
           {/* Contact info cards */}
           <div className="lg:col-span-2 space-y-4">
             {[
-              { icon: Mail, title: 'Email', value: 'hello@omnistock.in', link: 'mailto:hello@omnistock.in' },
+              { icon: Mail, title: 'Email', value: 'hello@kartriq.in', link: 'mailto:hello@kartriq.in' },
               { icon: MessageCircle, title: 'Chat', value: 'Live chat 9am – 9pm IST', link: '#' },
               { icon: Phone, title: 'Call', value: '+91 80 4123 4567', link: 'tel:+918041234567' },
               { icon: MapPin, title: 'Office', value: 'Koramangala, Bangalore, India', link: '#' },

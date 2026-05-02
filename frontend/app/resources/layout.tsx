@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Resources — Omnistock',
+  title: 'Resources — Kartriq',
   description:
-    'Blog, case studies, video tutorials, and help center for Omnistock users.',
+    'Blog, case studies, video tutorials, and help center for Kartriq users.',
   openGraph: {
-    title: 'Resources — Omnistock',
+    title: 'Resources — Kartriq',
     description:
-      'Blog, case studies, video tutorials, and help center for Omnistock users.',
+      'Blog, case studies, video tutorials, and help center for Kartriq users.',
   },
 };
 

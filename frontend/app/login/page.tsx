@@ -76,7 +76,7 @@ export default function LoginPage() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
               <Sparkles size={17} className="text-white" />
             </div>
-            <span className="font-bold text-lg text-slate-900">Omnistock</span>
+            <span className="font-bold text-lg text-slate-900">Kartriq</span>
           </Link>
 
           <h1 className="text-3xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent tracking-tight">Welcome back</h1>
@@ -106,7 +106,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   className="text-xs font-bold text-emerald-600 hover:text-emerald-700"
-                  onClick={() => alert('Password reset coming soon. Contact support@omnistock.com.')}
+                  onClick={() => alert('Password reset coming soon. Contact support@kartriq.com.')}
                 >
                   Forgot?
                 </button>

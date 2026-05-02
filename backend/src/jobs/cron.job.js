@@ -1,6 +1,6 @@
-// Unified cron runner for Omnistock operational jobs.
+// Unified cron runner for Kartriq operational jobs.
 //
-// Runs periodically to keep channels in sync with Omnistock. Each job is
+// Runs periodically to keep channels in sync with Kartriq. Each job is
 // idempotent and logs its own results.
 //
 // Jobs:

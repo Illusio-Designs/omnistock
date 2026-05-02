@@ -45,7 +45,7 @@ Tests are vanilla Node.js `http.request` (no framework). To run a subset, commen
 
 ## Architecture
 
-Omnistock is a multi-tenant SaaS ERP for omnichannel inventory and order management (Amazon, Shopify, Flipkart, 50+ channels). It is a monorepo with three packages: `backend` (Express.js), `frontend` (Next.js 14), and `mobile` (Expo/React Native).
+Kartriq is a multi-tenant SaaS ERP for omnichannel inventory and order management (Amazon, Shopify, Flipkart, 50+ channels). It is a monorepo with three packages: `backend` (Express.js), `frontend` (Next.js 14), and `mobile` (Expo/React Native).
 
 ### Stack
 - **Backend**: Node.js + Express, Knex.js query builder, MySQL
@@ -205,7 +205,7 @@ When adding or editing a frontend page:
 
 ### Backend (`.env`)
 ```
-DATABASE_URL=mysql://root@localhost:3306/omnistock
+DATABASE_URL=mysql://root@localhost:3306/kartriq
 PORT=5001
 JWT_SECRET=<min 32 chars>
 ENCRYPTION_KEY=<64 hex chars>
@@ -229,7 +229,7 @@ The fallback baseURL in `frontend/lib/api.ts` is `http://localhost:5001/api/v1`.
 ## Common Gotchas
 
 - **Windows DLL lock**: If `npm install` fails with `EPERM rename query_engine-windows.dll.node`, stop the dev server first (it holds a file lock).
-- **DB doesn't exist**: XAMPP creates the MySQL instance but not the `omnistock` database — create it once via phpMyAdmin; migrations handle the rest.
+- **DB doesn't exist**: XAMPP creates the MySQL instance but not the `kartriq` database — create it once via phpMyAdmin; migrations handle the rest.
 - **Prisma shim ≠ Prisma ORM**: `utils/prisma.js` is a Knex wrapper. Passing unknown field names to `.create()` or `.update()` will cause a DB column-not-found error at runtime. Always check `schema.sql.js` for actual column names before writing data.
 - **Tenant isolation**: Never write a query without a `tenantId` filter unless the resource is explicitly global (plans, public content).
 - **Vendor/warehouse delete is soft**: Both `DELETE /vendors/:id` and `DELETE /warehouses/:id` set `isActive = false` rather than hard-deleting. The `GET /` list for both filters `isActive: true` so soft-deleted records disappear from listings.

@@ -6,7 +6,7 @@ import 'react-loading-skeleton/dist/skeleton.css';
 // Re-export for easy usage across the app
 export { Skeleton };
 
-/** Themed skeleton wrapper — matches Omnistock's emerald design */
+/** Themed skeleton wrapper — matches Kartriq's emerald design */
 export function ShimmerTheme({ children }: { children: React.ReactNode }) {
   return (
     <SkeletonTheme baseColor="#f1f5f9" highlightColor="#e2e8f0">

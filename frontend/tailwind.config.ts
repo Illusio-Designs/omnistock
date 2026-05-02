@@ -16,7 +16,7 @@ const config: Config = {
       },
       colors: {
         // Brand override: every existing `emerald-*` class now renders in the
-        // Omnistock teal/cyan palette without touching component code.
+        // Kartriq teal/cyan palette without touching component code.
         emerald: {
           50:  '#F0FCF8',
           100: '#D8F8EC',

@@ -12,7 +12,7 @@ export function Topbar() {
   const { user, logout } = useAuthStore();
   const { setMobileSidebar } = useUIStore();
   const { query, setQuery, clear } = useSearchStore();
-  const displayUser = user || { name: 'Dev User', role: 'SUPER_ADMIN', email: 'dev@omnistock.in' };
+  const displayUser = user || { name: 'Dev User', role: 'SUPER_ADMIN', email: 'dev@kartriq.in' };
 
   return (
     <header className="sticky top-0 z-30 bg-[#0B1220]/95 backdrop-blur-xl border-b border-white/10 px-4 md:px-6 h-16 flex items-center gap-3">

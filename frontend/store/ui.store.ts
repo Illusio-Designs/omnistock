@@ -25,7 +25,7 @@ export const useUIStore = create<UIState>()(
         })),
     }),
     {
-      name: 'omnistock-ui',
+      name: 'kartriq-ui',
       partialize: (s) => ({
         sidebarCollapsed: s.sidebarCollapsed,
         navGroupCollapsed: s.navGroupCollapsed,

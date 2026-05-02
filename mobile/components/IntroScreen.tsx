@@ -58,7 +58,7 @@ const SLIDES: Slide[] = [
     shadowColor: '#f59e0b',
     title: 'Ready to Scale',
     description:
-      'From 10 to 10,000 orders a day. Omnistock grows with your business.',
+      'From 10 to 10,000 orders a day. Kartriq grows with your business.',
   },
 ];
 

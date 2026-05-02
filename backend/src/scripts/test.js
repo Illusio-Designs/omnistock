@@ -69,7 +69,7 @@ function assert(condition, msg) {
 function group(name) { console.log(`\n\x1b[1m${name}\x1b[0m`); }
 
 async function main() {
-  console.log(`\n\x1b[1mOmnistock Backend Test Suite\x1b[0m`);
+  console.log(`\n\x1b[1mKartriq Backend Test Suite\x1b[0m`);
   console.log(`Target: ${BASE}\n`);
 
   // ── Health ─────────────────────────────────────────────────

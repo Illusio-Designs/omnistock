@@ -71,7 +71,7 @@ export interface SidebarProps {
 
 export function Sidebar({
   groups,
-  brandName = 'Omnistock',
+  brandName = 'Kartriq',
   brandSubtitle,
   showUpgradeCard = true,
 }: SidebarProps = {}) {

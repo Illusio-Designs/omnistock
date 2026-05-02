@@ -186,7 +186,7 @@ export default function ChannelDetailPage() {
           <div className="flex items-center justify-between px-5 py-4 border-b">
             <div>
               <h3 className="font-semibold text-gray-900">SKU Mappings</h3>
-              <p className="text-xs text-gray-500">Link channel SKUs to Omnistock products</p>
+              <p className="text-xs text-gray-500">Link channel SKUs to Kartriq products</p>
             </div>
             <span className="text-sm text-gray-500">{listings?.length || 0} mapped</span>
           </div>

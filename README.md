@@ -1,4 +1,4 @@
-# Omnistock — Omnichannel ERP
+# Kartriq — Omnichannel ERP
 
 A full-stack ERP (EasyEcom-style) for D2C brands, marketplaces and warehouses:
 inventory, orders, purchases, invoices, returns, shipments and reconciliation
@@ -15,7 +15,7 @@ across every sales channel.
 ## Project Structure
 
 ```
-e:/omnistock/
+e:/kartriq/
 ├── backend/                    ← Express API (port 5001)
 │   ├── src/
 │   │   ├── index.js            ← Entry point — runs initDb then listens
@@ -58,18 +58,18 @@ e:/omnistock/
 Open the XAMPP control panel → start **Apache** + **MySQL**.
 
 Open phpMyAdmin at `http://localhost/phpmyadmin` and create an empty database
-named **`omnistock`** (one time only).
+named **`kartriq`** (one time only).
 
 ### 2. Backend
 
 ```bash
-cd e:/omnistock/backend
+cd e:/kartriq/backend
 npm install         # runs `prisma generate` via postinstall
 npm run dev
 ```
 
 On first boot, `initDb` will automatically:
-1. apply all Prisma migrations to your `omnistock` DB
+1. apply all Prisma migrations to your `kartriq` DB
 2. run the seed (permissions, plans, roles, admin user, sample data)
 
 API runs on `http://localhost:5001`.
@@ -77,14 +77,14 @@ API runs on `http://localhost:5001`.
 ### 3. Frontend
 
 ```bash
-cd e:/omnistock/frontend
+cd e:/kartriq/frontend
 npm install
 npm run dev
 ```
 
 App runs on `http://localhost:3000`.
 
-**Default login:** `admin@omnistock.com` / `admin123`
+**Default login:** `admin@kartriq.com` / `admin123`
 
 ---
 
@@ -92,7 +92,7 @@ App runs on `http://localhost:3000`.
 
 ```env
 # MySQL on XAMPP — default root password is empty
-DATABASE_URL="mysql://root@localhost:3306/omnistock"
+DATABASE_URL="mysql://root@localhost:3306/kartriq"
 
 PORT=5001
 NODE_ENV=development
@@ -220,10 +220,10 @@ XAMPP MySQL isn't running. Start it from the XAMPP control panel.
 
 **`Access denied for user 'root'@'localhost'`**
 XAMPP's default MySQL root password is empty. In `backend/.env`, use
-`mysql://root@localhost:3306/omnistock` (no password), **not**
-`mysql://root:password@localhost:3306/omnistock`.
+`mysql://root@localhost:3306/kartriq` (no password), **not**
+`mysql://root:password@localhost:3306/kartriq`.
 
-**`Database 'omnistock' doesn't exist`**
+**`Database 'kartriq' doesn't exist`**
 Create it once in phpMyAdmin — Prisma migrations create tables, not the database.
 
 **Prisma `Update available 5.22.0 -> 7.7.0` notice**

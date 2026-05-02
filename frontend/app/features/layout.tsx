@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Features — Omnistock',
+  title: 'Features — Kartriq',
   description:
     'Explore 50+ features including multi-channel sync, real-time inventory, smart reconciliation, returns management, and more.',
   openGraph: {
-    title: 'Features — Omnistock',
+    title: 'Features — Kartriq',
     description:
       'Explore 50+ features including multi-channel sync, real-time inventory, smart reconciliation, returns management, and more.',
   },

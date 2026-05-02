@@ -1,4 +1,4 @@
-# Omnistock Channel Inventory
+# Kartriq Channel Inventory
 
 Complete list of every channel registered in [`backend/src/data/channel-catalog.js`](../backend/src/data/channel-catalog.js).
 
@@ -6,7 +6,7 @@ Complete list of every channel registered in [`backend/src/data/channel-catalog.
 - ✅ **Integrated** — adapter is built, sellers can connect today
 - 🚧 **Pending backend** — listed in the catalog (`integrated: false`); UI shows it as "Coming Soon" until the adapter ships
 - 🔐 **OAuth** — founder registers ONE app at `/admin/settings`, sellers click "Authorize"
-- 📋 **Paste-form** — each seller generates keys in the channel's portal and pastes them into Omnistock
+- 📋 **Paste-form** — each seller generates keys in the channel's portal and pastes them into Kartriq
 - 📝 **Manual** — no external API; tenant connects once, then records orders via the New Order form
 - ⚠️ **Approval required** — channel requires a partnership / seller approval before API access is granted
 
@@ -139,7 +139,7 @@ For setup steps see [INTEGRATIONS.md](INTEGRATIONS.md).
 
 | Channel | Status | Connection | Features | Notes |
 |---|:---:|:---:|---|---|
-| Custom Webhook | ✅ | 📋 Webhook + HMAC | webhook, hmac validation, field mapping | Universal receiver. POST `/api/v1/channels/:id/webhook` with `x-omnistock-signature` HMAC-SHA256 header. |
+| Custom Webhook | ✅ | 📋 Webhook + HMAC | webhook, hmac validation, field mapping | Universal receiver. POST `/api/v1/channels/:id/webhook` with `x-kartriq-signature` HMAC-SHA256 header. |
 | Other | ✅ | 📝 Manual | manual | Catch-all for one-off / experimental channels. Manual order entry. |
 
 ---

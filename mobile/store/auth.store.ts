@@ -160,7 +160,7 @@ export const useAuthStore = create<AuthState>()(
       markHydrated: () => set({ hydrated: true }),
     }),
     {
-      name: 'omnistock-auth',
+      name: 'kartriq-auth',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({
         user: s.user,

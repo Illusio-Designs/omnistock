@@ -12,7 +12,7 @@ const jakarta = Plus_Jakarta_Sans({
   display: 'swap',
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://omnistock.vercel.app';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://kartriq.vercel.app';
 
 // ── Viewport (separate export in Next 14+) ──
 export const viewport: Viewport = {
@@ -25,8 +25,8 @@ export const viewport: Viewport = {
 // ── Global metadata ──
 const FALLBACK: Metadata = {
   title: {
-    default: 'Omnistock — Multi-channel Inventory & Order Management',
-    template: '%s | Omnistock',
+    default: 'Kartriq — Multi-channel Inventory & Order Management',
+    template: '%s | Kartriq',
   },
   description: 'One platform for all your channels. Manage inventory, orders, returns and reconciliation across Amazon, Flipkart, Shopify and 56+ channels.',
   keywords: [
@@ -34,9 +34,9 @@ const FALLBACK: Metadata = {
     'OMS', 'WMS', 'Amazon', 'Flipkart', 'Shopify', 'returns management',
     'reconciliation', 'D2C', 'warehouse management', 'SaaS ERP',
   ],
-  authors: [{ name: 'Omnistock', url: SITE_URL }],
-  creator: 'Omnistock',
-  publisher: 'Omnistock',
+  authors: [{ name: 'Kartriq', url: SITE_URL }],
+  creator: 'Kartriq',
+  publisher: 'Kartriq',
   metadataBase: new URL(SITE_URL),
   alternates: {
     canonical: '/',
@@ -45,21 +45,21 @@ const FALLBACK: Metadata = {
     type: 'website',
     locale: 'en_IN',
     url: SITE_URL,
-    siteName: 'Omnistock',
-    title: 'Omnistock — Multi-channel Inventory & Order Management',
+    siteName: 'Kartriq',
+    title: 'Kartriq — Multi-channel Inventory & Order Management',
     description: 'Manage inventory, orders, returns and reconciliation across 56+ channels from one platform.',
     images: [
       {
         url: `${SITE_URL}/og-image.svg`,
         width: 1200,
         height: 630,
-        alt: 'Omnistock — Everything Commerce',
+        alt: 'Kartriq — Everything Commerce',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Omnistock — Multi-channel Commerce Platform',
+    title: 'Kartriq — Multi-channel Commerce Platform',
     description: 'Manage inventory, orders, returns and reconciliation across 56+ channels.',
     images: [`${SITE_URL}/og-image.svg`],
   },
@@ -104,7 +104,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'SoftwareApplication',
-              name: 'Omnistock',
+              name: 'Kartriq',
               applicationCategory: 'BusinessApplication',
               operatingSystem: 'Web',
               url: SITE_URL,

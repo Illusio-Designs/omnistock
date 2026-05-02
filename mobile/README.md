@@ -1,6 +1,6 @@
-# Omnistock Mobile
+# Kartriq Mobile
 
-Expo (React Native) companion app for Omnistock. Mirrors the authenticated areas
+Expo (React Native) companion app for Kartriq. Mirrors the authenticated areas
 of the web frontend — public/marketing pages (landing, about, pricing, features,
 solutions, help, contact, resources) are intentionally excluded.
 

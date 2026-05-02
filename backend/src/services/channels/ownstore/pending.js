@@ -31,7 +31,7 @@ class WixAdapter extends BaseAdapter {
 
 // Squarespace Commerce
 class SquarespaceAdapter extends BaseAdapter {
-  constructor(creds) { super(creds); this.client = bearerClient('https://api.squarespace.com/1.0/commerce', creds.apiKey, { 'User-Agent': 'Omnistock/1.0' }); }
+  constructor(creds) { super(creds); this.client = bearerClient('https://api.squarespace.com/1.0/commerce', creds.apiKey, { 'User-Agent': 'Kartriq/1.0' }); }
   async fetchOrders() {
     const { data } = await this.client.get('/orders', { params: { fulfillmentStatus: 'PENDING' } });
     return (data?.result || []).map(o => makeOrderShape({
