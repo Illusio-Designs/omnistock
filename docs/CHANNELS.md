@@ -139,7 +139,7 @@ For setup steps see [INTEGRATIONS.md](INTEGRATIONS.md).
 
 | Channel | Status | Connection | Features | Notes |
 |---|:---:|:---:|---|---|
-| Custom Webhook | ✅ | 📋 Webhook + HMAC | webhook, hmac validation, field mapping | Universal receiver. POST `/api/v1/channels/:id/webhook` with `x-kartriq-signature` HMAC-SHA256 header (legacy `x-omnistock-signature` also accepted). |
+| Custom Webhook | ✅ | 📋 Webhook + HMAC | webhook, hmac validation, field mapping | Universal receiver. POST `/api/v1/channels/:id/webhook` with `x-kartriq-signature` HMAC-SHA256 header. |
 | Other | ✅ | 📝 Manual | manual | Catch-all for one-off / experimental channels. Manual order entry. |
 
 ---

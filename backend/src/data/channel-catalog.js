@@ -789,7 +789,7 @@ const CATALOG = [
       { key: 'webhookSecret', label: 'Webhook Secret (HMAC-SHA256)', type: 'password', required: false },
       { key: 'fieldMap',      label: 'Field Map (JSON)',              type: 'textarea', required: false },
     ],
-    note: 'Point your system to POST /api/v1/channels/:id/webhook. If a secret is set, send x-kartriq-signature header with hex HMAC-SHA256 of the raw body. The legacy x-omnistock-signature header is also accepted.',
+    note: 'Point your system to POST /api/v1/channels/:id/webhook. If a secret is set, send x-kartriq-signature header with hex HMAC-SHA256 of the raw body.',
   },
   {
     type: 'OTHER',

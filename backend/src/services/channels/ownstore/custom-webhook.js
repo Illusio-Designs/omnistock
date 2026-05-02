@@ -11,8 +11,6 @@ const crypto = require('crypto');
 // Credentials: { webhookSecret?, fieldMap? }
 //   - webhookSecret: optional HMAC secret; if set, incoming requests must
 //                    include an `x-kartriq-signature` header = hex HMAC.
-//                    The legacy `x-omnistock-signature` header is also
-//                    accepted for backward compatibility.
 //   - fieldMap:       optional JSON mapping custom keys → canonical keys.
 //                     Example: { "customer_name": "customer.name", "total_amount": "total" }
 //
