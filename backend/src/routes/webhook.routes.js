@@ -38,6 +38,7 @@ async function handleIncomingWebhook(channelId, req, res) {
     const rawBody = JSON.stringify(req.body);
     const sig =
       req.headers['x-kartriq-signature'] ||
+      req.headers['x-omnistock-signature'] || // legacy header — kept for backward compat with senders signed before the Kartriq rename
       req.headers['x-hub-signature-256'] || // Meta / FB / Insta / WhatsApp
       req.headers['x-shopify-hmac-sha256'] ||
       req.headers['x-amz-signature'] ||

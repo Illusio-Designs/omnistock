@@ -609,6 +609,8 @@ POST https://YOUR-DOMAIN/api/v1/webhooks/channels/<channelId>
 x-kartriq-signature: <hex digest>
 ```
 
+The legacy `x-omnistock-signature` header is still accepted by the receiver, so existing senders signed before the Kartriq rename will continue to validate without changes.
+
 **Payload shape**: see [backend/src/services/channels/ownstore/custom-webhook.js](../backend/src/services/channels/ownstore/custom-webhook.js) `parseWebhook()` — accepts a fairly flexible JSON format (channelOrderId, items[], customer, shippingAddress, total, etc.).
 
 ---

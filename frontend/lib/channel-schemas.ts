@@ -620,7 +620,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     steps: [
       'Pick a strong HMAC secret and set it below',
       'Configure your source system to POST to /api/v1/webhooks/channels/:id',
-      'Sign the raw body with HMAC-SHA256 using your secret and send it in the x-kartriq-signature header',
+      'Sign the raw body with HMAC-SHA256 using your secret and send it in the x-kartriq-signature header (legacy x-omnistock-signature also accepted)',
     ],
     fields: [
       { key: 'webhookSecret', label: 'Webhook HMAC Secret', kind: 'password', required: true, secret: true, help: 'Pick any 32+ char random string. Use it in your sender to sign requests with HMAC-SHA256.' },
