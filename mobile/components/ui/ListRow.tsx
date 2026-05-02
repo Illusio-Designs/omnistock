@@ -30,7 +30,7 @@ export default function ListRow({
         <View
           className="w-11 h-11 rounded-2xl bg-gradient-to-br bg-emerald-50 items-center justify-center mr-3.5"
           style={{
-            shadowColor: '#10b981',
+            shadowColor: '#06D4B8',
             shadowOpacity: 0.1,
             shadowRadius: 4,
             shadowOffset: { width: 0, height: 2 },

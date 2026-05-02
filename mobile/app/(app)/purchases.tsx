@@ -129,7 +129,7 @@ export default function PurchasesScreen() {
             <ListRow
               key={p.id}
               isFirst={idx === 0}
-              icon={<FileText size={15} color="#059669" />}
+              icon={<FileText size={15} color="#04AB94" />}
               title={`#${p.poNumber ?? p.id?.slice(0, 8)}`}
               subtitle={p.vendor?.name ?? p.vendorName ?? '\u2014'}
               meta={p.createdAt ? formatShortDate(p.createdAt) : undefined}

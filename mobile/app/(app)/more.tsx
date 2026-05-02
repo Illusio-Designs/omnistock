@@ -31,15 +31,15 @@ type Item = {
 };
 
 const ITEMS: Item[] = [
-  { href: '/inventory', label: 'Inventory', icon: <Boxes size={18} color="#059669" />, iconBg: 'bg-emerald-50' },
+  { href: '/inventory', label: 'Inventory', icon: <Boxes size={18} color="#04AB94" />, iconBg: 'bg-emerald-50' },
   { href: '/purchases', label: 'Purchases', icon: <FileText size={18} color="#0ea5e9" />, iconBg: 'bg-sky-50' },
   { href: '/vendors', label: 'Vendors', icon: <Truck size={18} color="#8b5cf6" />, iconBg: 'bg-violet-50' },
   { href: '/warehouses', label: 'Warehouses', icon: <Warehouse size={18} color="#f59e0b" />, iconBg: 'bg-amber-50' },
   { href: '/customers', label: 'Customers', icon: <User size={18} color="#ec4899" />, iconBg: 'bg-pink-50' },
-  { href: '/channels', label: 'Channels', icon: <Plug size={18} color="#10b981" />, iconBg: 'bg-emerald-50' },
+  { href: '/channels', label: 'Channels', icon: <Plug size={18} color="#06D4B8" />, iconBg: 'bg-emerald-50' },
   { href: '/shipments', label: 'Shipments', icon: <Truck size={18} color="#0ea5e9" />, iconBg: 'bg-sky-50' },
   { href: '/invoices', label: 'Invoices', icon: <CreditCard size={18} color="#8b5cf6" />, iconBg: 'bg-violet-50' },
-  { href: '/team', label: 'Team', icon: <Users size={18} color="#059669" />, iconBg: 'bg-emerald-50' },
+  { href: '/team', label: 'Team', icon: <Users size={18} color="#04AB94" />, iconBg: 'bg-emerald-50' },
   { href: '/billing', label: 'Billing & Usage', icon: <CreditCard size={18} color="#f59e0b" />, iconBg: 'bg-amber-50' },
   { href: '/settings', label: 'Settings', icon: <SettingsIcon size={18} color="#64748b" />, iconBg: 'bg-slate-100' },
   { href: '/ui-kit',   label: 'UI Kit',   icon: <Palette size={18} color="#0ea5e9" />,        iconBg: 'bg-sky-50' },
@@ -106,7 +106,7 @@ export default function MoreScreen() {
             <View
               className="w-14 h-14 rounded-2xl bg-emerald-500 items-center justify-center mr-4"
               style={{
-                shadowColor: '#10b981',
+                shadowColor: '#06D4B8',
                 shadowOpacity: 0.4,
                 shadowRadius: 8,
                 shadowOffset: { width: 0, height: 2 },

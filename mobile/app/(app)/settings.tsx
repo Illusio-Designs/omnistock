@@ -38,7 +38,7 @@ export default function SettingsScreen() {
   const sections: Section[] = [
     {
       title: 'Account',
-      icon: <User size={18} color="#059669" />,
+      icon: <User size={18} color="#04AB94" />,
       iconBg: 'bg-emerald-50',
       rows: [
         { label: 'Name', value: user?.name ?? '\u2014' },

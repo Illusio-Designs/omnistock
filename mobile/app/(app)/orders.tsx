@@ -322,7 +322,7 @@ export default function OrdersScreen() {
             <ListRow
               key={o.id}
               isFirst={idx === 0}
-              icon={<Package size={15} color="#059669" />}
+              icon={<Package size={15} color="#04AB94" />}
               title={`#${o.orderNumber ?? o.id?.slice(0, 8)}`}
               subtitle={o.customer?.name ?? o.customerName ?? '\u2014'}
               meta={(() => {

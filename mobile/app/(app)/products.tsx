@@ -86,7 +86,7 @@ export default function ProductsScreen() {
             <ListRow
               key={p.id}
               isFirst={idx === 0}
-              icon={<Package size={15} color="#059669" />}
+              icon={<Package size={15} color="#04AB94" />}
               title={p.name ?? p.title ?? 'Untitled'}
               subtitle={`SKU: ${p.sku ?? '\u2014'}`}
               meta={p.category?.name ?? p.brand?.name}

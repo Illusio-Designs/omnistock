@@ -73,7 +73,7 @@ export default function VendorsScreen() {
             <ListRow
               key={v.id}
               isFirst={idx === 0}
-              icon={<Truck size={15} color="#059669" />}
+              icon={<Truck size={15} color="#04AB94" />}
               title={v.name}
               subtitle={v.email ?? v.phone ?? ''}
               meta={[v.city, v.country].filter(Boolean).join(', ') || v.paymentTerms}

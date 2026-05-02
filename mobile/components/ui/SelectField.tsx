@@ -62,7 +62,7 @@ export default function SelectField({ label, value, options, onChange, placehold
                   >
                     {opt.label}
                   </Text>
-                  {opt.value === value ? <Check size={18} color="#059669" /> : null}
+                  {opt.value === value ? <Check size={18} color="#04AB94" /> : null}
                 </Pressable>
               ))}
             </ScrollView>

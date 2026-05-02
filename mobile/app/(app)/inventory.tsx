@@ -92,7 +92,7 @@ export default function InventoryScreen() {
               <ListRow
                 key={i.id}
                 isFirst={idx === 0}
-                icon={<Package size={15} color="#059669" />}
+                icon={<Package size={15} color="#04AB94" />}
                 title={i.productName ?? i.product?.name ?? i.sku ?? 'SKU'}
                 subtitle={i.warehouseName ?? i.warehouse?.name ?? ''}
                 right={

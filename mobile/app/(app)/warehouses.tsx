@@ -77,7 +77,7 @@ export default function WarehousesScreen() {
             <ListRow
               key={w.id}
               isFirst={idx === 0}
-              icon={<Warehouse size={15} color="#059669" />}
+              icon={<Warehouse size={15} color="#04AB94" />}
               title={w.name}
               subtitle={[w.address?.line1, w.address?.city].filter(Boolean).join(', ') || (w.address ?? w.city ?? '')}
               meta={w.code ? `Code: ${w.code}` : (w.country ?? '')}

@@ -54,7 +54,7 @@ export default function InvoicesScreen() {
             <ListRow
               key={inv.id}
               isFirst={idx === 0}
-              icon={<FileText size={15} color="#059669" />}
+              icon={<FileText size={15} color="#04AB94" />}
               title={`#${inv.number ?? inv.id?.slice(0, 8)}`}
               subtitle={inv.planName ?? inv.description ?? inv.type ?? ''}
               meta={inv.createdAt ? formatShortDate(inv.createdAt) : undefined}

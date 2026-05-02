@@ -29,15 +29,15 @@ export default function ReportsScreen() {
     {
       label: 'Total sales',
       value: sales.data?.total != null ? formatCurrency(sales.data.total) : '\u2014',
-      icon: <Wallet size={18} color="#059669" />,
-      color: '#10b981',
+      icon: <Wallet size={18} color="#04AB94" />,
+      color: '#06D4B8',
       bg: 'bg-emerald-50',
     },
     {
       label: 'Orders',
       value: sales.data?.count?.toString() ?? '\u2014',
-      icon: <TrendingUp size={18} color="#059669" />,
-      color: '#10b981',
+      icon: <TrendingUp size={18} color="#04AB94" />,
+      color: '#06D4B8',
       bg: 'bg-emerald-50',
     },
     {

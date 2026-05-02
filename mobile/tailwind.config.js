@@ -5,16 +5,39 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Brand override — every existing `emerald-*` class in the mobile app
+        // now renders in the Kartriq teal/cyan palette without touching
+        // component code (mirrors frontend tailwind.config.ts).
+        emerald: {
+          50:  '#F0FCF8',
+          100: '#D8F8EC',
+          200: '#A8F0DA',
+          300: '#6CE5C7',
+          400: '#2BD5B6',
+          500: '#06D4B8', // brand teal
+          600: '#04AB94', // brand teal — hover/dark
+          700: '#077F70',
+          800: '#0A5A50',
+          900: '#0B3D38',
+        },
         brand: {
-          DEFAULT: '#10b981',
-          light: '#34d399',
-          dark: '#059669',
+          DEFAULT: '#06D4B8',
+          light:   '#2BD5B6',
+          dark:    '#04AB94',
           foreground: '#ffffff',
-          50: '#ecfdf5',
-          100: '#d1fae5',
-          500: '#10b981',
-          600: '#059669',
-          700: '#047857',
+          50:  '#F0FCF8',
+          100: '#D8F8EC',
+          500: '#06D4B8',
+          600: '#04AB94',
+          700: '#077F70',
+        },
+        cyan: {
+          50:  '#ECFEFF',
+          100: '#CFFAFE',
+          400: '#22D3EE',
+          500: '#06B6D4', // brand cyan
+          600: '#0891B2',
+          700: '#0E7490',
         },
         surface: {
           DEFAULT: '#ffffff',

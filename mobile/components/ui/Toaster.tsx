@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { ToastType, useToastStore } from '../../store/toast.store';
 
 const STYLES: Record<ToastType, { bg: string; border: string; text: string; iconColor: string; Icon: any }> = {
-  success: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-800', iconColor: '#059669', Icon: CheckCircle2 },
+  success: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-800', iconColor: '#04AB94', Icon: CheckCircle2 },
   error:   { bg: 'bg-rose-50',    border: 'border-rose-200',    text: 'text-rose-800',    iconColor: '#e11d48', Icon: XCircle },
   info:    { bg: 'bg-sky-50',     border: 'border-sky-200',     text: 'text-sky-800',     iconColor: '#0284c7', Icon: Info },
   warning: { bg: 'bg-amber-50',   border: 'border-amber-200',   text: 'text-amber-800',   iconColor: '#d97706', Icon: AlertTriangle },

@@ -96,8 +96,8 @@ export default function BillingScreen() {
       label: 'Orders this month',
       used: used.ordersThisPeriod || 0,
       limit: limits.ordersPerMonth ?? null,
-      icon: <ShoppingCart size={18} color="#059669" />,
-      color: '#10b981',
+      icon: <ShoppingCart size={18} color="#04AB94" />,
+      color: '#06D4B8',
       overage: overage.orders,
       overageRate: Number(rates.extraOrders || 0),
       overageCharge: charges.orders,
@@ -177,7 +177,7 @@ export default function BillingScreen() {
         <Card className="p-5 mb-4">
           <View className="flex-row items-center mb-3">
             <View className="w-10 h-10 rounded-2xl bg-emerald-50 items-center justify-center mr-3">
-              <CreditCard size={18} color="#059669" />
+              <CreditCard size={18} color="#04AB94" />
             </View>
             <View className="flex-1">
               <Text className="text-[13px] font-bold text-slate-400 uppercase tracking-wider">
@@ -206,7 +206,7 @@ export default function BillingScreen() {
       <Card className="p-5 mb-4">
         <View className="flex-row items-start mb-4">
           <View className="w-10 h-10 rounded-2xl bg-emerald-50 items-center justify-center mr-3">
-            <Wallet size={18} color="#059669" />
+            <Wallet size={18} color="#04AB94" />
           </View>
           <View className="flex-1">
             <Text className="text-[13px] font-bold text-slate-400 uppercase tracking-wider">
@@ -453,7 +453,7 @@ export default function BillingScreen() {
 
       {isPayg ? (
         <View className="flex-row items-center mt-4 p-3 bg-emerald-50 rounded-2xl border border-emerald-100">
-          <CheckCircle2 size={16} color="#059669" />
+          <CheckCircle2 size={16} color="#04AB94" />
           <Text className="text-[13px] font-bold text-emerald-700 ml-2 flex-1">
             Pay-As-You-Go active \u00B7 Overage allowed
           </Text>

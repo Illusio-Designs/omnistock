@@ -26,8 +26,8 @@ export default function AdminScreen() {
     {
       label: 'Tenants',
       value: (data?.tenants ?? '\u2014').toString(),
-      icon: <Building2 size={18} color="#059669" />,
-      color: '#10b981',
+      icon: <Building2 size={18} color="#04AB94" />,
+      color: '#06D4B8',
       bg: 'bg-emerald-50',
     },
     {

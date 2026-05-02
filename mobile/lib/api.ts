@@ -85,6 +85,67 @@ export const userApi = {
   permissionCatalog: () => api.get('/users/_permissions/catalog'),
 };
 
+// ── OAuth (per-seller channel authorization) ──────────────────────
+// Each *Start endpoint returns { url } that the mobile app should open in
+// an in-app browser; the callback redirects back to the deep-link scheme.
+export const oauthApi = {
+  amazonStart:  (channelId: string, region?: string) =>
+    api.get('/oauth/amazon/start', { params: { channelId, ...(region ? { region } : {}) } }),
+  shopifyStart: (channelId: string, shop: string) =>
+    api.get('/oauth/shopify/start', { params: { channelId, shop } }),
+  flipkartStart: (channelId: string) =>
+    api.get('/oauth/flipkart/start', { params: { channelId } }),
+  metaStart: (channelId: string) =>
+    api.get('/oauth/meta/start', { params: { channelId } }),
+  lazadaStart: (channelId: string, region: string) =>
+    api.get('/oauth/lazada/start', { params: { channelId, region } }),
+  shopeeStart: (channelId: string, region: string) =>
+    api.get('/oauth/shopee/start', { params: { channelId, region } }),
+  mercadoLibreStart: (channelId: string, region: string) =>
+    api.get('/oauth/mercadolibre/start', { params: { channelId, region } }),
+  allegroStart: (channelId: string, sandbox: boolean) =>
+    api.get('/oauth/allegro/start', { params: { channelId, sandbox: String(sandbox) } }),
+  wishStart: (channelId: string) =>
+    api.get('/oauth/wish/start', { params: { channelId } }),
+  status: (provider: string, channelId: string) =>
+    api.get(`/oauth/${provider}/status`, { params: { channelId } }),
+  amazonStatus: (channelId: string) =>
+    api.get('/oauth/amazon/status', { params: { channelId } }),
+};
+
+// ── Support tickets ────────────────────────────────────────────────
+export const ticketApi = {
+  list: () => api.get('/tickets'),
+  get: (id: string) => api.get(`/tickets/${id}`),
+  create: (data: { subject: string; body: string; priority?: string; category?: string }) =>
+    api.post('/tickets', data),
+  reply: (id: string, body: string) => api.post(`/tickets/${id}/reply`, { body }),
+  close: (id: string) => api.post(`/tickets/${id}/close`, {}),
+};
+
+// ── Razorpay checkout / verification ──────────────────────────────
+// `checkout` returns { orderId, keyId, amount, currency } that should be fed
+// into the react-native-razorpay SDK; `verify` posts the signed handler
+// response back so the backend can confirm and credit the wallet/plan.
+export const paymentApi = {
+  checkout: (data: { planCode: string; billingCycle?: string }) =>
+    api.post('/payments/checkout', data),
+  verify: (data: any) => api.post('/payments/verify', data),
+};
+
+// ── Public CMS (no auth required — used by the marketing/onboarding flow) ──
+export const publicApi = {
+  blog: () => api.get('/public/blog'),
+  blogPost: (slug: string) => api.get(`/public/blog/${slug}`),
+  seo: (path: string) => api.get('/public/seo', { params: { path } }),
+  sitemap: () => api.get('/public/sitemap'),
+  stats: () => api.get('/public/stats'),
+  integrations: () => api.get('/public/integrations'),
+  content: (type: string) => api.get('/public/content', { params: { type } }),
+  tracking: () => api.get('/public/tracking'),
+  maintenance: () => api.get('/public/maintenance'),
+};
+
 export const roleApi = {
   list: () => api.get('/roles'),
   create: (data: any) => api.post('/roles', data),

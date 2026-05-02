@@ -68,7 +68,7 @@ export default function AnimatedSplash({ onFinish }: Props) {
       <View
         className="absolute w-40 h-40 rounded-full"
         style={{
-          backgroundColor: '#10b981',
+          backgroundColor: '#06D4B8',
           opacity: 0.08,
           transform: [{ scale: 2 }],
         }}
@@ -84,7 +84,7 @@ export default function AnimatedSplash({ onFinish }: Props) {
         <View
           className="w-20 h-20 rounded-3xl bg-emerald-500 items-center justify-center mb-8"
           style={{
-            shadowColor: '#10b981',
+            shadowColor: '#06D4B8',
             shadowOpacity: 0.5,
             shadowRadius: 20,
             shadowOffset: { width: 0, height: 8 },

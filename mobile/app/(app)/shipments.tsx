@@ -36,7 +36,7 @@ export default function ShipmentsScreen() {
             <ListRow
               key={s.id}
               isFirst={idx === 0}
-              icon={<Truck size={15} color="#059669" />}
+              icon={<Truck size={15} color="#04AB94" />}
               title={`AWB: ${s.awb ?? s.trackingNumber ?? '\u2014'}`}
               subtitle={s.courier ?? s.carrierName ?? ''}
               meta={s.createdAt ? formatShortDate(s.createdAt) : undefined}

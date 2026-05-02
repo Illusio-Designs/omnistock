@@ -71,12 +71,12 @@ function RevenueChart({ data }: { data: MonthPoint[] }) {
       <Svg width={width} height={height}>
         <Defs>
           <LinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor="#10b981" stopOpacity={0.25} />
-            <Stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
+            <Stop offset="0%" stopColor="#06D4B8" stopOpacity={0.25} />
+            <Stop offset="100%" stopColor="#06D4B8" stopOpacity={0.02} />
           </LinearGradient>
         </Defs>
         <Path d={area} fill="url(#grad)" />
-        <Path d={line} stroke="#10b981" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <Path d={line} stroke="#06D4B8" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" fill="none" />
       </Svg>
       <View className="flex-row justify-between px-1 mt-1">
         {data.map((d) => (
@@ -126,7 +126,7 @@ export default function DashboardScreen() {
       <ScrollView
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={['#10b981']} tintColor="#10b981" />}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={['#06D4B8']} tintColor="#06D4B8" />}
       >
         {/* ── Premium header ──────────────────────────────── */}
         <View
@@ -143,7 +143,7 @@ export default function DashboardScreen() {
             <View className="flex-row items-center flex-1">
               <View className="w-11 h-11 rounded-2xl bg-emerald-500 items-center justify-center mr-3"
                 style={{
-                  shadowColor: '#10b981',
+                  shadowColor: '#06D4B8',
                   shadowOpacity: 0.4,
                   shadowRadius: 8,
                   shadowOffset: { width: 0, height: 2 },
@@ -171,13 +171,13 @@ export default function DashboardScreen() {
             <View className="flex-row items-center justify-between mb-1">
               <View className="flex-row items-center">
                 <View className="w-8 h-8 rounded-xl bg-emerald-500/20 items-center justify-center mr-2.5">
-                  <Wallet size={16} color="#34d399" />
+                  <Wallet size={16} color="#2BD5B6" />
                 </View>
                 <Text className="text-slate-400 text-sm font-bold">Total Revenue</Text>
               </View>
               {lastRev > 0 ? (
                 <Badge variant={revenueUp ? 'emerald' : 'rose'}>
-                  {revenueUp ? <ArrowUp size={10} color="#047857" /> : <ArrowDown size={10} color="#be123c" />}
+                  {revenueUp ? <ArrowUp size={10} color="#077F70" /> : <ArrowDown size={10} color="#be123c" />}
                   {' '}{revenueGrowthAbs}%
                 </Badge>
               ) : null}
@@ -240,14 +240,14 @@ export default function DashboardScreen() {
               <Card className="p-5">
                 <View className="w-10 h-10 rounded-2xl bg-emerald-50 items-center justify-center mb-3"
                   style={{
-                    shadowColor: '#10b981',
+                    shadowColor: '#06D4B8',
                     shadowOpacity: 0.1,
                     shadowRadius: 6,
                     shadowOffset: { width: 0, height: 2 },
                     elevation: 2,
                   }}
                 >
-                  <ShoppingCart size={18} color="#059669" />
+                  <ShoppingCart size={18} color="#04AB94" />
                 </View>
                 <Text className="text-2xl font-extrabold text-slate-900 tracking-tight">
                   {(s.totalOrders || 0).toLocaleString()}
@@ -277,7 +277,7 @@ export default function DashboardScreen() {
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-lg font-extrabold text-slate-900 tracking-tight">My Channels</Text>
               <Pressable className="flex-row items-center bg-emerald-50 px-3 py-1.5 rounded-xl active:bg-emerald-100" onPress={() => router.push('/channels')}>
-                <Plus size={14} color="#059669" />
+                <Plus size={14} color="#04AB94" />
                 <Text className="text-xs font-bold text-emerald-700 ml-1">Add</Text>
               </Pressable>
             </View>
@@ -340,7 +340,7 @@ export default function DashboardScreen() {
               { label: 'Pending Orders', value: s.pendingOrders || 0, icon: <Clock size={16} color="#f59e0b" />, color: '#f59e0b' },
               { label: 'Processing', value: s.processingOrders || 0, icon: <Package size={16} color="#0ea5e9" />, color: '#0ea5e9' },
               { label: 'Products Listed', value: s.totalProducts || 0, icon: <Package size={16} color="#8b5cf6" />, color: '#8b5cf6' },
-              { label: 'Customers', value: s.totalCustomers || 0, icon: <Users size={16} color="#10b981" />, color: '#10b981' },
+              { label: 'Customers', value: s.totalCustomers || 0, icon: <Users size={16} color="#06D4B8" />, color: '#06D4B8' },
             ].map((item, idx) => (
               <View
                 key={item.label}
@@ -368,7 +368,7 @@ export default function DashboardScreen() {
               <Text className="text-lg font-extrabold text-slate-900 tracking-tight">Recent Orders</Text>
               <Pressable className="flex-row items-center active:opacity-70" onPress={() => router.push('/orders')}>
                 <Text className="text-[13px] font-bold text-emerald-600 mr-1">View All</Text>
-                <ArrowUpRight size={14} color="#059669" />
+                <ArrowUpRight size={14} color="#04AB94" />
               </Pressable>
             </View>
             <View>
@@ -383,14 +383,14 @@ export default function DashboardScreen() {
                     <View
                       className="w-11 h-11 rounded-2xl bg-emerald-50 items-center justify-center mr-3.5"
                       style={{
-                        shadowColor: '#10b981',
+                        shadowColor: '#06D4B8',
                         shadowOpacity: 0.08,
                         shadowRadius: 4,
                         shadowOffset: { width: 0, height: 2 },
                         elevation: 1,
                       }}
                     >
-                      <Package size={16} color="#059669" />
+                      <Package size={16} color="#04AB94" />
                     </View>
                     <View className="flex-1">
                       <Text className="font-bold text-slate-900 text-[15px] tracking-tight" numberOfLines={1}>

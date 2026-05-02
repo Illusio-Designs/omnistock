@@ -60,7 +60,7 @@ export default function Button({
       style={
         variant === 'primary'
           ? {
-              shadowColor: '#10b981',
+              shadowColor: '#06D4B8',
               shadowOpacity: 0.3,
               shadowRadius: 8,
               shadowOffset: { width: 0, height: 4 },

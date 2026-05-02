@@ -31,7 +31,7 @@ const SLIDES: Slide[] = [
   {
     icon: <Package size={32} color="#fff" />,
     iconBg: 'bg-emerald-500',
-    shadowColor: '#10b981',
+    shadowColor: '#06D4B8',
     title: 'Unified Inventory',
     description:
       'Track stock across all warehouses and channels in real-time. Never oversell again.',
@@ -163,7 +163,7 @@ export default function IntroScreen({ onFinish }: Props) {
           onPress={goNext}
           className="bg-emerald-600 rounded-2xl py-4 items-center active:bg-emerald-700"
           style={{
-            shadowColor: '#10b981',
+            shadowColor: '#06D4B8',
             shadowOpacity: 0.35,
             shadowRadius: 12,
             shadowOffset: { width: 0, height: 6 },

@@ -123,7 +123,7 @@ export default function LoginScreen() {
             <View
               className="w-14 h-14 rounded-2xl bg-emerald-500 items-center justify-center mb-6"
               style={{
-                shadowColor: '#10b981',
+                shadowColor: '#06D4B8',
                 shadowOpacity: 0.4,
                 shadowRadius: 12,
                 shadowOffset: { width: 0, height: 4 },
@@ -237,7 +237,7 @@ export default function LoginScreen() {
               disabled={loading}
               className="bg-emerald-600 rounded-2xl py-4 items-center active:bg-emerald-700"
               style={{
-                shadowColor: '#10b981',
+                shadowColor: '#06D4B8',
                 shadowOpacity: 0.35,
                 shadowRadius: 12,
                 shadowOffset: { width: 0, height: 6 },

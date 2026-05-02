@@ -135,7 +135,7 @@ export default function TeamScreen() {
         <Card className="p-5 mb-4">
           <View className="flex-row items-center mb-3">
             <View className="w-10 h-10 rounded-2xl bg-emerald-50 items-center justify-center mr-3">
-              <Users size={18} color="#059669" />
+              <Users size={18} color="#04AB94" />
             </View>
             <View className="flex-1">
               <Text className="text-[15px] font-bold text-slate-900 tracking-tight">
@@ -180,7 +180,7 @@ export default function TeamScreen() {
               <ListRow
                 key={u.id}
                 isFirst={idx === 0}
-                icon={<UserCog size={15} color="#059669" />}
+                icon={<UserCog size={15} color="#04AB94" />}
                 title={`${u.name}${isMe ? ' (You)' : ''}`}
                 subtitle={u.email}
                 meta={roleNames || u.role}

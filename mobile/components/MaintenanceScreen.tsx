@@ -30,7 +30,7 @@ export default function MaintenanceScreen({ message, eta }: Props) {
         </View>
       ) : null}
 
-      <ActivityIndicator size="small" color="#10b981" style={{ marginTop: 24 }} />
+      <ActivityIndicator size="small" color="#06D4B8" style={{ marginTop: 24 }} />
 
       <Text className="mt-8 text-[10px] text-slate-400 text-center">
         We are working to get things back up. Please try again shortly.

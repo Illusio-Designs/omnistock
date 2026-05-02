@@ -42,8 +42,8 @@ export default function PageShell({
             <RefreshControl
               refreshing={!!refreshing}
               onRefresh={onRefresh}
-              tintColor="#10b981"
-              colors={['#10b981']}
+              tintColor="#06D4B8"
+              colors={['#06D4B8']}
             />
           ) : undefined
         }
