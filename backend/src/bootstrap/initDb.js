@@ -79,6 +79,33 @@ async function initDb() {
       KEY \`wallet_txn_tenant_idx\` (\`tenantId\`, \`createdAt\`),
       KEY \`wallet_txn_wallet_idx\` (\`walletId\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    // Saved Razorpay tokens / customer ids per tenant — required for autopay
+    // (recurring charges to the wallet without re-prompting the user).
+    `CREATE TABLE IF NOT EXISTS \`tenant_payment_methods\` (
+      \`id\` varchar(191) NOT NULL,
+      \`tenantId\` varchar(191) NOT NULL,
+      \`provider\` varchar(32) NOT NULL DEFAULT 'razorpay',
+      \`providerCustomerId\` varchar(191) DEFAULT NULL,
+      \`providerTokenId\` varchar(191) DEFAULT NULL,
+      \`method\` varchar(32) DEFAULT NULL,
+      \`brand\` varchar(64) DEFAULT NULL,
+      \`last4\` varchar(8) DEFAULT NULL,
+      \`expiryMonth\` int(11) DEFAULT NULL,
+      \`expiryYear\` int(11) DEFAULT NULL,
+      \`upiVpa\` varchar(191) DEFAULT NULL,
+      \`label\` varchar(191) DEFAULT NULL,
+      \`isDefault\` tinyint(1) NOT NULL DEFAULT 0,
+      \`isActive\` tinyint(1) NOT NULL DEFAULT 1,
+      \`failureCount\` int(11) NOT NULL DEFAULT 0,
+      \`lastUsedAt\` datetime(3) DEFAULT NULL,
+      \`lastFailureAt\` datetime(3) DEFAULT NULL,
+      \`lastFailureReason\` text DEFAULT NULL,
+      \`createdAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+      \`updatedAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3) ON UPDATE current_timestamp(3),
+      PRIMARY KEY (\`id\`),
+      KEY \`pm_tenant_idx\` (\`tenantId\`, \`isActive\`),
+      KEY \`pm_default_idx\` (\`tenantId\`, \`isDefault\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   ];
   for (const sql of walletTables) {
     try { await db.raw(sql); } catch (e) { console.warn('[initDb] wallet table:', e.message); }

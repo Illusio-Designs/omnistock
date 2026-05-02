@@ -132,10 +132,26 @@ export const userApi = {
 };
 
 // ── SaaS: payments (Razorpay) ──────────────────────────────────────
+// Two flows:
+//   1. Plan checkout: checkout(planCode) → Razorpay → verify({...resp,planCode})
+//   2. Wallet top-up:  walletCheckout(amount) → Razorpay → walletVerify({...resp,amount})
+// Saved methods (cards/UPI tokens) drive the autopay job once a user opts in.
 export const paymentApi = {
-  checkout: (data: { planCode: string; billingCycle?: string }) =>
+  // Plan upgrade
+  checkout: (data: { planCode: string; billingCycle?: string; savePaymentMethod?: boolean }) =>
     api.post('/payments/checkout', data),
   verify: (data: any) => api.post('/payments/verify', data),
+  // Wallet top-up
+  walletCheckout: (data: { amount: number; savePaymentMethod?: boolean }) =>
+    api.post('/payments/wallet-checkout', data),
+  walletVerify: (data: any) => api.post('/payments/wallet-verify', data),
+  // Saved methods (autopay)
+  methods: () => api.get('/payments/methods'),
+  setDefaultMethod: (id: string) => api.post(`/payments/methods/${id}/default`, {}),
+  deleteMethod: (id: string) => api.delete(`/payments/methods/${id}`),
+  // Platform admin one-click test mode
+  applyTestConfig: (data: { keyId: string; keySecret: string; webhookSecret?: string }) =>
+    api.post('/payments/test-config', data),
 };
 
 // ── SaaS: tenant roles & RBAC ──────────────────────────────────────

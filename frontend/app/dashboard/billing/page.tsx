@@ -32,19 +32,22 @@ export default function BillingPage() {
     autoTopupTriggerBelow: '',
   });
   const [savingSettings, setSavingSettings] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
 
   const load = async () => {
-    const [s, u, p, w, t] = await Promise.all([
+    const [s, u, p, w, t, m] = await Promise.all([
       billingApi.subscription(),
       billingApi.usage(),
       planApi.list(),
       billingApi.wallet().catch(() => ({ data: null })),
       billingApi.walletTransactions(20).catch(() => ({ data: [] })),
+      paymentApi.methods().catch(() => ({ data: [] })),
     ]);
     setSub(s.data); setUsage(u.data); setPlans(p.data);
     const walletData = w.data;
     setWallet(walletData);
     setTxns(t.data?.transactions || (Array.isArray(t.data) ? t.data : []));
+    setPaymentMethods(Array.isArray(m.data) ? m.data : []);
     if (walletData) {
       setWalletSettings({
         lowBalanceThreshold: walletData.lowBalanceThreshold ?? '',
@@ -52,6 +55,26 @@ export default function BillingPage() {
         autoTopupAmount: walletData.autoTopupAmount ?? '',
         autoTopupTriggerBelow: walletData.autoTopupTriggerBelow ?? '',
       });
+    }
+  };
+
+  const setDefaultMethod = async (id: string) => {
+    try {
+      await paymentApi.setDefaultMethod(id);
+      toast.success('Default method updated');
+      await load();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.error || 'Failed');
+    }
+  };
+  const removeMethod = async (id: string) => {
+    if (!confirm('Remove this saved card?')) return;
+    try {
+      await paymentApi.deleteMethod(id);
+      toast.success('Method removed');
+      await load();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.error || 'Failed');
     }
   };
 
@@ -299,6 +322,44 @@ export default function BillingPage() {
                   placeholder="e.g. 200"
                 />
               </>
+            )}
+          </div>
+
+          {/* Saved payment methods — drives the autopay charge */}
+          <div className="mt-5 pt-5 border-t border-slate-100">
+            <div className="text-sm font-bold text-slate-900 mb-2">Saved payment methods</div>
+            {paymentMethods.length === 0 ? (
+              <div className="text-xs text-slate-500 bg-slate-50 rounded-2xl p-3 border border-slate-200">
+                No saved cards yet. Tick <b>Enable Auto Top-up</b> on your next manual top-up and we'll save the card so future top-ups happen automatically.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {paymentMethods.map((m: any) => (
+                  <div key={m.id} className="flex items-center gap-3 p-3 rounded-2xl border border-slate-200">
+                    <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-xs font-bold text-slate-700">
+                      {(m.brand || m.method || 'CARD').slice(0, 4).toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-bold text-slate-900">{m.label || `${m.brand || 'Card'} •••• ${m.last4 || ''}`}</div>
+                      <div className="text-[11px] text-slate-500">
+                        {m.expiryMonth ? `Expires ${String(m.expiryMonth).padStart(2,'0')}/${m.expiryYear}` : (m.upiVpa || 'Saved at checkout')}
+                        {m.failureCount ? ` · last failed (${m.failureCount}x)` : ''}
+                      </div>
+                    </div>
+                    {m.isDefault ? (
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg">DEFAULT</span>
+                    ) : (
+                      <Button variant="ghost" size="sm" onClick={() => setDefaultMethod(m.id)}>Set default</Button>
+                    )}
+                    <Button variant="ghost" size="sm" onClick={() => removeMethod(m.id)}>Remove</Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {walletSettings.autoTopupEnabled && paymentMethods.filter((m: any) => m.isDefault).length === 0 && (
+              <div className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-2xl p-3">
+                ⚠ Auto top-up is on but no default payment method is set. Save a card on your next top-up to activate it.
+              </div>
             )}
           </div>
         </Modal>

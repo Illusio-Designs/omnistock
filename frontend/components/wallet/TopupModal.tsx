@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Wallet } from 'lucide-react';
-import { billingApi } from '@/lib/api';
+import { Plus, Wallet, Sparkles } from 'lucide-react';
+import { billingApi, paymentApi } from '@/lib/api';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -16,25 +16,84 @@ interface TopupModalProps {
   currentBalance?: number;
 }
 
+// Lazy-loads checkout.js the first time we need it. Razorpay's SDK is a
+// single global so we cache it on window.
+function loadRazorpayCheckout(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if ((window as any).Razorpay) return resolve(true);
+    const s = document.createElement('script');
+    s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    s.onload = () => resolve(true);
+    s.onerror = () => resolve(false);
+    document.body.appendChild(s);
+  });
+}
+
 export function TopupModal({ open, onClose, currentBalance }: TopupModalProps) {
   const [amount, setAmount] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [saveCard, setSaveCard] = useState(true);
 
   const submit = async (amt: number) => {
     if (!amt || amt <= 0) return;
     setBusy(true);
     setError('');
+
     try {
-      await billingApi.topupWallet(amt);
-      window.dispatchEvent(new CustomEvent(WALLET_CHANGED_EVENT));
-      setAmount('');
-      onClose();
+      // 1. Create a Razorpay order on the backend
+      const { data } = await paymentApi.walletCheckout({ amount: amt, savePaymentMethod: saveCard });
+
+      // Stub mode (no Razorpay creds) — credit directly via the legacy
+      // /billing/wallet/topup. Useful for local/dev environments.
+      if (data.order?.stub) {
+        await billingApi.topupWallet(amt);
+        window.dispatchEvent(new CustomEvent(WALLET_CHANGED_EVENT));
+        setAmount('');
+        onClose();
+        return;
+      }
+
+      // 2. Open Razorpay Checkout for the user
+      const ok = await loadRazorpayCheckout();
+      if (!ok) throw new Error('Failed to load Razorpay');
+      const rzp = new (window as any).Razorpay({
+        key: data.keyId,
+        amount: data.order.amount,
+        currency: data.order.currency,
+        order_id: data.order.id,
+        name: 'Kartriq Wallet',
+        description: `Top up ₹${amt.toLocaleString()}`,
+        prefill: data.prefill,
+        customer_id: data.customerId || undefined,
+        theme: { color: '#06D4B8' },
+        handler: async (resp: any) => {
+          // 3. Verify the signature + credit the wallet on the backend
+          await paymentApi.walletVerify({
+            razorpay_order_id: resp.razorpay_order_id,
+            razorpay_payment_id: resp.razorpay_payment_id,
+            razorpay_signature: resp.razorpay_signature,
+            amount: amt,
+          });
+          window.dispatchEvent(new CustomEvent(WALLET_CHANGED_EVENT));
+          setAmount('');
+          onClose();
+        },
+        modal: {
+          ondismiss: () => setBusy(false),
+        },
+      });
+      rzp.on('payment.failed', (resp: any) => {
+        setError(resp?.error?.description || 'Payment failed');
+        setBusy(false);
+      });
+      rzp.open();
     } catch (e: any) {
-      setError(e?.response?.data?.error || 'Top up failed');
-    } finally {
+      setError(e?.response?.data?.error || e.message || 'Top up failed');
       setBusy(false);
+      return;
     }
+    // (don't reset busy here — the Razorpay handler resolves async)
   };
 
   return (
@@ -79,6 +138,23 @@ export function TopupModal({ open, onClose, currentBalance }: TopupModalProps) {
             min={1}
           />
         </div>
+
+        <label className="flex items-start gap-3 p-3 rounded-2xl border border-slate-200 cursor-pointer hover:border-emerald-300 transition-colors">
+          <input
+            type="checkbox"
+            checked={saveCard}
+            onChange={(e) => setSaveCard(e.target.checked)}
+            className="mt-0.5 w-4 h-4 rounded text-emerald-600"
+          />
+          <div className="flex-1">
+            <div className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
+              <Sparkles size={14} className="text-emerald-600" /> Enable Auto Top-up
+            </div>
+            <div className="text-xs text-slate-500 mt-0.5">
+              Save this card so we can auto top-up when your balance dips below your threshold. You can manage or remove it from Wallet Settings anytime.
+            </div>
+          </div>
+        </label>
 
         {error && (
           <div className="text-sm text-rose-600 font-medium">{error}</div>

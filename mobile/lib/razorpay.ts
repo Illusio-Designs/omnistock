@@ -1,23 +1,26 @@
 // Razorpay payment bridge.
 //
 // Two flows:
-//   subscribeToPlan()  → calls /payments/checkout to create a Razorpay order
-//                        for a plan upgrade, opens the native Razorpay modal,
-//                        and finalises the subscription via /payments/verify.
-//   topupWallet()      → same flow but credits the wallet on success.
+//   subscribeToPlan(planCode, billingCycle, savePaymentMethod?)
+//     → /payments/checkout → native Razorpay modal → /payments/verify
 //
-// Both use the `react-native-razorpay` native module. The module ships native
-// code so the app must be a development build (or production EAS build) — it
-// will not work in Expo Go. We lazy-require so the app boots either way.
+//   topupWallet(amount, savePaymentMethod?)
+//     → /payments/wallet-checkout → native Razorpay modal → /payments/wallet-verify
+//
+// Both use the `react-native-razorpay` native module. The module ships
+// native code so the app must be a development build (or production EAS
+// build) — it will not work in Expo Go. We lazy-require so the app boots
+// either way and falls back gracefully.
 
 import { Alert } from 'react-native';
 import { paymentApi, billingApi } from './api';
 
 type CheckoutResponse = {
-  order: { id: string; amount: number; currency: string };
+  order: { id: string; amount: number; currency: string; stub?: boolean };
   keyId: string;
-  plan: { code: string; name: string; amount: number };
-  prefill: { email: string; name: string };
+  customerId?: string | null;
+  plan?: { code: string; name: string; amount: number };
+  prefill: { email: string; name: string; contact?: string };
 };
 
 function loadRazorpay(): any | null {
@@ -29,7 +32,7 @@ function loadRazorpay(): any | null {
   }
 }
 
-function buildOptions(co: CheckoutResponse, description: string) {
+function buildOptions(co: CheckoutResponse, name: string, description: string) {
   return {
     description,
     image: 'https://kartriq.vercel.app/og-image.png',
@@ -37,10 +40,11 @@ function buildOptions(co: CheckoutResponse, description: string) {
     key: co.keyId,
     amount: co.order.amount,        // already in paise from backend
     order_id: co.order.id,
-    name: 'Kartriq',
+    name,
+    customer_id: co.customerId || undefined,
     prefill: {
       email: co.prefill.email,
-      contact: '',
+      contact: co.prefill.contact || '',
       name: co.prefill.name,
     },
     theme: { color: '#06D4B8' },
@@ -48,7 +52,39 @@ function buildOptions(co: CheckoutResponse, description: string) {
 }
 
 /** Upgrade / change subscription plan via Razorpay. */
-export async function subscribeToPlan(planCode: string, billingCycle: 'MONTHLY' | 'YEARLY' = 'MONTHLY') {
+export async function subscribeToPlan(
+  planCode: string,
+  billingCycle: 'MONTHLY' | 'YEARLY' = 'MONTHLY',
+  savePaymentMethod = true,
+) {
+  let co: CheckoutResponse;
+  try {
+    const r = await paymentApi.checkout({ planCode, billingCycle, savePaymentMethod });
+    co = r.data;
+  } catch (err: any) {
+    Alert.alert('Checkout failed', err?.response?.data?.error || err.message);
+    return { ok: false };
+  }
+
+  // Stub mode (no Razorpay creds on backend) — finalise instantly so dev
+  // environments still work.
+  if (co.order?.stub) {
+    try {
+      await paymentApi.verify({
+        razorpay_order_id: co.order.id,
+        razorpay_payment_id: `pay_stub_${Date.now()}`,
+        razorpay_signature: 'stub',
+        planCode,
+        billingCycle,
+      });
+      Alert.alert('Plan switched (dev)', `${co.plan?.name || planCode} active.`);
+      return { ok: true, dev: true };
+    } catch (err: any) {
+      Alert.alert('Failed', err?.response?.data?.error || err.message);
+      return { ok: false };
+    }
+  }
+
   const RazorpayCheckout = loadRazorpay();
   if (!RazorpayCheckout) {
     Alert.alert(
@@ -58,17 +94,8 @@ export async function subscribeToPlan(planCode: string, billingCycle: 'MONTHLY' 
     return { ok: false };
   }
 
-  let co: CheckoutResponse;
   try {
-    const r = await paymentApi.checkout({ planCode, billingCycle });
-    co = r.data;
-  } catch (err: any) {
-    Alert.alert('Checkout failed', err?.response?.data?.error || err.message);
-    return { ok: false };
-  }
-
-  try {
-    const result: any = await RazorpayCheckout.open(buildOptions(co, `${co.plan.name} (${billingCycle})`));
+    const result: any = await RazorpayCheckout.open(buildOptions(co, 'Kartriq', `${co.plan?.name || planCode} (${billingCycle})`));
     await paymentApi.verify({
       razorpay_order_id: result.razorpay_order_id,
       razorpay_payment_id: result.razorpay_payment_id,
@@ -76,7 +103,7 @@ export async function subscribeToPlan(planCode: string, billingCycle: 'MONTHLY' 
       planCode,
       billingCycle,
     });
-    Alert.alert('Subscription updated', `You're now on ${co.plan.name}.`);
+    Alert.alert('Subscription updated', `You're now on ${co.plan?.name || planCode}.`);
     return { ok: true };
   } catch (err: any) {
     if (err?.code === 0 || err?.code === 'PAYMENT_CANCELLED') return { ok: false, cancelled: true };
@@ -86,18 +113,57 @@ export async function subscribeToPlan(planCode: string, billingCycle: 'MONTHLY' 
 }
 
 /**
- * Top up the tenant wallet by `amount`. The backend currently only exposes
- * a direct credit endpoint (`/billing/wallet/topup`), so we credit on the
- * server side without an actual Razorpay charge. When a dedicated
- * `/payments/wallet-checkout` endpoint ships, swap this for the same
- * Razorpay open → verify → credit pattern used by subscribeToPlan().
+ * Top up the tenant wallet via Razorpay. Optionally saves the card so the
+ * backend autopay job can recharge automatically when the balance dips.
  */
-export async function topupWallet(amount: number, paymentRef?: string) {
+export async function topupWallet(amount: number, savePaymentMethod = true) {
+  let co: CheckoutResponse;
   try {
-    await billingApi.topupWallet(amount, paymentRef);
-    return { ok: true };
+    const r = await paymentApi.walletCheckout({ amount, savePaymentMethod });
+    co = r.data;
   } catch (err: any) {
     Alert.alert('Top-up failed', err?.response?.data?.error || err.message);
+    return { ok: false };
+  }
+
+  // Stub mode (dev / no Razorpay creds) — credit immediately so the wallet
+  // ledger stays usable while developing.
+  if (co.order?.stub) {
+    try {
+      await billingApi.topupWallet(amount);
+      return { ok: true, dev: true };
+    } catch (err: any) {
+      Alert.alert('Top-up failed', err?.response?.data?.error || err.message);
+      return { ok: false };
+    }
+  }
+
+  const RazorpayCheckout = loadRazorpay();
+  if (!RazorpayCheckout) {
+    Alert.alert(
+      'Razorpay not available',
+      'Rebuild the dev client with react-native-razorpay to charge a real card. Falling back to dev credit.'
+    );
+    try {
+      await billingApi.topupWallet(amount);
+      return { ok: true, dev: true };
+    } catch {
+      return { ok: false };
+    }
+  }
+
+  try {
+    const result: any = await RazorpayCheckout.open(buildOptions(co, 'Kartriq Wallet', `Top-up ₹${amount}`));
+    await paymentApi.walletVerify({
+      razorpay_order_id: result.razorpay_order_id,
+      razorpay_payment_id: result.razorpay_payment_id,
+      razorpay_signature: result.razorpay_signature,
+      amount,
+    });
+    return { ok: true };
+  } catch (err: any) {
+    if (err?.code === 0 || err?.code === 'PAYMENT_CANCELLED') return { ok: false, cancelled: true };
+    Alert.alert('Top-up failed', err?.description || err?.response?.data?.error || err?.message || 'Unknown error');
     return { ok: false };
   }
 }

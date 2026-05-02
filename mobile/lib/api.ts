@@ -124,13 +124,20 @@ export const ticketApi = {
 };
 
 // ── Razorpay checkout / verification ──────────────────────────────
-// `checkout` returns { orderId, keyId, amount, currency } that should be fed
-// into the react-native-razorpay SDK; `verify` posts the signed handler
-// response back so the backend can confirm and credit the wallet/plan.
+// Plan flow:    checkout(planCode) → react-native-razorpay → verify(...)
+// Wallet flow:  walletCheckout(amount) → react-native-razorpay → walletVerify(...)
+// Methods:      methods() / setDefaultMethod(id) / deleteMethod(id)  drive
+//               the backend autopay job for wallet auto top-ups.
 export const paymentApi = {
-  checkout: (data: { planCode: string; billingCycle?: string }) =>
+  checkout: (data: { planCode: string; billingCycle?: string; savePaymentMethod?: boolean }) =>
     api.post('/payments/checkout', data),
   verify: (data: any) => api.post('/payments/verify', data),
+  walletCheckout: (data: { amount: number; savePaymentMethod?: boolean }) =>
+    api.post('/payments/wallet-checkout', data),
+  walletVerify: (data: any) => api.post('/payments/wallet-verify', data),
+  methods: () => api.get('/payments/methods'),
+  setDefaultMethod: (id: string) => api.post(`/payments/methods/${id}/default`, {}),
+  deleteMethod: (id: string) => api.delete(`/payments/methods/${id}`),
 };
 
 // ── Public CMS (no auth required — used by the marketing/onboarding flow) ──

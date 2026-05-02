@@ -21,6 +21,7 @@ const {
   pushInventoryToChannel,
 } = require('../services/channel.service');
 const { processReviewQueue } = require('../services/review.service');
+const { runAutopayJob } = require('./autopay.job');
 
 // ── 1. Pull new orders from every active channel that supports it ───────────
 async function syncChannelOrders() {
@@ -153,6 +154,7 @@ async function runAllJobs() {
     await safe('pushInventoryToAll', pushInventoryToAll),
     await safe('pollShipmentStatus', pollShipmentStatus),
     await safe('processReviewQueue', () => processReviewQueue({})),
+    await safe('runAutopayJob', runAutopayJob),
   );
 
   console.log('[cron] done in', Date.now() - t0, 'ms', out);
@@ -180,12 +182,14 @@ function start() {
   const inventoryInterval = Number(process.env.CRON_INVENTORY_MIN || 15);
   const trackingInterval  = Number(process.env.CRON_TRACKING_MIN || 10);
   const reviewInterval    = Number(process.env.CRON_REVIEW_MIN || 60);
+  const autopayInterval   = Number(process.env.CRON_AUTOPAY_MIN || 15);
 
   console.log('[cron] scheduling:', {
     orderSyncMin: orderSyncInterval,
     inventoryMin: inventoryInterval,
     trackingMin: trackingInterval,
     reviewMin: reviewInterval,
+    autopayMin: autopayInterval,
   });
 
   _intervals.push(
@@ -193,6 +197,7 @@ function start() {
     setInterval(() => pushInventoryToAll().catch((e) => console.error('[cron] pushInventoryToAll:', e.message)), minutes(inventoryInterval)),
     setInterval(() => pollShipmentStatus().catch((e) => console.error('[cron] pollShipmentStatus:', e.message)), minutes(trackingInterval)),
     setInterval(() => processReviewQueue({}).catch((e) => console.error('[cron] processReviewQueue:', e.message)), minutes(reviewInterval)),
+    setInterval(() => runAutopayJob().catch((e) => console.error('[cron] runAutopayJob:', e.message)), minutes(autopayInterval)),
   );
 }
 
