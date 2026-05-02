@@ -5,7 +5,7 @@ const { makeOrderShape } = require('../_base');
 // Wish Merchant Platform adapter — mobile-first global marketplace.
 //
 // Auth model — founder-app OAuth 2.0:
-//   1. Uniflo registers a Wish app at https://merchant.wish.com/api-partner
+//   1. Kartriq registers a Wish app at https://merchant.wish.com/api-partner
 //      and stores client_id + client_secret + redirectUri in settings.service:
 //      wish.clientId / wish.clientSecret / wish.redirectUri.
 //   2. Seller (tenant) clicks Authorize → consent on merchant.wish.com →

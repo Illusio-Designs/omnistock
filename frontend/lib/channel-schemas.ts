@@ -657,7 +657,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     steps: [
       'Click "Authorize with Amazon" below',
       'Log in to your Amazon.com Seller Central account when prompted',
-      'Approve Uniflo\'s access to your inventory and orders',
+      'Approve Kartriq\'s access to your inventory and orders',
       'You\'ll be redirected back automatically',
     ],
     fields: [],
@@ -669,7 +669,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     steps: [
       'Click "Authorize with Amazon" below',
       'Log in to your Amazon UK Seller Central account when prompted',
-      'Approve Uniflo\'s access to your inventory and orders',
+      'Approve Kartriq\'s access to your inventory and orders',
       'You\'ll be redirected back automatically',
     ],
     fields: [],
@@ -681,7 +681,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     steps: [
       'Click "Authorize with Amazon" below',
       'Log in to your Amazon UAE Seller Central account when prompted',
-      'Approve Uniflo\'s access to your inventory and orders',
+      'Approve Kartriq\'s access to your inventory and orders',
       'You\'ll be redirected back automatically',
     ],
     fields: [],
@@ -693,7 +693,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     steps: [
       'Click "Authorize with Amazon" below',
       'Log in to your Amazon Saudi Arabia Seller Central account when prompted',
-      'Approve Uniflo\'s access to your inventory and orders',
+      'Approve Kartriq\'s access to your inventory and orders',
       'You\'ll be redirected back automatically',
     ],
     fields: [],
@@ -705,7 +705,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     steps: [
       'Click "Authorize with Amazon" below',
       'Log in to your Amazon Singapore Seller Central account when prompted',
-      'Approve Uniflo\'s access to your inventory and orders',
+      'Approve Kartriq\'s access to your inventory and orders',
       'You\'ll be redirected back automatically',
     ],
     fields: [],
@@ -717,7 +717,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     steps: [
       'Click "Authorize with Amazon" below',
       'Log in to your Amazon Australia Seller Central account when prompted',
-      'Approve Uniflo\'s access to your inventory and orders',
+      'Approve Kartriq\'s access to your inventory and orders',
       'You\'ll be redirected back automatically',
     ],
     fields: [],
@@ -729,7 +729,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     steps: [
       'Click "Authorize with Amazon" below',
       'Log in to your Amazon Germany Seller Central account when prompted',
-      'Approve Uniflo\'s access to your inventory and orders',
+      'Approve Kartriq\'s access to your inventory and orders',
       'You\'ll be redirected back automatically',
     ],
     fields: [],
@@ -841,7 +841,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     steps: [
       'Click "Authorize with Allegro" below',
       'Sign in to your Allegro account when prompted',
-      'Approve Uniflo\'s access to orders + inventory',
+      'Approve Kartriq\'s access to orders + inventory',
       'You\'ll be redirected back automatically',
     ],
     fields: [
@@ -875,7 +875,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
       'Sign in to your OnBuy seller account',
       'Open Settings → API Access and copy the Consumer Key + Secret Key',
       'Pick the OnBuy site (2000 = UK)',
-      'Paste below — Uniflo manages the 1-hour access tokens for you',
+      'Paste below — Kartriq manages the 1-hour access tokens for you',
     ],
     fields: [
       { key: 'consumerKey', label: 'OnBuy Consumer Key', kind: 'text',     required: true },
@@ -921,7 +921,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     steps: [
       'Sign in to R-Login (your Rakuten merchant control panel)',
       'Open API settings and copy the Service Secret + License Key',
-      'Paste both below — Uniflo combines them into the ESA auth header',
+      'Paste both below — Kartriq combines them into the ESA auth header',
     ],
     fields: [
       { key: 'serviceSecret', label: 'Service Secret', kind: 'password', required: true, secret: true, help: 'From R-Login → API settings.' },
@@ -937,7 +937,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
       'Sign in to zDirect (https://zdirect.com)',
       'Open API → Manage Clients and create a new client',
       'Copy the client ID, client secret, and merchant ID',
-      'Paste below — Uniflo handles the OAuth client-credentials grant',
+      'Paste below — Kartriq handles the OAuth client-credentials grant',
     ],
     fields: [
       { key: 'clientId',     label: 'zDirect Client ID',     kind: 'text',     required: true },
@@ -954,7 +954,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
       'Sign in to Kaufland Seller Center → Settings → API Access',
       'Generate a Client Key + Secret Key',
       'Pick the storefront you sell on',
-      'Paste below — Uniflo HMAC-signs every request automatically',
+      'Paste below — Kartriq HMAC-signs every request automatically',
     ],
     fields: [
       { key: 'clientKey',  label: 'Client Key', kind: 'text',     required: true },
@@ -978,7 +978,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     steps: [
       'Click "Authorize with Wish" below',
       'Sign in to your Wish merchant account when prompted',
-      'Approve Uniflo\'s access to your inventory and orders',
+      'Approve Kartriq\'s access to your inventory and orders',
       'You\'ll be redirected back automatically',
     ],
     fields: [],

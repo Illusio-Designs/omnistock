@@ -264,7 +264,7 @@ export default function IntegrationsPage() {
                 href="/onboarding"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-sm font-bold rounded-full shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all"
               >
-                Try Uniflo Free <ArrowRight size={14} />
+                Try Kartriq Free <ArrowRight size={14} />
               </Link>
               <Link
                 href="/contact"

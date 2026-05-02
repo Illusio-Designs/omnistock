@@ -6,7 +6,7 @@ const { makeOrderShape } = require('../_base');
 // Lazada Open Platform adapter — multi-region (SG/TH/PH/MY/VN/ID).
 //
 // Auth model — founder-app OAuth:
-//   1. Uniflo registers a Lazada Open Platform app at https://open.lazada.com/apps.
+//   1. Kartriq registers a Lazada Open Platform app at https://open.lazada.com/apps.
 //      App key + app secret are stored once in settings.service under
 //      lazada.appKey / lazada.appSecret.
 //   2. Seller (tenant) clicks "Authorize" → goes through https://auth.lazada.com,

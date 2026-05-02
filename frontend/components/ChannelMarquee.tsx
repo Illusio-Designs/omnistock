@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-// ── Every single channel supported by Uniflo ──────────────────────────
+// ── Every single channel supported by Kartriq ──────────────────────────
 // Keep this in sync with backend/src/data/channel-catalog.js
 // `key` is the local logo filename: /logos/<key>.png
 export const ALL_CHANNELS = [

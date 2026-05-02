@@ -6,7 +6,7 @@ const { makeOrderShape } = require('../_base');
 // Shopee Open Platform adapter — multi-region (SG/MY/TH/ID/VN/PH/TW/BR/MX/CO/CL/PL).
 //
 // Auth model — founder-app OAuth:
-//   1. Uniflo registers a Shopee Open Platform app at https://open.shopee.com
+//   1. Kartriq registers a Shopee Open Platform app at https://open.shopee.com
 //      and receives partner_id + partner_key. These are stored once, platform-
 //      wide, in settings.service under shopee.partnerId / shopee.partnerKey.
 //   2. Seller (tenant) is sent to /shop/auth_partner with a signed link, logs

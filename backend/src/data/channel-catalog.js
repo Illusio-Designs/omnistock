@@ -1,4 +1,4 @@
-// Master catalog of every channel Uniflo supports.
+// Master catalog of every channel Kartriq supports.
 // `integrated`  → adapter file exists in the codebase
 // `comingSoon`  → adapter exists but has NOT been smoke-tested against live
 //                  seller credentials yet — do not advertise as production-ready

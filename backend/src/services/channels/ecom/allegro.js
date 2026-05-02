@@ -5,7 +5,7 @@ const { makeOrderShape } = require('../_base');
 // Allegro adapter — Poland's leading marketplace.
 //
 // Auth model — founder-app OAuth 2.0 (Authorization Code Grant):
-//   1. Uniflo registers one Allegro app at https://apps.developer.allegro.pl
+//   1. Kartriq registers one Allegro app at https://apps.developer.allegro.pl
 //      and stores client_id + client_secret + redirectUri in settings.service:
 //      allegro.clientId / allegro.clientSecret / allegro.redirectUri.
 //   2. Seller (tenant) clicks Authorize → consent on allegro.pl/auth/oauth →

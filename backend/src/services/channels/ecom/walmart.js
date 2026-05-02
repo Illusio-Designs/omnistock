@@ -5,10 +5,10 @@ const { makeOrderShape } = require('../_base');
 // Walmart Marketplace adapter (US, Canada, Mexico)
 //
 // Auth model — Solution Provider founder-app:
-//   1. Uniflo registers a Solution Provider app at https://developer.walmart.com
+//   1. Kartriq registers a Solution Provider app at https://developer.walmart.com
 //      and receives clientId + clientSecret. These are stored once, platform-
 //      wide, in settings.service under walmart.clientId / walmart.clientSecret.
-//   2. A seller (tenant) authorises Uniflo to act on their behalf and tells us
+//   2. A seller (tenant) authorises Kartriq to act on their behalf and tells us
 //      their Walmart partnerId. We mint short-lived access tokens per request
 //      using client_credentials + WM_PARTNER.ID = seller's partnerId.
 //

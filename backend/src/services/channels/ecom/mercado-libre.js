@@ -5,7 +5,7 @@ const { makeOrderShape } = require('../_base');
 // Mercado Libre adapter — Latin America (AR, BR, MX, CL, CO, UY, PE, VE).
 //
 // Auth model — founder-app OAuth 2.0:
-//   1. Uniflo registers one Mercado Libre app at https://developers.mercadolibre.com
+//   1. Kartriq registers one Mercado Libre app at https://developers.mercadolibre.com
 //      and stores client_id + client_secret + redirectUri in settings.service:
 //      mercadolibre.clientId / mercadolibre.clientSecret / mercadolibre.redirectUri.
 //   2. Seller (tenant) clicks Authorize → consent on auth.mercadolibre.com.<tld>
