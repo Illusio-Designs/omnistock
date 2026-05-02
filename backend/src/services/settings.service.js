@@ -21,7 +21,10 @@ async function loadAll() {
     let val = row.value;
     if (row.isSecret && val) {
       try {
-        const parsed = JSON.parse(val);
+        // The prisma shim auto-parses any string starting with `{` or `[` into an
+        // object, so by the time we get here `val` may already be the encrypted
+        // payload object — only JSON.parse it if it's still a raw string.
+        const parsed = typeof val === 'string' ? JSON.parse(val) : val;
         val = decryptCredentials(parsed);
       } catch {
         val = null;

@@ -56,12 +56,21 @@ async function getAppCredentials(creds) {
   return { clientId, clientSecret };
 }
 
+// Sandbox endpoints serve mock data and accept Draft-state apps. Set
+// `sandbox: true` in channel credentials (or pass amazon.sandbox=true in
+// Admin → Settings) to test against them while the production app is still
+// in Sandbox status on the Amazon Developer Console.
+function toSandboxHost(prodEndpoint) {
+  return prodEndpoint.replace('https://sellingpartnerapi-', 'https://sandbox.sellingpartnerapi-');
+}
+
 class AmazonAdapter {
   constructor(credentials) {
     this.creds = credentials || {};
     this.region = this.creds.region || 'IN';
     const cfg = getRegionConfig(this.region);
-    this.endpoint = cfg.endpoint;
+    this.sandbox = this.creds.sandbox === true || this.creds.sandbox === 'true';
+    this.endpoint = this.sandbox ? toSandboxHost(cfg.endpoint) : cfg.endpoint;
     this.marketplaceId = cfg.marketplaceId;
     this._accessToken = null;
     this._tokenExpiry = null;
@@ -71,13 +80,23 @@ class AmazonAdapter {
     if (this._accessToken && this._tokenExpiry > Date.now()) {
       return this._accessToken;
     }
+    if (!this.creds.refreshToken) {
+      throw new Error('Amazon connection missing refreshToken — complete the seller OAuth flow first.');
+    }
     const { clientId, clientSecret } = await getAppCredentials(this.creds);
-    const { data } = await axios.post(LWA_URL, {
-      grant_type: 'refresh_token',
-      refresh_token: this.creds.refreshToken,
-      client_id: clientId,
-      client_secret: clientSecret,
-    });
+    let data;
+    try {
+      ({ data } = await axios.post(LWA_URL, {
+        grant_type: 'refresh_token',
+        refresh_token: this.creds.refreshToken,
+        client_id: clientId,
+        client_secret: clientSecret,
+      }));
+    } catch (err) {
+      const body = err.response?.data;
+      const reason = body?.error_description || body?.error || err.message;
+      throw new Error(`Amazon LWA token exchange failed (${err.response?.status || '?'}): ${reason}`);
+    }
     this._accessToken = data.access_token;
     this._tokenExpiry = Date.now() + (data.expires_in - 60) * 1000;
     return this._accessToken;
@@ -85,13 +104,27 @@ class AmazonAdapter {
 
   async _request(method, path, params = {}) {
     const token = await this._getAccessToken();
-    const { data } = await axios({
-      method,
-      url: `${this.endpoint}${path}`,
-      headers: { 'x-amz-access-token': token, 'Content-Type': 'application/json' },
-      params,
-    });
-    return data;
+    try {
+      const { data } = await axios({
+        method,
+        url: `${this.endpoint}${path}`,
+        headers: { 'x-amz-access-token': token, 'Content-Type': 'application/json' },
+        params,
+      });
+      return data;
+    } catch (err) {
+      const status = err.response?.status;
+      const body   = err.response?.data;
+      // SP-API errors: { errors: [{ code, message, details }] }
+      const apiMsg = body?.errors?.[0]?.message
+                  || body?.errors?.[0]?.code
+                  || body?.message
+                  || err.message;
+      const hint = status === 403
+        ? ' — common causes: (1) the seller has not authorized this SP-API role, (2) the refresh token is from a different region than the configured endpoint, or (3) the app is in Draft state and not approved for this role on Amazon Developer Console.'
+        : '';
+      throw new Error(`Amazon SP-API ${method} ${path} failed (${status || '?'}): ${apiMsg}${hint}`);
+    }
   }
 
   async testConnection() {

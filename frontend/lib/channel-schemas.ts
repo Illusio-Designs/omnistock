@@ -115,6 +115,16 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
         secret: true,
         help: 'Develop Apps → your app → click "Authorize" / "Self Authorize" to generate. Begins with "Atzr|...". Skip this field if you\'re using the OAuth button.',
       },
+      {
+        key: 'sandbox',
+        label: 'Use SP-API Sandbox',
+        kind: 'select',
+        options: [
+          { value: 'false', label: 'No — production endpoint (default)' },
+          { value: 'true',  label: 'Yes — sandbox endpoint (mock data, for Draft apps)' },
+        ],
+        help: 'Turn this on while your app is still in "Sandbox" status on the Amazon Developer Console. Production endpoints reject Draft apps with 403. Sandbox returns canned mock data so you can test the connection wiring.',
+      },
     ],
   },
 
