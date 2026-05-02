@@ -22,12 +22,14 @@ const CATALOG = [
     integrated: true,
     requiresApproval: true,
     features: ['orders', 'inventory', 'tracking'],
+    // LWA Client ID + Client Secret are auto-pulled from platform settings
+    // (amazon.clientId / amazon.clientSecret) and so do not appear on the
+    // tenant-facing credentials form. Tenants either run OAuth (preferred)
+    // or paste a Self-Authorized refresh token for fast testing.
     credentialsSchema: [
-      { key: 'sellerId',     label: 'Seller ID',          type: 'text',     required: true  },
-      { key: 'clientId',     label: 'LWA Client ID',      type: 'text',     required: true  },
-      { key: 'clientSecret', label: 'LWA Client Secret',  type: 'password', required: true  },
-      { key: 'refreshToken', label: 'Refresh Token',      type: 'password', required: true  },
-      { key: 'region',       label: 'Region',             type: 'select',   required: true, options: ['IN','US','EU'], default: 'IN' },
+      { key: 'sellerId',     label: 'Seller ID',          type: 'text',     required: true,  help: 'Seller Central → Settings → Account Info. Auto-filled if you use the OAuth button.' },
+      { key: 'refreshToken', label: 'Refresh Token',      type: 'password', required: false, help: 'Skip if using OAuth. Otherwise: Develop Apps → your app → click "Self Authorize" to generate; begins with Atzr|.' },
+      { key: 'region',       label: 'Region',             type: 'select',   required: true,  options: ['IN','US','EU'], default: 'IN' },
     ],
     applyUrl: 'https://sellercentral.amazon.in',
     docsUrl:  'https://developer-docs.amazon.com/sp-api/',
@@ -581,11 +583,12 @@ const CATALOG = [
     tagline: 'D2C website builder powered by Amazon MCF',
     integrated: true,
     features: ['orders', 'webhook', 'mcf_fulfillment', 'mcf_tracking', 'fba_inventory'],
+    // LWA Client ID / Client Secret are auto-pulled from amazon.clientId /
+    // amazon.clientSecret platform settings. Tenants only need to provide
+    // their seller-specific values.
     credentialsSchema: [
-      { key: 'clientId',     label: 'LWA Client ID',     type: 'text',     required: true  },
-      { key: 'clientSecret', label: 'LWA Client Secret', type: 'password', required: true  },
-      { key: 'refreshToken', label: 'Refresh Token',     type: 'password', required: true  },
-      { key: 'sellerId',     label: 'Seller ID',         type: 'text',     required: true  },
+      { key: 'sellerId',     label: 'Seller ID',         type: 'text',     required: true,  help: 'Seller Central → Settings → Account Info.' },
+      { key: 'refreshToken', label: 'Refresh Token',     type: 'password', required: false, help: 'Skip if using OAuth. Otherwise: Develop Apps → your app → "Self Authorize"; begins with Atzr|.' },
       { key: 'webhookSecret',label: 'Webhook Secret',    type: 'password', required: false },
     ],
     applyUrl: 'https://smartcommerce.amazon.in/smartbiz',
@@ -841,43 +844,64 @@ const CATALOG = [
       pending('AMAZON_US',       'ECOM', 'Amazon US',              'Amazon.com — US marketplace', {
         applyUrl: 'https://sellercentral.amazon.com',
         docsUrl:  'https://developer-docs.amazon.com/sp-api/',
-        credentialsSchema: [], // OAuth-driven — sellers click "Authorize with Amazon"
+        credentialsSchema: [
+          { key: 'sellerId', label: 'Seller ID', type: 'text', required: false, help: 'Auto-filled if you use OAuth.' },
+          { key: 'refreshToken', label: 'Refresh Token', type: 'password', required: false, help: 'Skip if using OAuth. Otherwise: Self Authorize from Develop Apps; begins with Atzr|.' },
+        ], // OAuth-driven by default — fields are only used when pasting a Self-Authorized refresh token
         note: 'Reuses the platform Amazon SP-API app (amazon.appId / amazon.clientId / amazon.clientSecret). Region is fixed to US (marketplace ATVPDKIKX0DER, NA SP-API host). Smoke-test by registering the SP-API app for the North America region in Seller Central.',
       }),
       pending('AMAZON_UK',  'ECOM', 'Amazon UK',           'Amazon.co.uk — UK marketplace', {
         applyUrl: 'https://sellercentral.amazon.co.uk',
         docsUrl:  'https://developer-docs.amazon.com/sp-api/',
-        credentialsSchema: [],
+        credentialsSchema: [
+          { key: 'sellerId', label: 'Seller ID', type: 'text', required: false, help: 'Auto-filled if you use OAuth.' },
+          { key: 'refreshToken', label: 'Refresh Token', type: 'password', required: false, help: 'Skip if using OAuth. Otherwise: Self Authorize from Develop Apps; begins with Atzr|.' },
+        ],
         note: 'Reuses the platform Amazon SP-API app. Region locked to UK (marketplace A1F83G8C2ARO7P, EU SP-API host). Smoke-test against a UK sandbox seller.',
       }),
       pending('AMAZON_UAE', 'ECOM', 'Amazon UAE',          'Amazon.ae — UAE marketplace', {
         applyUrl: 'https://sellercentral.amazon.ae',
         docsUrl:  'https://developer-docs.amazon.com/sp-api/',
-        credentialsSchema: [],
+        credentialsSchema: [
+          { key: 'sellerId', label: 'Seller ID', type: 'text', required: false, help: 'Auto-filled if you use OAuth.' },
+          { key: 'refreshToken', label: 'Refresh Token', type: 'password', required: false, help: 'Skip if using OAuth. Otherwise: Self Authorize from Develop Apps; begins with Atzr|.' },
+        ],
         note: 'Reuses the platform Amazon SP-API app. Region locked to AE (marketplace A2VIGQ35RCS4UG, EU SP-API host). Smoke-test against a UAE sandbox seller.',
       }),
       pending('AMAZON_SA',  'ECOM', 'Amazon Saudi Arabia', 'Amazon.sa — Saudi marketplace', {
         applyUrl: 'https://sellercentral.amazon.sa',
         docsUrl:  'https://developer-docs.amazon.com/sp-api/',
-        credentialsSchema: [],
+        credentialsSchema: [
+          { key: 'sellerId', label: 'Seller ID', type: 'text', required: false, help: 'Auto-filled if you use OAuth.' },
+          { key: 'refreshToken', label: 'Refresh Token', type: 'password', required: false, help: 'Skip if using OAuth. Otherwise: Self Authorize from Develop Apps; begins with Atzr|.' },
+        ],
         note: 'Reuses the platform Amazon SP-API app. Region locked to SA (marketplace A17E79C6D8DWNP, EU SP-API host). Smoke-test against a Saudi sandbox seller.',
       }),
       pending('AMAZON_SG',  'ECOM', 'Amazon Singapore',    'Amazon.sg — Singapore marketplace', {
         applyUrl: 'https://sellercentral.amazon.sg',
         docsUrl:  'https://developer-docs.amazon.com/sp-api/',
-        credentialsSchema: [],
+        credentialsSchema: [
+          { key: 'sellerId', label: 'Seller ID', type: 'text', required: false, help: 'Auto-filled if you use OAuth.' },
+          { key: 'refreshToken', label: 'Refresh Token', type: 'password', required: false, help: 'Skip if using OAuth. Otherwise: Self Authorize from Develop Apps; begins with Atzr|.' },
+        ],
         note: 'Reuses the platform Amazon SP-API app. Region locked to SG (marketplace A19VAU5U5O7RUS, FE SP-API host). Smoke-test against a Singapore sandbox seller.',
       }),
       pending('AMAZON_AU',  'ECOM', 'Amazon Australia',    'Amazon.com.au — AU marketplace', {
         applyUrl: 'https://sellercentral.amazon.com.au',
         docsUrl:  'https://developer-docs.amazon.com/sp-api/',
-        credentialsSchema: [],
+        credentialsSchema: [
+          { key: 'sellerId', label: 'Seller ID', type: 'text', required: false, help: 'Auto-filled if you use OAuth.' },
+          { key: 'refreshToken', label: 'Refresh Token', type: 'password', required: false, help: 'Skip if using OAuth. Otherwise: Self Authorize from Develop Apps; begins with Atzr|.' },
+        ],
         note: 'Reuses the platform Amazon SP-API app. Region locked to AU (marketplace A39IBJ37TRP1C6, FE SP-API host). Smoke-test against an Australian sandbox seller.',
       }),
       pending('AMAZON_DE',  'ECOM', 'Amazon Germany',      'Amazon.de — Germany marketplace', {
         applyUrl: 'https://sellercentral.amazon.de',
         docsUrl:  'https://developer-docs.amazon.com/sp-api/',
-        credentialsSchema: [],
+        credentialsSchema: [
+          { key: 'sellerId', label: 'Seller ID', type: 'text', required: false, help: 'Auto-filled if you use OAuth.' },
+          { key: 'refreshToken', label: 'Refresh Token', type: 'password', required: false, help: 'Skip if using OAuth. Otherwise: Self Authorize from Develop Apps; begins with Atzr|.' },
+        ],
         note: 'Reuses the platform Amazon SP-API app. Region locked to DE (marketplace A1PA6795UKMFR9, EU SP-API host). Smoke-test against a German sandbox seller.',
       }),
       pending('LAZADA', 'ECOM', 'Lazada', 'Southeast Asia marketplace', {
@@ -1099,7 +1123,15 @@ const CATALOG = [
       pending('EASYVMS',         'RETURNS', 'EasyVMS',              'Returns fraud prevention',          { features: ['returns','fraud_check'], applyUrl: 'https://vms.easyecom.io' }),
 
       // ── FULFILLMENT / 3PL (new category) ───────────────────────
-      pending('AMAZON_FBA',      'FULFILLMENT', 'Amazon FBA',       "Amazon's fulfillment network",      { features: ['fulfillment','tracking','inventory_sync'], applyUrl: 'https://sell.amazon.in/fulfillment-by-amazon' }),
+      pending('AMAZON_FBA',      'FULFILLMENT', 'Amazon FBA',       "Amazon's fulfillment network",      {
+        features: ['fulfillment','tracking','inventory_sync'],
+        applyUrl: 'https://sell.amazon.in/fulfillment-by-amazon',
+        // Reuses platform Amazon SP-API app — same as the marketplace channels
+        credentialsSchema: [
+          { key: 'sellerId', label: 'Seller ID', type: 'text', required: false, help: 'Auto-filled if you use OAuth.' },
+          { key: 'refreshToken', label: 'Refresh Token', type: 'password', required: false, help: 'Skip if using OAuth. Otherwise: Self Authorize from Develop Apps; begins with Atzr|.' },
+        ],
+      }),
       pending('FLIPKART_SMART_FULFILLMENT','FULFILLMENT','Flipkart Smart Fulfillment','Flipkart-managed warehousing & fulfillment', { features: ['fulfillment','tracking','inventory_sync'], applyUrl: 'https://seller.flipkart.com' }),
       pending('WAREIQ',          'FULFILLMENT', 'WareIQ',           'On-demand 3PL fulfillment network', { features: ['fulfillment','tracking','inventory_sync'], applyUrl: 'https://wareiq.com' }),
       pending('LOGINEXT',        'FULFILLMENT', 'LogiNext',         'Logistics & fulfillment automation',{ features: ['fulfillment','tracking'], applyUrl: 'https://www.loginextsolutions.com' }),

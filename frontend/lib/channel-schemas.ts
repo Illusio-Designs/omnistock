@@ -28,6 +28,27 @@ export interface ChannelSchema {
   oauth?: 'amazon' | 'shopify' | 'flipkart' | 'meta' | 'lazada' | 'shopee' | 'mercadolibre' | 'allegro' | 'wish';
 }
 
+// Shared fallback fields for any Amazon SP-API channel — lets a tenant skip
+// the OAuth round-trip by pasting a Self-Authorized refresh token from
+// Seller Central → Develop Apps → "Authorize" / "Self Authorize". Works
+// because backend/src/services/channels/ecom/amazon.js auto-pulls
+// amazon.clientId + amazon.clientSecret from platform settings.
+const AMAZON_MANUAL_FIELDS: ChannelField[] = [
+  {
+    key: 'sellerId',
+    label: 'Seller ID (only for manual paste)',
+    kind: 'text',
+    help: 'Seller Central → Settings → Account Info. Skip this field if you\'re using the OAuth button — it\'s filled in automatically after authorization.',
+  },
+  {
+    key: 'refreshToken',
+    label: 'Refresh Token (only for manual paste)',
+    kind: 'password',
+    secret: true,
+    help: 'Develop Apps → your app → click "Authorize" / "Self Authorize" to issue. Begins with "Atzr|...". Skip this field if you\'re using the OAuth button.',
+  },
+];
+
 export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
   AMAZON_SMARTBIZ: {
     type: 'AMAZON_SMARTBIZ',
@@ -61,13 +82,12 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
     type: 'AMAZON',
     name: 'Amazon Marketplace',
     docsUrl: 'https://developer-docs.amazon.com/sp-api',
-    description: 'Amazon SP-API for sellers on amazon.in / .com / .co.uk etc.',
+    description: 'Amazon SP-API for sellers on amazon.in / .com / .co.uk etc. Two ways to connect: (a) click "Authorize with Amazon" to do the standard OAuth round-trip, or (b) paste a Self-Authorized refresh token from Seller Central → Develop Apps → Authorize.',
     oauth: 'amazon',
     steps: [
-      'Click "Authorize with Amazon" below',
-      'Sign in to Seller Central',
-      'Approve Kartriq\'s access scopes',
-      'You\'ll be redirected back automatically',
+      'Pick the marketplace region',
+      'EITHER click "Authorize with Amazon" (OAuth — best for onboarding)',
+      'OR paste a Self-Authorized refresh token from your developer app (fastest for testing your own seller account)',
     ],
     fields: [
       {
@@ -81,6 +101,19 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
           { value: 'EU', label: 'Europe / UK' },
         ],
         help: 'Pick the marketplace where your Seller Central account is registered — it sets the SP-API endpoint.',
+      },
+      {
+        key: 'sellerId',
+        label: 'Seller ID (only for manual paste)',
+        kind: 'text',
+        help: 'Seller Central → Settings → Account Info. Skip this field if you\'re using OAuth — it\'s filled in automatically.',
+      },
+      {
+        key: 'refreshToken',
+        label: 'Refresh Token (only for manual paste)',
+        kind: 'password',
+        secret: true,
+        help: 'Develop Apps → your app → click "Authorize" / "Self Authorize" to generate. Begins with "Atzr|...". Skip this field if you\'re using the OAuth button.',
       },
     ],
   },
@@ -660,7 +693,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
       'Approve Kartriq\'s access to your inventory and orders',
       'You\'ll be redirected back automatically',
     ],
-    fields: [],
+    fields: [...AMAZON_MANUAL_FIELDS],
   },
   AMAZON_UK: {
     type: 'AMAZON_UK', name: 'Amazon UK', docsUrl: 'https://sellercentral.amazon.co.uk',
@@ -672,7 +705,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
       'Approve Kartriq\'s access to your inventory and orders',
       'You\'ll be redirected back automatically',
     ],
-    fields: [],
+    fields: [...AMAZON_MANUAL_FIELDS],
   },
   AMAZON_UAE: {
     type: 'AMAZON_UAE', name: 'Amazon UAE', docsUrl: 'https://sellercentral.amazon.ae',
@@ -684,7 +717,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
       'Approve Kartriq\'s access to your inventory and orders',
       'You\'ll be redirected back automatically',
     ],
-    fields: [],
+    fields: [...AMAZON_MANUAL_FIELDS],
   },
   AMAZON_SA: {
     type: 'AMAZON_SA', name: 'Amazon Saudi Arabia', docsUrl: 'https://sellercentral.amazon.sa',
@@ -696,7 +729,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
       'Approve Kartriq\'s access to your inventory and orders',
       'You\'ll be redirected back automatically',
     ],
-    fields: [],
+    fields: [...AMAZON_MANUAL_FIELDS],
   },
   AMAZON_SG: {
     type: 'AMAZON_SG', name: 'Amazon Singapore', docsUrl: 'https://sellercentral.amazon.sg',
@@ -708,7 +741,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
       'Approve Kartriq\'s access to your inventory and orders',
       'You\'ll be redirected back automatically',
     ],
-    fields: [],
+    fields: [...AMAZON_MANUAL_FIELDS],
   },
   AMAZON_AU: {
     type: 'AMAZON_AU', name: 'Amazon Australia', docsUrl: 'https://sellercentral.amazon.com.au',
@@ -720,7 +753,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
       'Approve Kartriq\'s access to your inventory and orders',
       'You\'ll be redirected back automatically',
     ],
-    fields: [],
+    fields: [...AMAZON_MANUAL_FIELDS],
   },
   AMAZON_DE: {
     type: 'AMAZON_DE', name: 'Amazon Germany', docsUrl: 'https://sellercentral.amazon.de',
@@ -732,7 +765,7 @@ export const CHANNEL_SCHEMAS: Record<string, ChannelSchema> = {
       'Approve Kartriq\'s access to your inventory and orders',
       'You\'ll be redirected back automatically',
     ],
-    fields: [],
+    fields: [...AMAZON_MANUAL_FIELDS],
   },
   LAZADA: {
     type: 'LAZADA',
