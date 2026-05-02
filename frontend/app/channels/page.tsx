@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchStore } from '@/store/search.store';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { channelApi } from '@/lib/api';
 import {
@@ -182,6 +183,11 @@ export default function ChannelsPage() {
   const [requestModal, setRequestModal] = useState<CatalogEntry | null>(null);
   const qc = useQueryClient();
 
+  // Topbar global search — case-insensitive substring match against the
+  // channel name, type and tagline so "amaz" finds Amazon India / Amazon US,
+  // "razor" finds Razorpay, etc.
+  const searchQuery = useSearchStore((s) => s.query);
+
   const { data, isLoading } = useQuery({
     queryKey: ['channels-catalog'],
     queryFn: () => channelApi.catalog().then(r => r.data),
@@ -189,8 +195,13 @@ export default function ChannelsPage() {
 
   // Group catalog by category after filtering
   const grouped = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
     const all: CatalogEntry[] = (data?.catalog || []).filter((e: CatalogEntry) => {
       if (statusFilter && e.status !== statusFilter) return false;
+      if (q) {
+        const hay = `${e.name} ${e.type} ${e.tagline || ''} ${e.category}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
       return true;
     });
     const map: Record<string, CatalogEntry[]> = {};
@@ -199,7 +210,7 @@ export default function ChannelsPage() {
       map[entry.category].push(entry);
     }
     return map;
-  }, [data, statusFilter]);
+  }, [data, statusFilter, searchQuery]);
 
   const summary = data?.summary || { total: 0, connected: 0, available: 0, not_available: 0 };
 

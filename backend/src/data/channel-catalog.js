@@ -589,7 +589,7 @@ const CATALOG = [
     credentialsSchema: [
       { key: 'sellerId',     label: 'Seller ID',         type: 'text',     required: true,  help: 'Seller Central → Settings → Account Info.' },
       { key: 'refreshToken', label: 'Refresh Token',     type: 'password', required: false, help: 'Skip if using OAuth. Otherwise: Develop Apps → your app → "Self Authorize"; begins with Atzr|.' },
-      { key: 'webhookSecret',label: 'Webhook Secret',    type: 'password', required: false },
+      { key: 'webhookSecret',label: 'Webhook Secret (optional)', type: 'password', required: false, help: 'Optional. Only needed if you want SmartBiz to push order events to Kartriq in real time (instead of polling every 5 minutes). Set the same shared secret in your SmartBiz dashboard → Webhooks. Leave blank to use SP-API polling only.' },
     ],
     applyUrl: 'https://smartcommerce.amazon.in/smartbiz',
     docsUrl:  'https://developer-docs.amazon.com/sp-api/',
