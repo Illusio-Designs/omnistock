@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { productApi } from '@/lib/api';
+import { useFilteredBySearch } from '@/lib/useGlobalSearch';
 import {
   Button, Card, Modal, Input, Textarea, Select, Pagination, FileUpload, Tooltip, EmptyState,
 } from '@/components/ui';
@@ -21,6 +22,11 @@ export default function ProductsPage() {
     queryKey: ['products', page, pageSize],
     queryFn: () => productApi.list({ page, limit: pageSize }).then(r => r.data),
   });
+
+  // Topbar global search — filters by name, sku, brand, category.
+  const filteredProducts = useFilteredBySearch(data?.products, (p: any) =>
+    `${p.name || ''} ${p.sku || ''} ${p.brand?.name || ''} ${p.category?.name || ''} ${p.barcode || ''}`
+  );
 
   const syncMutation = useMutation({
     mutationFn: (id: string) => productApi.syncChannels(id),
@@ -68,7 +74,7 @@ export default function ProductsPage() {
         ) : data?.products?.length ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {data.products.map((p: any) => (
+              {filteredProducts.map((p: any) => (
                 <Card key={p.id} className="p-4 hover:shadow-lg transition-shadow flex flex-col">
                   <Link href={`/products/${p.id}`} className="flex-1">
                     <div className="w-full h-32 bg-slate-50 rounded-xl mb-3 flex items-center justify-center overflow-hidden">

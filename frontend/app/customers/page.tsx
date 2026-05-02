@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { customerApi } from '@/lib/api';
+import { useFilteredBySearch } from '@/lib/useGlobalSearch';
 import {
   Button, Badge, Card, Modal, Input, Pagination, Tooltip, Checkbox, Loader, Avatar,
 } from '@/components/ui';
@@ -24,7 +25,10 @@ export default function CustomersPage() {
     queryFn: () => customerApi.list({ page, limit: pageSize }).then(r => r.data),
   });
 
-  const customers = data?.customers || data || [];
+  const allCustomers = data?.customers || data || [];
+  const customers = useFilteredBySearch(allCustomers, (c: any) =>
+    `${c.name || ''} ${c.email || ''} ${c.phone || ''} ${c.gstIn || ''} ${c.city || ''}`
+  );
   const total = data?.total || customers.length;
   const b2bCount = customers.filter((c: any) => c.isB2B).length;
 

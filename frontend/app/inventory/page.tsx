@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { inventoryApi, warehouseApi, productApi } from '@/lib/api';
+import { useFilteredBySearch } from '@/lib/useGlobalSearch';
 import {
   Button, Badge, Card, Modal, Input, Textarea, Select, Pagination, Tabs,
 } from '@/components/ui';
@@ -42,6 +43,11 @@ export default function InventoryPage() {
     queryKey: ['inventory', warehouseId, page, pageSize],
     queryFn: () => inventoryApi.list({ warehouseId: warehouseId || undefined, page, limit: pageSize }).then(r => r.data),
   });
+
+  // Topbar global search — matches sku, product name, barcode, warehouse code.
+  const filteredItems = useFilteredBySearch(data?.items, (item: any) =>
+    `${item.variant?.sku || item.sku || ''} ${item.product?.name || item.variant?.product?.name || ''} ${item.variant?.barcode || ''} ${item.warehouse?.name || ''} ${item.warehouse?.code || ''}`
+  );
   const { data: lowStock } = useQuery({
     queryKey: ['low-stock'],
     queryFn: () => inventoryApi.lowStock().then(r => r.data),
@@ -136,7 +142,7 @@ export default function InventoryPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {data?.items?.length ? data.items.map((item: any, idx: number) => (
+                    {filteredItems.length ? filteredItems.map((item: any, idx: number) => (
                       <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
                         <td className="px-4 py-3 text-slate-500 font-semibold">{(page - 1) * pageSize + idx + 1}</td>
                         <td className="px-4 py-3 font-bold text-slate-900">{item.variant?.product?.name}</td>

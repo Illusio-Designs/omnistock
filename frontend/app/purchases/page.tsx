@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { purchaseApi, vendorApi } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
+import { useFilteredBySearch } from '@/lib/useGlobalSearch';
 import {
   Button, Badge, Card, Modal, Input, Textarea, Select, Pagination, Tooltip, Loader, DatePicker,
 } from '@/components/ui';
@@ -29,7 +30,10 @@ export default function PurchasesPage() {
     queryFn: () => purchaseApi.list({ page, limit: pageSize }).then(r => r.data),
   });
 
-  const purchases = data?.purchases || data || [];
+  const allPurchases = data?.purchases || data || [];
+  const purchases = useFilteredBySearch(allPurchases, (p: any) =>
+    `${p.poNumber || ''} ${p.vendor?.name || ''} ${p.status || ''} ${p.notes || ''}`
+  );
   const total = data?.total || purchases.length;
 
   return (

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { shipmentApi, orderApi, channelApi } from '@/lib/api';
+import { useFilteredBySearch } from '@/lib/useGlobalSearch';
 import { Button, Badge, Card, Pagination, Select, Tooltip, Input, Modal, Loader } from '@/components/ui';
 import { Truck, Package, MapPin, Eye, ExternalLink, Search, Plus, CheckCircle2, XCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -46,7 +47,10 @@ export default function ShipmentsPage() {
     queryFn: () => shipmentApi.list({ page, limit: pageSize, status: status || undefined }).then(r => r.data).catch(() => ({ shipments: [], total: 0 })),
   });
 
-  const shipments = data?.shipments || data || [];
+  const allShipments = data?.shipments || data || [];
+  const shipments = useFilteredBySearch(allShipments, (s: any) =>
+    `${s.orderNumber || ''} ${s.trackingNumber || ''} ${s.courierName || ''} ${s.status || ''}`
+  );
   const total = data?.total || shipments.length;
   const delivered = shipments.filter((s: any) => s.status === 'DELIVERED').length;
   const inTransit = shipments.filter((s: any) => ['IN_TRANSIT', 'PICKED_UP', 'OUT_FOR_DELIVERY'].includes(s.status)).length;

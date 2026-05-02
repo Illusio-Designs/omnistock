@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { userApi, roleApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
+import { useFilteredBySearch } from '@/lib/useGlobalSearch';
 import { Plus, Trash2, Users, Shield, Save, Pencil } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
@@ -56,6 +57,11 @@ function UsersTab({ canManage }: { canManage: boolean }) {
     setUsers(u.data); setRoles(r.data);
   };
   useEffect(() => { load(); }, []);
+
+  // Topbar search — filters by name, email, role names.
+  const filteredUsers = useFilteredBySearch(users, (u: any) =>
+    `${u.name || ''} ${u.email || ''} ${u.role || ''} ${(u.roles || []).map((ur: any) => ur.role?.name || '').join(' ')}`
+  );
 
   const save = async (data: any) => {
     if (data.id) await userApi.update(data.id, data);
@@ -112,7 +118,7 @@ function UsersTab({ canManage }: { canManage: boolean }) {
             </tr>
           </thead>
           <tbody>
-            {users.map((u, idx) => (
+            {filteredUsers.map((u, idx) => (
               <tr key={u.id} className="border-t border-slate-100">
                 <td className="p-3 text-slate-500 font-semibold">{idx + 1}</td>
                 <td className="p-3 font-semibold">

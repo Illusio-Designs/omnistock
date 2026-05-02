@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { channelApi } from '@/lib/api';
+import { useFilteredBySearch } from '@/lib/useGlobalSearch';
 import { ArrowLeft, Inbox, Clock, CheckCircle2, XCircle, Loader2, X } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
@@ -32,10 +33,15 @@ export default function ChannelRequestsPage() {
   const qc = useQueryClient();
   const [confirmUi, askConfirm] = useConfirm();
 
-  const { data: requests, isLoading } = useQuery({
+  const { data: rawRequests, isLoading } = useQuery({
     queryKey: ['channel-requests', status],
     queryFn: () => channelApi.listRequests({ status: status || undefined }).then(r => r.data),
   });
+
+  // Topbar global search filters by channel type, name, notes and status
+  const requests = useFilteredBySearch(rawRequests, (r: any) =>
+    `${r.type || ''} ${r.name || ''} ${r.notes || ''} ${r.status || ''} ${r.catalogEntry?.name || ''}`
+  );
 
   const cancelMutation = useMutation({
     mutationFn: (id: string) => channelApi.deleteRequest(id),

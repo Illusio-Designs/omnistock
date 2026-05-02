@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { warehouseApi } from '@/lib/api';
+import { useFilteredBySearch } from '@/lib/useGlobalSearch';
 import {
   Button, Badge, Card, Modal, Input, Checkbox, EmptyState,
 } from '@/components/ui';
@@ -20,7 +21,10 @@ export default function WarehousesPage() {
     queryFn: () => warehouseApi.list().then(r => r.data),
   });
 
-  const warehouses = data || [];
+  const allWarehouses = data || [];
+  const warehouses = useFilteredBySearch(allWarehouses, (w: any) =>
+    `${w.name || ''} ${w.code || ''} ${w.address?.line1 || ''} ${w.address?.city || ''} ${w.address?.state || ''} ${w.address?.pincode || ''}`
+  );
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => warehouseApi.delete(id),
