@@ -214,8 +214,8 @@ router.get('/amazon/callback', async (req, res) => {
     console.error('[oauth/amazon/callback]', err.response?.data || err.message);
     // Surface the error on the channel so the user sees it in the UI
     try {
-      await prisma.channel.update({
-        where: { id: parsed.channelId },
+      await prisma.channel.updateMany({
+        where: { id: parsed.channelId, tenantId: parsed.tenantId },
         data: { syncError: err.response?.data?.error_description || err.message },
       });
     } catch {}
@@ -379,8 +379,8 @@ router.get('/shopify/callback', async (req, res) => {
   } catch (err) {
     console.error('[oauth/shopify/callback]', err.response?.data || err.message);
     try {
-      await prisma.channel.update({
-        where: { id: parsed.channelId },
+      await prisma.channel.updateMany({
+        where: { id: parsed.channelId, tenantId: parsed.tenantId },
         data: { syncError: err.response?.data?.error_description || err.message },
       });
     } catch {}
@@ -486,8 +486,8 @@ router.get('/lazada/callback', async (req, res) => {
   } catch (err) {
     console.error('[oauth/lazada/callback]', err.response?.data || err.message);
     try {
-      await prisma.channel.update({
-        where: { id: parsed.channelId },
+      await prisma.channel.updateMany({
+        where: { id: parsed.channelId, tenantId: parsed.tenantId },
         data: { syncError: err.response?.data?.message || err.message },
       });
     } catch {}
@@ -584,8 +584,8 @@ router.get('/shopee/callback', async (req, res) => {
   } catch (err) {
     console.error('[oauth/shopee/callback]', err.response?.data || err.message);
     try {
-      await prisma.channel.update({
-        where: { id: parsed.channelId },
+      await prisma.channel.updateMany({
+        where: { id: parsed.channelId, tenantId: parsed.tenantId },
         data: { syncError: err.response?.data?.message || err.message },
       });
     } catch {}
@@ -692,8 +692,8 @@ router.get('/mercadolibre/callback', async (req, res) => {
   } catch (err) {
     console.error('[oauth/mercadolibre/callback]', err.response?.data || err.message);
     try {
-      await prisma.channel.update({
-        where: { id: parsed.channelId },
+      await prisma.channel.updateMany({
+        where: { id: parsed.channelId, tenantId: parsed.tenantId },
         data: { syncError: err.response?.data?.message || err.message },
       });
     } catch {}
@@ -795,8 +795,8 @@ router.get('/allegro/callback', async (req, res) => {
   } catch (err) {
     console.error('[oauth/allegro/callback]', err.response?.data || err.message);
     try {
-      await prisma.channel.update({
-        where: { id: parsed.channelId },
+      await prisma.channel.updateMany({
+        where: { id: parsed.channelId, tenantId: parsed.tenantId },
         data: { syncError: err.response?.data?.error_description || err.message },
       });
     } catch {}
@@ -894,8 +894,8 @@ router.get('/wish/callback', async (req, res) => {
   } catch (err) {
     console.error('[oauth/wish/callback]', err.response?.data || err.message);
     try {
-      await prisma.channel.update({
-        where: { id: parsed.channelId },
+      await prisma.channel.updateMany({
+        where: { id: parsed.channelId, tenantId: parsed.tenantId },
         data: { syncError: err.response?.data?.message || err.message },
       });
     } catch {}
@@ -1001,8 +1001,8 @@ router.get('/flipkart/callback', async (req, res) => {
   } catch (err) {
     console.error('[oauth/flipkart/callback]', err.response?.data || err.message);
     try {
-      await prisma.channel.update({
-        where: { id: parsed.channelId },
+      await prisma.channel.updateMany({
+        where: { id: parsed.channelId, tenantId: parsed.tenantId },
         data: { syncError: err.response?.data?.error_description || err.message },
       });
     } catch {}
@@ -1130,8 +1130,8 @@ router.get('/meta/callback', async (req, res) => {
   } catch (err) {
     console.error('[oauth/meta/callback]', err.response?.data || err.message);
     try {
-      await prisma.channel.update({
-        where: { id: parsed.channelId },
+      await prisma.channel.updateMany({
+        where: { id: parsed.channelId, tenantId: parsed.tenantId },
         data: { syncError: err.response?.data?.error?.message || err.message },
       });
     } catch {}

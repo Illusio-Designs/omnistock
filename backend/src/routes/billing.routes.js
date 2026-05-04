@@ -39,19 +39,69 @@ router.get('/wallet/transactions', requirePermission('billing.read'), async (req
   }
 });
 
-// Top up the wallet. In production this is called AFTER payment is captured
-// by the payment gateway (Razorpay / Stripe) so `paymentRef` is the gateway's txn id.
+// Direct wallet top-up — for use by:
+//   1. Platform admins doing manual credits / refunds (audited)
+//   2. Internal callers (autopay job, /payments/wallet-verify) which
+//      pass a verified Razorpay paymentId — checked here against the
+//      Razorpay API before crediting.
+//
+// Tenants cannot self-credit by calling this endpoint directly with an
+// invented paymentRef — the payment is fetched from Razorpay and rejected
+// unless its status === 'captured' AND the amount matches.
 router.post('/wallet/topup', requirePermission('billing.manage'), async (req, res) => {
   try {
     const { amount, paymentRef, description } = req.body || {};
     if (!amount || Number(amount) <= 0) return res.status(400).json({ error: 'amount must be positive' });
+
+    const isPlatformAdmin = !!req.user?.isPlatformAdmin;
+
+    // Non-admins MUST provide a captured Razorpay paymentRef whose amount
+    // matches what they're crediting. This blocks the "free money" attack
+    // where a tenant admin self-credits with a fake paymentRef.
+    if (!isPlatformAdmin) {
+      if (!paymentRef) {
+        return res.status(403).json({ error: 'paymentRef required (verified payment gateway transaction). Use /payments/wallet-checkout to start a Razorpay flow.' });
+      }
+      try {
+        const { getClient, getCreds } = require('../services/payment.service');
+        const client = await getClient();
+        const { isLive } = await getCreds();
+        // In stub/dev mode (no live Razorpay creds) we permit the legacy path
+        // so e2e tests still work; in prod we require verification.
+        if (isLive && client) {
+          const payment = await client.payments.fetch(paymentRef);
+          if (!payment || payment.status !== 'captured') {
+            return res.status(400).json({ error: 'Payment not captured at gateway' });
+          }
+          const expectedPaise = Math.round(Number(amount) * 100);
+          if (Number(payment.amount) !== expectedPaise) {
+            return res.status(400).json({ error: 'Amount mismatch with Razorpay payment' });
+          }
+          // Confirm the payment is for this tenant via order notes
+          if (payment.notes?.tenantId && payment.notes.tenantId !== req.tenant.id) {
+            return res.status(403).json({ error: 'Payment belongs to a different tenant' });
+          }
+        } else if (process.env.NODE_ENV === 'production') {
+          return res.status(503).json({ error: 'Payment gateway not configured; cannot verify topup' });
+        }
+      } catch (err) {
+        return res.status(400).json({ error: 'Failed to verify payment with gateway: ' + (err?.error?.description || err.message) });
+      }
+    }
+
     const result = await wallet.topup(req.tenant.id, Number(amount), {
       paymentRef: paymentRef || null,
-      description: description || 'Manual top-up',
+      description: description || (isPlatformAdmin ? 'Manual top-up (platform admin)' : 'Top-up'),
       createdById: req.user.id,
       type: 'TOPUP',
     });
-    audit({ req, action: 'wallet.topup', resource: 'wallet', resourceId: result.transactionId, metadata: { amount, paymentRef } });
+    audit({
+      req,
+      action: isPlatformAdmin ? 'wallet.topup.admin' : 'wallet.topup.razorpay',
+      resource: 'wallet',
+      resourceId: result.transactionId,
+      metadata: { amount, paymentRef, byPlatformAdmin: isPlatformAdmin },
+    });
     res.json({ ok: true, ...result });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -96,7 +146,7 @@ router.patch('/tenant', requirePermission('billing.manage'), async (req, res) =>
 });
 
 // Current subscription + plan
-router.get('/subscription', async (req, res) => {
+router.get('/subscription', requirePermission('billing.read'), async (req, res) => {
   const sub = await prisma.subscription.findUnique({
     where: { tenantId: req.tenant.id },
     include: { plan: true },
@@ -105,7 +155,7 @@ router.get('/subscription', async (req, res) => {
 });
 
 // Usage snapshot for current period — includes overage + PAYG charges
-router.get('/usage', async (req, res) => {
+router.get('/usage', requirePermission('billing.read'), async (req, res) => {
   const tenantId = req.tenant.id;
   const period = new Date().toISOString().slice(0, 7);
 

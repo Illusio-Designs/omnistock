@@ -1,6 +1,22 @@
 const { Router } = require('express');
 const { v4: uuid } = require('uuid');
 const prisma = require('../utils/prisma');
+
+// Scrub axios/Razorpay error objects before logging — `err.config`,
+// `err.request` and `err.response.config` echo the outgoing request body
+// (which can include `key_id` headers) and Razorpay sometimes mirrors
+// notes in the response. Returns a small object safe to console.error.
+function safeErrLog(err) {
+  if (!err) return err;
+  return {
+    name: err.name,
+    message: err.message,
+    code: err.code,
+    status: err.response?.status,
+    rzpDescription: err.error?.description || err.response?.data?.error?.description,
+    rzpReason: err.error?.reason || err.response?.data?.error?.reason,
+  };
+}
 const db = require('../utils/db');
 const {
   authenticate, requireTenant, requirePermission, invalidateUserCache,
@@ -22,7 +38,13 @@ const router = Router();
 router.post('/webhook', async (req, res) => {
   try {
     const signature = req.headers['x-razorpay-signature'] || '';
-    const rawBody = JSON.stringify(req.body);
+    // Use the raw body captured by express.json's verify hook in index.js.
+    // Falling back to a re-stringify means the HMAC can't match — so we
+    // refuse instead of guessing.
+    const rawBody = req.rawBody;
+    if (!rawBody) {
+      return res.status(400).json({ error: 'rawBody not captured' });
+    }
     if (!(await verifyWebhookSignature(rawBody, signature))) {
       return res.status(401).json({ error: 'Invalid signature' });
     }
@@ -43,17 +65,31 @@ router.post('/webhook', async (req, res) => {
       const purpose = notes.purpose; // 'plan' | 'wallet' | 'autopay'
       const amountInr = paymentEntity?.amount ? Number(paymentEntity.amount) / 100 : null;
 
-      if (invoiceId) {
-        await prisma.billingInvoice.update({
-          where: { id: invoiceId },
-          data: { status: 'PAID', paidAt: new Date(), providerRef: paymentEntity?.id },
-        });
+      // Cross-check ownership before mutating: notes are signed by Razorpay
+      // (we trust the signature) but the contents originated from /checkout
+      // which wrote them at order creation. Still defence-in-depth: refuse
+      // to update a record whose tenantId doesn't match the notes.
+      if (invoiceId && tenantId) {
+        const inv = await prisma.billingInvoice.findUnique({ where: { id: invoiceId } });
+        if (inv && inv.tenantId === tenantId) {
+          await prisma.billingInvoice.update({
+            where: { id: invoiceId },
+            data: { status: 'PAID', paidAt: new Date(), providerRef: paymentEntity?.id },
+          });
+        } else {
+          console.warn('[payment.webhook] invoice tenant mismatch — refusing update:', { invoiceId, expectedTenant: tenantId, actualTenant: inv?.tenantId });
+        }
       }
-      if (subscriptionId) {
-        await prisma.subscription.update({
-          where: { id: subscriptionId },
-          data: { status: 'ACTIVE', provider: 'razorpay' },
-        });
+      if (subscriptionId && tenantId) {
+        const sub = await prisma.subscription.findUnique({ where: { id: subscriptionId } });
+        if (sub && sub.tenantId === tenantId) {
+          await prisma.subscription.update({
+            where: { id: subscriptionId },
+            data: { status: 'ACTIVE', provider: 'razorpay' },
+          });
+        } else {
+          console.warn('[payment.webhook] subscription tenant mismatch — refusing update:', { subscriptionId, expectedTenant: tenantId });
+        }
       }
       if (tenantId) {
         await prisma.tenant.update({ where: { id: tenantId }, data: { status: 'ACTIVE' } });
@@ -139,14 +175,20 @@ router.post('/webhook', async (req, res) => {
     // ── Failed payments ───────────────────────────────────────────────────
     if (event === 'payment.failed') {
       const sid = notes.subscriptionId;
-      if (sid) {
-        await prisma.subscription.update({ where: { id: sid }, data: { status: 'PAST_DUE' } }).catch(() => {});
+      const tenantIdForFail = notes.tenantId;
+      if (sid && tenantIdForFail) {
+        const sub = await prisma.subscription.findUnique({ where: { id: sid } });
+        if (sub && sub.tenantId === tenantIdForFail) {
+          await prisma.subscription.update({ where: { id: sid }, data: { status: 'PAST_DUE' } }).catch(() => {});
+        }
       }
-      // Bump failure count on the saved method so autopay backs off
+      // Bump failure count on the saved method so autopay backs off — but
+      // only update rows belonging to the tenant in the notes (defence in
+      // depth in case two tenants ever share a token row).
       const tokenId = paymentEntity?.token_id;
-      if (tokenId) {
+      if (tokenId && tenantIdForFail) {
         await db('tenant_payment_methods')
-          .where({ providerTokenId: tokenId })
+          .where({ providerTokenId: tokenId, tenantId: tenantIdForFail })
           .update({
             failureCount: db.raw('failureCount + 1'),
             lastFailureAt: new Date(),
@@ -158,7 +200,7 @@ router.post('/webhook', async (req, res) => {
 
     res.json({ ok: true });
   } catch (err) {
-    console.error('[payment.webhook]', err);
+    console.error('[payment.webhook]', safeErrLog(err));
     res.status(500).json({ error: err.message });
   }
 });
@@ -211,7 +253,7 @@ router.post('/checkout', requirePermission('billing.manage'), async (req, res) =
       prefill: { email: req.user.email, name: req.user.name, contact: req.user.phone || '' },
     });
   } catch (err) {
-    console.error('[payment.checkout]', err);
+    console.error('[payment.checkout]', safeErrLog(err));
     res.status(500).json({ error: err.message });
   }
 });
@@ -310,7 +352,7 @@ router.post('/wallet-checkout', requirePermission('billing.manage'), async (req,
       prefill: { email: req.user.email, name: req.user.name, contact: req.user.phone || '' },
     });
   } catch (err) {
-    console.error('[payment.wallet-checkout]', err);
+    console.error('[payment.wallet-checkout]', safeErrLog(err));
     res.status(500).json({ error: err.message });
   }
 });
@@ -348,8 +390,18 @@ router.post('/wallet-verify', requirePermission('billing.manage'), async (req, r
 // SAVED PAYMENT METHODS  (used by the autopay job to recurring-charge cards)
 // ──────────────────────────────────────────────────────────────────────────
 router.get('/methods', requirePermission('billing.read'), async (req, res) => {
+  // Project only the display-safe columns. providerTokenId and
+  // providerCustomerId are recurring-charge credentials that must never
+  // leave the server — they're combined with our keySecret to drive the
+  // autopay job. An XSS or leaked browser cache that exposed the token
+  // alongside the public keyId would be enough to forge charges.
   const rows = await db('tenant_payment_methods')
     .where({ tenantId: req.tenant.id, isActive: 1 })
+    .select(
+      'id', 'method', 'brand', 'last4', 'expiryMonth', 'expiryYear',
+      'upiVpa', 'label', 'isDefault', 'failureCount', 'lastUsedAt',
+      'lastFailureAt', 'lastFailureReason', 'createdAt',
+    )
     .orderBy([{ column: 'isDefault', order: 'desc' }, { column: 'createdAt', order: 'desc' }]);
   res.json(rows);
 });

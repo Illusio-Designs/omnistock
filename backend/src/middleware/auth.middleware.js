@@ -314,8 +314,14 @@ const enforceLimit = (resource) => async (req, res, next) => {
     }
     next();
   } catch (e) {
+    // Fail closed — silently allowing the request through on a DB blip
+    // would let tenants on capped plans burst past their limits whenever
+    // anything in the limit-check pipeline (count query, wallet read,
+    // meter lookup) errors. Better to 503 and let them retry.
     console.error('enforceLimit error', e);
-    next();
+    return res.status(503).json({
+      error: 'Plan limit check temporarily unavailable. Please retry shortly.',
+    });
   }
 };
 

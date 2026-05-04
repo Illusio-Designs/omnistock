@@ -80,24 +80,56 @@ async function createOrder({ amount, currency = 'INR', notes = {}, customerId, s
   return { ...order, keyId };
 }
 
+// Constant-time compare for two hex strings. Prevents timing-oracle attacks
+// against signature verification (#6 in audit).
+function safeHexEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  if (a.length !== b.length) return false;
+  try {
+    return crypto.timingSafeEqual(Buffer.from(a, 'hex'), Buffer.from(b, 'hex'));
+  } catch {
+    return false;
+  }
+}
+
+// In production we refuse to verify when no secret is configured (fail
+// closed). In dev/test we keep the convenience of accepting unsigned
+// callbacks so local stubs work without Razorpay credentials.
+function isProd() {
+  return process.env.NODE_ENV === 'production';
+}
+
 // ── Verify a Razorpay checkout callback signature ──────────────────────────
 async function verifySignature({ orderId, paymentId, signature }) {
   const { keySecret } = await getCreds();
-  if (!keySecret) return true; // stub mode: trust everything
-  if (signature === 'stub') return true;
+  if (!keySecret) {
+    if (isProd()) return false;
+    return true; // dev/test: trust everything when running unconfigured
+  }
+  // The literal 'stub' short-circuit is only honoured in dev/test. In prod
+  // an attacker could otherwise pass signature: 'stub' and bypass verification.
+  if (signature === 'stub' && !isProd()) return true;
   const expected = crypto
     .createHmac('sha256', keySecret)
     .update(`${orderId}|${paymentId}`)
     .digest('hex');
-  return expected === signature;
+  return safeHexEqual(expected, signature || '');
 }
 
 // ── Verify a Razorpay webhook signature ─────────────────────────────────────
+// `rawBody` MUST be the unparsed bytes Razorpay sent (see index.js's
+// express.json verify hook). Re-stringifying the parsed body produces a
+// different HMAC than what Razorpay computed and rejects every legitimate
+// event.
 async function verifyWebhookSignature(rawBody, signature) {
   const { webhookSecret } = await getCreds();
-  if (!webhookSecret) return true;
+  if (!webhookSecret) {
+    if (isProd()) return false;
+    return true;
+  }
+  if (!rawBody || typeof rawBody !== 'string') return false;
   const expected = crypto.createHmac('sha256', webhookSecret).update(rawBody).digest('hex');
-  return expected === signature;
+  return safeHexEqual(expected, signature || '');
 }
 
 async function getKeyId() {
@@ -214,6 +246,21 @@ async function applyTestMode({ keyId, keySecret, webhookSecret, updatedBy }) {
   if (!String(keyId).startsWith('rzp_test_')) {
     throw new Error('Test keyId must start with rzp_test_');
   }
+
+  // Validate the supplied credentials against Razorpay BEFORE persisting.
+  // A platform-admin form submission with attacker-controlled values would
+  // otherwise silently swap our gateway credentials and redirect future
+  // webhooks. Creating a tiny order against the test endpoint forces
+  // authentication and rejects bad keys with a 401.
+  try {
+    const Razorpay = require('razorpay');
+    const probe = new Razorpay({ key_id: keyId, key_secret: keySecret });
+    await probe.orders.create({ amount: 100, currency: 'INR', notes: { probe: 'kartriq-test-mode-validate' } });
+  } catch (err) {
+    const reason = err?.error?.description || err?.message || 'unknown';
+    throw new Error(`Razorpay rejected the test credentials: ${reason}`);
+  }
+
   await Promise.all([
     settings.set('razorpay.keyId', keyId, { category: 'payment', label: 'Razorpay Key ID', isSecret: false, updatedBy }),
     settings.set('razorpay.keySecret', keySecret, { category: 'payment', label: 'Razorpay Key Secret', isSecret: true, updatedBy }),

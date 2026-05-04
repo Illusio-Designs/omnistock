@@ -47,7 +47,16 @@ const corsConfig = require('./config/cors.config');
 app.use(cors(corsConfig));
 app.use(compression());
 app.use(morgan('dev'));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({
+  limit: '10mb',
+  // Stash the unparsed bytes so HMAC verification on payment webhooks can
+  // hash the exact payload Razorpay signed. JSON.stringify(req.body) does
+  // NOT round-trip — key order, whitespace and unicode escaping all differ
+  // — so HMAC over a re-stringified body will reject every legitimate event.
+  verify: (req, _res, buf) => {
+    if (buf && buf.length) req.rawBody = buf.toString('utf8');
+  },
+}));
 app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting — relaxed in test mode so the e2e test suite can run
@@ -79,6 +88,24 @@ const webhookLimiter = rateLimit({
   message: { error: 'Too many webhook requests' },
 });
 app.use('/api/v1/webhooks', webhookLimiter);
+// Razorpay sends webhooks to /payments/webhook (mounted there for legacy
+// compatibility); apply the same throttle so a flood can't exhaust the
+// global limiter.
+app.use('/api/v1/payments/webhook', webhookLimiter);
+
+// Per-route brute-force guard for signature-verify endpoints. A timing
+// oracle on /verify is impractical with 60 req/min cap and would-be
+// attackers can't grind keys.
+const paymentLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: isTestMode ? 10000 : 60,
+  skipSuccessfulRequests: true,
+  message: { error: 'Too many verification attempts' },
+});
+app.use('/api/v1/payments/verify', paymentLimiter);
+app.use('/api/v1/payments/wallet-verify', paymentLimiter);
+app.use('/api/v1/payments/checkout', paymentLimiter);
+app.use('/api/v1/payments/wallet-checkout', paymentLimiter);
 
 // ── Health Check ──────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date() }));
