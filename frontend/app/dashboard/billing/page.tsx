@@ -107,7 +107,7 @@ export default function BillingPage() {
   // Razorpay checkout helper — lazy-loads the script the first time
   const loadRazorpay = () =>
     new Promise<boolean>((resolve) => {
-      if ((window as any).Razorpay) return resolve(true);
+      if (window.Razorpay) return resolve(true);
       const s = document.createElement('script');
       s.src = 'https://checkout.razorpay.com/v1/checkout.js';
       s.onload = () => resolve(true);
@@ -143,7 +143,7 @@ export default function BillingPage() {
       }
       const ok = await loadRazorpay();
       if (!ok) throw new Error('Failed to load Razorpay');
-      const rzp = new (window as any).Razorpay({
+      const rzp = new window.Razorpay!({
         key: data.keyId,
         amount: data.order.amount,
         currency: data.order.currency,

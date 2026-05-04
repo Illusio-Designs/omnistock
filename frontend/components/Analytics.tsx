@@ -17,7 +17,7 @@ export function Analytics() {
   });
 
   useEffect(() => {
-    const api = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    const api = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api/v1';
     fetch(`${api}/public/tracking`)
       .then(r => r.ok ? r.json() : null)
       .then(data => {

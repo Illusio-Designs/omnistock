@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api/v1';
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://kartriq.vercel.app';
 
 export const revalidate = 3600;

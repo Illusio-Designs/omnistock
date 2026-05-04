@@ -20,7 +20,7 @@ interface TopupModalProps {
 // single global so we cache it on window.
 function loadRazorpayCheckout(): Promise<boolean> {
   return new Promise((resolve) => {
-    if ((window as any).Razorpay) return resolve(true);
+    if (window.Razorpay) return resolve(true);
     const s = document.createElement('script');
     s.src = 'https://checkout.razorpay.com/v1/checkout.js';
     s.onload = () => resolve(true);
@@ -57,7 +57,7 @@ export function TopupModal({ open, onClose, currentBalance }: TopupModalProps) {
       // 2. Open Razorpay Checkout for the user
       const ok = await loadRazorpayCheckout();
       if (!ok) throw new Error('Failed to load Razorpay');
-      const rzp = new (window as any).Razorpay({
+      const rzp = new window.Razorpay!({
         key: data.keyId,
         amount: data.order.amount,
         currency: data.order.currency,

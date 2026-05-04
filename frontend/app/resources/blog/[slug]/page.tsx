@@ -20,6 +20,24 @@ interface Post {
   metaDescription: string | null;
 }
 
+// Allow http(s)/mailto/relative-path hrefs only — anything else (notably
+// `javascript:` or `data:`) is a stored XSS vector. With JWT in localStorage
+// a single bad blog post = full account takeover, so this list is allow-list
+// not block-list.
+function safeHref(raw: string): string {
+  const s = String(raw || '').trim();
+  if (!s) return '#';
+  if (/^https?:\/\//i.test(s)) return s;
+  if (/^mailto:/i.test(s))     return s;
+  if (s.startsWith('/') || s.startsWith('#')) return s;
+  return '#';
+}
+
+// Escape attribute values so a closing-quote can't break out of an href.
+function attrEscape(s: string): string {
+  return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
 // Minimal markdown → HTML so we don't need a dep.
 // Handles headings, paragraphs, bold, italic, links, lists, inline code.
 function renderMarkdown(md: string): string {
@@ -34,7 +52,9 @@ function renderMarkdown(md: string): string {
     .replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 rounded bg-slate-100 text-emerald-700 text-[0.9em]">$1</code>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-emerald-600 underline hover:text-emerald-700">$1</a>');
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, label, href) =>
+      `<a href="${attrEscape(safeHref(href))}" rel="nofollow noopener" class="text-emerald-600 underline hover:text-emerald-700">${label}</a>`
+    );
 
   for (const line of lines) {
     if (/^#{1}\s+/.test(line)) { if (inList) { out.push('</ul>'); inList = false; } out.push(`<h1 class="text-3xl font-bold mt-8 mb-4 bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent">${inline(line.replace(/^#\s+/, ''))}</h1>`); continue; }
