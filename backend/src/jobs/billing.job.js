@@ -10,6 +10,7 @@
 //   - require('./jobs/billing.job').runBillingJob()  (from an in-process scheduler)
 
 const prisma = require('../utils/prisma');
+const logger = require('../utils/logger');
 const { sendTrialEndingSoon, sendPastDue, sendInvoicePaid } = require('../services/email.service');
 const settings = require('../services/settings.service');
 
@@ -199,7 +200,7 @@ async function rollForwardSubscriptions() {
               data: { status: 'PAID', paidAt: new Date(), providerRef: charge.paymentId },
             });
           } catch (invErr) {
-            console.error(`[billing.job] CRITICAL: charged ${charge.paymentId} for sub ${sub.id} but invoice update failed:`, invErr.message);
+            logger.error({ err: invErr.message }, `[billing.job] CRITICAL: charged ${charge.paymentId} for sub ${sub.id} but invoice update failed:`);
             // Best-effort: stash the payment id on the subscription itself so
             // a reconciliation script can pair it back up later.
             await prisma.subscription.update({
@@ -246,7 +247,7 @@ async function rollForwardSubscriptions() {
       });
       if (extend) rolled++;
     } catch (err) {
-      console.error(`[billing.job] roll-forward failed for sub ${sub.id}:`, err.message);
+      logger.error({ err: err.message }, `[billing.job] roll-forward failed for sub ${sub.id}:`);
     }
   }
   return { rolled, invoiced, autoRenewed, autoRenewFailed, pastDue };
@@ -317,7 +318,7 @@ async function retryFailedRenewals() {
         stillFailing++;
       }
     } catch (err) {
-      console.error(`[billing.job] retry renewal failed for sub ${sub.id}:`, err.message);
+      logger.error({ err: err.message }, `[billing.job] retry renewal failed for sub ${sub.id}:`);
     }
   }
   return { recovered, stillFailing };
@@ -348,19 +349,19 @@ async function suspendOverdueTenants() {
 }
 
 async function runBillingJob() {
-  console.log('[billing.job] starting…');
+  logger.info('[billing.job] starting…');
   const roll = await rollForwardSubscriptions();
   const retry = await retryFailedRenewals();
   const suspend = await suspendOverdueTenants();
   const reminders = await sendTrialReminders();
-  console.log('[billing.job] done', { ...roll, ...retry, ...suspend, ...reminders });
+  logger.info({ detail: { ...roll, ...retry, ...suspend, ...reminders } }, '[billing.job] done');
   return { ...roll, ...retry, ...suspend, ...reminders };
 }
 
 // Allow direct CLI invocation
 if (require.main === module) {
   runBillingJob()
-    .catch((e) => { console.error(e); process.exit(1); })
+    .catch((e) => { logger.error(e); process.exit(1); })
     .finally(() => prisma.$disconnect());
 }
 

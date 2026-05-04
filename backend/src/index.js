@@ -5,6 +5,50 @@ const compression = require('compression');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
+const { randomUUID } = require('crypto');
+
+dotenv.config();
+
+// ── Sentry — must init BEFORE requiring any module that handles errors.
+// No-op when SENTRY_DSN is unset, so dev/test runs unchanged.
+const Sentry = require('@sentry/node');
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    tracesSampleRate: Number(process.env.SENTRY_TRACE_RATE || 0.05),
+    // Drop request bodies from event payloads — they may contain credentials
+    beforeSend(event) {
+      if (event.request) {
+        delete event.request.data;
+        if (event.request.headers) {
+          delete event.request.headers.authorization;
+          delete event.request.headers.cookie;
+          delete event.request.headers['x-razorpay-signature'];
+        }
+      }
+      return event;
+    },
+  });
+}
+
+// ── axios global defaults — no outbound request blocks the event loop
+// indefinitely. Channel adapters and Razorpay calls all share the default.
+const axios = require('axios');
+const axiosRetry = require('axios-retry').default || require('axios-retry');
+axios.defaults.timeout = Number(process.env.AXIOS_TIMEOUT_MS || 15_000);
+axiosRetry(axios, {
+  retries: Number(process.env.AXIOS_RETRIES || 2),
+  retryDelay: axiosRetry.exponentialDelay,
+  // Retry on network errors + 5xx + 429. Do NOT retry POST by default — most
+  // POSTs aren't idempotent. Per-call override available via axios config.
+  retryCondition: (err) => {
+    if (axiosRetry.isNetworkOrIdempotentRequestError(err)) return true;
+    return err.response && err.response.status === 429;
+  },
+});
+
+const logger = require('./utils/logger');
 
 const authRoutes = require('./routes/auth.routes');
 const productRoutes = require('./routes/product.routes');
@@ -33,8 +77,6 @@ const { autoAudit } = require('./services/audit.service');
 
 const { initDb } = require('./bootstrap/initDb');
 
-dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -46,7 +88,39 @@ app.use(helmet());
 const corsConfig = require('./config/cors.config');
 app.use(cors(corsConfig));
 app.use(compression());
-app.use(morgan('dev'));
+
+// ── Request ID + structured per-request logger ───────────────────
+// Every inbound request gets a stable ID echoed via the x-request-id
+// header and threaded into req.log so all log lines for one request
+// can be correlated. Distributed tracing on a budget.
+app.use((req, res, next) => {
+  const incoming = req.headers['x-request-id'];
+  req.id = (typeof incoming === 'string' && incoming.length < 64) ? incoming : randomUUID();
+  res.setHeader('x-request-id', req.id);
+  // req.tenant / req.user are populated by auth middleware later, so we
+  // re-bind the logger inside autoAudit / route handlers if we want them.
+  req.log = logger.child({ requestId: req.id });
+  next();
+});
+
+// Replace Morgan with structured access logging via Pino. Skips /health
+// to keep load-balancer probes from drowning the log stream.
+app.use((req, res, next) => {
+  const start = process.hrtime.bigint();
+  res.on('finish', () => {
+    if (req.path === '/health' || req.path === '/live' || req.path === '/ready') return;
+    const durMs = Number((process.hrtime.bigint() - start) / 1_000_000n);
+    req.log?.info({
+      method: req.method,
+      path: req.originalUrl,
+      status: res.statusCode,
+      durMs,
+      tenantId: req.tenant?.id,
+      userId: req.user?.id,
+    }, 'request');
+  });
+  next();
+});
 app.use(express.json({
   limit: '10mb',
   // Stash the unparsed bytes so HMAC verification on payment webhooks can
@@ -107,8 +181,21 @@ app.use('/api/v1/payments/wallet-verify', paymentLimiter);
 app.use('/api/v1/payments/checkout', paymentLimiter);
 app.use('/api/v1/payments/wallet-checkout', paymentLimiter);
 
-// ── Health Check ──────────────────────────────────────
+// ── Health checks ─────────────────────────────────────
+// /health and /live: process up — used by k8s liveness or load balancers
+// /ready          : process up AND DB reachable — used by k8s readiness;
+//                   503s mean "don't route traffic at me yet"
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date() }));
+app.get('/live',   (_req, res) => res.json({ status: 'live', timestamp: new Date() }));
+app.get('/ready', async (_req, res) => {
+  try {
+    const db = require('./utils/db');
+    await db.raw('SELECT 1 AS ok');
+    res.json({ status: 'ready', db: 'ok', timestamp: new Date() });
+  } catch (err) {
+    res.status(503).json({ status: 'not-ready', db: 'unreachable', error: err.message });
+  }
+});
 
 // ── Auto audit: logs every successful authenticated mutation ──
 app.use(autoAudit);
@@ -143,13 +230,39 @@ app.use(`${api}/tickets`,    ticketsRoutes);
 app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));
 
 // ── Global Error Handler ──────────────────────────────
-app.use((err, _req, res, _next) => {
-  console.error('[ERROR]', err.stack);
+app.use((err, req, res, _next) => {
+  // Send to Sentry (no-op when DSN unset). Tag with tenant + user when known.
+  if (process.env.SENTRY_DSN) {
+    Sentry.withScope((scope) => {
+      if (req.id)         scope.setTag('requestId', req.id);
+      if (req.tenant?.id) scope.setTag('tenantId', req.tenant.id);
+      if (req.user?.id)   scope.setUser({ id: req.user.id, email: req.user.email });
+      Sentry.captureException(err);
+    });
+  }
+  // Structured log — pino redacts the dangerous paths automatically.
+  (req.log || logger).error({ err, path: req.originalUrl, method: req.method }, 'request error');
   const isDev = process.env.NODE_ENV !== 'production';
-  res.status(500).json({
+  res.status(err.status || 500).json({
     error: 'Internal server error',
+    requestId: req.id,
     ...(isDev && { message: err.message }),
   });
+});
+
+// Catch unhandled rejections / uncaught exceptions — ship to Sentry, log,
+// don't crash. (Crashing on unhandledRejection is a footgun; we want the
+// alert in Sentry without taking the API down.)
+process.on('unhandledRejection', (reason) => {
+  if (process.env.SENTRY_DSN) Sentry.captureException(reason);
+  logger.error({ err: reason }, 'unhandledRejection');
+});
+process.on('uncaughtException', (err) => {
+  if (process.env.SENTRY_DSN) Sentry.captureException(err);
+  logger.fatal({ err }, 'uncaughtException');
+  // For uncaught it IS safer to exit and let the supervisor restart, since
+  // Node may be in a bad state. PM2/k8s/docker restarts immediately.
+  setTimeout(() => process.exit(1), 500).unref();
 });
 
 (async () => {

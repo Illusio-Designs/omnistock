@@ -12,6 +12,7 @@
 // Runs every CRON_AUTOPAY_MIN minutes (default 15) when CRON_LEADER=true.
 
 const db = require('../utils/db');
+const logger = require('../utils/logger');
 const wallet = require('../services/wallet.service');
 const { chargeRecurringToken, getCreds } = require('../services/payment.service');
 
@@ -72,7 +73,7 @@ async function findCandidates() {
 async function chargeOne(row) {
   const amount = Number(row.autoTopupAmount || 0);
   if (!amount || amount <= 0) {
-    console.warn(`[autopay] tenant ${row.tenantId} has autoTopupEnabled but no autoTopupAmount`);
+    logger.warn(`[autopay] tenant ${row.tenantId} has autoTopupEnabled but no autoTopupAmount`);
     return { skipped: true, reason: 'no amount configured' };
   }
   // Razorpay rejects recurring charges without a customer_id. If the saved
@@ -135,7 +136,7 @@ async function chargeOne(row) {
         lastFailureReason: reason,
         updatedAt: new Date(),
       });
-    console.warn(`[autopay] charge failed for tenant ${row.tenantId}: ${reason}`);
+    logger.warn(`[autopay] charge failed for tenant ${row.tenantId}: ${reason}`);
     return { ok: false, tenantId: row.tenantId, error: reason };
   }
 }
@@ -160,8 +161,8 @@ async function runAutopayJob() {
 
 if (require.main === module) {
   runAutopayJob()
-    .then((r) => { console.log('[autopay] done', r); process.exit(0); })
-    .catch((e) => { console.error(e); process.exit(1); });
+    .then((r) => { logger.info({ detail: r }, '[autopay] done'); process.exit(0); })
+    .catch((e) => { logger.error(e); process.exit(1); });
 }
 
 module.exports = { runAutopayJob, findCandidates };

@@ -15,6 +15,7 @@
 //   - HTTP: `POST /api/v1/admin/cron/run` (protected, platform admin only)
 
 const prisma = require('../utils/prisma');
+const logger = require('../utils/logger');
 const {
   getAdapter,
   importOrders,
@@ -60,7 +61,7 @@ async function syncChannelOrders() {
         where: { id: ch.id },
         data: { syncError: err.message },
       }).catch((dbErr) => {
-        console.error(`[cron] failed to record syncError for ${ch.id}:`, dbErr.message);
+        logger.error({ err: dbErr.message }, `[cron] failed to record syncError for ${ch.id}:`);
       });
     }
   }
@@ -140,12 +141,12 @@ async function pollShipmentStatus() {
 // ── Entry points ────────────────────────────────────────────────────────────
 
 async function runAllJobs() {
-  console.log('[cron] starting…');
+  logger.info('[cron] starting…');
   const t0 = Date.now();
 
   const safe = async (name, fn) => {
     try { return { [name]: await fn() }; }
-    catch (err) { console.error(`[cron] ${name} failed:`, err.message); return { [name]: { error: err.message } }; }
+    catch (err) { logger.error({ err: err.message }, `[cron] ${name} failed:`); return { [name]: { error: err.message } }; }
   };
 
   const out = Object.assign(
@@ -168,7 +169,7 @@ const _intervals = [];
 function start() {
   if (_started) return;
   if (process.env.DISABLE_CRON === 'true') {
-    console.log('[cron] DISABLED via DISABLE_CRON=true');
+    logger.info('[cron] DISABLED via DISABLE_CRON=true');
     return;
   }
   if (process.env.CRON_LEADER === 'false') {
@@ -184,13 +185,13 @@ function start() {
   const reviewInterval    = Number(process.env.CRON_REVIEW_MIN || 60);
   const autopayInterval   = Number(process.env.CRON_AUTOPAY_MIN || 15);
 
-  console.log('[cron] scheduling:', {
+  logger.info({ detail: {
     orderSyncMin: orderSyncInterval,
     inventoryMin: inventoryInterval,
     trackingMin: trackingInterval,
     reviewMin: reviewInterval,
     autopayMin: autopayInterval,
-  });
+  } }, '[cron] scheduling:');
 
   _intervals.push(
     setInterval(() => syncChannelOrders().catch((e) => console.error('[cron] syncChannelOrders:', e.message)), minutes(orderSyncInterval)),
@@ -209,7 +210,7 @@ function stop() {
 
 if (require.main === module) {
   runAllJobs()
-    .catch((e) => { console.error(e); process.exit(1); })
+    .catch((e) => { logger.error(e); process.exit(1); })
     .finally(() => prisma.$disconnect());
 }
 

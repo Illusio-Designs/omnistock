@@ -223,20 +223,36 @@ router.get('/amazon/callback', async (req, res) => {
   }
 });
 
+// Escape any string before interpolating into HTML. Both `title` and `body`
+// in renderPage() can be sourced from upstream OAuth provider error
+// responses (e.g. Amazon's `error_description` or Shopify's error string).
+// Without escaping, a hostile or accidentally-crafted upstream error string
+// becomes a stored XSS vector inside the OAuth callback page.
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function renderPage(title, body, { autoClose = false } = {}) {
+  const safeTitle = escapeHtml(title);
+  const safeBody  = escapeHtml(body);
   return `<!doctype html>
-<html><head><meta charset="utf-8"><title>${title}</title>
+<html><head><meta charset="utf-8"><title>${safeTitle}</title>
 <style>
-  body { font-family: Inter, system-ui, sans-serif; background: linear-gradient(135deg,#10b981,#0d9488); color:white; min-height:100vh; display:flex; align-items:center; justify-content:center; margin:0; }
+  body { font-family: Inter, system-ui, sans-serif; background: linear-gradient(135deg,#06D4B8,#06B6D4); color:white; min-height:100vh; display:flex; align-items:center; justify-content:center; margin:0; }
   .card { background: rgba(255,255,255,0.95); color:#0f172a; padding:32px 40px; border-radius:20px; max-width:440px; text-align:center; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
   h1 { margin:0 0 12px; font-size:22px; }
   p  { margin:0; color:#475569; line-height:1.5; font-size:14px; }
-  button { margin-top:20px; background:#10b981; color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:700; cursor:pointer; }
+  button { margin-top:20px; background:#06D4B8; color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:700; cursor:pointer; }
 </style></head>
 <body>
   <div class="card">
-    <h1>${title}</h1>
-    <p>${body}</p>
+    <h1>${safeTitle}</h1>
+    <p>${safeBody}</p>
     <button onclick="window.close()">Close window</button>
   </div>
   ${autoClose ? '<script>setTimeout(() => window.close(), 3000);</script>' : ''}
