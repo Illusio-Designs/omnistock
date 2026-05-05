@@ -4,6 +4,7 @@ import './globals.css';
 import { Providers } from '@/components/layout/Providers';
 import { PageLoader } from '@/components/PageLoader';
 import { Analytics } from '@/components/Analytics';
+import { WebVitalsReporter } from '@/components/WebVitalsReporter';
 import { loadSeo } from '@/lib/seo';
 
 const jakarta = Plus_Jakarta_Sans({
@@ -126,10 +127,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="font-sans">
+        <a href="#main-content" className="skip-link">Skip to content</a>
         <Analytics />
+        <WebVitalsReporter />
         <Providers>
           <PageLoader />
-          {children}
+          <div id="main-content">{children}</div>
         </Providers>
       </body>
     </html>

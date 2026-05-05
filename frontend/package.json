@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
     "build:big": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096 --max-semi-space-size=64\" next build",
     "start": "next start",
     "lint": "next lint"
@@ -27,6 +29,7 @@
     "@radix-ui/react-toast": "^1.1.5",
     "@sentry/nextjs": "^8.40.0",
     "@tanstack/react-query": "^5.28.4",
+    "@tanstack/react-virtual": "^3.10.8",
     "axios": "^1.6.8",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
@@ -38,11 +41,19 @@
     "recharts": "^2.12.4",
     "tailwind-merge": "^2.2.2",
     "tailwindcss-animate": "^1.0.7",
+    "web-vitals": "^4.2.4",
     "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^14.2.35",
     "@playwright/test": "^1.48.0",
+    "@storybook/addon-a11y": "^8.4.0",
+    "@storybook/addon-essentials": "^8.4.0",
+    "@storybook/addon-interactions": "^8.4.0",
+    "@storybook/blocks": "^8.4.0",
+    "@storybook/nextjs": "^8.4.0",
+    "@storybook/react": "^8.4.0",
+    "@storybook/test": "^8.4.0",
     "@types/node": "^20",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
@@ -54,6 +65,7 @@
     "eslint": "^8",
     "eslint-config-next": "^14.2.35",
     "postcss": "^8",
+    "storybook": "^8.4.0",
     "tailwindcss": "^3.3.0",
     "typescript": "^5"
   }
