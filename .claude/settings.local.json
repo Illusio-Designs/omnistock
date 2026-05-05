@@ -131,7 +131,16 @@
       "Bash(nc -vz -G 10 ftp.kartriq.com 22)",
       "Bash(ping -c 2 -W 3000 190.92.174.38)",
       "Bash(FTP_PASSWORD='Rishi@1995' FTP_SECURE='none' node scripts/ftp-test.js)",
-      "Bash(FTP_PASSWORD='Rishi@1995' FTP_PORT='990' node scripts/ftp-test.js)"
+      "Bash(FTP_PASSWORD='Rishi@1995' FTP_PORT='990' node scripts/ftp-test.js)",
+      "Bash(node -e \"console.log\\('JWT_SECRET=' + require\\('crypto'\\).randomBytes\\(32\\).toString\\('hex'\\)\\); console.log\\('ENCRYPTION_KEY=' + require\\('crypto'\\).randomBytes\\(32\\).toString\\('hex'\\)\\)\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code} | %{time_total}s | redirect=%{redirect_url}\\\\n\" -L --max-time 15 https://kartriq.com)",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code} | %{time_total}s\\\\n\" --max-time 15 https://api.kartriq.com/health)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code} | %{time_total}s\\\\n\" --max-time 15 https://api.kartriq.com)",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code} | %{time_total}s\\\\n\" --max-time 15 https://kartriq.com/health)",
+      "Bash(dig @1.1.1.1 +short api.kartriq.com)",
+      "Bash(dig @1.1.1.1 +short kartriq.com)",
+      "Bash(curl -sL --max-time 20 -w \"\\\\n--- HTTP %{http_code} | final URL: %{url_effective} ---\\\\n\" https://kartriq.com/health)",
+      "Bash(curl -sL --max-time 20 -w \"\\\\nHTTP %{http_code}\\\\n\" https://kartriq.com/api/v1/health)"
     ],
     "additionalDirectories": [
       "\\tmp"
