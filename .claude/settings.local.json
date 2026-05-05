@@ -111,7 +111,27 @@
       "Bash(node -e \"const d = JSON.parse\\(require\\('fs'\\).readFileSync\\('/tmp/intg.json','utf8'\\)\\); console.log\\('summary:', d.summary, '| categories:', [...new Set\\(d.items.map\\(i => i.category\\)\\)].join\\(','\\)\\);\")",
       "Bash(git pull *)",
       "Bash(node sandbox-test.js)",
-      "Bash(git diff *)"
+      "Bash(git diff *)",
+      "Bash(FTP_PASSWORD='Rishi@1995' node scripts/ftp-test.js)",
+      "Bash(dig +short ftp.kartriq.com)",
+      "Bash(dig +short kartriq.com)",
+      "Bash(nslookup ftp.kartriq.com)",
+      "Bash(FTP_HOST='kartriq.com' FTP_PASSWORD='Rishi@1995' node scripts/ftp-test.js)",
+      "Bash(nc -vz -G 10 kartriq.com 21)",
+      "Bash(nc -vz -G 10 kartriq.com 990)",
+      "Bash(dig @1.1.1.1 +short ftp.kartriq.com)",
+      "Bash(dig @8.8.8.8 +short ftp.kartriq.com)",
+      "Bash(dig +short kartriq.com A)",
+      "Bash(dig +short kartriq.com MX)",
+      "Bash(nc -vz -G 8 test.rebex.net 21)",
+      "Bash(nc -vz -G 8 ftp.gnu.org 21)",
+      "Bash(nc -vz -G 8 216.198.79.1 21)",
+      "Bash(nc -vz -G 10 ftp.kartriq.com 21)",
+      "Bash(nc -vz -G 10 ftp.kartriq.com 990)",
+      "Bash(nc -vz -G 10 ftp.kartriq.com 22)",
+      "Bash(ping -c 2 -W 3000 190.92.174.38)",
+      "Bash(FTP_PASSWORD='Rishi@1995' FTP_SECURE='none' node scripts/ftp-test.js)",
+      "Bash(FTP_PASSWORD='Rishi@1995' FTP_PORT='990' node scripts/ftp-test.js)"
     ],
     "additionalDirectories": [
       "\\tmp"
