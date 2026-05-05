@@ -121,8 +121,16 @@ export function MultiSelect({
           {selected.length > 0 && (
             <span
               role="button"
+              tabIndex={0}
               aria-label="Clear selection"
               onClick={clearAll}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onChange([]);
+                }
+              }}
               className="p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-700 cursor-pointer"
             >
               <X size={size === 'sm' ? 11 : 13} />
