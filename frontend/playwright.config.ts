@@ -6,6 +6,8 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 
 export default defineConfig({
   testDir: './e2e',
+  // Visual specs live in e2e/visual and are run by playwright.visual.config.ts.
+  testIgnore: ['**/visual/**'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

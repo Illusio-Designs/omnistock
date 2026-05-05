@@ -50,6 +50,9 @@ jobs:
       - name: Lint (next lint)
         run: npm run lint
 
+      - name: Component tests (vitest)
+        run: npm test
+
       - name: Build (next build)
         env:
           # Build-time env. Real secrets are injected in deploy, not CI.
