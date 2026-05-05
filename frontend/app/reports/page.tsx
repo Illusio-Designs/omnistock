@@ -6,7 +6,6 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { reportApi } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 import { DatePicker } from '@/components/ui/DatePicker';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 export default function ReportsPage() {
   const [from, setFrom] = useState('');

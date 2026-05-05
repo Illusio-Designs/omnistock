@@ -7,7 +7,10 @@
     "dev:big": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096 --max-semi-space-size=64\" next dev",
     "dev:turbo": "next dev --turbo",
     "build": "next build",
+    "build:analyze": "cross-env ANALYZE=true next build",
     "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "build:big": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096 --max-semi-space-size=64\" next build",
     "start": "next start",
     "lint": "next lint"
@@ -38,7 +41,12 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^14.2.35",
+    "@playwright/test": "^1.48.0",
     "@types/node": "^20",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint-plugin-jsx-a11y": "^6.10.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",

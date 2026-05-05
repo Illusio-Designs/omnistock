@@ -10,6 +10,7 @@ import {
 } from '@/components/ui';
 import { Plus, Package, RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function ProductsPage() {
   const [page, setPage] = useState(1);
@@ -79,7 +80,15 @@ export default function ProductsPage() {
                   <Link href={`/products/${p.id}`} className="flex-1">
                     <div className="w-full h-32 bg-slate-50 rounded-xl mb-3 flex items-center justify-center overflow-hidden">
                       {p.images?.[0] ? (
-                        <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" />
+                        <Image
+                          src={p.images[0]}
+                          alt={p.name}
+                          width={400}
+                          height={256}
+                          className="w-full h-full object-cover"
+                          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                          unoptimized={p.images[0].startsWith('data:')}
+                        />
                       ) : (
                         <Package size={32} className="text-slate-300" />
                       )}

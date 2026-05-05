@@ -16,10 +16,14 @@ export function PageLoader() {
 
   return (
     <div
+      role="status"
+      aria-live="polite"
+      aria-label="Loading"
       className={`fixed inset-0 z-[9999] flex items-center justify-center bg-white transition-all duration-500 ${
         fadeOut ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
       }`}
     >
+      <span className="sr-only">Loading</span>
       <div className="flex flex-col items-center gap-6">
         {/* Animated logo mark */}
         <div className="relative w-16 h-16">

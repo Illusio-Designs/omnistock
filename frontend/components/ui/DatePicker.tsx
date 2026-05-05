@@ -73,19 +73,23 @@ export function DatePicker({ value, onChange, placeholder = 'Select date', class
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <button
+              type="button"
               onClick={prevMonth}
+              aria-label="Previous month"
               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={16} aria-hidden="true" />
             </button>
             <div className="text-sm font-bold text-slate-900">
               {MONTHS[month]} {year}
             </div>
             <button
+              type="button"
               onClick={nextMonth}
+              aria-label="Next month"
               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600"
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={16} aria-hidden="true" />
             </button>
           </div>
 

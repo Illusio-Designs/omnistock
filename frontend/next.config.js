@@ -43,7 +43,23 @@ const nextConfig = {
   // shrinking the Docker image from ~1GB to ~150MB and speeding up cold starts.
   output: 'standalone',
   images: {
-    domains: ['localhost'],
+    // Allow-list of remote hosts. `domains` is deprecated; use remotePatterns
+    // so the path can also be scoped (we restrict logos to a /<domain>/<file>
+    // shape on logo.dev). Add a host here before referencing it via next/image.
+    remotePatterns: [
+      { protocol: 'http',  hostname: 'localhost' },
+      { protocol: 'https', hostname: 'img.logo.dev' },
+      { protocol: 'https', hostname: 'icon.horse' },
+      { protocol: 'https', hostname: 'www.google.com', pathname: '/s2/favicons/**' },
+      { protocol: 'https', hostname: 'cdn.shopify.com' },
+      { protocol: 'https', hostname: 'm.media-amazon.com' },
+      { protocol: 'https', hostname: 'images-na.ssl-images-amazon.com' },
+      { protocol: 'https', hostname: 'rukminim1.flixcart.com' },
+      { protocol: 'https', hostname: 'rukminim2.flixcart.com' },
+      { protocol: 'https', hostname: '**.cloudfront.net' },
+      { protocol: 'https', hostname: '**.amazonaws.com' },
+      { protocol: 'https', hostname: 'res.cloudinary.com' },
+    ],
   },
   async headers() {
     return [
@@ -91,4 +107,16 @@ function withOptionalSentry(cfg) {
   }
 }
 
-module.exports = withOptionalSentry(nextConfig);
+// Bundle analyzer — `npm run build:analyze` opens an HTML treemap of every
+// JS chunk. Use it to spot regressions when adding deps. Optional require so
+// prod builds work even if the dev dep isn't installed.
+function withOptionalAnalyzer(cfg) {
+  if (process.env.ANALYZE !== 'true') return cfg;
+  try {
+    return require('@next/bundle-analyzer')({ enabled: true })(cfg);
+  } catch {
+    return cfg;
+  }
+}
+
+module.exports = withOptionalAnalyzer(withOptionalSentry(nextConfig));

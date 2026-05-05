@@ -55,9 +55,10 @@ export function Modal({ open, onClose, title, description, children, footer, siz
             </div>
             <button
               onClick={onClose}
+              aria-label="Close"
               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-500 transition-colors"
             >
-              <X size={16} />
+              <X size={16} aria-hidden="true" />
             </button>
           </div>
         )}

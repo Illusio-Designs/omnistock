@@ -169,22 +169,24 @@ export function Sidebar({
           <Tooltip content={c ? 'Expand sidebar' : 'Collapse sidebar'} side="right">
             <button
               onClick={toggleSidebar}
+              aria-label={c ? 'Expand sidebar' : 'Collapse sidebar'}
               className={cn(
                 'ml-auto w-8 h-8 items-center justify-center rounded-lg text-white/55 hover:text-white hover:bg-white/10 transition-colors flex-shrink-0',
                 'hidden lg:flex',
                 c && 'lg:hidden'
               )}
             >
-              <PanelLeftClose size={15} />
+              <PanelLeftClose size={15} aria-hidden="true" />
             </button>
           </Tooltip>
 
           {/* Mobile close */}
           <button
             onClick={() => setMobileSidebar(false)}
+            aria-label="Close navigation"
             className="ml-auto w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-white/60 lg:hidden flex-shrink-0"
           >
-            <X size={16} />
+            <X size={16} aria-hidden="true" />
           </button>
         </div>
 
@@ -194,9 +196,10 @@ export function Sidebar({
             <Tooltip content="Expand sidebar" side="right">
               <button
                 onClick={toggleSidebar}
+                aria-label="Expand sidebar"
                 className="w-10 h-8 flex items-center justify-center rounded-lg text-white/55 hover:text-white hover:bg-white/10 transition-colors"
               >
-                <PanelLeftOpen size={16} />
+                <PanelLeftOpen size={16} aria-hidden="true" />
               </button>
             </Tooltip>
           </div>
@@ -369,9 +372,10 @@ export function Sidebar({
             <Tooltip content="Log out" side="right">
               <button
                 onClick={handleLogout}
+                aria-label="Log out"
                 className="w-11 h-10 mx-auto flex items-center justify-center rounded-xl text-white/60 hover:text-rose-300 hover:bg-rose-500/15 transition-colors"
               >
-                <LogOut size={17} />
+                <LogOut size={17} aria-hidden="true" />
               </button>
             </Tooltip>
           </div>

@@ -12,8 +12,16 @@ import {
   Wallet, TrendingDown, PiggyBank, Download, MoreHorizontal, ArrowUp, ArrowDown,
   ArrowUpRight, Filter, Plus, Send, Package, Info, Eye, RefreshCw,
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
+
+// Recharts is ~90KB gzipped — load it only when the chart hits the viewport.
+const EarningsAreaChart = dynamic(() => import('@/components/charts/EarningsAreaChart'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full w-full bg-slate-50 rounded animate-pulse" aria-hidden="true" />
+  ),
+});
 
 export default function DashboardPage() {
   const [date, setDate] = useState<Date | null>(new Date());
@@ -91,7 +99,7 @@ export default function DashboardPage() {
                 </Tooltip>
               </div>
               <Dropdown
-                trigger={<button className="text-slate-400 hover:text-slate-700 p-1"><MoreHorizontal size={16} /></button>}
+                trigger={<button aria-label="More actions" className="text-slate-400 hover:text-slate-700 p-1"><MoreHorizontal size={16} /></button>}
                 items={[
                   { label: 'View details', icon: <Eye size={14} /> },
                   { label: 'Refresh data', icon: <RefreshCw size={14} /> },
@@ -233,24 +241,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="h-56 sm:h-64 -ml-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={CHART_DATA} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorEarnings" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#06D4B8" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="#06D4B8" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} tickFormatter={(v) => `${v / 1000}k`} />
-                  <RechartsTooltip
-                    contentStyle={{ backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', boxShadow: '0 4px 20px rgba(15,23,42,0.08)', fontSize: 12, fontWeight: 600 }}
-                    formatter={(v: number) => [`$${v.toLocaleString()}`, 'Earnings']}
-                  />
-                  <Area type="monotone" dataKey="earnings" stroke="#06D4B8" strokeWidth={2.5} fill="url(#colorEarnings)" activeDot={{ r: 6, fill: '#06D4B8', stroke: 'white', strokeWidth: 3 }} />
-                </AreaChart>
-              </ResponsiveContainer>
+              <EarningsAreaChart data={CHART_DATA} />
             </div>
           </Card>
         </div>

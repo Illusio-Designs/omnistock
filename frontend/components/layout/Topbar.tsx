@@ -55,8 +55,8 @@ export function Topbar() {
 
         {/* Help */}
         <Tooltip content="Help & Support" side="bottom">
-          <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.06] hover:bg-white/10 text-white/60 hover:text-white transition-colors">
-            <HelpCircle size={17} />
+          <button aria-label="Help and support" className="w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.06] hover:bg-white/10 text-white/60 hover:text-white transition-colors">
+            <HelpCircle size={17} aria-hidden="true" />
           </button>
         </Tooltip>
 
@@ -65,16 +65,16 @@ export function Topbar() {
 
         {/* Mail */}
         <Tooltip content="Inbox" side="bottom">
-          <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.06] hover:bg-white/10 text-white/60 hover:text-white transition-colors">
-            <Mail size={17} />
+          <button aria-label="Inbox" className="w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.06] hover:bg-white/10 text-white/60 hover:text-white transition-colors">
+            <Mail size={17} aria-hidden="true" />
           </button>
         </Tooltip>
 
         {/* Avatar */}
         <Tooltip content={displayUser.name} side="bottom">
-          <button className="ml-2 flex items-center gap-2 pl-1 pr-3 py-1 rounded-full hover:bg-white/10 transition-colors">
+          <button aria-label={`Account menu for ${displayUser.name}`} className="ml-2 flex items-center gap-2 pl-1 pr-3 py-1 rounded-full hover:bg-white/10 transition-colors">
             <Avatar name={displayUser.name} size="sm" shape="circle" />
-            <ChevronDown size={14} className="text-white/50 hidden sm:block" />
+            <ChevronDown size={14} aria-hidden="true" className="text-white/50 hidden sm:block" />
           </button>
         </Tooltip>
       </div>
