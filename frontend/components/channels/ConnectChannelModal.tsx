@@ -30,6 +30,9 @@ export function ConnectChannelModal({
   const [showSecret, setShowSecret] = useState<Record<string, boolean>>({});
   const [status, setStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const popupRef = useRef<Window | null>(null);
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
   // Webhook URL surfaced for each channel — the tenant copies this into the
   // external platform's dashboard so we receive events.
@@ -58,11 +61,6 @@ export function ConnectChannelModal({
   const toggleSecret = (k: string) => setShowSecret((p) => ({ ...p, [k]: !p[k] }));
 
   // ── OAuth flow (Amazon etc.) ──────────────────────────────
-  const pollRef = useRef<any>(null);
-  const popupRef = useRef<Window | null>(null);
-
-  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
-
   const startOAuth = async () => {
     if (!schema?.oauth) return;
     setStatus('saving');
