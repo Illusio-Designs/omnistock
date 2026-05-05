@@ -82,13 +82,23 @@ class AmazonSmartBizAdapter {
 
   async _getToken() {
     if (this._token && this._tokenExpiry > Date.now()) return this._token;
+    if (!this.creds.refreshToken) {
+      throw new Error('Amazon Smart Biz channel missing refreshToken — complete the seller OAuth flow first.');
+    }
     const { clientId, clientSecret } = await getAppCredentials(this.creds);
-    const { data } = await axios.post(LWA_URL, {
-      grant_type: 'refresh_token',
-      refresh_token: this.creds.refreshToken,
-      client_id: clientId,
-      client_secret: clientSecret,
-    });
+    let data;
+    try {
+      ({ data } = await axios.post(LWA_URL, {
+        grant_type: 'refresh_token',
+        refresh_token: this.creds.refreshToken,
+        client_id: clientId,
+        client_secret: clientSecret,
+      }));
+    } catch (err) {
+      const body = err.response?.data;
+      const reason = body?.error_description || body?.error || err.message;
+      throw new Error(`Amazon LWA token exchange failed (${err.response?.status || '?'}): ${reason}`);
+    }
     this._token = data.access_token;
     this._tokenExpiry = Date.now() + (data.expires_in - 60) * 1000;
     return this._token;
@@ -96,14 +106,40 @@ class AmazonSmartBizAdapter {
 
   async _req(method, path, payload = null, params = {}) {
     const token = await this._getToken();
-    const { data } = await axios({
-      method,
-      url: `${SP_API}${path}`,
-      headers: { 'x-amz-access-token': token, 'Content-Type': 'application/json' },
-      params,
-      data: payload,
-    });
-    return data;
+    try {
+      const { data } = await axios({
+        method,
+        url: `${SP_API}${path}`,
+        headers: { 'x-amz-access-token': token, 'Content-Type': 'application/json' },
+        params,
+        data: payload,
+      });
+      return data;
+    } catch (err) {
+      const status = err.response?.status;
+      const body   = err.response?.data;
+      let apiMsg = body?.errors?.[0]?.message
+                || body?.errors?.[0]?.code
+                || body?.message
+                || body?.error_description
+                || body?.error;
+      if (!apiMsg) {
+        if (body && typeof body === 'object') {
+          try { apiMsg = JSON.stringify(body); } catch { apiMsg = err.message; }
+        } else if (typeof body === 'string' && body.length) {
+          apiMsg = body.slice(0, 400);
+        } else {
+          apiMsg = err.message;
+        }
+      }
+      console.error('[amazon-smartbiz._req] failed', { method, path, status, body, endpoint: SP_API });
+      const hint = status === 403
+        ? ' — common causes: (1) seller has not authorized this SP-API role, (2) refresh token region mismatch, (3) app in Draft state.'
+        : status === 400
+        ? ' — common causes: (1) sandbox/production credential mismatch, (2) wrong region for the marketplace, (3) the request body or query params are malformed for this SP-API path.'
+        : '';
+      throw new Error(`Amazon SP-API ${method} ${path} failed (${status || '?'}): ${apiMsg}${hint}`);
+    }
   }
 
   // ── Connection test ─────────────────────────────────────────────────────────
@@ -118,9 +154,13 @@ class AmazonSmartBizAdapter {
   // Fetches MCF fulfillment orders created for Smart Biz sales.
   // Call this from sync/orders endpoint.
 
-  async fetchOrders(sinceDate) {
+  async fetchOrders(opts = {}) {
+    const since = opts instanceof Date ? opts : opts.since;
     const params = {};
-    if (sinceDate) params.queryStartDate = sinceDate;
+    if (since) {
+      const d = since instanceof Date ? since : new Date(since);
+      params.queryStartDate = d.toISOString();
+    }
 
     const data = await this._req(
       'GET',
