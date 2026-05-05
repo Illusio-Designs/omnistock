@@ -69,7 +69,9 @@ class AmazonAdapter {
     this.creds = credentials || {};
     this.region = this.creds.region || 'IN';
     const cfg = getRegionConfig(this.region);
-    this.sandbox = this.creds.sandbox === true || this.creds.sandbox === 'true';
+    this.sandbox = this.creds.sandbox === true
+                || this.creds.sandbox === 'true'
+                || String(this.creds.mode || '').toLowerCase() === 'sandbox';
     this.endpoint = this.sandbox ? toSandboxHost(cfg.endpoint) : cfg.endpoint;
     this.marketplaceId = cfg.marketplaceId;
     this._accessToken = null;

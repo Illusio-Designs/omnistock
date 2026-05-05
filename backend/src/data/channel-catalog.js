@@ -27,9 +27,10 @@ const CATALOG = [
     // tenant-facing credentials form. Tenants either run OAuth (preferred)
     // or paste a Self-Authorized refresh token for fast testing.
     credentialsSchema: [
-      { key: 'sellerId',     label: 'Seller ID',          type: 'text',     required: true,  help: 'Seller Central → Settings → Account Info. Auto-filled if you use the OAuth button.' },
+      { key: 'sellerId',     label: 'Seller ID',          type: 'text',     required: true,  help: 'Seller Central → Settings → Account Info. For sandbox, paste the sandbox seller ID from Developer Central → "View sandbox credentials".' },
       { key: 'refreshToken', label: 'Refresh Token',      type: 'password', required: false, help: 'Skip if using OAuth. Otherwise: Develop Apps → your app → click "Self Authorize" to generate; begins with Atzr|.' },
       { key: 'region',       label: 'Region',             type: 'select',   required: true,  options: ['IN','US','CA','MX','BR','UK','DE','FR','IT','ES','NL','SE','PL','TR','AE','SA','EG','ZA','JP','AU','SG'], default: 'IN' },
+      { key: 'mode',         label: 'Mode',               type: 'select',   required: true,  options: ['production','sandbox'], default: 'production', help: 'Use sandbox while your developer registration is under review. Sandbox returns mock data only and accepts only documented test request shapes.' },
     ],
     applyUrl: 'https://sellercentral.amazon.in',
     docsUrl:  'https://developer-docs.amazon.com/sp-api/',
@@ -587,8 +588,9 @@ const CATALOG = [
     // amazon.clientSecret platform settings. Tenants only need to provide
     // their seller-specific values.
     credentialsSchema: [
-      { key: 'sellerId',     label: 'Seller ID',         type: 'text',     required: true,  help: 'Seller Central → Settings → Account Info.' },
+      { key: 'sellerId',     label: 'Seller ID',         type: 'text',     required: true,  help: 'Seller Central → Settings → Account Info. For sandbox, paste the sandbox seller ID from Developer Central → "View sandbox credentials".' },
       { key: 'refreshToken', label: 'Refresh Token',     type: 'password', required: false, help: 'Skip if using OAuth. Otherwise: Develop Apps → your app → "Self Authorize"; begins with Atzr|.' },
+      { key: 'mode',         label: 'Mode',              type: 'select',   required: true,  options: ['production','sandbox'], default: 'production', help: 'Use sandbox while your developer registration is under review. Sandbox returns mock data only and accepts only the documented test request shapes.' },
       { key: 'webhookSecret',label: 'Webhook Secret (optional)', type: 'password', required: false, help: 'Optional. Only needed if you want SmartBiz to push order events to Kartriq in real time (instead of polling every 5 minutes). Set the same shared secret in your SmartBiz dashboard → Webhooks. Leave blank to use SP-API polling only.' },
     ],
     applyUrl: 'https://smartcommerce.amazon.in/smartbiz',

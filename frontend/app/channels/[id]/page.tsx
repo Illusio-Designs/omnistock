@@ -7,7 +7,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { channelApi } from '@/lib/api';
 import {
   ArrowLeft, RefreshCw, Download, Upload,
-  Plug, AlertCircle, Trash2, KeyRound,
+  Plug, AlertCircle, Trash2, KeyRound, CheckCircle2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { ConnectChannelModal } from '@/components/channels/ConnectChannelModal';
@@ -92,6 +92,11 @@ export default function ChannelDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {hasCredentials && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
+                <CheckCircle2 size={12} /> Connected
+              </span>
+            )}
             <Button variant="primary" leftIcon={<KeyRound size={14} />} onClick={() => setConnectOpen(true)}>
               {hasCredentials ? 'Update credentials' : 'Connect'}
             </Button>
@@ -148,7 +153,6 @@ export default function ChannelDetailPage() {
             onConnected={() => {
               setConnectOpen(false);
               qc.invalidateQueries({ queryKey: ['channel', id] });
-              toast.success('Channel connected successfully');
             }}
           />
         )}
