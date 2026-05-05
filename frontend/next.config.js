@@ -17,7 +17,8 @@ const cspDirectives = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
-  `connect-src 'self' ${apiOrigin} https://api.razorpay.com https://lumberjack.razorpay.com https://www.google-analytics.com https://*.clarity.ms https://accounts.google.com`,
+  "worker-src 'self' blob:",
+  `connect-src 'self' ${apiOrigin} https://api.razorpay.com https://lumberjack.razorpay.com https://www.google-analytics.com https://*.clarity.ms https://accounts.google.com https://*.sentry.io https://*.ingest.sentry.io https://*.ingest.us.sentry.io`,
   "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://accounts.google.com",
   "object-src 'none'",
   "base-uri 'self'",
@@ -65,4 +66,29 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+// Wrap with Sentry only if a DSN + auth token are provided. The plugin is a
+// no-op without auth (it would skip source-map upload anyway) but importing
+// it requires `@sentry/nextjs` to be installed. We try/catch so dev environments
+// without the package still build.
+function withOptionalSentry(cfg) {
+  if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return cfg;
+  try {
+    const { withSentryConfig } = require('@sentry/nextjs');
+    return withSentryConfig(cfg, {
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      silent: !process.env.CI,
+      // Tunnel ad-blocker-bypass route. Stops uBlock/Brave from swallowing
+      // error events. Add to CSP connect-src if you flip CSP to enforcing.
+      tunnelRoute: '/monitoring',
+      hideSourceMaps: true,
+      disableLogger: true,
+      widenClientFileUpload: true,
+    });
+  } catch {
+    return cfg;
+  }
+}
+
+module.exports = withOptionalSentry(nextConfig);

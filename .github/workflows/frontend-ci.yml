@@ -1,0 +1,59 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+
+# Cancel superseded runs on the same PR — saves Actions minutes.
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: typecheck · lint · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # `npm ci` requires package-lock.json. Fall back to `install` if absent
+      # so a fresh checkout without a lockfile still runs.
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install --no-audit --no-fund
+          fi
+
+      - name: Typecheck (tsc --noEmit)
+        run: npm run typecheck
+
+      - name: Lint (next lint)
+        run: npm run lint
+
+      - name: Build (next build)
+        env:
+          # Build-time env. Real secrets are injected in deploy, not CI.
+          NEXT_PUBLIC_API_URL: http://localhost:5001/api/v1
+          NEXT_PUBLIC_SITE_URL: https://example.com
+          NODE_OPTIONS: '--max-old-space-size=4096'
+        run: npm run build
