@@ -30,7 +30,7 @@ export function ConnectChannelModal({
   const [showSecret, setShowSecret] = useState<Record<string, boolean>>({});
   const [status, setStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const popupRef = useRef<Window | null>(null);
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
