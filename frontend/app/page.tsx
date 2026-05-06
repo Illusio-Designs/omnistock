@@ -190,26 +190,30 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { iso: 'in', region: 'India',           channels: ['Amazon.in', 'Flipkart', 'Myntra', 'Meesho', 'Nykaa', 'Ajio', 'Tata Cliq', 'JioMart', 'Blinkit', 'Zepto', 'Swiggy Instamart', 'BB Now'] },
-              { iso: 'sg', region: 'Southeast Asia',  channels: ['Lazada', 'Shopee', 'TikTok Shop', 'Amazon SG', 'Amazon AU'] },
-              { iso: 'us', region: 'North America',  channels: ['Amazon US', 'Walmart', 'eBay', 'Etsy', 'Shopify', 'BigCommerce'] },
-              { iso: 'eu', region: 'Europe',          channels: ['Amazon UK', 'Amazon DE', 'Zalando', 'Allegro', 'Kaufland', 'OnBuy', 'ManoMano', 'Fruugo'] },
-              { iso: 'br', region: 'Latin America',   channels: ['Mercado Libre (8 markets)', 'Shopee BR/MX/CO/CL'] },
-              { iso: 'ae', region: 'Middle East',     channels: ['Amazon UAE', 'Amazon Saudi Arabia', 'Noon (UAE/KSA/Egypt)'] },
+              { iso: 'in', twemoji: '1f1ee-1f1f3', region: 'India',           channels: ['Amazon.in', 'Flipkart', 'Myntra', 'Meesho', 'Nykaa', 'Ajio', 'Tata Cliq', 'JioMart', 'Blinkit', 'Zepto', 'Swiggy Instamart', 'BB Now'] },
+              { iso: 'sg', twemoji: '1f1f8-1f1ec', region: 'Southeast Asia',  channels: ['Lazada', 'Shopee', 'TikTok Shop', 'Amazon SG', 'Amazon AU'] },
+              { iso: 'us', twemoji: '1f1fa-1f1f8', region: 'North America',  channels: ['Amazon US', 'Walmart', 'eBay', 'Etsy', 'Shopify', 'BigCommerce'] },
+              { iso: 'eu', twemoji: '1f1ea-1f1fa', region: 'Europe',          channels: ['Amazon UK', 'Amazon DE', 'Zalando', 'Allegro', 'Kaufland', 'OnBuy', 'ManoMano', 'Fruugo'] },
+              { iso: 'br', twemoji: '1f1e7-1f1f7', region: 'Latin America',   channels: ['Mercado Libre (8 markets)', 'Shopee BR/MX/CO/CL'] },
+              { iso: 'ae', twemoji: '1f1e6-1f1ea', region: 'Middle East',     channels: ['Amazon UAE', 'Amazon Saudi Arabia', 'Noon (UAE/KSA/Egypt)'] },
             ].map((r) => (
-              <div key={r.region} className="rounded-2xl bg-white border border-slate-200 p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all">
+              <div key={r.region} className="group rounded-2xl bg-white border border-slate-200 p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all">
                 <div className="flex items-center gap-3 mb-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`https://flagcdn.com/${r.iso}.svg`}
-                    alt=""
+                  <span
                     aria-hidden
-                    width={28}
-                    height={20}
-                    loading="lazy"
-                    className="rounded-sm shadow-sm border border-slate-200 object-cover"
-                    style={{ width: 28, height: 20 }}
-                  />
+                    className="relative inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-br from-white to-slate-50 ring-1 ring-slate-200 shadow-[0_4px_14px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] group-hover:scale-105 group-hover:ring-emerald-200 transition-all"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/svg/${r.twemoji}.svg`}
+                      alt=""
+                      width={28}
+                      height={28}
+                      loading="lazy"
+                      className="drop-shadow-sm"
+                      style={{ width: 28, height: 28 }}
+                    />
+                  </span>
                   <h4 className="font-bold text-slate-900">{r.region}</h4>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
