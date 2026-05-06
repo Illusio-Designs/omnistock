@@ -18,8 +18,8 @@ that distinguishes a working app from a sellable SaaS.
 ## Progress
 
 - ✅ Shipped: **19 of 39** numbered items + 5 build/UX fixes
-- ⛔ Deferred: **5 items** (#12 SSO, #13 Tenant API keys, #17 Public status page, #19 Automated DB backups, #22 CI pipeline)
-- 🔄 Remaining: **15 items**
+- ⛔ Deferred: **6 items** (#12 SSO, #13 Tenant API keys, #17 Public status page, #19 Automated DB backups, #22 CI pipeline, #31 Public docs site)
+- 🔄 Remaining: **14 items**
 
 ---
 
@@ -106,7 +106,7 @@ that distinguishes a working app from a sellable SaaS.
 |---|---|------|-------|
 | 29 | ✅ | **Cmd+K command palette** | `frontend/components/CommandPalette.tsx`, mounted in `DashboardLayout`. ⌘K / Ctrl+K toggles globally, Esc closes, ↑↓ navigates, Enter activates. Static commands (4 quick actions + 14 page navs + 6 settings shortcuts) plus debounced live search across products, orders, customers. Topbar gains a clickable `⌘K` button that dispatches `open-command-palette` so other UI can open it without re-implementing the keyboard handler. No external dep. Shipped in `aefc86d`. |
 | 30 | ✅ | **In-app changelog / "What's new"** | `frontend/components/ChangelogDrawer.tsx` + `frontend/data/changelog.ts`. Megaphone icon in the Topbar (with red unread dot) opens a slide-in drawer from the right. Entries grouped by tag (`feature` / `fix` / `security` / `improve`) with colour-coded badges. Last-seen entry id stored in localStorage; the dot clears the moment the drawer is opened. Listens for `open-changelog` event so other UI can trigger it. Shipped in this commit. |
-| 31 | 🔄 | **Public docs site** | API reference, integration guides, FAQs. Tools: Mintlify, Docusaurus, or extend the existing `/help` page. |
+| 31 | ⛔ | ~~**Public docs site**~~ | Skipped for now — `/help` covers in-app questions, and customer volume doesn't yet justify the SEO funnel. Revisit once self-serve signups become a meaningful acquisition channel. Founder ops needs are met by the existing `/admin/*` tools and an eventual `docs/RUNBOOK.md`. |
 | 32 | 🔄 | **Referral / affiliate program** | Track referrer codes on signup, credit wallet on conversion. |
 | 33 | 🔄 | **Empty-state illustrations + first-run tips** | Some pages have them; audit each list page (orders, products, channels) for a polished empty state with a clear primary CTA. |
 | 34 | 🔄 | **Dark mode** | No theme toggle today. Implement via Tailwind `dark:` classes + a Zustand-stored preference. |
@@ -131,7 +131,7 @@ The previous top-5 (compliance + revenue) are all done. Next priorities:
 
 1. **Test coverage on auth + billing + webhooks** (#20) — biggest risk surface in the codebase
 2. **Empty-state illustrations + first-run tips** (#33) — polishes the trial-to-paid conversion path
-3. **Public docs site** (#31) — API reference + integration guides; unblocks self-serve customers
+3. **In-app changelog already shipped** — pick another item from the remaining 14
 4. **Email QA in production** (re-verify #11 once SMTP is live) — fire `POST /admin/email/test` from prod inbox
 5. *(open slot — pick anything from the remaining 15)*
 
