@@ -17,9 +17,9 @@ that distinguishes a working app from a sellable SaaS.
 
 ## Progress
 
-- ✅ Shipped: **18 of 39** numbered items + 5 build/UX fixes
+- ✅ Shipped: **19 of 39** numbered items + 5 build/UX fixes
 - ⛔ Deferred: **5 items** (#12 SSO, #13 Tenant API keys, #17 Public status page, #19 Automated DB backups, #22 CI pipeline)
-- 🔄 Remaining: **16 items**
+- 🔄 Remaining: **15 items**
 
 ---
 
@@ -79,7 +79,7 @@ that distinguishes a working app from a sellable SaaS.
 | # | Status | Item | Notes |
 |---|---|------|-------|
 | 17 | ⛔ | ~~**Public status page**~~ | Deferred — not needed at current scale. Will revisit when an enterprise prospect or post-mortem demands it; recommended path is BetterStack/Instatus (hosted, ~1 hour to set up) so the status page lives on different infrastructure than the API it monitors. |
-| 18 | 🔄 | **`/healthz` and `/readyz` endpoints** | Required for k8s / load balancer probes. `/healthz` = process alive; `/readyz` = DB + critical deps reachable. |
+| 18 | ✅ | **`/healthz` and `/readyz` endpoints** | New `backend/src/routes/health.routes.js` mounted **before** the global rate limiter and audit middleware so probe traffic doesn't burn the limit budget or pollute the audit log. `/healthz` returns process uptime + pid (200 if Node is alive). `/readyz` checks DB reachability + presence of required env vars (`JWT_SECRET`, `ENCRYPTION_KEY`); returns 503 with per-check details if anything is broken. Legacy aliases `/health`, `/live`, `/ready` kept for back-compat with any existing monitor. Inline implementations previously in `index.js` removed. Shipped in this commit. |
 | 19 | ⛔ | ~~**Automated DB backups**~~ | Deferred — handled at the hosting layer (cPanel nightly snapshots / managed-MySQL provider's automatic backups). Will revisit if we move to a self-managed DB or need point-in-time restore SLAs. |
 | 20 | 🔄 | **Test coverage** | Backend: 1 e2e file (`scripts/test.js`). Frontend: 3 component tests + 1 smoke spec. Target: ~60-70% line coverage on auth, billing, webhooks before scaling. |
 | 21 | ✅ | **Background job queue** | MySQL-backed (no Redis required) durable queue with BullMQ-style retry/DLQ. New `services/jobs.service.js` exposes `enqueue`, `register`, `startWorker`, `retry`, `discard`, `purge`. Worker boots in-process from `index.js` (gateable via `DISABLE_JOB_WORKER=true` for read-only nodes); claims rows atomically via UPDATE-WHERE-pending, reschedules failures with 30s/1m/5m/15m/60m back-off, and dead-letters after `maxAttempts`. Stale `running` rows older than 10 min are reaped to recover from hard crashes. Handlers registered for `email.send`, `webhook.deliver` (HMAC-signed), `channel.sync`, `audit.purge` in `jobs/handlers.js`. New `job_queue` table in `initDb.js`. Founder UI at `/admin/jobs`: 4 stat tiles (pending/running/done/dead) double as bucket switchers, type filter, search, click-to-expand row showing payload + last error, Retry on dead-letter rows, Discard on done/dead, Purge old rows action. Auto-refreshes the live buckets every 5s. Ticket-reply email migrated as a demo of the new pattern. Shipped in this commit. |
@@ -129,11 +129,11 @@ that distinguishes a working app from a sellable SaaS.
 
 The previous top-5 (compliance + revenue) are all done. Next priorities:
 
-1. **`/healthz` + `/readyz`** (#18) — needed for any k8s / load-balancer setup, ~30 min of work
-2. **Test coverage on auth + billing + webhooks** (#20) — biggest risk surface in the codebase
-3. **Empty-state illustrations + first-run tips** (#33) — polishes the trial-to-paid conversion path
-4. **Public docs site** (#31) — API reference + integration guides; unblocks self-serve customers
-5. **In-app cmd+K already shipped** — pick whichever of the remaining 17 you want next
+1. **Test coverage on auth + billing + webhooks** (#20) — biggest risk surface in the codebase
+2. **Empty-state illustrations + first-run tips** (#33) — polishes the trial-to-paid conversion path
+3. **Public docs site** (#31) — API reference + integration guides; unblocks self-serve customers
+4. **Email QA in production** (re-verify #11 once SMTP is live) — fire `POST /admin/email/test` from prod inbox
+5. *(open slot — pick anything from the remaining 15)*
 
 ---
 
@@ -165,4 +165,5 @@ These were closed during this audit / cleanup pass:
 - ✅ #15 Team invitations via email (magic-link) — `c0476be`
 - ✅ #16 Custom roles UI (production-grade) — `1dad6cf`
 - ✅ Vercel a11y fix: dialog backdrops use real button — `fa476e7`
-- ✅ #21 Background job queue (MySQL-backed, retry + DLQ + admin UI) — this commit
+- ✅ #21 Background job queue (MySQL-backed, retry + DLQ + admin UI) — `5b9ba8f`
+- ✅ #18 `/healthz` + `/readyz` endpoints (consolidated route file) — this commit

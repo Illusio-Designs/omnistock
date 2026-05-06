@@ -134,6 +134,14 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: true }));
 
+// ── Health checks ─────────────────────────────────────
+// Mounted BEFORE the rate limiter and auto-audit so probe traffic
+// (UptimeRobot, BetterStack, ad-hoc curl) doesn't burn the global limit
+// and doesn't pollute the audit log. Canonical names: /healthz + /readyz.
+// Legacy aliases /health, /live, /ready kept for back-compat.
+const healthRoutes = require('./routes/health.routes');
+app.use(healthRoutes);
+
 // Rate limiting — relaxed in test mode so the e2e test suite can run
 const isTestMode = process.env.NODE_ENV === 'test' || process.env.DISABLE_RATE_LIMIT === 'true';
 
@@ -181,22 +189,6 @@ app.use('/api/v1/payments/verify', paymentLimiter);
 app.use('/api/v1/payments/wallet-verify', paymentLimiter);
 app.use('/api/v1/payments/checkout', paymentLimiter);
 app.use('/api/v1/payments/wallet-checkout', paymentLimiter);
-
-// ── Health checks ─────────────────────────────────────
-// /health and /live: process up — used by k8s liveness or load balancers
-// /ready          : process up AND DB reachable — used by k8s readiness;
-//                   503s mean "don't route traffic at me yet"
-app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date() }));
-app.get('/live',   (_req, res) => res.json({ status: 'live', timestamp: new Date() }));
-app.get('/ready', async (_req, res) => {
-  try {
-    const db = require('./utils/db');
-    await db.raw('SELECT 1 AS ok');
-    res.json({ status: 'ready', db: 'ok', timestamp: new Date() });
-  } catch (err) {
-    res.status(503).json({ status: 'not-ready', db: 'unreachable', error: err.message });
-  }
-});
 
 // ── Auto audit: logs every successful authenticated mutation ──
 app.use(autoAudit);
