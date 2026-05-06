@@ -18,8 +18,8 @@ that distinguishes a working app from a sellable SaaS.
 ## Progress
 
 - ✅ Shipped: **18 of 39** numbered items + 5 build/UX fixes
-- ⛔ Deferred: **4 items** (#12 SSO, #13 Tenant API keys, #17 Public status page, #22 CI pipeline)
-- 🔄 Remaining: **17 items**
+- ⛔ Deferred: **5 items** (#12 SSO, #13 Tenant API keys, #17 Public status page, #19 Automated DB backups, #22 CI pipeline)
+- 🔄 Remaining: **16 items**
 
 ---
 
@@ -80,7 +80,7 @@ that distinguishes a working app from a sellable SaaS.
 |---|---|------|-------|
 | 17 | ⛔ | ~~**Public status page**~~ | Deferred — not needed at current scale. Will revisit when an enterprise prospect or post-mortem demands it; recommended path is BetterStack/Instatus (hosted, ~1 hour to set up) so the status page lives on different infrastructure than the API it monitors. |
 | 18 | 🔄 | **`/healthz` and `/readyz` endpoints** | Required for k8s / load balancer probes. `/healthz` = process alive; `/readyz` = DB + critical deps reachable. |
-| 19 | 🔄 | **Automated DB backups** | Verify MySQL is backed up nightly with point-in-time restore tested. Document restore procedure in `docs/RUNBOOK.md`. |
+| 19 | ⛔ | ~~**Automated DB backups**~~ | Deferred — handled at the hosting layer (cPanel nightly snapshots / managed-MySQL provider's automatic backups). Will revisit if we move to a self-managed DB or need point-in-time restore SLAs. |
 | 20 | 🔄 | **Test coverage** | Backend: 1 e2e file (`scripts/test.js`). Frontend: 3 component tests + 1 smoke spec. Target: ~60-70% line coverage on auth, billing, webhooks before scaling. |
 | 21 | ✅ | **Background job queue** | MySQL-backed (no Redis required) durable queue with BullMQ-style retry/DLQ. New `services/jobs.service.js` exposes `enqueue`, `register`, `startWorker`, `retry`, `discard`, `purge`. Worker boots in-process from `index.js` (gateable via `DISABLE_JOB_WORKER=true` for read-only nodes); claims rows atomically via UPDATE-WHERE-pending, reschedules failures with 30s/1m/5m/15m/60m back-off, and dead-letters after `maxAttempts`. Stale `running` rows older than 10 min are reaped to recover from hard crashes. Handlers registered for `email.send`, `webhook.deliver` (HMAC-signed), `channel.sync`, `audit.purge` in `jobs/handlers.js`. New `job_queue` table in `initDb.js`. Founder UI at `/admin/jobs`: 4 stat tiles (pending/running/done/dead) double as bucket switchers, type filter, search, click-to-expand row showing payload + last error, Retry on dead-letter rows, Discard on done/dead, Purge old rows action. Auto-refreshes the live buckets every 5s. Ticket-reply email migrated as a demo of the new pattern. Shipped in this commit. |
 | 22 | ⛔ | ~~**CI pipeline**~~ | Deferred — not on the roadmap. Vercel build + the existing local lint/typecheck cover most regressions; revisit if/when the team grows or merge conflicts on `main` start hurting. Path documented: `.github/workflows/ci.yml` running lint + typecheck + `next build` on PR, plus a `vercel.json` ignoreCommand to skip frontend builds for backend-only pushes. |
