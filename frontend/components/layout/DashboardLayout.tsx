@@ -11,6 +11,7 @@ import { MaintenancePage } from '@/components/MaintenancePage';
 import { setPlanLimitHandler, authApi, publicApi } from '@/lib/api';
 import { Loader } from '@/components/ui/Loader';
 import { TrialBanner } from '@/components/TrialBanner';
+import { CommandPalette } from '@/components/CommandPalette';
 import { Toaster } from '@/components/ui/Toaster';
 import { Eye, X, ArrowLeft, Zap } from 'lucide-react';
 
@@ -139,6 +140,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         )}
         <TrialBanner />
         <div className="flex-1 p-4 sm:p-5 lg:p-6 xl:p-8 animate-fade-in">{children}</div>
+        <CommandPalette />
       </main>
     </div>
   );

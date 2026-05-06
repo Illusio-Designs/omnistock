@@ -81,7 +81,7 @@ that distinguishes a working app from a sellable SaaS.
 
 | # | Item | Notes |
 |---|------|-------|
-| 29 | **Cmd+K command palette** | Standard SaaS pattern. Search across orders, products, customers, settings. Tools: cmdk library. |
+| ~~29~~ | ✅ ~~**Cmd+K command palette**~~ — shipped | `frontend/components/CommandPalette.tsx`, mounted in DashboardLayout. ⌘K / Ctrl+K toggles, Esc closes, ↑↓ navigates, Enter activates. Static commands (quick actions + 14 page navs + settings) plus debounced live search across products, orders, customers. Topbar gains a clickable `⌘K` button that dispatches `open-command-palette` event so other UI surfaces can open it without re-implementing the keyboard handler. No external dep — built on plain React + portal. |
 | 30 | **In-app changelog / "What's new"** | Drawer accessible from topbar that shows recent releases — drives feature discovery. |
 | 31 | **Public docs site** | API reference, integration guides, FAQs. Tools: Mintlify, Docusaurus, or extend the existing `/help` page. |
 | 32 | **Referral / affiliate program** | Track referrer codes on signup, credit wallet on conversion. |
@@ -142,3 +142,4 @@ These were closed during the audit / cleanup pass:
   - Payment failed: `payment.routes.js` Razorpay webhook handler on `payment.failed`
   - Password reset: new `POST /auth/forgot-password` + `POST /auth/reset-password` (60-min JWT token, no DB row needed)
 - ✅ Email diagnostics — `POST /admin/email/test { to }` fires every template at a chosen address and returns per-template ok/stub/error status, confirming whether SMTP is actually configured vs running in console-stub mode
+- ✅ Cmd+K command palette — `frontend/components/CommandPalette.tsx` mounted in DashboardLayout. ⌘K / Ctrl+K toggles globally, Esc closes, ↑↓ navigates, Enter activates. Static commands (quick actions + 14 page navs + settings shortcuts) plus debounced live search across products, orders, customers. Topbar gains a clickable `⌘K` button that dispatches `open-command-palette` so other UI can open it without re-implementing the keyboard handler. No external dep

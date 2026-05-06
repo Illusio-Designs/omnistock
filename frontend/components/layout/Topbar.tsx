@@ -46,6 +46,19 @@ export function Topbar() {
       </div>
 
       <div className="flex items-center gap-1 ml-auto">
+        {/* Command palette shortcut */}
+        <Tooltip content="Command palette" side="bottom">
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event('open-command-palette'))}
+            aria-label="Open command palette"
+            className="hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white/70 hover:text-white bg-white/[0.06] hover:bg-white/10 border border-white/10 rounded-xl transition-colors"
+          >
+            <Search size={12} />
+            <kbd className="font-mono">⌘K</kbd>
+          </button>
+        </Tooltip>
+
         {/* AI */}
         <Tooltip content="Ask AI" side="bottom">
           <button className="hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 rounded-xl transition-colors">
