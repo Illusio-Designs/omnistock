@@ -15,21 +15,49 @@ export function ShimmerTheme({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Card skeleton — mimics a typical dashboard card */
-export function CardSkeleton({ count = 1 }: { count?: number }) {
+/** Single card skeleton — drop directly inside a parent grid */
+export function CardSkeletonItem() {
   return (
     <ShimmerTheme>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {Array.from({ length: count }).map((_, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-slate-200 p-6">
-            <Skeleton width={80} height={12} borderRadius={8} />
-            <Skeleton width={120} height={28} borderRadius={8} className="mt-3" />
-            <Skeleton count={2} height={12} borderRadius={6} className="mt-4" />
-            <Skeleton height={100} borderRadius={12} className="mt-4" />
-          </div>
-        ))}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <div className="flex items-start justify-between mb-4">
+          <Skeleton width={40} height={40} borderRadius={12} />
+          <Skeleton width={16} height={16} borderRadius={6} />
+        </div>
+        <Skeleton width="60%" height={20} borderRadius={6} />
+        <Skeleton count={2} height={12} borderRadius={6} className="mt-3" />
+        <div className="mt-6 flex items-end gap-1 h-16">
+          {[30, 45, 35, 60, 40, 75, 55, 85, 65].map((h, i) => (
+            <div key={i} className="flex-1" style={{ height: `${h}%` }}>
+              <Skeleton height="100%" borderRadius={4} />
+            </div>
+          ))}
+        </div>
       </div>
     </ShimmerTheme>
+  );
+}
+
+/**
+ * N card skeletons rendered as siblings (no grid wrapper).
+ * Use directly inside any parent grid — the parent controls the layout.
+ */
+export function CardSkeleton({ count = 1 }: { count?: number }) {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, i) => (
+        <CardSkeletonItem key={i} />
+      ))}
+    </>
+  );
+}
+
+/** Standalone 3-column card skeleton grid — for use outside an existing grid */
+export function CardSkeletonGrid({ count = 3 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <CardSkeleton count={count} />
+    </div>
   );
 }
 
@@ -83,7 +111,7 @@ export function SectionSkeleton() {
           <Skeleton width={400} height={32} borderRadius={8} className="mt-4 mx-auto" />
           <Skeleton width={300} height={14} borderRadius={6} className="mt-3 mx-auto" />
         </div>
-        <CardSkeleton count={3} />
+        <CardSkeletonGrid count={3} />
       </div>
     </ShimmerTheme>
   );
@@ -116,7 +144,7 @@ export function PageSkeleton() {
         </div>
         {/* Content skeleton */}
         <div className="max-w-6xl mx-auto px-6 py-10">
-          <CardSkeleton count={3} />
+          <CardSkeletonGrid count={3} />
         </div>
       </div>
     </ShimmerTheme>
