@@ -114,6 +114,7 @@ export function CommandPalette() {
       { id: 'go-settings', group: 'Settings', label: 'Settings',         icon: Settings, run: go('/settings') },
       { id: 'go-billing',  group: 'Settings', label: 'Billing & wallet', icon: Wallet,   run: go('/dashboard/billing') },
       { id: 'go-usage',    group: 'Settings', label: 'Usage & limits',   icon: Gauge,    run: go('/usage') },
+      { id: 'go-audit',    group: 'Settings', label: 'Activity log',     keywords: 'audit security history changes', icon: Settings, run: go('/audit') },
       { id: 'go-team',     group: 'Settings', label: 'Team',             icon: Users,    run: go('/dashboard/team') },
       { id: 'go-2fa',      group: 'Settings', label: 'Two-factor authentication', keywords: '2fa mfa security totp', icon: Settings, run: go('/settings?tab=security') },
       { id: 'go-export',   group: 'Settings', label: 'Export my data',   keywords: 'gdpr dpdp download data', icon: FileText, run: go('/settings?tab=security') },

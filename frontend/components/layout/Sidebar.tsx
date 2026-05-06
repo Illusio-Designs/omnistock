@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Package, Warehouse, ShoppingCart, TrendingUp,
   Users, Store, Truck, FileText, BarChart2, Settings, LogOut,
   Building2, Plug, HelpCircle, Sparkles, PanelLeftClose, PanelLeftOpen, X,
-  Wallet, UserCog, Palette, ChevronDown, Gauge,
+  Wallet, UserCog, Palette, ChevronDown, Gauge, Activity,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useUIStore } from '@/store/ui.store';
@@ -56,6 +56,7 @@ const DEFAULT_NAV_GROUPS: SidebarNavGroup[] = [
       { label: 'Team',        href: '/dashboard/team',    icon: UserCog },
       { label: 'Billing',     href: '/dashboard/billing', icon: Wallet },
       { label: 'Usage',       href: '/usage',        icon: Gauge },
+      { label: 'Activity log', href: '/audit',       icon: Activity },
       { label: 'Settings',    href: '/settings',     icon: Settings },
       { label: 'UI Kit',      href: '/dashboard/ui-kit', icon: Palette },
       { label: 'Help Desk',   href: '/help',         icon: HelpCircle },

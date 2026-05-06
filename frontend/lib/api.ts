@@ -97,6 +97,9 @@ export const billingApi = {
   }) => api.patch('/billing/wallet/settings', body),
   updateTenant: (data: { businessName?: string; gstin?: string }) =>
     api.patch('/billing/tenant', data),
+  // Tenant-visible audit log (own tenant only)
+  audit: (params?: { limit?: number; action?: string; before?: string }) =>
+    api.get('/billing/audit', { params }),
 };
 
 // ── OAuth (per-seller channel authorization) ──────────────────────

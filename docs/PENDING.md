@@ -17,9 +17,9 @@ that distinguishes a working app from a sellable SaaS.
 
 ## Progress
 
-- ✅ Shipped: **14 of 39** numbered items + 4 build/UX fixes
+- ✅ Shipped: **15 of 39** numbered items + 4 build/UX fixes
 - ⛔ Deferred: **1 item** (#13 Tenant API keys)
-- 🔄 Remaining: **24 items**
+- 🔄 Remaining: **23 items**
 
 ---
 
@@ -68,7 +68,7 @@ that distinguishes a working app from a sellable SaaS.
 |---|---|------|-------|
 | 12 | 🔄 | **SSO (SAML / OIDC)** | Only Google OAuth today. Enterprise prospects will ask for Okta / Azure AD. Stick this behind a feature flag on the Enterprise plan. |
 | 13 | ⛔ | ~~**Tenant API keys**~~ | Deferred — not on the roadmap. Tenants will use the existing JWT session for any programmatic access. |
-| 14 | 🔄 | **Tenant-visible audit log** | Founder admin has audit; tenants currently can't see their own. Reuse `audit.service.js`, add `/audit` page filtered by `req.tenant.id`. |
+| 14 | ✅ | **Tenant-visible audit log** | `frontend/app/audit/page.tsx` — backed by `GET /billing/audit` (tenant-scoped server-side, gated by `settings.read`). Endpoint enriched with `limit`, `action`, and `before` query params plus a `total` count and a top-30 distinct-actions list for the filter dropdown. UI mirrors the admin audit page (verb/method colour pills, status colours, click-to-expand metadata) but drops cross-tenant fields. Sidebar gains an "Activity log" entry; Cmd+K palette adds a shortcut. Shipped in this commit. |
 | 15 | 🔄 | **Team invitations via email** | Magic-link signup so a tenant admin can invite teammates by email without them needing to register first. (Email template `sendUserInvite` is already shipped in #11 — needs the magic-link accept flow.) |
 | 16 | 🔄 | **Custom roles UI** | `role.routes.js` exists; verify there is a UI for tenants to define their own roles + assign permission strings. |
 
@@ -133,7 +133,7 @@ The previous top-5 (compliance + revenue) are all done. Next priorities:
 2. **`/healthz` + `/readyz`** (#18) — needed for any k8s / load-balancer setup, ~30 min of work
 3. **Team invitations magic-link accept flow** (#15) — email template already exists, just need the accept endpoint + UI
 4. **Test coverage on auth + billing + webhooks** (#20) — biggest risk surface in the codebase
-5. **Tenant-visible audit log** (#14) — backend already audits every action; just needs a tenant-scoped read endpoint + UI
+5. **Public status page** (#17) — link from footer; surfaces uptime + incident history
 
 ---
 
@@ -160,4 +160,5 @@ These were closed during this audit / cleanup pass:
 - ✅ #10 Plan upgrade / downgrade with proration — `4e3abc1`
 - ✅ #11 Email templates + diagnostics — `4e3abc1`
 - ✅ #29 Cmd+K command palette — `aefc86d`
-- ✅ #30 In-app changelog drawer — this commit
+- ✅ #30 In-app changelog drawer — `8b070f5`
+- ✅ #14 Tenant-visible audit log — this commit

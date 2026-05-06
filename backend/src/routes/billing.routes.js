@@ -388,14 +388,41 @@ router.post('/subscription/cancel', requirePermission('billing.manage'), async (
   res.json(updated);
 });
 
-// Tenant audit log (own tenant only)
+// Tenant audit log (own tenant only). Lightly indexed read — capped at 500
+// rows so a single response stays under the JSON limit; clients should
+// paginate via `before` (cursor on createdAt) to walk further back.
 router.get('/audit', requirePermission('settings.read'), async (req, res) => {
-  const logs = await prisma.auditLog.findMany({
+  const limit = Math.min(500, Math.max(1, Number(req.query.limit) || 100));
+  const action = String(req.query.action || '').trim();
+  const before = req.query.before ? new Date(String(req.query.before)) : null;
+
+  const where = { tenantId: req.tenant.id };
+  if (action) where.action = { contains: action };
+  if (before && !isNaN(before.getTime())) where.createdAt = { lt: before };
+
+  const [rows, total] = await Promise.all([
+    prisma.auditLog.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    }),
+    prisma.auditLog.count({ where: { tenantId: req.tenant.id } }),
+  ]);
+
+  // Distinct action list for the UI's filter dropdown — small surface, fast.
+  const distinctActions = await prisma.auditLog.groupBy({
+    by: ['action'],
     where: { tenantId: req.tenant.id },
-    orderBy: { createdAt: 'desc' },
-    take: 100,
+    _count: { action: true },
+    orderBy: { _count: { action: 'desc' } },
+    take: 30,
+  }).catch(() => []);
+
+  res.json({
+    logs: rows,
+    total,
+    actions: distinctActions.map((a) => ({ action: a.action, count: a._count?.action || 0 })),
   });
-  res.json(logs);
 });
 
 // Billing invoices history

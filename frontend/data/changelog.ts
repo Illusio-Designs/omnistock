@@ -22,6 +22,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-05-06-audit',
+    date: '2026-05-06',
+    title: 'Activity log for your workspace',
+    tag: 'feature',
+    highlights: [
+      'New /audit page lists every authenticated change made in your tenant',
+      'Filter by action, search by user / path / resource id, click any row to inspect metadata',
+      'Useful for security reviews and compliance — accessible from the sidebar under Operations',
+    ],
+  },
+  {
     id: '2026-05-06-cmdk',
     date: '2026-05-06',
     title: 'Command palette (⌘K / Ctrl+K)',
