@@ -18,8 +18,8 @@ that distinguishes a working app from a sellable SaaS.
 ## Progress
 
 - ✅ Shipped: **18 of 39** numbered items + 5 build/UX fixes
-- ⛔ Deferred: **2 items** (#12 SSO, #13 Tenant API keys)
-- 🔄 Remaining: **19 items**
+- ⛔ Deferred: **3 items** (#12 SSO, #13 Tenant API keys, #17 Public status page)
+- 🔄 Remaining: **18 items**
 
 ---
 
@@ -78,7 +78,7 @@ that distinguishes a working app from a sellable SaaS.
 
 | # | Status | Item | Notes |
 |---|---|------|-------|
-| 17 | 🔄 | **Public status page** | `status.kartriq.com` with component-level health (API, DB, payments, channels). Link from footer. Tools: BetterStack, Statuspage, or self-hosted Cachet. |
+| 17 | ⛔ | ~~**Public status page**~~ | Deferred — not needed at current scale. Will revisit when an enterprise prospect or post-mortem demands it; recommended path is BetterStack/Instatus (hosted, ~1 hour to set up) so the status page lives on different infrastructure than the API it monitors. |
 | 18 | 🔄 | **`/healthz` and `/readyz` endpoints** | Required for k8s / load balancer probes. `/healthz` = process alive; `/readyz` = DB + critical deps reachable. |
 | 19 | 🔄 | **Automated DB backups** | Verify MySQL is backed up nightly with point-in-time restore tested. Document restore procedure in `docs/RUNBOOK.md`. |
 | 20 | 🔄 | **Test coverage** | Backend: 1 e2e file (`scripts/test.js`). Frontend: 3 component tests + 1 smoke spec. Target: ~60-70% line coverage on auth, billing, webhooks before scaling. |
@@ -133,7 +133,7 @@ The previous top-5 (compliance + revenue) are all done. Next priorities:
 2. **`/healthz` + `/readyz`** (#18) — needed for any k8s / load-balancer setup, ~30 min of work
 3. **Test coverage on auth + billing + webhooks** (#20) — biggest risk surface in the codebase
 4. **Test coverage on auth + billing + webhooks** (#20) — biggest risk surface in the codebase
-5. **Public status page** (#17) — link from footer; surfaces uptime + incident history
+5. **Empty-state illustrations + first-run tips** (#33) — polishes the trial-to-paid conversion path
 
 ---
 
