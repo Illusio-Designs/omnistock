@@ -6,8 +6,9 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { invoiceApi } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 import { useFilteredBySearch } from '@/lib/useGlobalSearch';
-import { Button, Badge, Card, Pagination, Select, Tooltip, Modal, Input, Loader } from '@/components/ui';
+import { Button, Badge, Card, Pagination, Select, Tooltip, Modal, Input, Loader, EmptyState } from '@/components/ui';
 import { FileText, Download, Eye, Plus, Receipt, CreditCard, X } from 'lucide-react';
+import Link from 'next/link';
 
 const TYPE_FILTERS = [
   { value: '',             label: 'All Types' },
@@ -171,13 +172,24 @@ export default function InvoicesPage() {
                     </td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={8} className="px-4 py-16 text-center">
-                    <div className="inline-flex w-14 h-14 rounded-2xl bg-emerald-50 items-center justify-center mb-3">
-                      <FileText size={24} className="text-emerald-600" />
-                    </div>
-                    <div className="font-bold text-slate-900">No invoices yet</div>
-                    <div className="text-xs text-slate-500 mt-1">Invoices are auto-generated when orders ship.</div>
-                  </td></tr>
+                  <tr>
+                    <td colSpan={8} className="p-0">
+                      <EmptyState
+                        icon={<Receipt size={28} />}
+                        iconBg="bg-emerald-50 text-emerald-600"
+                        title="No invoices yet"
+                        description="Invoices appear automatically when orders are confirmed. You can also draft one manually for pro-forma billing."
+                        action={
+                          <Link href="/orders">
+                            <Button leftIcon={<FileText size={14} />}>View orders</Button>
+                          </Link>
+                        }
+                        secondaryAction={<span>they generate on order confirmation</span>}
+                        decorative
+                        size="lg"
+                      />
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>

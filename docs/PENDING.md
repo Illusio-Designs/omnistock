@@ -17,9 +17,9 @@ that distinguishes a working app from a sellable SaaS.
 
 ## Progress
 
-- ✅ Shipped: **20 of 39** numbered items + 5 build/UX fixes
+- ✅ Shipped: **21 of 39** numbered items + 5 build/UX fixes
 - ⛔ Deferred: **6 items** (#12 SSO, #13 Tenant API keys, #17 Public status page, #19 Automated DB backups, #22 CI pipeline, #31 Public docs site)
-- 🔄 Remaining: **13 items**
+- 🔄 Remaining: **12 items**
 
 ---
 
@@ -108,7 +108,7 @@ that distinguishes a working app from a sellable SaaS.
 | 30 | ✅ | **In-app changelog / "What's new"** | `frontend/components/ChangelogDrawer.tsx` + `frontend/data/changelog.ts`. Megaphone icon in the Topbar (with red unread dot) opens a slide-in drawer from the right. Entries grouped by tag (`feature` / `fix` / `security` / `improve`) with colour-coded badges. Last-seen entry id stored in localStorage; the dot clears the moment the drawer is opened. Listens for `open-changelog` event so other UI can trigger it. Shipped in this commit. |
 | 31 | ⛔ | ~~**Public docs site**~~ | Skipped for now — `/help` covers in-app questions, and customer volume doesn't yet justify the SEO funnel. Revisit once self-serve signups become a meaningful acquisition channel. Founder ops needs are met by the existing `/admin/*` tools and an eventual `docs/RUNBOOK.md`. |
 | 32 | ✅ | **Referral / affiliate program** | Each tenant gets a unique `KQ-XXXXXX` code (lazy-allocated on first read). Onboarding accepts `?ref=CODE` and `localStorage`-persists it through the signup flow. New `referrals` table tracks pending → converted → voided state per (referrer, referred) pair. Conversion fires automatically when a referred tenant transitions from trial/free onto a paid plan; the referrer's wallet is credited via `wallet.topup` with `reference: referral:<id>` for idempotency. New `/referrals` page (sidebar entry + Cmd+K) shows the share code, copy/Web-Share buttons, signups/pending/converted/earned stat strip, and a per-referral table. Reward amount + currency are tunable from `/admin/settings → Referral` (defaults: ₹500 INR). Shipped in this commit. |
-| 33 | 🔄 | **Empty-state illustrations + first-run tips** | Some pages have them; audit each list page (orders, products, channels) for a polished empty state with a clear primary CTA. |
+| 33 | ✅ | **Empty-state illustrations + first-run tips** | Phase 1 shipped. `<EmptyState>` (`components/ui/EmptyState.tsx`) extended with `secondaryAction`, `tip`, and a `decorative` gradient halo. Wired into 8 list pages — orders, products, customers, inventory, invoices, shipments, vendors, warehouses — each with: a context-appropriate icon, a clear primary CTA, a secondary path (e.g. *"or import from a channel"*), and a tip on the most-used pages (Cmd+K hint on Products, multi-location reminder on Warehouses). Ad-hoc inline empty states removed. Phase 2 (onboarding checklist on dashboard) and Phase 3 (first-run coachmarks) deferred for now. Shipped in this commit. |
 | 34 | 🔄 | **Dark mode** | No theme toggle today. Implement via Tailwind `dark:` classes + a Zustand-stored preference. |
 
 ---
@@ -167,4 +167,5 @@ These were closed during this audit / cleanup pass:
 - ✅ Vercel a11y fix: dialog backdrops use real button — `fa476e7`
 - ✅ #21 Background job queue (MySQL-backed, retry + DLQ + admin UI) — `5b9ba8f`
 - ✅ #18 `/healthz` + `/readyz` endpoints (consolidated route file) — `cca7e32`
-- ✅ #32 Referral / affiliate program (codes + wallet rewards on conversion) — this commit
+- ✅ #32 Referral / affiliate program (codes + wallet rewards on conversion) — `0b4a75e`
+- ✅ #33 Empty-state polish across 8 list pages — this commit

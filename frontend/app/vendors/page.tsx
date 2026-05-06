@@ -102,12 +102,13 @@ export default function VendorsPage() {
               icon={<Building2 size={28} />}
               iconBg="bg-emerald-50 text-emerald-600"
               title="No vendors yet"
-              description="Add your first supplier to start creating purchase orders."
+              description="Vendors are the suppliers you buy stock from. Add one to start creating purchase orders and tracking what you owe them."
               action={
                 <Button leftIcon={<Plus size={14} />} onClick={() => setCreateOpen(true)}>
-                  New Vendor
+                  New vendor
                 </Button>
               }
+              decorative
               size="lg"
             />
           </Card>

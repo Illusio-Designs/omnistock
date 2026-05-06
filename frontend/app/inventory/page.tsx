@@ -6,9 +6,10 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { inventoryApi, warehouseApi, productApi } from '@/lib/api';
 import { useFilteredBySearch } from '@/lib/useGlobalSearch';
 import {
-  Button, Badge, Card, Modal, Input, Textarea, Select, Pagination, Tabs,
+  Button, Badge, Card, Modal, Input, Textarea, Select, Pagination, Tabs, EmptyState,
 } from '@/components/ui';
-import { AlertTriangle, Plus, ArrowUpDown, Boxes, History } from 'lucide-react';
+import { AlertTriangle, Plus, ArrowUpDown, Boxes, History, Package } from 'lucide-react';
+import Link from 'next/link';
 
 const TYPE_OPTIONS = [
   { value: 'INBOUND',    label: 'Inbound (Add Stock)' },
@@ -216,12 +217,20 @@ export default function InventoryPage() {
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan={7} className="px-4 py-16 text-center">
-                        <div className="inline-flex w-12 h-12 rounded-2xl bg-slate-100 items-center justify-center mb-3">
-                          <ArrowUpDown size={20} className="text-slate-400" />
-                        </div>
-                        <div className="font-bold text-slate-900">No movements yet</div>
-                        <div className="text-xs text-slate-500 mt-1">Stock adjustments and order fulfillments appear here.</div>
+                      <td colSpan={7} className="p-0">
+                        <EmptyState
+                          icon={<ArrowUpDown size={28} />}
+                          iconBg="bg-emerald-50 text-emerald-600"
+                          title="No stock movements yet"
+                          description="Every adjustment, transfer, sale and receipt lands here as an audit trail. Add a product to start moving stock."
+                          action={
+                            <Link href="/products">
+                              <Button leftIcon={<Package size={14} />}>Manage products</Button>
+                            </Link>
+                          }
+                          decorative
+                          size="lg"
+                        />
                       </td>
                     </tr>
                   )}

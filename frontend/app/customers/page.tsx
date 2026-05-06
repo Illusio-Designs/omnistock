@@ -6,7 +6,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { customerApi } from '@/lib/api';
 import { useFilteredBySearch } from '@/lib/useGlobalSearch';
 import {
-  Button, Badge, Card, Modal, Input, Pagination, Tooltip, Checkbox, Loader, Avatar,
+  Button, Badge, Card, Modal, Input, Pagination, Tooltip, Checkbox, Loader, Avatar, EmptyState,
 } from '@/components/ui';
 import {
   Plus, Users, Mail, Phone, UserPlus, TrendingUp, Crown, Pencil, Trash2,
@@ -120,7 +120,24 @@ export default function CustomersPage() {
                     </td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">No customers yet</td></tr>
+                  <tr>
+                    <td colSpan={8} className="p-0">
+                      <EmptyState
+                        icon={<Users size={28} />}
+                        iconBg="bg-emerald-50 text-emerald-600"
+                        title="No customers yet"
+                        description="Customers are created automatically with each order, or you can add them manually for B2B accounts and quotes."
+                        action={
+                          <Button leftIcon={<UserPlus size={14} />} onClick={() => setCreateOpen(true)}>
+                            Add customer
+                          </Button>
+                        }
+                        secondaryAction={<span>or wait — they appear after your first order</span>}
+                        decorative
+                        size="lg"
+                      />
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>

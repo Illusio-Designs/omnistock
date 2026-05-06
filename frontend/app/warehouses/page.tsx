@@ -99,12 +99,14 @@ export default function WarehousesPage() {
               icon={<Store size={28} />}
               iconBg="bg-emerald-50 text-emerald-600"
               title="No warehouses yet"
-              description="Add a fulfillment location to start managing inventory."
+              description="Warehouses are physical locations where stock lives — your shop, a 3PL, or a home garage. Add one to start tracking inventory."
               action={
                 <Button leftIcon={<Plus size={14} />} onClick={() => setCreateOpen(true)}>
-                  New Warehouse
+                  New warehouse
                 </Button>
               }
+              tip="even single-location sellers should add at least one — it's how stock counts get tracked."
+              decorative
               size="lg"
             />
           </Card>

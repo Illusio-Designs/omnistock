@@ -7,9 +7,9 @@ import { orderApi, customerApi, channelApi } from '@/lib/api';
 import { formatCurrency, formatDateTime, ORDER_STATUS_COLORS } from '@/lib/utils';
 import { useFilteredBySearch } from '@/lib/useGlobalSearch';
 import {
-  Button, Badge, Card, Modal, Input, Textarea, Select, Pagination, Tooltip, Loader, Tabs,
+  Button, Badge, Card, Modal, Input, Textarea, Select, Pagination, Tooltip, Loader, Tabs, EmptyState,
 } from '@/components/ui';
-import { AlertTriangle, CheckCircle2, Package, Plus, Star, Trash2, XCircle, Zap, Hand, Layers } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Package, Plus, Star, Trash2, XCircle, Zap, Hand, Layers, ShoppingBag, Plug } from 'lucide-react';
 import Link from 'next/link';
 
 const STATUSES = [
@@ -245,7 +245,28 @@ export default function OrdersPage() {
                     </td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={10} className="px-4 py-12 text-center text-slate-400">No orders yet</td></tr>
+                  <tr>
+                    <td colSpan={10} className="p-0">
+                      <EmptyState
+                        icon={<ShoppingBag size={28} />}
+                        iconBg="bg-emerald-50 text-emerald-600"
+                        title="No orders yet"
+                        description="Orders flow in automatically from connected channels (Amazon, Shopify, Flipkart…). You can also create one manually for offline / B2B sales."
+                        action={
+                          <Link href="/channels">
+                            <Button leftIcon={<Plug size={14} />}>Connect a channel</Button>
+                          </Link>
+                        }
+                        secondaryAction={
+                          <Button variant="ghost" size="sm" leftIcon={<Plus size={12} />} onClick={() => setModalOpen(true)}>
+                            Create manually
+                          </Button>
+                        }
+                        decorative
+                        size="lg"
+                      />
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>

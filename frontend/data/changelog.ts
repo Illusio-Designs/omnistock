@@ -22,6 +22,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-05-06-empty-states',
+    date: '2026-05-06',
+    title: 'Friendlier empty list pages',
+    tag: 'improve',
+    highlights: [
+      'Orders, products, customers, inventory, invoices, shipments, vendors, and warehouses now show a guided empty state with a clear next step',
+      'Each empty page surfaces the most useful action plus an alternate path (e.g. "import from a channel" or "wait for the first order")',
+      'Subtle background halo + tips help new tenants get to first value faster',
+    ],
+  },
+  {
     id: '2026-05-06-referrals',
     date: '2026-05-06',
     title: 'Refer friends, earn wallet credit',

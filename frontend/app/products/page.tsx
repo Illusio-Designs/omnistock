@@ -136,12 +136,19 @@ export default function ProductsPage() {
               icon={<Package size={28} />}
               iconBg="bg-emerald-50 text-emerald-600"
               title="No products yet"
-              description="Add your first product to start selling."
+              description="Add your first product, or pull your existing catalogue from a connected channel like Shopify or Amazon."
               action={
                 <Button leftIcon={<Plus size={14} />} onClick={() => setModalOpen(true)}>
-                  Add Product
+                  Add product
                 </Button>
               }
+              secondaryAction={
+                <Link href="/channels" className="text-emerald-600 font-bold hover:text-emerald-700">
+                  or import from a channel
+                </Link>
+              }
+              tip={<>press <kbd className="font-mono px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px]">⌘K</kbd> and type &quot;new product&quot; to skip this dialog</>}
+              decorative
               size="lg"
             />
           </Card>

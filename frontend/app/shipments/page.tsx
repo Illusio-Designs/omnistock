@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { shipmentApi, orderApi, channelApi } from '@/lib/api';
 import { useFilteredBySearch } from '@/lib/useGlobalSearch';
-import { Button, Badge, Card, Pagination, Select, Tooltip, Input, Modal, Loader } from '@/components/ui';
+import { Button, Badge, Card, Pagination, Select, Tooltip, Input, Modal, Loader, EmptyState } from '@/components/ui';
 import { Truck, Package, MapPin, Eye, ExternalLink, Search, Plus, CheckCircle2, XCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -157,13 +157,24 @@ export default function ShipmentsPage() {
                     </td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={9} className="px-4 py-16 text-center">
-                    <div className="inline-flex w-14 h-14 rounded-2xl bg-emerald-50 items-center justify-center mb-3">
-                      <Truck size={24} className="text-emerald-600" />
-                    </div>
-                    <div className="font-bold text-slate-900">No shipments yet</div>
-                    <div className="text-xs text-slate-500 mt-1">Shipments appear here when orders are dispatched.</div>
-                  </td></tr>
+                  <tr>
+                    <td colSpan={9} className="p-0">
+                      <EmptyState
+                        icon={<Truck size={28} />}
+                        iconBg="bg-emerald-50 text-emerald-600"
+                        title="No shipments yet"
+                        description="Add a tracking number to a confirmed order, or connect Shiprocket / Delhivery to pull shipments automatically."
+                        action={
+                          <Button leftIcon={<Plus size={14} />} onClick={() => setCreateModalOpen(true)}>
+                            Create shipment
+                          </Button>
+                        }
+                        secondaryAction={<span>or paste a tracking number above to look one up</span>}
+                        decorative
+                        size="lg"
+                      />
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
