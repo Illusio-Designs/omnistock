@@ -21,6 +21,23 @@ function OnboardingInner() {
     businessName: '', phone: '', gstin: '',
     industry: '', companySize: '', country: 'IN',
   });
+  // Capture `?ref=CODE` once on mount + persist to localStorage so the link
+  // keeps working after a tab refresh / coming back from email verification.
+  const [referralCode, setReferralCode] = useState<string>('');
+  useEffect(() => {
+    const fromUrl = params.get('ref') || params.get('referral');
+    if (fromUrl) {
+      const cleaned = fromUrl.trim().toUpperCase().slice(0, 32);
+      setReferralCode(cleaned);
+      try { localStorage.setItem('kartriq.referralCode', cleaned); } catch {}
+    } else {
+      try {
+        const saved = localStorage.getItem('kartriq.referralCode') || '';
+        if (saved) setReferralCode(saved);
+      } catch {}
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     planApi.list().then((r) => setPlans(r.data || [])).catch(() => {});
@@ -32,7 +49,14 @@ function OnboardingInner() {
     setErr('');
     setLoading(true);
     try {
-      const { data } = await authApi.onboard({ ...form, planCode });
+      const { data } = await authApi.onboard({
+        ...form,
+        planCode,
+        ...(referralCode ? { referralCode } : {}),
+      });
+      // Clear the cached referral so it doesn't stick on the next signup
+      // from this device.
+      try { localStorage.removeItem('kartriq.referralCode'); } catch {}
       setAuth(data.user, data.token);
       router.push('/dashboard/billing');
     } catch (e: any) {

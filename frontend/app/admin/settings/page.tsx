@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { adminApi } from '@/lib/api';
 import {
-  Save, Eye, EyeOff, CheckCircle2, Lock, Package2, Mail, CreditCard, ShoppingBag, Cable, Globe, Sparkles, Clock, BarChart3, Wrench,
+  Save, Eye, EyeOff, CheckCircle2, Lock, Package2, Mail, CreditCard, ShoppingBag, Cable, Globe, Sparkles, Clock, BarChart3, Wrench, Gift,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Tabs, TabItem } from '@/components/ui';
@@ -18,11 +18,12 @@ const CATEGORY_META: Record<string, { label: string; description: string; icon: 
   smtp:        { label: 'SMTP Email',     description: 'Outbound email transport. Leave blank for console-stub mode in dev.',        icon: Mail },
   billing:     { label: 'Billing',        description: 'Grace periods, invoice policy.',                                             icon: Sparkles },
   reviews:     { label: 'Reviews',        description: 'Automated review-request cadence.',                                          icon: Clock },
+  referral:    { label: 'Referral',       description: 'Wallet reward paid to referrers when an invited tenant becomes a paid customer.', icon: Gift },
   tracking:    { label: 'Tracking',       description: 'Analytics IDs injected into the public site (GA, FB Pixel, Microsoft Clarity).', icon: BarChart3 },
   maintenance: { label: 'Maintenance',    description: 'Toggle the dashboard maintenance page and customise the message users see.', icon: Wrench },
 };
 
-const CATEGORY_ORDER = ['amazon','shopify','flipkart','meta','google','razorpay','smtp','billing','reviews','tracking','maintenance'];
+const CATEGORY_ORDER = ['amazon','shopify','flipkart','meta','google','razorpay','smtp','billing','reviews','referral','tracking','maintenance'];
 
 export default function AdminSettingsPage() {
   const [data, setData] = useState<Record<string, any[]>>({});

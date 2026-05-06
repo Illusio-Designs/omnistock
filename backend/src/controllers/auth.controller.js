@@ -218,6 +218,9 @@ const onboardSchema = z.object({
   companySize: z.string().optional(),
   country: z.string().optional(),
   planCode: z.enum(['STANDARD', 'PROFESSIONAL', 'BUSINESS', 'ENTERPRISE']).optional(),
+  // Optional `?ref=CODE` from the referral program. Bad codes don't fail
+  // the signup — they're silently ignored by referrals.recordSignup.
+  referralCode: z.string().max(32).optional(),
 });
 
 function slugify(s) {
@@ -322,6 +325,20 @@ const onboardBusiness = async (req, res) => {
       name: result.user.name,
       businessName: result.tenant.businessName,
     }).catch((e) => console.error('[welcome email]', e.message));
+
+    // Record the inbound referral, if any. Unknown / self-referred / invalid
+    // codes are ignored by the service so the signup itself never fails.
+    if (data.referralCode) {
+      try {
+        const referrals = require('../services/referrals.service');
+        await referrals.recordSignup({
+          referredTenantId: result.tenant.id,
+          code: data.referralCode,
+        });
+      } catch (e) {
+        console.warn('[referral] recordSignup failed:', e.message);
+      }
+    }
 
     res.status(201).json({
       token,

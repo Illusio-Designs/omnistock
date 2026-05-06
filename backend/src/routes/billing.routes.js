@@ -345,6 +345,20 @@ router.post('/subscription/change', requirePermission('billing.manage'), async (
       walletTxnId: walletTxn?.transactionId || null,
     },
   });
+
+  // Referral conversion — fire when a tenant transitions from trial/free
+  // onto a paid plan for the first time. The service is idempotent (only
+  // converts the first pending row for this tenant) so it's safe to call
+  // on every plan change.
+  const becamePaid = newPrice > 0 && (sub.status === 'TRIALING' || oldPrice === 0);
+  if (becamePaid) {
+    try {
+      const referrals = require('../services/referrals.service');
+      await referrals.markConverted(req.tenant.id, { reason: 'plan-upgrade' });
+    } catch (e) {
+      console.warn('[referral] conversion failed:', e.message);
+    }
+  }
   res.json({
     ...updated,
     proration: skipProration ? null : {

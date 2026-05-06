@@ -17,9 +17,9 @@ that distinguishes a working app from a sellable SaaS.
 
 ## Progress
 
-- ✅ Shipped: **19 of 39** numbered items + 5 build/UX fixes
+- ✅ Shipped: **20 of 39** numbered items + 5 build/UX fixes
 - ⛔ Deferred: **6 items** (#12 SSO, #13 Tenant API keys, #17 Public status page, #19 Automated DB backups, #22 CI pipeline, #31 Public docs site)
-- 🔄 Remaining: **14 items**
+- 🔄 Remaining: **13 items**
 
 ---
 
@@ -107,7 +107,7 @@ that distinguishes a working app from a sellable SaaS.
 | 29 | ✅ | **Cmd+K command palette** | `frontend/components/CommandPalette.tsx`, mounted in `DashboardLayout`. ⌘K / Ctrl+K toggles globally, Esc closes, ↑↓ navigates, Enter activates. Static commands (4 quick actions + 14 page navs + 6 settings shortcuts) plus debounced live search across products, orders, customers. Topbar gains a clickable `⌘K` button that dispatches `open-command-palette` so other UI can open it without re-implementing the keyboard handler. No external dep. Shipped in `aefc86d`. |
 | 30 | ✅ | **In-app changelog / "What's new"** | `frontend/components/ChangelogDrawer.tsx` + `frontend/data/changelog.ts`. Megaphone icon in the Topbar (with red unread dot) opens a slide-in drawer from the right. Entries grouped by tag (`feature` / `fix` / `security` / `improve`) with colour-coded badges. Last-seen entry id stored in localStorage; the dot clears the moment the drawer is opened. Listens for `open-changelog` event so other UI can trigger it. Shipped in this commit. |
 | 31 | ⛔ | ~~**Public docs site**~~ | Skipped for now — `/help` covers in-app questions, and customer volume doesn't yet justify the SEO funnel. Revisit once self-serve signups become a meaningful acquisition channel. Founder ops needs are met by the existing `/admin/*` tools and an eventual `docs/RUNBOOK.md`. |
-| 32 | 🔄 | **Referral / affiliate program** | Track referrer codes on signup, credit wallet on conversion. |
+| 32 | ✅ | **Referral / affiliate program** | Each tenant gets a unique `KQ-XXXXXX` code (lazy-allocated on first read). Onboarding accepts `?ref=CODE` and `localStorage`-persists it through the signup flow. New `referrals` table tracks pending → converted → voided state per (referrer, referred) pair. Conversion fires automatically when a referred tenant transitions from trial/free onto a paid plan; the referrer's wallet is credited via `wallet.topup` with `reference: referral:<id>` for idempotency. New `/referrals` page (sidebar entry + Cmd+K) shows the share code, copy/Web-Share buttons, signups/pending/converted/earned stat strip, and a per-referral table. Reward amount + currency are tunable from `/admin/settings → Referral` (defaults: ₹500 INR). Shipped in this commit. |
 | 33 | 🔄 | **Empty-state illustrations + first-run tips** | Some pages have them; audit each list page (orders, products, channels) for a polished empty state with a clear primary CTA. |
 | 34 | 🔄 | **Dark mode** | No theme toggle today. Implement via Tailwind `dark:` classes + a Zustand-stored preference. |
 
@@ -166,4 +166,5 @@ These were closed during this audit / cleanup pass:
 - ✅ #16 Custom roles UI (production-grade) — `1dad6cf`
 - ✅ Vercel a11y fix: dialog backdrops use real button — `fa476e7`
 - ✅ #21 Background job queue (MySQL-backed, retry + DLQ + admin UI) — `5b9ba8f`
-- ✅ #18 `/healthz` + `/readyz` endpoints (consolidated route file) — this commit
+- ✅ #18 `/healthz` + `/readyz` endpoints (consolidated route file) — `cca7e32`
+- ✅ #32 Referral / affiliate program (codes + wallet rewards on conversion) — this commit

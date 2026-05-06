@@ -149,6 +149,11 @@ export const userApi = {
   resendInvite: (id: string) => api.post(`/users/${id}/resend-invite`, {}),
 };
 
+// Tenant referral / affiliate program
+export const referralApi = {
+  me: () => api.get('/referrals/me'),
+};
+
 // Public — no auth required
 export const inviteApi = {
   preview: (token: string) => api.get(`/auth/invite/${encodeURIComponent(token)}`),

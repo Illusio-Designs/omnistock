@@ -317,6 +317,10 @@ const SETTINGS_CATALOG = [
   // Review automation
   { key: 'reviews.delayHours', category: 'reviews', label: 'Review request delay (hours)', isSecret: false },
 
+  // Referral / affiliate program
+  { key: 'referral.rewardAmount',   category: 'referral', label: 'Reward per conversion', isSecret: false, description: 'Wallet credit (in INR) given to the referrer when their invitee converts to a paid plan. Default: 500.' },
+  { key: 'referral.rewardCurrency', category: 'referral', label: 'Reward currency',       isSecret: false, description: 'Currency the reward is denominated in. Default: INR.' },
+
   // Analytics & Tracking
   { key: 'tracking.gaId',       category: 'tracking', label: 'Google Analytics ID',       isSecret: false, description: 'Measurement ID, e.g. G-XXXXXXXXXX' },
   { key: 'tracking.fbPixelId',  category: 'tracking', label: 'Facebook Pixel ID',         isSecret: false, description: 'From Meta Events Manager' },

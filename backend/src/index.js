@@ -74,6 +74,7 @@ const usersRoutes = require('./routes/users.routes');
 const oauthRoutes = require('./routes/oauth.routes');
 const ticketsRoutes = require('./routes/tickets.routes');
 const metricsRoutes = require('./routes/metrics.routes');
+const referralRoutes = require('./routes/referral.routes');
 const { autoAudit } = require('./services/audit.service');
 
 const { initDb } = require('./bootstrap/initDb');
@@ -219,6 +220,7 @@ app.use(`${api}/users`,      usersRoutes);
 app.use(`${api}/oauth`,      oauthRoutes);
 app.use(`${api}/tickets`,    ticketsRoutes);
 app.use(`${api}/metrics`,    metricsRoutes);
+app.use(`${api}/referrals`,  referralRoutes);
 
 // ── 404 Handler ───────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));

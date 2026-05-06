@@ -22,6 +22,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-05-06-referrals',
+    date: '2026-05-06',
+    title: 'Refer friends, earn wallet credit',
+    tag: 'feature',
+    highlights: [
+      'New /referrals page with your unique code, shareable link, and stats',
+      'When someone signs up with your link and upgrades to a paid plan, the reward lands in your wallet automatically',
+      'Founders can tune the reward amount + currency from /admin/settings → Referral',
+    ],
+  },
+  {
     id: '2026-05-06-jobs',
     date: '2026-05-06',
     title: 'Durable background jobs with retry + dead-letter',

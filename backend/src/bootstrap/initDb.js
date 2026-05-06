@@ -67,6 +67,12 @@ async function initDb() {
     // Dunning cadence — last reminder stage sent (0 = none, 1/3/7/14 = day)
     { table: 'subscriptions', column: 'lastDunningStage', ddl: 'INT NOT NULL DEFAULT 0' },
     { table: 'subscriptions', column: 'pastDueSince',     ddl: 'DATETIME(3) DEFAULT NULL' },
+
+    // Referral / affiliate program
+    // referralCode    — auto-generated unique code each tenant can share
+    // referredByCode  — code that brought the tenant in, set at signup
+    { table: 'tenants', column: 'referralCode',    ddl: 'VARCHAR(32) DEFAULT NULL' },
+    { table: 'tenants', column: 'referredByCode',  ddl: 'VARCHAR(32) DEFAULT NULL' },
   ];
 
   // Create wallet tables if they don't exist (separate from column migrations)
@@ -155,6 +161,27 @@ async function initDb() {
       KEY \`jq_status_runat\` (\`status\`, \`runAt\`),
       KEY \`jq_type\` (\`type\`),
       KEY \`jq_dead_idx\` (\`status\`, \`finishedAt\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    // Referral conversions — one row per (referrer, referred) pair, with
+    // the reward state machine: pending → converted (rewarded) | voided.
+    `CREATE TABLE IF NOT EXISTS \`referrals\` (
+      \`id\` varchar(191) NOT NULL,
+      \`referrerTenantId\` varchar(191) NOT NULL,
+      \`referredTenantId\` varchar(191) NOT NULL,
+      \`code\` varchar(32) NOT NULL,
+      \`status\` varchar(16) NOT NULL DEFAULT 'pending',
+      \`rewardAmount\` decimal(12,2) NOT NULL DEFAULT 0.00,
+      \`rewardCurrency\` varchar(8) NOT NULL DEFAULT 'INR',
+      \`walletTransactionId\` varchar(191) DEFAULT NULL,
+      \`signedUpAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+      \`convertedAt\` datetime(3) DEFAULT NULL,
+      \`voidedAt\` datetime(3) DEFAULT NULL,
+      \`voidedReason\` varchar(255) DEFAULT NULL,
+      \`createdAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+      PRIMARY KEY (\`id\`),
+      UNIQUE KEY \`referrals_referred_unique\` (\`referredTenantId\`),
+      KEY \`referrals_referrer_idx\` (\`referrerTenantId\`, \`status\`),
+      KEY \`referrals_code_idx\` (\`code\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
     // Idempotency keys — payment writes cache their response here for 24h
     // so a network-retry of the exact same Idempotency-Key returns the
