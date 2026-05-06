@@ -86,11 +86,18 @@ export function ChangelogDrawer() {
       aria-modal="true"
       aria-label="What's new"
       className="fixed inset-0 z-[10000] flex justify-end bg-slate-900/40 backdrop-blur-sm animate-fade-in"
-      onClick={() => setOpen(false)}
     >
+      {/* Click-outside backdrop — a real <button> so it satisfies a11y rules
+          and is keyboard-reachable. Sits behind the panel via z-order. */}
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={() => setOpen(false)}
+        className="absolute inset-0 cursor-default"
+        tabIndex={-1}
+      />
       <div
-        className="w-full max-w-md h-full bg-white shadow-2xl shadow-slate-900/30 flex flex-col animate-slide-in-right"
-        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-md h-full bg-white shadow-2xl shadow-slate-900/30 flex flex-col animate-slide-in-right"
       >
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100">
