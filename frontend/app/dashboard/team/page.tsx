@@ -5,7 +5,8 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { userApi, roleApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 import { useFilteredBySearch } from '@/lib/useGlobalSearch';
-import { Plus, Trash2, Users, Shield, Save, Pencil } from 'lucide-react';
+import { Plus, Trash2, Users, Shield, Save, Pencil, Mail, Send } from 'lucide-react';
+import { toast } from '@/store/toast.store';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { PasswordInput } from '@/components/ui/PasswordInput';
@@ -131,7 +132,16 @@ function UsersTab({ canManage }: { canManage: boolean }) {
                     )}
                   </div>
                 </td>
-                <td className="p-3 text-slate-600">{u.email}</td>
+                <td className="p-3 text-slate-600">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span>{u.email}</span>
+                    {u.pendingInvite && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 uppercase tracking-wider">
+                        <Mail size={10} /> Pending invite
+                      </span>
+                    )}
+                  </div>
+                </td>
                 <td className="p-3">
                   <div className="flex flex-wrap gap-1">
                     {u.roles?.length ? u.roles.map((ur: any) => (
@@ -147,6 +157,29 @@ function UsersTab({ canManage }: { canManage: boolean }) {
                 <td className="p-3 flex gap-2 justify-end">
                   {canManage && !u.isPlatformAdmin && (
                     <>
+                      {u.pendingInvite && (
+                        <Tooltip content="Resend invite email">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={async () => {
+                              try {
+                                const r = await userApi.resendInvite(u.id);
+                                toast.success('Invite email re-sent.');
+                                if (r.data?.devInviteUrl) {
+                                  // Dev only: surface the magic link so admins
+                                  // can copy it when SMTP isn't configured yet.
+                                  console.info('[invite] dev URL:', r.data.devInviteUrl);
+                                }
+                              } catch (err: any) {
+                                toast.error(err?.response?.data?.error || 'Could not resend invite');
+                              }
+                            }}
+                          >
+                            <Send size={14} />
+                          </Button>
+                        </Tooltip>
+                      )}
                       <Tooltip content="Edit user">
                         <Button variant="ghost" size="icon" onClick={() => setEditing(u)}>
                           <Pencil size={14} />
@@ -199,7 +232,15 @@ function UserForm({ initial, roles, onClose, onSave }: {
         <Input label="Email" value={f.email ?? ''} onChange={(e) => setF({ ...f, email: e.target.value })} disabled={!!initial} />
         {!initial && (
           <div className="col-span-2">
-            <PasswordInput label="Temporary password" value={f.password ?? ''} onChange={(e) => setF({ ...f, password: e.target.value })} />
+            <PasswordInput
+              label="Temporary password (optional)"
+              value={f.password ?? ''}
+              onChange={(e) => setF({ ...f, password: e.target.value })}
+            />
+            <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
+              Leave blank to email a magic-link invite — the user picks their own password.
+              Set one only if you need to hand-deliver credentials offline.
+            </p>
           </div>
         )}
         {initial && (

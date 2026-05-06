@@ -146,6 +146,14 @@ export const userApi = {
   update: (id: string, data: any) => api.put(`/users/${id}`, data),
   delete: (id: string) => api.delete(`/users/${id}`),
   permissionCatalog: () => api.get('/users/_permissions/catalog'),
+  resendInvite: (id: string) => api.post(`/users/${id}/resend-invite`, {}),
+};
+
+// Public — no auth required
+export const inviteApi = {
+  preview: (token: string) => api.get(`/auth/invite/${encodeURIComponent(token)}`),
+  accept: (data: { token: string; password: string; name?: string }) =>
+    api.post('/auth/accept-invite', data),
 };
 
 // ── SaaS: payments (Razorpay) ──────────────────────────────────────

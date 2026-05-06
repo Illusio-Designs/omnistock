@@ -22,6 +22,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-05-06-invites',
+    date: '2026-05-06',
+    title: 'Magic-link team invitations',
+    tag: 'feature',
+    highlights: [
+      'Invite teammates from Settings → Team without picking a password for them',
+      'Recipients land on a branded /accept-invite page that shows the workspace name + their email before the password prompt',
+      'Pending invites show a "Pending invite" pill in the team list with a Resend button',
+      'Invite links expire after 7 days; old links are blocked from overwriting an existing password',
+    ],
+  },
+  {
     id: '2026-05-06-audit',
     date: '2026-05-06',
     title: 'Activity log for your workspace',

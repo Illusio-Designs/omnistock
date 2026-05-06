@@ -86,6 +86,98 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
+// Magic-link team-invite acceptance. Public — the JWT in `token` is the
+// proof of who invited you. Marks the account active, sets the password,
+// then issues a real session JWT so the user lands inside the app already
+// logged in.
+router.post('/accept-invite', async (req, res) => {
+  try {
+    const { token, password, name } = req.body || {};
+    if (!token) return res.status(400).json({ error: 'token required' });
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'password must be at least 6 characters' });
+    }
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+      return res.status(401).json({ error: 'Invite link is invalid or has expired. Ask your admin to resend it.' });
+    }
+    if (payload.purpose !== 'invite') return res.status(401).json({ error: 'Wrong token type' });
+
+    const user = await prisma.user.findUnique({ where: { id: payload.id } });
+    if (!user) return res.status(404).json({ error: 'Invite no longer valid (user removed)' });
+    if (user.password) {
+      // Already accepted — refuse silently so the same link can't be used to
+      // overwrite an existing password.
+      return res.status(409).json({ error: 'This invite has already been accepted. Use Sign in instead.' });
+    }
+
+    const hashed = await bcrypt.hash(password, 12);
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashed,
+        isActive: true,
+        emailVerified: true,
+        ...(name ? { name: String(name).trim().slice(0, 191) } : {}),
+      },
+    });
+    audit({ req, action: 'auth.invite.accept', resource: 'user', resourceId: user.id });
+
+    const session = jwt.sign(
+      {
+        id: updated.id, email: updated.email, role: updated.role,
+        tenantId: updated.tenantId || null,
+        isPlatformAdmin: !!updated.isPlatformAdmin,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      token: session,
+      user: {
+        id: updated.id, email: updated.email, name: updated.name, role: updated.role,
+        tenantId: updated.tenantId, isPlatformAdmin: !!updated.isPlatformAdmin,
+        mfaEnabled: !!updated.mfaEnabled,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /auth/invite/:token — preview-only endpoint so the accept-invite page
+// can show "You've been invited to <Acme> by <Inviter>" before the user types
+// their password. Returns minimal info so a leaked token can't enumerate too
+// much PII.
+router.get('/invite/:token', async (req, res) => {
+  try {
+    let payload;
+    try {
+      payload = jwt.verify(req.params.token, process.env.JWT_SECRET);
+    } catch {
+      return res.status(401).json({ error: 'Invite link is invalid or has expired' });
+    }
+    if (payload.purpose !== 'invite') return res.status(401).json({ error: 'Wrong token type' });
+    const user = await prisma.user.findUnique({ where: { id: payload.id } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.password) return res.status(409).json({ error: 'This invite has already been accepted' });
+    const tenant = user.tenantId
+      ? await prisma.tenant.findUnique({ where: { id: user.tenantId } })
+      : null;
+    res.json({
+      email: user.email,
+      name: user.name,
+      tenantName: tenant?.businessName || tenant?.name || null,
+      expiresAt: payload.exp ? new Date(payload.exp * 1000).toISOString() : null,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/reset-password', async (req, res) => {
   try {
     const { token, newPassword } = req.body || {};
