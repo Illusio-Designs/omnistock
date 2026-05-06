@@ -18,7 +18,9 @@ export default meta;
 
 type Story = StoryObj<typeof VirtualList>;
 
-const data = Array.from({ length: 5000 }, (_, i) => ({
+type Row = { id: number; name: string; meta: string };
+
+const data: Row[] = Array.from({ length: 5000 }, (_, i) => ({
   id: i + 1,
   name: `Row ${i + 1}`,
   meta: `Lorem ipsum row ${i + 1} payload`,
@@ -30,15 +32,18 @@ export const FiveThousandRows: Story = {
     estimateSize: 56,
     height: 480,
     className: 'border border-slate-200 rounded-2xl bg-white',
-    getKey: (item: { id: number }) => item.id,
-    renderItem: (item: { id: number; name: string; meta: string }) => (
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 last:border-0">
-        <div>
-          <div className="font-semibold text-slate-900">{item.name}</div>
-          <div className="text-xs text-slate-500">{item.meta}</div>
+    getKey: (item) => (item as Row).id,
+    renderItem: (item) => {
+      const row = item as Row;
+      return (
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 last:border-0">
+          <div>
+            <div className="font-semibold text-slate-900">{row.name}</div>
+            <div className="text-xs text-slate-500">{row.meta}</div>
+          </div>
+          <span className="text-xs font-mono text-slate-400">#{row.id}</span>
         </div>
-        <span className="text-xs font-mono text-slate-400">#{item.id}</span>
-      </div>
-    ),
+      );
+    },
   },
 };
