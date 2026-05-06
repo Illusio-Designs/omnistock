@@ -17,9 +17,9 @@ that distinguishes a working app from a sellable SaaS.
 
 ## Progress
 
-- ✅ Shipped: **16 of 39** numbered items + 4 build/UX fixes
+- ✅ Shipped: **17 of 39** numbered items + 4 build/UX fixes
 - ⛔ Deferred: **1 item** (#13 Tenant API keys)
-- 🔄 Remaining: **22 items**
+- 🔄 Remaining: **21 items**
 
 ---
 
@@ -70,7 +70,7 @@ that distinguishes a working app from a sellable SaaS.
 | 13 | ⛔ | ~~**Tenant API keys**~~ | Deferred — not on the roadmap. Tenants will use the existing JWT session for any programmatic access. |
 | 14 | ✅ | **Tenant-visible audit log** | `frontend/app/audit/page.tsx` — backed by `GET /billing/audit` (tenant-scoped server-side, gated by `settings.read`). Endpoint enriched with `limit`, `action`, and `before` query params plus a `total` count and a top-30 distinct-actions list for the filter dropdown. UI mirrors the admin audit page (verb/method colour pills, status colours, click-to-expand metadata) but drops cross-tenant fields. Sidebar gains an "Activity log" entry; Cmd+K palette adds a shortcut. Shipped in this commit. |
 | 15 | ✅ | **Team invitations via email** | Magic-link signup end-to-end. Admins now leave the password field blank in `/dashboard/team` to send a 7-day JWT-signed invite to the recipient's inbox. Public `POST /auth/accept-invite` (paired with `GET /auth/invite/:token` for preview) sets the password, marks the user active, and returns a real session JWT. New `/accept-invite` page renders the workspace name, invitee email, and expiry before the password prompt. Pending invites are surfaced in the team list with a "Pending invite" pill and a Resend button. Shipped in this commit. |
-| 16 | 🔄 | **Custom roles UI** | `role.routes.js` exists; verify there is a UI for tenants to define their own roles + assign permission strings. |
+| 16 | ✅ | **Custom roles UI** | Backend `role.routes.js` was already in place; the tenant-side UI in `/dashboard/team` Roles tab is now production-grade. New: plan-limit indicator (with `at limit` warning when `maxUserRoles` is reached), separate "Custom" vs read-only "Built-in" sections, role cards with permission preview + user count, **Clone role** action, **module-level select-all/clear** in the editor, debounced **permission search**, **Grant all (wildcard)** + **Clear** shortcuts, tooltips with each permission's description, friendly empty state with CTA, and explicit 402 handling that surfaces the plan-limit toast instead of a silent failure. Shipped in this commit. |
 
 ---
 
@@ -131,7 +131,7 @@ The previous top-5 (compliance + revenue) are all done. Next priorities:
 
 1. **CI pipeline** (#22) — gate `next build` + tests on every PR so broken `main` deploys stop happening
 2. **`/healthz` + `/readyz`** (#18) — needed for any k8s / load-balancer setup, ~30 min of work
-3. **Custom roles UI** (#16) — `role.routes.js` exists; needs a tenant-facing UI to define roles and assign permission strings
+3. **Background job queue** (#21) — biggest reliability gap; current cron scripts have no retry/DLQ for outbound webhook delivery
 4. **Test coverage on auth + billing + webhooks** (#20) — biggest risk surface in the codebase
 5. **Public status page** (#17) — link from footer; surfaces uptime + incident history
 
@@ -162,4 +162,5 @@ These were closed during this audit / cleanup pass:
 - ✅ #29 Cmd+K command palette — `aefc86d`
 - ✅ #30 In-app changelog drawer — `8b070f5`
 - ✅ #14 Tenant-visible audit log — `b6efd95`
-- ✅ #15 Team invitations via email (magic-link) — this commit
+- ✅ #15 Team invitations via email (magic-link) — `c0476be`
+- ✅ #16 Custom roles UI (production-grade) — this commit

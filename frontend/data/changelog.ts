@@ -22,6 +22,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-05-06-roles',
+    date: '2026-05-06',
+    title: 'Custom roles — refreshed',
+    tag: 'improve',
+    highlights: [
+      'Plan-limit indicator on the Roles tab tells you how many custom roles you have left',
+      'Search permissions, select an entire module at once, or clone an existing role to build a variant',
+      'Each role card now previews its top permissions and shows how many users hold it',
+      'Friendly empty state guides admins through creating their first custom role',
+    ],
+  },
+  {
     id: '2026-05-06-invites',
     date: '2026-05-06',
     title: 'Magic-link team invitations',

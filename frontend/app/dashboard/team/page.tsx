@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { userApi, roleApi } from '@/lib/api';
+import { userApi, roleApi, billingApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 import { useFilteredBySearch } from '@/lib/useGlobalSearch';
-import { Plus, Trash2, Users, Shield, Save, Pencil, Mail, Send } from 'lucide-react';
+import { Plus, Trash2, Users, Shield, Save, Pencil, Mail, Send, Copy, Search, Lock, Sparkles } from 'lucide-react';
 import { toast } from '@/store/toast.store';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
@@ -285,101 +285,288 @@ function RolesTab({ canManage }: { canManage: boolean }) {
   const [editing, setEditing] = useState<any>(null);
   const [showNew, setShowNew] = useState(false);
   const [confirmUi, askConfirm] = useConfirm();
+  const [usage, setUsage] = useState<{ used: number; limit: number | null } | null>(null);
 
   const load = async () => {
-    const [r, p] = await Promise.all([roleApi.list(), userApi.permissionCatalog()]);
+    const [r, p, u] = await Promise.all([
+      roleApi.list(),
+      userApi.permissionCatalog(),
+      // Optional — fall back gracefully if the call fails (perms or network)
+      billingApi.usage().catch(() => null),
+    ]);
     setRoles(r.data); setPerms(p.data);
+    if (u?.data) {
+      // Custom roles only — system roles don't count against the plan limit
+      const customCount = (r.data || []).filter((x: any) => !x.isSystem).length;
+      const limit = u.data.plan?.maxUserRoles ?? null;
+      setUsage({ used: customCount, limit });
+    }
   };
   useEffect(() => { load(); }, []);
 
   const save = async (data: any) => {
-    if (data.id) await roleApi.update(data.id, data);
-    else await roleApi.create(data);
-    setEditing(null); setShowNew(false); load();
+    try {
+      if (data.id) await roleApi.update(data.id, data);
+      else await roleApi.create(data);
+      toast.success(data.id ? 'Role updated' : 'Role created');
+      setEditing(null); setShowNew(false); load();
+    } catch (err: any) {
+      const e = err?.response?.data?.error;
+      if (err?.response?.status === 402) {
+        toast.error('Plan limit reached — upgrade or enable Pay-As-You-Go to add more custom roles.');
+      } else {
+        toast.error(e || 'Could not save role');
+      }
+    }
   };
-  const del = async (id: string) => {
+
+  const del = async (role: any) => {
+    const userCount = role._count?.users || 0;
     const ok = await askConfirm({
-      title: 'Delete this role?',
-      description: 'Users assigned to this role will lose its permissions. This cannot be undone.',
-      confirmLabel: 'Delete',
+      title: `Delete "${role.name}"?`,
+      description: userCount > 0
+        ? `${userCount} user${userCount === 1 ? '' : 's'} will lose this role's permissions. This cannot be undone.`
+        : 'No users are assigned to this role. This cannot be undone.',
+      confirmLabel: 'Delete role',
       variant: 'danger',
     });
     if (!ok) return;
-    await roleApi.delete(id); load();
+    try {
+      await roleApi.delete(role.id);
+      toast.success('Role deleted');
+      load();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || 'Could not delete role');
+    }
   };
 
-  // Group perms by module for the form
+  // Re-purpose `editing` so the form pre-fills with the source role's
+  // permissions, but with no `id` so save() takes the create branch.
+  const clone = (role: any) => {
+    setShowNew(false);
+    setEditing({
+      _isClone: true,
+      code: `${role.code}_COPY`,
+      name: `${role.name} (copy)`,
+      description: role.description || '',
+      permissions: role.permissions || [],
+    });
+  };
+
   const permsByModule: Record<string, any[]> = {};
-  for (const p of perms) {
-    (permsByModule[p.module] ||= []).push(p);
-  }
+  for (const p of perms) (permsByModule[p.module] ||= []).push(p);
+
+  const customRoles = roles.filter((r: any) => !r.isSystem);
+  const systemRoles = roles.filter((r: any) => r.isSystem);
+  const atLimit = usage?.limit != null && usage.used >= usage.limit;
 
   return (
     <>
       {confirmUi}
-      {canManage && (
-        <div className="mb-4">
-          <Button variant="primary" leftIcon={<Plus size={16} />} onClick={() => setShowNew(true)}>
+
+      {/* Plan-limit + new-role header */}
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+        <div className="flex items-center gap-3">
+          {usage && usage.limit != null && (
+            <div className="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-full px-3 py-1.5">
+              <strong className={atLimit ? 'text-rose-700' : 'text-slate-900'}>
+                {usage.used}
+              </strong>{' '}
+              of <strong>{usage.limit}</strong> custom roles used
+              {atLimit && <span className="ml-2 text-rose-600 font-bold">· at limit</span>}
+            </div>
+          )}
+          {usage && usage.limit == null && (
+            <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5">
+              <strong>Unlimited</strong> custom roles on your plan
+            </div>
+          )}
+        </div>
+        {canManage && (
+          <Button
+            variant="primary"
+            leftIcon={<Plus size={16} />}
+            onClick={() => { setEditing(null); setShowNew(true); }}
+          >
             New role
           </Button>
-        </div>
-      )}
+        )}
+      </div>
 
       <Modal
         open={showNew || !!editing}
         onClose={() => { setEditing(null); setShowNew(false); }}
-        title={editing ? 'Edit role' : 'New role'}
+        title={editing && !editing._isClone && editing.id ? `Edit ${editing.name}` : (editing?._isClone ? 'Clone role' : 'New role')}
         size="xl"
       >
         <RoleForm
           initial={editing}
           permsByModule={permsByModule}
+          permTotal={perms.length}
           onClose={() => { setEditing(null); setShowNew(false); }}
           onSave={save}
         />
       </Modal>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {roles.map((r) => (
-          <div key={r.id} className="p-4 bg-white border border-slate-200 rounded-2xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-bold">{r.name}</div>
-                <div className="text-xs text-slate-500 font-mono">{r.code} {r.isSystem && '· system'}</div>
-              </div>
-              <div className="text-xs text-slate-500">{r._count?.users || 0} users</div>
+      {/* Custom roles */}
+      <div>
+        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Custom roles</div>
+        {customRoles.length === 0 ? (
+          <div className="border border-dashed border-slate-300 rounded-2xl p-10 text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 mb-3">
+              <Sparkles size={20} />
             </div>
-            <div className="text-xs text-slate-500 mt-2">{r.permissions?.length || 0} permissions</div>
+            <h3 className="font-bold text-slate-900">No custom roles yet</h3>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+              Define a role like &quot;Warehouse manager&quot; or &quot;Read-only auditor&quot;
+              with exactly the permissions that job needs, then assign it to teammates.
+            </p>
             {canManage && (
-              <div className="flex gap-2 mt-3">
-                <Button variant="ghost" size="sm" onClick={() => setEditing(r)}>Edit</Button>
-                {!r.isSystem && (
-                  <Button variant="danger" size="sm" onClick={() => del(r.id)}>Delete</Button>
-                )}
-              </div>
+              <Button
+                className="mt-4"
+                variant="primary"
+                leftIcon={<Plus size={14} />}
+                onClick={() => { setEditing(null); setShowNew(true); }}
+              >
+                Create your first role
+              </Button>
             )}
           </div>
-        ))}
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {customRoles.map((r) => (
+              <RoleCard key={r.id} role={r} canManage={canManage} onEdit={() => setEditing(r)} onClone={() => clone(r)} onDelete={() => del(r)} />
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Built-in / system roles — read-only */}
+      {systemRoles.length > 0 && (
+        <div className="mt-8">
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <Lock size={11} /> Built-in roles
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {systemRoles.map((r) => (
+              <RoleCard key={r.id} role={r} canManage={canManage} onEdit={() => setEditing(r)} systemOnly />
+            ))}
+          </div>
+        </div>
+      )}
     </>
   );
 }
 
-function RoleForm({ initial, permsByModule, onClose, onSave }: {
+function RoleCard({
+  role, canManage, onEdit, onClone, onDelete, systemOnly,
+}: {
+  role: any;
+  canManage: boolean;
+  onEdit: () => void;
+  onClone?: () => void;
+  onDelete?: () => void;
+  systemOnly?: boolean;
+}) {
+  const permCount = role.permissions?.length || 0;
+  const userCount = role._count?.users || 0;
+  // Show a short permission preview so each card is scannable.
+  const previewCodes: string[] = (role.permissions || [])
+    .slice(0, 4)
+    .map((rp: any) => rp.permission?.code)
+    .filter(Boolean);
+  const wildcard = previewCodes.includes('*');
+  return (
+    <div className={`p-4 rounded-2xl border ${role.isSystem ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-200 hover:border-emerald-300 hover:shadow-md transition-all'}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <Shield size={14} className={role.isSystem ? 'text-slate-500' : 'text-emerald-600'} />
+            <div className="font-bold text-slate-900 truncate">{role.name}</div>
+            {role.isSystem && (
+              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 bg-white border border-slate-200 rounded-full px-1.5 py-0.5">
+                system
+              </span>
+            )}
+          </div>
+          <div className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">{role.code}</div>
+          {role.description && (
+            <div className="text-xs text-slate-600 mt-2 line-clamp-2">{role.description}</div>
+          )}
+        </div>
+        <div className="text-right flex-shrink-0">
+          <div className="text-xs font-bold text-slate-700">{userCount}</div>
+          <div className="text-[10px] text-slate-500 uppercase tracking-wider">user{userCount === 1 ? '' : 's'}</div>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center gap-2 flex-wrap">
+        {wildcard ? (
+          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 rounded-full px-2 py-0.5">
+            Full access
+          </span>
+        ) : (
+          <>
+            {previewCodes.map((c) => (
+              <span key={c} className="text-[10px] font-mono text-slate-600 bg-slate-100 rounded px-1.5 py-0.5">{c}</span>
+            ))}
+            {permCount > previewCodes.length && (
+              <span className="text-[10px] text-slate-500">+{permCount - previewCodes.length} more</span>
+            )}
+            {permCount === 0 && (
+              <span className="text-[10px] text-slate-400 italic">no permissions yet</span>
+            )}
+          </>
+        )}
+      </div>
+
+      {canManage && (
+        <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
+          <Button variant="ghost" size="sm" leftIcon={<Pencil size={12} />} onClick={onEdit}>
+            {systemOnly ? 'View' : 'Edit'}
+          </Button>
+          {!role.isSystem && onClone && (
+            <Button variant="ghost" size="sm" leftIcon={<Copy size={12} />} onClick={onClone}>
+              Clone
+            </Button>
+          )}
+          {!role.isSystem && onDelete && (
+            <Button variant="danger" size="sm" leftIcon={<Trash2 size={12} />} onClick={onDelete} className="ml-auto">
+              Delete
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RoleForm({ initial, permsByModule, permTotal, onClose, onSave }: {
   initial: any;
   permsByModule: Record<string, any[]>;
+  permTotal: number;
   onClose: () => void;
   onSave: (data: any) => void;
 }) {
+  const isClone = !!initial?._isClone;
+  const isSystem = !!initial?.isSystem;
   const [f, setF] = useState<any>(initial || {
     code: '', name: '', description: '', permissionCodes: [],
   });
+  const [search, setSearch] = useState('');
+
+  // Pre-fill permissionCodes from initial on mount / when switching role
   useEffect(() => {
     if (initial?.permissions) {
       setF((p: any) => ({
         ...p,
-        permissionCodes: initial.permissions.map((rp: any) => rp.permission.code),
+        permissionCodes: initial.permissions.map((rp: any) => rp.permission?.code).filter(Boolean),
       }));
+    } else if (initial?.permissionCodes) {
+      // (e.g. clone seed already carries codes)
+      setF((p: any) => ({ ...p, permissionCodes: initial.permissionCodes }));
+    } else if (!initial) {
+      setF({ code: '', name: '', description: '', permissionCodes: [] });
     }
   }, [initial]);
 
@@ -392,44 +579,173 @@ function RoleForm({ initial, permsByModule, onClose, onSave }: {
     }));
   };
 
+  const toggleModule = (mod: string, allOn: boolean) => {
+    const codesInMod = (permsByModule[mod] || []).map((p: any) => p.code);
+    setF((p: any) => {
+      const existing = new Set(p.permissionCodes);
+      if (allOn) codesInMod.forEach((c) => existing.delete(c));
+      else codesInMod.forEach((c) => existing.add(c));
+      return { ...p, permissionCodes: Array.from(existing) };
+    });
+  };
+
+  const clearAll = () => setF((p: any) => ({ ...p, permissionCodes: [] }));
+  const grantAll = () => setF((p: any) => ({ ...p, permissionCodes: ['*'] }));
+
+  const q = search.trim().toLowerCase();
+  const filteredModules = Object.entries(permsByModule).map(([mod, list]) => ({
+    mod,
+    list: q ? (list as any[]).filter((p) => p.code.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q)) : list,
+  })).filter((g) => (g.list as any[]).length > 0);
+
+  const selected = f.permissionCodes.length;
+  const hasWildcard = f.permissionCodes.includes('*');
+
   return (
     <div>
+      {/* Identity */}
       <div className="grid grid-cols-2 gap-4">
-        <Input label="Code" value={f.code ?? ''} onChange={(e) => setF({ ...f, code: e.target.value.toUpperCase() })} disabled={!!initial?.isSystem} />
-        <Input label="Name" value={f.name ?? ''} onChange={(e) => setF({ ...f, name: e.target.value })} />
+        <Input
+          label="Code"
+          value={f.code ?? ''}
+          onChange={(e) => setF({ ...f, code: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '') })}
+          disabled={isSystem || (!!initial?.id && !isClone)}
+        />
+        <Input
+          label="Name"
+          value={f.name ?? ''}
+          onChange={(e) => setF({ ...f, name: e.target.value })}
+          disabled={isSystem}
+        />
         <div className="col-span-2">
-          <Input label="Description" value={f.description ?? ''} onChange={(e) => setF({ ...f, description: e.target.value })} />
+          <Input
+            label="Description"
+            value={f.description ?? ''}
+            onChange={(e) => setF({ ...f, description: e.target.value })}
+            disabled={isSystem}
+            placeholder="What does this role do? Visible to other admins."
+          />
         </div>
       </div>
 
-      <div className="mt-6">
-        <div className="text-xs font-semibold text-slate-600 uppercase mb-2">Permissions</div>
-        <div className="space-y-3 max-h-96 overflow-auto pr-2">
-          {Object.entries(permsByModule).map(([mod, list]: any) => (
+      {/* Permissions header */}
+      <div className="mt-6 flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <div className="text-xs font-bold text-slate-700 uppercase tracking-wider">Permissions</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">
+            {hasWildcard ? (
+              <span className="text-emerald-700 font-bold">Full access (wildcard *)</span>
+            ) : (
+              <>
+                <strong>{selected}</strong> of {permTotal} selected
+              </>
+            )}
+          </div>
+        </div>
+        {!isSystem && (
+          <div className="flex items-center gap-2">
+            {!hasWildcard && (
+              <button type="button" onClick={grantAll} className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700">
+                Grant all
+              </button>
+            )}
+            {selected > 0 && (
+              <button type="button" onClick={clearAll} className="text-[11px] font-bold text-slate-500 hover:text-slate-700">
+                Clear
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Search */}
+      {!isSystem && !hasWildcard && (
+        <div className="mt-3 relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Filter permissions… (e.g. orders, billing)"
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none"
+          />
+        </div>
+      )}
+
+      {/* Permission grid */}
+      <div className={`mt-3 space-y-3 max-h-[40vh] overflow-auto pr-2 ${hasWildcard ? 'opacity-60 pointer-events-none' : ''}`}>
+        {filteredModules.length === 0 ? (
+          <div className="text-center text-xs text-slate-400 py-6">No permissions match &quot;{search}&quot;.</div>
+        ) : filteredModules.map(({ mod, list }) => {
+          const codesInMod = (list as any[]).map((p: any) => p.code);
+          const selectedInMod = codesInMod.filter((c) => f.permissionCodes.includes(c)).length;
+          const allOn = selectedInMod === codesInMod.length && codesInMod.length > 0;
+          return (
             <div key={mod}>
-              <div className="text-xs font-bold text-slate-700 uppercase mb-1">{mod}</div>
-              <div className="flex flex-wrap gap-2">
-                {list.map((p: any) => (
-                  <button
-                    key={p.code}
-                    type="button"
-                    onClick={() => toggle(p.code)}
-                    className={`px-2.5 py-1 rounded-full text-[10px] font-bold font-mono ${
-                      f.permissionCodes.includes(p.code) ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'
-                    }`}
-                  >
-                    {p.code}
-                  </button>
-                ))}
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-xs font-bold text-slate-700 uppercase tracking-wider">{mod}</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-slate-400">{selectedInMod}/{codesInMod.length}</span>
+                  {!isSystem && (
+                    <button
+                      type="button"
+                      onClick={() => toggleModule(mod, allOn)}
+                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                        allOn ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {allOn ? 'Clear module' : 'Select module'}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {(list as any[]).map((p: any) => {
+                  const on = f.permissionCodes.includes(p.code);
+                  return (
+                    <Tooltip key={p.code} content={p.description || p.code}>
+                      <button
+                        type="button"
+                        onClick={() => !isSystem && toggle(p.code)}
+                        disabled={isSystem}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold font-mono transition-colors ${
+                          on
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        } ${isSystem ? 'cursor-not-allowed' : ''}`}
+                      >
+                        {p.code}
+                      </button>
+                    </Tooltip>
+                  );
+                })}
               </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
-      <div className="mt-5 flex gap-2 justify-end">
+      <div className="mt-5 flex gap-2 justify-end pt-4 border-t border-slate-100">
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
-        <Button variant="primary" leftIcon={<Save size={14} />} onClick={() => onSave(f)}>Save</Button>
+        {!isSystem && (
+          <Button
+            variant="primary"
+            leftIcon={<Save size={14} />}
+            onClick={() => {
+              const payload = {
+                ...f,
+                // Strip clone marker before sending
+                _isClone: undefined,
+                permissions: undefined,
+                // Force creation on clone (no id) but preserve id otherwise
+                id: isClone ? undefined : f.id,
+              };
+              onSave(payload);
+            }}
+            disabled={!f.code || !f.name}
+          >
+            {isClone ? 'Create copy' : (f.id ? 'Save changes' : 'Create role')}
+          </Button>
+        )}
       </div>
     </div>
   );
