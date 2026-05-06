@@ -17,9 +17,9 @@ that distinguishes a working app from a sellable SaaS.
 
 ## Progress
 
-- ✅ Shipped: **17 of 39** numbered items + 4 build/UX fixes
+- ✅ Shipped: **18 of 39** numbered items + 5 build/UX fixes
 - ⛔ Deferred: **1 item** (#13 Tenant API keys)
-- 🔄 Remaining: **21 items**
+- 🔄 Remaining: **20 items**
 
 ---
 
@@ -82,7 +82,7 @@ that distinguishes a working app from a sellable SaaS.
 | 18 | 🔄 | **`/healthz` and `/readyz` endpoints** | Required for k8s / load balancer probes. `/healthz` = process alive; `/readyz` = DB + critical deps reachable. |
 | 19 | 🔄 | **Automated DB backups** | Verify MySQL is backed up nightly with point-in-time restore tested. Document restore procedure in `docs/RUNBOOK.md`. |
 | 20 | 🔄 | **Test coverage** | Backend: 1 e2e file (`scripts/test.js`). Frontend: 3 component tests + 1 smoke spec. Target: ~60-70% line coverage on auth, billing, webhooks before scaling. |
-| 21 | 🔄 | **Background job queue** | `jobs/` are cron-driven scripts. No retry, no dead-letter queue. Migrate to BullMQ + Redis for outbound webhooks, channel sync, email sending. |
+| 21 | ✅ | **Background job queue** | MySQL-backed (no Redis required) durable queue with BullMQ-style retry/DLQ. New `services/jobs.service.js` exposes `enqueue`, `register`, `startWorker`, `retry`, `discard`, `purge`. Worker boots in-process from `index.js` (gateable via `DISABLE_JOB_WORKER=true` for read-only nodes); claims rows atomically via UPDATE-WHERE-pending, reschedules failures with 30s/1m/5m/15m/60m back-off, and dead-letters after `maxAttempts`. Stale `running` rows older than 10 min are reaped to recover from hard crashes. Handlers registered for `email.send`, `webhook.deliver` (HMAC-signed), `channel.sync`, `audit.purge` in `jobs/handlers.js`. New `job_queue` table in `initDb.js`. Founder UI at `/admin/jobs`: 4 stat tiles (pending/running/done/dead) double as bucket switchers, type filter, search, click-to-expand row showing payload + last error, Retry on dead-letter rows, Discard on done/dead, Purge old rows action. Auto-refreshes the live buckets every 5s. Ticket-reply email migrated as a demo of the new pattern. Shipped in this commit. |
 | 22 | 🔄 | **CI pipeline** | Verify GitHub Actions run `lint` + `typecheck` + `test` + `next build` on every PR. Recent build failures suggest pushes to `main` aren't gated. |
 
 ---
@@ -131,7 +131,7 @@ The previous top-5 (compliance + revenue) are all done. Next priorities:
 
 1. **CI pipeline** (#22) — gate `next build` + tests on every PR so broken `main` deploys stop happening
 2. **`/healthz` + `/readyz`** (#18) — needed for any k8s / load-balancer setup, ~30 min of work
-3. **Background job queue** (#21) — biggest reliability gap; current cron scripts have no retry/DLQ for outbound webhook delivery
+3. **Test coverage on auth + billing + webhooks** (#20) — biggest risk surface in the codebase
 4. **Test coverage on auth + billing + webhooks** (#20) — biggest risk surface in the codebase
 5. **Public status page** (#17) — link from footer; surfaces uptime + incident history
 
@@ -163,4 +163,6 @@ These were closed during this audit / cleanup pass:
 - ✅ #30 In-app changelog drawer — `8b070f5`
 - ✅ #14 Tenant-visible audit log — `b6efd95`
 - ✅ #15 Team invitations via email (magic-link) — `c0476be`
-- ✅ #16 Custom roles UI (production-grade) — this commit
+- ✅ #16 Custom roles UI (production-grade) — `1dad6cf`
+- ✅ Vercel a11y fix: dialog backdrops use real button — `fa476e7`
+- ✅ #21 Background job queue (MySQL-backed, retry + DLQ + admin UI) — this commit

@@ -236,6 +236,16 @@ export const adminApi = {
   updateSetting: (key: string, value: string) => api.put(`/admin/settings/${encodeURIComponent(key)}`, { value }),
   updateSettings: (items: { key: string; value: string }[]) => api.put('/admin/settings', items),
   deleteSetting: (key: string) => api.delete(`/admin/settings/${encodeURIComponent(key)}`),
+  // background job queue
+  jobsStats: () => api.get('/admin/jobs'),
+  jobsList: (params?: { status?: string; type?: string; limit?: number }) =>
+    api.get('/admin/jobs/list', { params }),
+  jobsRetry: (id: string) => api.post(`/admin/jobs/${id}/retry`, {}),
+  jobsDiscard: (id: string) => api.delete(`/admin/jobs/${id}`),
+  jobsPurge: (body?: { doneOlderThanDays?: number; deadOlderThanDays?: number }) =>
+    api.post('/admin/jobs/purge', body || {}),
+  // email diagnostics
+  emailTest: (to: string) => api.post('/admin/email/test', { to }),
 };
 
 // ── Public CMS (blog, seo, sitemap, stats, content) ────────────────

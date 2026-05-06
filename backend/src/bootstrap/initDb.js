@@ -132,6 +132,30 @@ async function initDb() {
       KEY \`pm_tenant_idx\` (\`tenantId\`, \`isActive\`),
       KEY \`pm_default_idx\` (\`tenantId\`, \`isDefault\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    // Background job queue — durable retry/DLQ without needing Redis.
+    // status: pending | running | done | dead.
+    // Workers claim a row via UPDATE (atomic) and run the registered handler.
+    // Failed jobs reschedule with exponential backoff up to maxAttempts;
+    // after that they're marked `dead` and surfaced in /admin/jobs.
+    `CREATE TABLE IF NOT EXISTS \`job_queue\` (
+      \`id\` varchar(191) NOT NULL,
+      \`type\` varchar(64) NOT NULL,
+      \`payload\` longtext NOT NULL,
+      \`priority\` int(11) NOT NULL DEFAULT 5,
+      \`runAt\` datetime(3) NOT NULL,
+      \`attempts\` int(11) NOT NULL DEFAULT 0,
+      \`maxAttempts\` int(11) NOT NULL DEFAULT 5,
+      \`status\` varchar(16) NOT NULL DEFAULT 'pending',
+      \`lockedAt\` datetime(3) DEFAULT NULL,
+      \`lockedBy\` varchar(191) DEFAULT NULL,
+      \`lastError\` text DEFAULT NULL,
+      \`createdAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+      \`finishedAt\` datetime(3) DEFAULT NULL,
+      PRIMARY KEY (\`id\`),
+      KEY \`jq_status_runat\` (\`status\`, \`runAt\`),
+      KEY \`jq_type\` (\`type\`),
+      KEY \`jq_dead_idx\` (\`status\`, \`finishedAt\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
     // Idempotency keys — payment writes cache their response here for 24h
     // so a network-retry of the exact same Idempotency-Key returns the
     // original response instead of double-charging.

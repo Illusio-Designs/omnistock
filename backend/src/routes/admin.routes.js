@@ -474,8 +474,10 @@ router.post('/tickets/:id/reply', async (req, res) => {
     }),
   ]);
 
-  // Notify the tenant who opened the ticket. Best-effort: never block the
-  // reply on email-send errors (SMTP could be down or unconfigured).
+  // Enqueue the notification email instead of firing it inline. The job
+  // queue handles SMTP outages, retries with backoff and surfaces persistent
+  // failures in /admin/jobs — far better than the previous fire-and-forget
+  // try/catch that just logged and dropped the email.
   try {
     const requester = ticket.userId
       ? await prisma.user.findUnique({ where: { id: ticket.userId } })
@@ -483,16 +485,20 @@ router.post('/tickets/:id/reply', async (req, res) => {
     const to = requester?.email || ticket.email;
     if (to) {
       const url = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/help/${ticket.id}`;
-      await sendTicketReply({
-        to,
-        name: requester?.name || 'there',
-        ticketSubject: ticket.subject || `Ticket #${ticket.id.slice(0, 6)}`,
-        ticketUrl: url,
-        replyPreview: String(body).slice(0, 280),
+      const jobs = require('../services/jobs.service');
+      await jobs.enqueue('email.send', {
+        template: 'sendTicketReply',
+        args: {
+          to,
+          name: requester?.name || 'there',
+          ticketSubject: ticket.subject || `Ticket #${ticket.id.slice(0, 6)}`,
+          ticketUrl: url,
+          replyPreview: String(body).slice(0, 280),
+        },
       });
     }
   } catch (err) {
-    console.warn('[admin/tickets/reply] email failed:', err.message);
+    console.warn('[admin/tickets/reply] enqueue email failed:', err.message);
   }
 
   res.json({ ok: true });
@@ -532,6 +538,57 @@ router.get('/stats', async (_req, res) => {
   ]);
   res.json({ tenants, activeSubs, trialing, totalUsers, totalOrders });
 });
+
+// ── JOB QUEUE ──────────────────────────────────────────
+//
+// /admin/jobs                       counts by status
+// /admin/jobs/list?status=pending   list rows for one bucket
+// /admin/jobs/:id/retry             move a dead row back to pending
+// /admin/jobs/:id                   discard a row (DELETE)
+
+router.get('/jobs', async (_req, res) => {
+  const jobs = require('../services/jobs.service');
+  res.json(await jobs.stats());
+});
+
+router.get('/jobs/list', async (req, res) => {
+  const jobs = require('../services/jobs.service');
+  const status = String(req.query.status || 'pending');
+  const type = req.query.type ? String(req.query.type) : undefined;
+  const limit = Math.min(500, Math.max(1, Number(req.query.limit) || 100));
+  const list = await jobs.listByStatus(status, { limit, type });
+  // Distinct type list for the filter dropdown
+  const types = await require('../utils/db')('job_queue')
+    .select('type').count('* as count').groupBy('type').orderBy('count', 'desc').limit(30);
+  res.json({
+    jobs: list.map((j) => ({
+      ...j,
+      // payload is JSON stringified in DB — return parsed for the UI
+      payload: safeParse(j.payload),
+    })),
+    types: types.map((t) => ({ type: t.type, count: Number(t.count) || 0 })),
+  });
+});
+
+router.post('/jobs/:id/retry', async (req, res) => {
+  const jobs = require('../services/jobs.service');
+  const ok = await jobs.retryDead(req.params.id);
+  if (!ok) return res.status(404).json({ error: 'Not a dead-letter row, or not found' });
+  res.json({ ok: true });
+});
+
+router.delete('/jobs/:id', async (req, res) => {
+  const jobs = require('../services/jobs.service');
+  const n = await jobs.discard(req.params.id);
+  res.json({ ok: n > 0 });
+});
+
+router.post('/jobs/purge', async (req, res) => {
+  const jobs = require('../services/jobs.service');
+  res.json(await jobs.purgeOld(req.body || {}));
+});
+
+function safeParse(s) { try { return JSON.parse(s); } catch { return s; } }
 
 // ── EMAIL DIAGNOSTICS ──────────────────────────────────
 // Send a sample of every transactional template to a chosen address. Used to

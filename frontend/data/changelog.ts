@@ -22,6 +22,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-05-06-jobs',
+    date: '2026-05-06',
+    title: 'Durable background jobs with retry + dead-letter',
+    tag: 'improve',
+    highlights: [
+      'Email sends, outbound webhooks and channel syncs now run through a queue that retries with exponential backoff',
+      'Persistent failures land in a Dead bucket for review instead of disappearing into log lines',
+      'Founders get a new /admin/jobs page to inspect, retry, or discard any job',
+      'No new infrastructure required — the queue is backed by a MySQL table',
+    ],
+  },
+  {
     id: '2026-05-06-roles',
     date: '2026-05-06',
     title: 'Custom roles — refreshed',

@@ -7,7 +7,7 @@ import { Sidebar, type SidebarNavGroup } from '@/components/layout/Sidebar';
 import { Topbar } from '@/components/layout/Topbar';
 import {
   LayoutDashboard, Package2, Building2, LifeBuoy, FileText, FileEdit,
-  Search, Settings, Activity, Users, BarChart3,
+  Search, Settings, Activity, Users, BarChart3, Cpu,
 } from 'lucide-react';
 
 // Admin nav — same visual layout as the tenant sidebar, different items.
@@ -34,6 +34,7 @@ const ADMIN_NAV_GROUPS: SidebarNavGroup[] = [
     label: 'System',
     items: [
       { label: 'Audit Log',      href: '/admin/audit',      icon: Activity },
+      { label: 'Background jobs', href: '/admin/jobs',      icon: Cpu },
       { label: 'Settings',       href: '/admin/settings',   icon: Settings },
     ],
   },

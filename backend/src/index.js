@@ -291,6 +291,23 @@ process.on('uncaughtException', (err) => {
     console.error('[cron] failed to start:', err.message);
   }
 
+  // Register job-queue handlers + start the polling worker. The queue is a
+  // MySQL-backed BullMQ-style runner with retry + dead-letter; see
+  // services/jobs.service.js. Disable on this node by setting
+  // DISABLE_JOB_WORKER=true (e.g. read-only replica, web-only tier).
+  let stopJobWorker = null;
+  if (process.env.DISABLE_JOB_WORKER !== 'true') {
+    try {
+      const jobs = require('./services/jobs.service');
+      const handlers = require('./jobs/handlers');
+      handlers.registerAll(jobs);
+      stopJobWorker = jobs.startWorker();
+      console.log('[jobs] worker started');
+    } catch (err) {
+      console.error('[jobs] failed to start worker:', err.message);
+    }
+  }
+
   // Graceful shutdown — release the port and clear cron timers so nodemon
   // restarts (or PM2/Docker stops) don't leave zombies hogging :5001.
   let shuttingDown = false;
@@ -299,6 +316,7 @@ process.on('uncaughtException', (err) => {
     shuttingDown = true;
     console.log(`[shutdown] received ${signal} — stopping cron + closing server`);
     try { cron.stop(); } catch {}
+    try { if (stopJobWorker) stopJobWorker(); } catch {}
     if (server) {
       server.close(() => {
         console.log('[shutdown] server closed');
