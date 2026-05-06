@@ -18,13 +18,15 @@ that distinguishes a working app from a sellable SaaS.
 ## Progress
 
 - ✅ Shipped: **14 of 39** numbered items + 4 build/UX fixes
-- 🔄 Remaining: **25 items**
+- ⛔ Deferred: **1 item** (#13 Tenant API keys)
+- 🔄 Remaining: **24 items**
 
 ---
 
 ## Legend
 
 - ✅ **Shipped** — landed on `main`
+- ⛔ **Deferred** — explicitly out of scope; left here for context
 - 🚨 **Compliance / legal** — must ship before scaling user base
 - 💰 **Revenue-critical** — directly impacts MRR or churn
 - 🏢 **Enterprise** — gating factor for higher-tier plans
@@ -65,7 +67,7 @@ that distinguishes a working app from a sellable SaaS.
 | # | Status | Item | Notes |
 |---|---|------|-------|
 | 12 | 🔄 | **SSO (SAML / OIDC)** | Only Google OAuth today. Enterprise prospects will ask for Okta / Azure AD. Stick this behind a feature flag on the Enterprise plan. |
-| 13 | 🔄 | **Tenant API keys** | So customers can call your API from their own tools / scripts. Schema: `apiKeys` table with hashed secret, scopes, last-used-at. |
+| 13 | ⛔ | ~~**Tenant API keys**~~ | Deferred — not on the roadmap. Tenants will use the existing JWT session for any programmatic access. |
 | 14 | 🔄 | **Tenant-visible audit log** | Founder admin has audit; tenants currently can't see their own. Reuse `audit.service.js`, add `/audit` page filtered by `req.tenant.id`. |
 | 15 | 🔄 | **Team invitations via email** | Magic-link signup so a tenant admin can invite teammates by email without them needing to register first. (Email template `sendUserInvite` is already shipped in #11 — needs the magic-link accept flow.) |
 | 16 | 🔄 | **Custom roles UI** | `role.routes.js` exists; verify there is a UI for tenants to define their own roles + assign permission strings. |
@@ -129,9 +131,9 @@ The previous top-5 (compliance + revenue) are all done. Next priorities:
 
 1. **CI pipeline** (#22) — gate `next build` + tests on every PR so broken `main` deploys stop happening
 2. **`/healthz` + `/readyz`** (#18) — needed for any k8s / load-balancer setup, ~30 min of work
-3. **Tenant API keys** (#13) — unblocks Enterprise prospects asking for programmatic access
-4. **Team invitations magic-link accept flow** (#15) — email template already exists, just need the accept endpoint + UI
-5. **Test coverage on auth + billing + webhooks** (#20) — biggest risk surface in the codebase
+3. **Team invitations magic-link accept flow** (#15) — email template already exists, just need the accept endpoint + UI
+4. **Test coverage on auth + billing + webhooks** (#20) — biggest risk surface in the codebase
+5. **Tenant-visible audit log** (#14) — backend already audits every action; just needs a tenant-scoped read endpoint + UI
 
 ---
 
