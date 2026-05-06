@@ -190,16 +190,26 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { flag: '🇮🇳', region: 'India',           channels: ['Amazon.in', 'Flipkart', 'Myntra', 'Meesho', 'Nykaa', 'Ajio', 'Tata Cliq', 'JioMart', 'Blinkit', 'Zepto', 'Swiggy Instamart', 'BB Now'] },
-              { flag: '🇸🇬', region: 'Southeast Asia',  channels: ['Lazada', 'Shopee', 'TikTok Shop', 'Amazon SG', 'Amazon AU'] },
-              { flag: '🇺🇸', region: 'North America',  channels: ['Amazon US', 'Walmart', 'eBay', 'Etsy', 'Shopify', 'BigCommerce'] },
-              { flag: '🇩🇪', region: 'Europe',          channels: ['Amazon UK', 'Amazon DE', 'Zalando', 'Allegro', 'Kaufland', 'OnBuy', 'ManoMano', 'Fruugo'] },
-              { flag: '🇧🇷', region: 'Latin America',   channels: ['Mercado Libre (8 markets)', 'Shopee BR/MX/CO/CL'] },
-              { flag: '🇦🇪', region: 'Middle East',     channels: ['Amazon UAE', 'Amazon Saudi Arabia', 'Noon (UAE/KSA/Egypt)'] },
+              { iso: 'in', region: 'India',           channels: ['Amazon.in', 'Flipkart', 'Myntra', 'Meesho', 'Nykaa', 'Ajio', 'Tata Cliq', 'JioMart', 'Blinkit', 'Zepto', 'Swiggy Instamart', 'BB Now'] },
+              { iso: 'sg', region: 'Southeast Asia',  channels: ['Lazada', 'Shopee', 'TikTok Shop', 'Amazon SG', 'Amazon AU'] },
+              { iso: 'us', region: 'North America',  channels: ['Amazon US', 'Walmart', 'eBay', 'Etsy', 'Shopify', 'BigCommerce'] },
+              { iso: 'eu', region: 'Europe',          channels: ['Amazon UK', 'Amazon DE', 'Zalando', 'Allegro', 'Kaufland', 'OnBuy', 'ManoMano', 'Fruugo'] },
+              { iso: 'br', region: 'Latin America',   channels: ['Mercado Libre (8 markets)', 'Shopee BR/MX/CO/CL'] },
+              { iso: 'ae', region: 'Middle East',     channels: ['Amazon UAE', 'Amazon Saudi Arabia', 'Noon (UAE/KSA/Egypt)'] },
             ].map((r) => (
               <div key={r.region} className="rounded-2xl bg-white border border-slate-200 p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all">
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-2xl" aria-hidden>{r.flag}</span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`https://flagcdn.com/${r.iso}.svg`}
+                    alt=""
+                    aria-hidden
+                    width={28}
+                    height={20}
+                    loading="lazy"
+                    className="rounded-sm shadow-sm border border-slate-200 object-cover"
+                    style={{ width: 28, height: 20 }}
+                  />
                   <h4 className="font-bold text-slate-900">{r.region}</h4>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
