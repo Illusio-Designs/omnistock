@@ -1,5 +1,10 @@
 const axios = require('axios');
 const settings = require('../../settings.service');
+const {
+  LWA_TOKEN_URL: LWA_URL,
+  AMAZON_MARKETPLACE_IDS: MARKETPLACE_IDS,
+  getEndpoint,
+} = require('../../../config/channel-endpoints');
 
 // Per-channel credentials (stored encrypted per tenant):
 //   { sellerId, refreshToken, region: "IN" | "US" | "EU" }
@@ -11,42 +16,6 @@ const settings = require('../../settings.service');
 // per tenant still work — per-tenant values win over platform settings.
 // Docs: https://developer-docs.amazon.com/sp-api/
 
-// Per-region SP-API host + marketplace ID. Sources:
-//   https://developer-docs.amazon.com/sp-api/docs/sp-api-endpoints
-//   https://developer-docs.amazon.com/sp-api/docs/marketplace-ids
-const REGION_CONFIG = {
-  IN: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A21TJRUUN4KGV' },
-  US: { endpoint: 'https://sellingpartnerapi-na.amazon.com', marketplaceId: 'ATVPDKIKX0DER' },
-  CA: { endpoint: 'https://sellingpartnerapi-na.amazon.com', marketplaceId: 'A2EUQ1WTGCTBG2' },
-  MX: { endpoint: 'https://sellingpartnerapi-na.amazon.com', marketplaceId: 'A1AM78C64UM0Y8' },
-  BR: { endpoint: 'https://sellingpartnerapi-na.amazon.com', marketplaceId: 'A2Q3Y263D00KWC' },
-  UK: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A1F83G8C2ARO7P' },
-  DE: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A1PA6795UKMFR9' },
-  FR: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A13V1IB3VIYZZH' },
-  IT: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'APJ6JRA9NG5V4'  },
-  ES: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A1RKKUPIHCS9HS' },
-  NL: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A1805IZSGTT6HS' },
-  SE: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A2NODRKZP88ZB9' },
-  PL: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A1C3SOZRARQ6R3' },
-  TR: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A33AVAJ2PDY3EV' },
-  AE: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A2VIGQ35RCS4UG' },
-  SA: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A17E79C6D8DWNP' },
-  EG: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'ARBP9OOSHTCHU'  },
-  ZA: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'AE08WJ6YKNBMC'  },
-  JP: { endpoint: 'https://sellingpartnerapi-fe.amazon.com', marketplaceId: 'A1VC38T7YXB528' },
-  AU: { endpoint: 'https://sellingpartnerapi-fe.amazon.com', marketplaceId: 'A39IBJ37TRP1C6' },
-  SG: { endpoint: 'https://sellingpartnerapi-fe.amazon.com', marketplaceId: 'A19VAU5U5O7RUS' },
-  // Legacy aliases — historic creds may pass region: 'EU' or 'NA'
-  EU: { endpoint: 'https://sellingpartnerapi-eu.amazon.com', marketplaceId: 'A1F83G8C2ARO7P' },
-  NA: { endpoint: 'https://sellingpartnerapi-na.amazon.com', marketplaceId: 'ATVPDKIKX0DER' },
-};
-
-const LWA_URL = 'https://api.amazon.com/auth/o2/token';
-
-function getRegionConfig(region) {
-  return REGION_CONFIG[region] || REGION_CONFIG.IN;
-}
-
 async function getAppCredentials(creds) {
   const clientId     = creds.clientId     || (await settings.get('amazon.clientId'));
   const clientSecret = creds.clientSecret || (await settings.get('amazon.clientSecret'));
@@ -56,24 +25,16 @@ async function getAppCredentials(creds) {
   return { clientId, clientSecret };
 }
 
-// Sandbox endpoints serve mock data and accept Draft-state apps. Set
-// `sandbox: true` in channel credentials (or pass amazon.sandbox=true in
-// Admin → Settings) to test against them while the production app is still
-// in Sandbox status on the Amazon Developer Console.
-function toSandboxHost(prodEndpoint) {
-  return prodEndpoint.replace('https://sellingpartnerapi-', 'https://sandbox.sellingpartnerapi-');
-}
-
+// Mode (sandbox vs production) is controlled globally via CHANNEL_MODE in
+// .env — see backend/src/config/channel-endpoints.js. Set CHANNEL_MODE=sandbox
+// while your production app is still in Sandbox status on the Amazon
+// Developer Console; switch to CHANNEL_MODE=production after approval.
 class AmazonAdapter {
   constructor(credentials) {
     this.creds = credentials || {};
     this.region = this.creds.region || 'IN';
-    const cfg = getRegionConfig(this.region);
-    this.sandbox = this.creds.sandbox === true
-                || this.creds.sandbox === 'true'
-                || String(this.creds.mode || '').toLowerCase() === 'sandbox';
-    this.endpoint = this.sandbox ? toSandboxHost(cfg.endpoint) : cfg.endpoint;
-    this.marketplaceId = cfg.marketplaceId;
+    this.endpoint = getEndpoint('AMAZON', this.region);
+    this.marketplaceId = MARKETPLACE_IDS[this.region] || MARKETPLACE_IDS.IN;
     this._accessToken = null;
     this._tokenExpiry = null;
   }

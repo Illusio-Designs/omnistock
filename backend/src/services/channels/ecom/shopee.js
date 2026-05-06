@@ -2,6 +2,7 @@ const axios = require('axios');
 const crypto = require('crypto');
 const settings = require('../../settings.service');
 const { makeOrderShape } = require('../_base');
+const { getEndpoint } = require('../../../config/channel-endpoints');
 
 // Shopee Open Platform adapter — multi-region (SG/MY/TH/ID/VN/PH/TW/BR/MX/CO/CL/PL).
 //
@@ -22,9 +23,10 @@ const { makeOrderShape } = require('../_base');
 //   https://open.shopee.com/documents?module=63&type=2&id=51    (Auth)
 //   https://open.shopee.com/documents?module=94&type=1&id=560   (Order)
 
-// Shopee unified all SEA regions onto partner.shopeemobile.com; LATAM/PL ride
-// the same host today. Sandbox: partner.test-stable.shopeemobile.com.
-const HOST = 'https://partner.shopeemobile.com';
+// Shopee unified all SEA regions onto partner.shopeemobile.com; LATAM/PL
+// ride the same host today. CHANNEL_MODE in .env flips between production
+// and sandbox (partner.test-stable.shopeemobile.com).
+const HOST = getEndpoint('SHOPEE');
 
 // Shopee Seller Center login origin per market — used as the `redirect`
 // parameter target the seller is bounced back to after authorization. We

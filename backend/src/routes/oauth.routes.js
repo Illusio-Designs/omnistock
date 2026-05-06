@@ -417,8 +417,9 @@ router.get('/lazada/start',
       const { channelId } = req.query;
       const region = String(req.query.region || 'SG').toUpperCase();
       if (!channelId) return res.status(400).json({ error: 'channelId required' });
-      if (!LazadaAdapter.REGION_HOSTS[region]) {
-        return res.status(400).json({ error: `Unsupported Lazada region "${region}". Use one of: SG, TH, PH, MY, VN, ID.` });
+      const SUPPORTED_LAZADA_REGIONS = ['SG', 'TH', 'PH', 'MY', 'VN', 'ID'];
+      if (!SUPPORTED_LAZADA_REGIONS.includes(region)) {
+        return res.status(400).json({ error: `Unsupported Lazada region "${region}". Use one of: ${SUPPORTED_LAZADA_REGIONS.join(', ')}.` });
       }
 
       const channel = await prisma.channel.findFirst({

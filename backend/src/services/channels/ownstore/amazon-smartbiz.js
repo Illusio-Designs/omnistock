@@ -29,20 +29,22 @@ async function getAppCredentials(creds) {
 //   4. In Smart Biz dashboard, set your Kartriq webhook URL
 //   5. Connect via POST /api/v1/channels/:id/connect with credentials above
 
-const LWA_URL          = 'https://api.amazon.com/auth/o2/token';
-const SP_API_PROD      = 'https://sellingpartnerapi-eu.amazon.com';         // covers IN region
-const SP_API_SANDBOX   = 'https://sandbox.sellingpartnerapi-eu.amazon.com'; // sandbox for the same region
-const IN_MARKETPLACE   = 'A21TJRUUN4KGV';
+const {
+  LWA_TOKEN_URL: LWA_URL,
+  AMAZON_MARKETPLACE_IDS,
+  getEndpoint,
+} = require('../../../config/channel-endpoints');
+
+const IN_MARKETPLACE = AMAZON_MARKETPLACE_IDS.IN;
 
 class AmazonSmartBizAdapter {
   constructor(credentials) {
     this.creds = credentials;
     this._token = null;
     this._tokenExpiry = null;
-    const isSandbox = credentials.sandbox === true
-                   || credentials.sandbox === 'true'
-                   || String(credentials.mode || '').toLowerCase() === 'sandbox';
-    this.spApi = isSandbox ? SP_API_SANDBOX : SP_API_PROD;
+    // Smart Biz is India-only. Mode (sandbox vs production) comes from
+    // process.env.CHANNEL_MODE — see backend/src/config/channel-endpoints.js.
+    this.spApi = getEndpoint('AMAZON_SMARTBIZ', 'IN');
   }
 
   // Smart Biz uses the same SP-API Listings endpoint as Amazon proper
@@ -137,7 +139,7 @@ class AmazonSmartBizAdapter {
           apiMsg = err.message;
         }
       }
-      console.error('[amazon-smartbiz._req] failed', { method, path, status, body, endpoint: this.spApi, mode: this.creds.mode || 'production' });
+      console.error('[amazon-smartbiz._req] failed', { method, path, status, body, endpoint: this.spApi, mode: process.env.CHANNEL_MODE || 'production' });
       const hint = status === 403
         ? ' — common causes: (1) seller has not authorized this SP-API role, (2) refresh token region mismatch, (3) app in Draft state.'
         : status === 400

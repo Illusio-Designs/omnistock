@@ -2,6 +2,7 @@ const axios = require('axios');
 const crypto = require('crypto');
 const settings = require('../../settings.service');
 const { makeOrderShape } = require('../_base');
+const { getEndpoint, PLATFORMS } = require('../../../config/channel-endpoints');
 
 // Lazada Open Platform adapter — multi-region (SG/TH/PH/MY/VN/ID).
 //
@@ -23,19 +24,12 @@ const { makeOrderShape } = require('../_base');
 //   https://open.lazada.com/apps/doc/doc?nodeId=10567&docId=108944  (Auth)
 //   https://open.lazada.com/apps/doc/api?path=/orders/get           (Orders)
 
-const REGION_HOSTS = {
-  SG: 'https://api.lazada.sg/rest',
-  TH: 'https://api.lazada.co.th/rest',
-  PH: 'https://api.lazada.com.ph/rest',
-  MY: 'https://api.lazada.com.my/rest',
-  VN: 'https://api.lazada.vn/rest',
-  ID: 'https://api.lazada.co.id/rest',
-};
-
-const AUTH_HOST = 'https://auth.lazada.com/rest';
+// Region URLs come from channel-endpoints.js — flips between production
+// (api.lazada.{tld}) and sandbox (api-sandbox.lazada.{tld}) via CHANNEL_MODE.
+const AUTH_HOST = PLATFORMS.LAZADA.authHost;
 
 function hostForRegion(region) {
-  return REGION_HOSTS[region] || REGION_HOSTS.SG;
+  return getEndpoint('LAZADA', region) || getEndpoint('LAZADA', 'SG');
 }
 
 // Lazada signing:
@@ -232,4 +226,4 @@ function escapeXml(s) {
 
 module.exports = LazadaAdapter;
 module.exports.signLazadaRequest = signLazadaRequest;
-module.exports.REGION_HOSTS = REGION_HOSTS;
+module.exports.hostForRegion = hostForRegion;

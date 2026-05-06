@@ -1,6 +1,7 @@
 const axios = require('axios');
 const settings = require('../../settings.service');
 const { makeOrderShape } = require('../_base');
+const { getEndpoint, getMode } = require('../../../config/channel-endpoints');
 
 // Allegro adapter — Poland's leading marketplace.
 //
@@ -22,22 +23,17 @@ const { makeOrderShape } = require('../_base');
 //   https://developer.allegro.pl/auth/                  (Authentication)
 //   https://developer.allegro.pl/documentation         (REST API)
 
-const PROD_API_HOST  = 'https://api.allegro.pl';
-const PROD_AUTH_HOST = 'https://allegro.pl';
-
-// Allegro provides a sandbox at *.allegrosandbox.pl. Honour creds.sandbox so a
-// founder can test with sandbox credentials without changing files.
-const SANDBOX_API_HOST  = 'https://api.allegro.pl.allegrosandbox.pl';
-const SANDBOX_AUTH_HOST = 'https://allegro.pl.allegrosandbox.pl';
+// Allegro hosts come from channel-endpoints.js. CHANNEL_MODE in .env flips
+// between production (api.allegro.pl) and sandbox (*.allegrosandbox.pl).
 
 const VENDOR_TYPE = 'application/vnd.allegro.public.v1+json';
 
 class AllegroAdapter {
   constructor(credentials = {}) {
     this.creds = credentials;
-    this.sandbox = !!credentials.sandbox;
-    this.apiHost  = this.sandbox ? SANDBOX_API_HOST  : PROD_API_HOST;
-    this.authHost = this.sandbox ? SANDBOX_AUTH_HOST : PROD_AUTH_HOST;
+    this.sandbox = getMode() === 'sandbox';
+    this.apiHost  = getEndpoint('ALLEGRO', 'api');
+    this.authHost = getEndpoint('ALLEGRO', 'auth');
   }
 
   async _getAppCredentials() {
@@ -223,5 +219,8 @@ class AllegroAdapter {
 }
 
 module.exports = AllegroAdapter;
-module.exports.PROD_AUTH_HOST    = PROD_AUTH_HOST;
-module.exports.SANDBOX_AUTH_HOST = SANDBOX_AUTH_HOST;
+// Re-exported for the OAuth route layer; sourced from the central
+// channel-endpoints config so prod / sandbox stay in sync platform-wide.
+const { PLATFORMS } = require('../../../config/channel-endpoints');
+module.exports.PROD_AUTH_HOST    = PLATFORMS.ALLEGRO.production.auth;
+module.exports.SANDBOX_AUTH_HOST = PLATFORMS.ALLEGRO.sandbox.auth;

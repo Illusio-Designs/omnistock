@@ -1,6 +1,7 @@
 const axios = require('axios');
 const settings = require('../../settings.service');
 const { makeOrderShape } = require('../_base');
+const { getEndpoint } = require('../../../config/channel-endpoints');
 
 // Walmart Marketplace adapter (US, Canada, Mexico)
 //
@@ -19,16 +20,14 @@ const { makeOrderShape } = require('../_base');
 //   https://developer.walmart.com/api/us/mp/orders
 //   https://developer.walmart.com/api/us/mp/auth
 
-const REGION_HOSTS = {
-  US: 'https://marketplace.walmartapis.com',
-  CA: 'https://marketplace.walmartapis.com/ca',
-  MX: 'https://marketplace.walmartapis.com/mx',
-};
+// Per-region URLs come from channel-endpoints.js. CHANNEL_MODE in .env
+// flips the whole adapter between marketplace.walmartapis.com (production)
+// and sandbox.walmartapis.com (sandbox).
 
 class WalmartAdapter {
   constructor(credentials = {}) {
     this.creds = credentials;
-    this.host = REGION_HOSTS[credentials.region || 'US'];
+    this.host = getEndpoint('WALMART', credentials.region || 'US');
     this._accessToken = null;
     this._tokenExpiry = null;
   }

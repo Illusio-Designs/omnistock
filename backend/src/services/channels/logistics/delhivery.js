@@ -1,14 +1,14 @@
 const axios = require('axios');
+const { getEndpoint } = require('../../../config/channel-endpoints');
 
-// Credentials shape: { token: "your_api_token", mode: "test" | "production" }
+// Credentials shape: { token: "your_api_token" }
 // Get your token from: https://app.delhivery.com → Settings → API
+// Mode (production / sandbox/staging) is controlled globally by
+// CHANNEL_MODE in .env — see backend/src/config/channel-endpoints.js.
 
 class DelhiveryAdapter {
   constructor(credentials) {
-    const isTest = credentials.mode === 'test';
-    this.baseUrl = isTest
-      ? 'https://staging-express.delhivery.com'
-      : 'https://track.delhivery.com';
+    this.baseUrl = getEndpoint('DELHIVERY');
     this.headers = {
       Authorization: `Token ${credentials.token}`,
       'Content-Type': 'application/json',

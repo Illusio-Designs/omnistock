@@ -1,13 +1,17 @@
 const axios = require('axios');
 const settings = require('../../settings.service');
+const { getEndpoint } = require('../../../config/channel-endpoints');
 
 // Per-tenant credentials shape (set by /oauth/flipkart/callback):
 //   { accessToken, refreshToken, expiresAt }
 // Legacy per-tenant shape (for back-compat): { appId, appSecret }
 // Global OAuth app creds come from Admin → Settings → Flipkart:
 //   flipkart.appId, flipkart.appSecret
+//
+// Endpoint flips with CHANNEL_MODE in .env (production ↔ sandbox).
 
-const BASE_URL = 'https://api.flipkart.net/sellers';
+const BASE_URL = getEndpoint('FLIPKART', 'api');
+const AUTH_URL = getEndpoint('FLIPKART', 'auth');
 
 class FlipkartAdapter {
   constructor(credentials) {
@@ -35,7 +39,7 @@ class FlipkartAdapter {
       ? { grant_type: 'refresh_token', refresh_token: this.creds.refreshToken }
       : { grant_type: 'client_credentials', scope: 'Seller_Api' };
 
-    const { data } = await axios.post('https://api.flipkart.net/oauth-service/oauth/token', null, {
+    const { data } = await axios.post(AUTH_URL, null, {
       params: grant,
       auth: { username: appId, password: appSecret },
     });

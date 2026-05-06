@@ -1,10 +1,12 @@
 const axios = require('axios');
+const { getEndpoint } = require('../../../config/channel-endpoints');
 
 // eBay Sell API (OAuth 2.0)
 // Credentials: { clientId, clientSecret, refreshToken }
+// Endpoint (production vs sandbox) is controlled by CHANNEL_MODE in .env.
 // Docs: https://developer.ebay.com/docs
 
-const BASE = 'https://api.ebay.com';
+const BASE = getEndpoint('EBAY');
 
 class EbayAdapter {
   constructor(credentials) {
