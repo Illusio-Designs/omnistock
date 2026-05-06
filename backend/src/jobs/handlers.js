@@ -82,6 +82,24 @@ async function channelSync(payload) {
   // inventory / tracking handlers can hook in here as adapters expose them.
 }
 
+// ── push.send ───────────────────────────────────────────────────────────────
+// payload: { scope: 'tenant' | 'user', tenantId? | userId?, payload: {...} }
+// payload.payload  shape: { title, body, path?, data?, sound?, priority? }
+async function pushSend(payload) {
+  const { scope, tenantId, userId, payload: msg } = payload || {};
+  if (!msg) throw new Error('push.send: payload.payload required');
+  const push = require('../services/push.service');
+  if (scope === 'tenant') {
+    if (!tenantId) throw new Error('push.send: tenantId required for scope=tenant');
+    return push.sendToTenant(tenantId, msg);
+  }
+  if (scope === 'user') {
+    if (!userId) throw new Error('push.send: userId required for scope=user');
+    return push.sendToUser(userId, msg);
+  }
+  throw new Error(`push.send: unknown scope "${scope}"`);
+}
+
 // ── audit.purge ─────────────────────────────────────────────────────────────
 // payload: { keepDays?: number } — defaults to 365
 async function auditPurge(payload = {}) {
@@ -97,6 +115,7 @@ function registerAll(jobs) {
   jobs.register('webhook.deliver', webhookDeliver);
   jobs.register('channel.sync',    channelSync);
   jobs.register('audit.purge',     auditPurge);
+  jobs.register('push.send',       pushSend);
 }
 
 module.exports = { registerAll };

@@ -7,10 +7,69 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "ios": { "supportsTablet": true, "bundleIdentifier": "com.kartriq.app" },
-    "android": { "package": "com.kartriq.app" },
-    "web": { "bundler": "metro" },
-    "plugins": ["expo-router", "expo-secure-store"],
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0b1220"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kartriq.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Use Face ID to unlock your Kartriq workspace.",
+        "NSUserNotificationsUsageDescription": "Get alerted when new orders arrive, payments fail, or stock runs low.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "associatedDomains": [
+        "applinks:kartriq.com",
+        "applinks:www.kartriq.com",
+        "applinks:app.kartriq.com"
+      ]
+    },
+    "android": {
+      "package": "com.kartriq.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#06D4B8"
+      },
+      "permissions": [
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "POST_NOTIFICATIONS",
+        "INTERNET"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            { "scheme": "https", "host": "kartriq.com", "pathPrefix": "/m" },
+            { "scheme": "https", "host": "www.kartriq.com", "pathPrefix": "/m" },
+            { "scheme": "https", "host": "app.kartriq.com" }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-local-authentication",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#06D4B8",
+          "defaultChannel": "default"
+        }
+      ]
+    ],
     "extra": {
       "apiUrl": "http://localhost:5001/api/v1"
     }

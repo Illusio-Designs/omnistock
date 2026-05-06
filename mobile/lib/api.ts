@@ -86,6 +86,13 @@ export const userApi = {
   permissionCatalog: () => api.get('/users/_permissions/catalog'),
 };
 
+// Push-notification device registration (mobile only)
+export const devicesApi = {
+  register: (body: { token: string; platform: string; deviceName?: string | null }) =>
+    api.post('/devices/register', body),
+  unregister: (token: string) => api.post('/devices/unregister', { token }),
+};
+
 // ── OAuth (per-seller channel authorization) ──────────────────────
 // Each *Start endpoint returns { url } that the mobile app should open in
 // an in-app browser; the callback redirects back to the deep-link scheme.

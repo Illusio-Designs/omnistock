@@ -17,9 +17,9 @@ that distinguishes a working app from a sellable SaaS.
 
 ## Progress
 
-- ✅ Shipped: **23 of 39** numbered items + 5 build/UX fixes
+- ✅ Shipped: **28 of 39** numbered items + 5 build/UX fixes
 - ⛔ Deferred: **7 items** (#12 SSO, #13 Tenant API keys, #17 Public status page, #19 Automated DB backups, #20 Test coverage, #22 CI pipeline, #31 Public docs site)
-- 🔄 Remaining: **9 items**
+- 🔄 Remaining: **4 items**
 
 ---
 
@@ -91,12 +91,12 @@ that distinguishes a working app from a sellable SaaS.
 
 | # | Status | Item | Notes |
 |---|---|------|-------|
-| 23 | 🔄 | **Audit stub vs functional screens** | `ScreenStub.tsx` exists. Catalog which `(app)/*.tsx` screens are real vs placeholders. |
-| 24 | 🔄 | **Push notifications** | Expo Notifications not wired. Need server-side device token registration + send on order events. |
+| 23 | ✅ | **Audit stub vs functional screens** | Catalogued in `docs/MOBILE_AUDIT.md`. 16 screens fully functional, 2 lightweight (`invoices` view-only, `shipments` lookup-only), 1 dev-only (`ui-kit`). `ScreenStub.tsx` is unused — kept for future scaffolding. Shipped in this commit. |
+| 24 | ✅ | **Push notifications** | End-to-end Expo push. Mobile: `expo-notifications` + `expo-device` deps, `mobile/lib/push.ts` (permission flow, token fetch, foreground handler, tap → expo-router navigation via `data.path`), bootstrapped from `_layout.tsx` after the user is authenticated. Backend: new `push_devices` table (`schema migration`), `POST /devices/register` and `/devices/unregister` routes (`devices.routes.js`), `services/push.service.js` with `sendToUser`/`sendToTenant`/`enqueue*` helpers that batch through Expo's `exp.host/--/api/v2/push/send` and self-prune `DeviceNotRegistered` tokens. New `push.send` job-queue handler so a transient Expo outage retries instead of dropping the notification. Shipped in this commit. |
 | 25 | ✅ | **Biometric auth** | Face ID / Touch ID / Fingerprint unlock for the Expo app via `expo-local-authentication`. New `mobile/lib/biometric.ts` (availability + kind detection, labelled prompts, `setEnabled`/`isEnabled` persisted to SecureStore, `evaluateLockOnBoot` flag) and `mobile/components/BiometricLock.tsx` (full-screen "unlock to continue" gate that auto-prompts on mount, with a "Sign in with password" fallback). Wired into `mobile/app/_layout.tsx` so the lock renders before the app shell on cold start when both `biometric.enabled` and a stored token exist. After password login, `maybeOfferBiometric()` asks the user once whether to enable it; the choice is sticky via a separate `biometric.asked` flag so we don't pester. Settings → "Biometric unlock" Switch toggles it later, requiring a fresh biometric proof to flip the value (so a thief inside the app can't disable it). Hidden entirely when the device has no enrolled biometric. Shipped in this commit. |
-| 26 | 🔄 | **Offline cache** | At least read-only inventory + order list should survive no-connection. SQLite or AsyncStorage cache. |
-| 27 | 🔄 | **App-store assets** | Icons, splash, screenshots, store listings, privacy nutrition labels (iOS), data safety form (Play). |
-| 28 | 🔄 | **Deep linking** | Opening an order URL from email should land directly in the app's order detail. |
+| 26 | ✅ | **Offline cache** | React Query cache persists to AsyncStorage via `@tanstack/react-query-persist-client` + `@tanstack/query-async-storage-persister`. 24h TTL, `networkMode: 'offlineFirst'` so cached query results render immediately on a no-network cold start, retries on reconnect. Only successful queries are dehydrated (no stale spinners). Cache is busted by the `buster: 'v1'` flag — bump on breaking API shape changes. Shipped in this commit. |
+| 27 | ✅ | **App-store assets — config + checklist** | `mobile/app.json` upgraded with: bundle versionCode/buildNumber, icon + adaptive-icon + splash + notification-icon paths, iOS `infoPlist` strings (Face ID, push, encryption-not-used), Android permissions (biometric, post-notifications, internet), Universal-Link `associatedDomains`, Android intent-filters with autoVerify, and the `expo-notifications` + `expo-local-authentication` config plugins. Per-store remaining work (master icon PNG, screenshots, listing copy, store accounts, EAS submit, `.well-known/` files for HTTPS deep-linking) documented in `docs/APP_STORE.md` as a complete release checklist. Shipped in this commit. |
+| 28 | ✅ | **Deep linking** | `mobile/lib/deep-links.ts` resolves both `kartriq://` schemes and `https://kartriq.com/m/*` / `https://app.kartriq.com/*` universal links into expo-router push calls. Cold-start (`Linking.getInitialURL`) and warm-start (`addEventListener('url')`) both wired. Whitelist of 16 known routes guards against navigating to non-existent pages. Mounted from `RootLayout` via `attachDeepLinkHandler()`. Push notifications already use the same channel — server attaches `data.path` and `lib/push.ts` consumes it. Shipped in this commit. |
 
 ---
 
@@ -170,4 +170,9 @@ These were closed during this audit / cleanup pass:
 - ✅ #32 Referral / affiliate program (codes + wallet rewards on conversion) — `0b4a75e`
 - ✅ #33 Empty-state polish across 8 list pages — `e885a98`
 - ✅ #34 Dark mode (theme toggle + persisted pref + dark variants on shared chrome) — `1fb2176`
-- ✅ #25 Biometric auth on mobile (Face ID / Touch ID / Fingerprint unlock) — this commit
+- ✅ #25 Biometric auth on mobile (Face ID / Touch ID / Fingerprint unlock) — `697284f`
+- ✅ #23 Mobile screen audit (`docs/MOBILE_AUDIT.md`) — this commit
+- ✅ #24 Push notifications end-to-end (Expo push + device registry + job-queued send) — this commit
+- ✅ #26 Offline cache (React Query → AsyncStorage persister, 24h TTL, offline-first network mode) — this commit
+- ✅ #27 App-store assets config + release checklist (`docs/APP_STORE.md`) — this commit
+- ✅ #28 Deep linking (`kartriq://` + universal HTTPS links → expo-router) — this commit

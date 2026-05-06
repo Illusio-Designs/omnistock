@@ -75,6 +75,31 @@ async function initDb() {
     { table: 'tenants', column: 'referredByCode',  ddl: 'VARCHAR(32) DEFAULT NULL' },
   ];
 
+  // Push-notification device registry — one row per (user, expo token).
+  // We re-issue tokens cheaply on every cold start, so a token rotating
+  // just upserts the row. Tenant id is denormalised onto the row so a
+  // simple WHERE tenantId=? returns every device that should receive a
+  // tenant-wide notification.
+  const deviceTables = [
+    `CREATE TABLE IF NOT EXISTS \`push_devices\` (
+      \`id\` varchar(191) NOT NULL,
+      \`userId\` varchar(191) NOT NULL,
+      \`tenantId\` varchar(191) DEFAULT NULL,
+      \`token\` varchar(255) NOT NULL,
+      \`platform\` varchar(16) NOT NULL DEFAULT 'unknown',
+      \`deviceName\` varchar(191) DEFAULT NULL,
+      \`lastSeenAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+      \`createdAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+      PRIMARY KEY (\`id\`),
+      UNIQUE KEY \`push_devices_token_unique\` (\`token\`),
+      KEY \`push_devices_user_idx\` (\`userId\`),
+      KEY \`push_devices_tenant_idx\` (\`tenantId\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  ];
+  for (const sql of deviceTables) {
+    try { await db.raw(sql); } catch (e) { console.warn('[initDb] push_devices:', e.message); }
+  }
+
   // Create wallet tables if they don't exist (separate from column migrations)
   const walletTables = [
     `CREATE TABLE IF NOT EXISTS \`tenant_wallets\` (
