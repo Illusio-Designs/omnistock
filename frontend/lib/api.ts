@@ -53,6 +53,15 @@ export const authApi = {
   updateMe: (data: { name?: string; phone?: string }) => api.patch('/auth/me', data),
   changePassword: (currentPassword: string, newPassword: string) =>
     api.post('/auth/change-password', { currentPassword, newPassword }),
+  // 2FA / TOTP
+  mfaSetup:   () => api.post('/auth/2fa/setup', {}),
+  mfaVerify:  (token: string) => api.post('/auth/2fa/verify', { token }),
+  mfaDisable: (password: string, token: string) => api.post('/auth/2fa/disable', { password, token }),
+  mfaLogin:   (mfaToken: string, token: string) => api.post('/auth/2fa/login', { mfaToken, token }),
+  // DPDP / GDPR
+  exportMe: () => api.get('/auth/me/export', { responseType: 'blob' }),
+  deleteMe: (body: { password?: string; confirmEmail?: string }) =>
+    api.post('/auth/me/delete', body),
 };
 
 // ── SaaS: plans (public) ───────────────────────────────────────────

@@ -7,9 +7,12 @@ import {
 } from '@/components/ui';
 import {
   User, Building2, Bell, Shield, CreditCard, Mail, Phone, Save, Check,
+  Download, Trash2, Smartphone, AlertTriangle,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { authApi, billingApi } from '@/lib/api';
+import { Modal } from '@/components/ui/Modal';
+import { useRouter } from 'next/navigation';
 
 const TABS = [
   { key: 'profile',  label: 'Profile',       icon: User },
@@ -247,21 +250,15 @@ export default function SettingsPage() {
                   </div>
                 </Card>
 
-                <Card className="p-6">
-                  <h2 className="font-bold text-lg text-slate-900 mb-1">Two-Factor Authentication</h2>
-                  <p className="text-xs text-slate-500 mb-5">Add an extra layer of security to your account</p>
-                  <Switch
-                    label="Enable 2FA"
-                    description="Require a verification code when signing in"
-                    checked={false}
-                  />
-                </Card>
+                <TwoFactorCard />
 
                 <Card className="p-6">
                   <h2 className="font-bold text-lg text-slate-900 mb-1">Active Session</h2>
                   <p className="text-xs text-slate-500 mb-4">Authentication uses stateless tokens, so only the current browser session is shown.</p>
                   <CurrentSessionCard />
                 </Card>
+
+                <DataPrivacyCard />
               </>
             )}
 
@@ -373,5 +370,255 @@ function CurrentSessionCard() {
       </div>
       <Badge variant="emerald" dot>Current</Badge>
     </div>
+  );
+}
+
+// ─── 2FA / TOTP card ────────────────────────────────────────────────────────
+function TwoFactorCard() {
+  const { user, setContext } = useAuthStore();
+  const enabled = !!user?.mfaEnabled;
+  const [setupOpen, setSetupOpen] = useState(false);
+  const [disableOpen, setDisableOpen] = useState(false);
+  const [setup, setSetup] = useState<{ secret: string; qrImageUrl: string; otpauthUrl: string } | null>(null);
+  const [code, setCode] = useState('');
+  const [pwd, setPwd] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const startSetup = async () => {
+    setErr(''); setCode(''); setBusy(true);
+    try {
+      const r = await authApi.mfaSetup();
+      setSetup(r.data);
+      setSetupOpen(true);
+    } catch (e: any) {
+      setErr(e?.response?.data?.error || 'Could not start setup');
+    } finally { setBusy(false); }
+  };
+
+  const completeSetup = async () => {
+    if (!/^\d{6}$/.test(code)) { setErr('Enter the 6-digit code from the app'); return; }
+    setErr(''); setBusy(true);
+    try {
+      await authApi.mfaVerify(code);
+      setSetupOpen(false); setSetup(null); setCode('');
+      // refresh user state — caller of useAuthStore needs an updated mfaEnabled
+      const me = await authApi.me();
+      setContext(me.data);
+    } catch (e: any) {
+      setErr(e?.response?.data?.error || 'Invalid code');
+    } finally { setBusy(false); }
+  };
+
+  const completeDisable = async () => {
+    if (!pwd || !/^\d{6}$/.test(code)) { setErr('Password and 6-digit code required'); return; }
+    setErr(''); setBusy(true);
+    try {
+      await authApi.mfaDisable(pwd, code);
+      setDisableOpen(false); setPwd(''); setCode('');
+      const me = await authApi.me();
+      setContext(me.data);
+    } catch (e: any) {
+      setErr(e?.response?.data?.error || 'Failed to disable');
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-bold text-lg text-slate-900 mb-1">Two-Factor Authentication</h2>
+          <p className="text-xs text-slate-500 mb-1">
+            Require a 6-digit code from an authenticator app (Google Authenticator, Authy, 1Password, etc.) when signing in.
+          </p>
+          {enabled && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-1 uppercase tracking-wider mt-2">
+              <Check size={11} /> Active
+            </span>
+          )}
+        </div>
+        {enabled ? (
+          <Button variant="outline" leftIcon={<Smartphone size={14} />} onClick={() => { setDisableOpen(true); setErr(''); }}>
+            Disable 2FA
+          </Button>
+        ) : (
+          <Button variant="primary" leftIcon={<Smartphone size={14} />} onClick={startSetup} loading={busy}>
+            Enable 2FA
+          </Button>
+        )}
+      </div>
+
+      {/* Setup modal */}
+      <Modal open={setupOpen} onClose={() => setSetupOpen(false)} title="Set up two-factor authentication" size="md">
+        {setup && (
+          <div className="space-y-4">
+            <ol className="text-sm text-slate-600 list-decimal pl-5 space-y-1">
+              <li>Open your authenticator app and tap <strong>Add account</strong>.</li>
+              <li>Scan this QR code, or paste the secret if scanning fails.</li>
+              <li>Enter the 6-digit code the app shows to confirm.</li>
+            </ol>
+            <div className="flex flex-col items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={setup.qrImageUrl} alt="2FA QR code" width={200} height={200} className="rounded-lg bg-white p-2" />
+              <code className="text-xs text-slate-600 font-mono break-all text-center">{setup.secret}</code>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">Verification code</label>
+              <input
+                type="text" inputMode="numeric" maxLength={6} pattern="\d{6}"
+                value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                placeholder="123456"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-center text-2xl font-mono tracking-[0.5em] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none"
+              />
+            </div>
+            {err && <p className="text-xs text-rose-600">{err}</p>}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setSetupOpen(false)}>Cancel</Button>
+              <Button variant="primary" loading={busy} onClick={completeSetup}>Verify and enable</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Disable modal */}
+      <Modal open={disableOpen} onClose={() => setDisableOpen(false)} title="Disable two-factor authentication" size="md">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Confirm your password and enter a current 2FA code to remove this layer of protection.
+          </p>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Current password</label>
+            <input
+              type="password" autoComplete="current-password"
+              value={pwd} onChange={(e) => setPwd(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Authenticator code</label>
+            <input
+              type="text" inputMode="numeric" maxLength={6} pattern="\d{6}"
+              value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-center text-xl font-mono tracking-[0.4em] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none"
+            />
+          </div>
+          {err && <p className="text-xs text-rose-600">{err}</p>}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setDisableOpen(false)}>Cancel</Button>
+            <Button variant="danger" loading={busy} onClick={completeDisable}>Disable 2FA</Button>
+          </div>
+        </div>
+      </Modal>
+    </Card>
+  );
+}
+
+// ─── Data privacy: export + delete account ─────────────────────────────────
+function DataPrivacyCard() {
+  const router = useRouter();
+  const { user, logout } = useAuthStore();
+  // OAuth-only users (Google) have no password to confirm with — their flow
+  // requires them to retype their email instead.
+  const hasPassword = !user?.provider || user.provider === 'local';
+  const [exporting, setExporting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [pwd, setPwd] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const exportData = async () => {
+    setExporting(true);
+    try {
+      const r = await authApi.exportMe();
+      const blob = new Blob([r.data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `kartriq-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      // ignore — error toast handled globally
+    } finally { setExporting(false); }
+  };
+
+  const doDelete = async () => {
+    setErr(''); setBusy(true);
+    try {
+      await authApi.deleteMe(hasPassword ? { password: pwd } : { confirmEmail });
+      logout();
+      router.replace('/');
+    } catch (e: any) {
+      setErr(e?.response?.data?.error || 'Could not delete account');
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <Card className="p-6">
+      <h2 className="font-bold text-lg text-slate-900 mb-1">Data &amp; Privacy</h2>
+      <p className="text-xs text-slate-500 mb-5">
+        Download a copy of your tenant data, or permanently delete your account.
+      </p>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200">
+          <div>
+            <div className="text-sm font-bold text-slate-900">Download my data</div>
+            <div className="text-xs text-slate-500 mt-0.5">
+              JSON bundle of products, orders, customers, invoices and more — for portability or backup.
+            </div>
+          </div>
+          <Button variant="outline" leftIcon={<Download size={14} />} loading={exporting} onClick={exportData}>
+            Export
+          </Button>
+        </div>
+
+        <div className="flex items-center justify-between p-4 rounded-xl border border-rose-200 bg-rose-50/40">
+          <div>
+            <div className="text-sm font-bold text-rose-800">Delete my account</div>
+            <div className="text-xs text-rose-700/80 mt-0.5">
+              Removes your login and scrubs personal data. If you own the tenant, the workspace is also marked for deletion.
+            </div>
+          </div>
+          <Button variant="danger" leftIcon={<Trash2 size={14} />} onClick={() => { setDeleteOpen(true); setErr(''); }}>
+            Delete
+          </Button>
+        </div>
+      </div>
+
+      <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Delete your account" size="md">
+        <div className="space-y-4">
+          <div className="flex items-start gap-2 bg-rose-50 border border-rose-200 text-rose-800 rounded-lg p-3 text-xs">
+            <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
+            <span>
+              This is irreversible. Your login is disabled, your name, email and phone are scrubbed, and if you own this tenant the entire workspace is marked for deletion.
+            </span>
+          </div>
+          {hasPassword ? (
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">Confirm with your password</label>
+              <input type="password" autoComplete="current-password" value={pwd} onChange={(e) => setPwd(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-100 outline-none" />
+            </div>
+          ) : (
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Type your email <code className="font-mono">{user?.email}</code> to confirm
+              </label>
+              <input type="email" value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-100 outline-none" />
+            </div>
+          )}
+          {err && <p className="text-xs text-rose-600">{err}</p>}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+            <Button variant="danger" loading={busy} onClick={doDelete}>Permanently delete</Button>
+          </div>
+        </div>
+      </Modal>
+    </Card>
   );
 }

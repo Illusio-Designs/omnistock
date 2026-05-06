@@ -29,14 +29,7 @@ that distinguishes a working app from a sellable SaaS.
 
 ## 🚨 Compliance / Legal — must-haves
 
-| # | Item | Notes |
-|---|------|-------|
-| 1 | **Cookie consent banner** | GA + FB Pixel + Microsoft Clarity now load on every public visit (see `components/Analytics.tsx`). India's DPDP Act and EU GDPR require explicit consent before any non-essential script runs. Suggest: `frontend/components/CookieConsent.tsx` that gates `<Analytics />` mounting. |
-| 2 | **Account deletion endpoint + UI** | DPDP/GDPR right-to-erasure. Should soft-delete tenant + user, queue hard delete after retention window, log to audit. |
-| 3 | **Data export ("Download my data")** | DPDP/GDPR portability. Bundles tenant rows (orders, products, customers, invoices) into a JSON/CSV zip. |
-| 4 | **2FA / MFA** | Table-stakes for any B2B SaaS. TOTP at minimum, optional SMS. Schema needs `users.totpSecret`, `users.mfaEnabled`. |
-| 5 | **Webhook signature verification** | `webhook.routes.js` accepts payloads but does not validate Razorpay / Shopify / Amazon HMAC signatures. Anyone with the URL can post forged events. |
-| 6 | **Idempotency keys** on payment writes | `POST /payments/*`, `POST /invoices/:id/pay`, `POST /billing/wallet/topup`. Prevents double-charge on network retries; standard practice. |
+✅ **All 6 items in this category have shipped.** See "Already shipped" section below.
 
 ---
 
@@ -138,3 +131,9 @@ These were closed during the audit / cleanup pass:
 - ✅ Region flags use Twemoji + sticker-style wrapper — `e74d957`
 - ✅ Loading shimmers across 7 pages now use `react-loading-skeleton` with content-shaped placeholders — `8901393`, `890c09d`
 - ✅ `/admin/analytics` page + Tracking & Maintenance tabs in `/admin/settings` — `0d0ce96`
+- ✅ Cookie consent banner gating GA / FB Pixel / Clarity — `frontend/components/CookieConsent.tsx`
+- ✅ Account deletion endpoint + Settings UI — `POST /auth/me/delete`, soft-delete with PII scrub
+- ✅ Data export endpoint + Settings UI — `GET /auth/me/export` returning JSON bundle
+- ✅ 2FA / TOTP end-to-end — schema (`users.totpSecret`, `users.mfaEnabled`), `/auth/2fa/setup|verify|disable|login`, login page MFA challenge step, settings card with QR setup
+- ✅ Webhook signature verification fixed — uses `req.rawBody` (HMAC over re-stringified JSON would never match)
+- ✅ Idempotency middleware (`middleware/idempotency.middleware.js`) + `idempotency_keys` table, applied to `/billing/wallet/topup`, `/invoices/:id/pay`, `/payments/checkout`, `/payments/verify`, `/payments/wallet-checkout`, `/payments/wallet-verify`

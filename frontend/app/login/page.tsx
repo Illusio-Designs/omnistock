@@ -16,6 +16,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState('');
 
   // Already logged in with a valid token? Redirect away. If expired, clear it.
   useEffect(() => {
@@ -57,11 +59,39 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await authApi.login(emailValue, passwordValue);
+      // 2FA challenge — server returned a short-lived mfa token instead of a
+      // full session. Switch the form into MFA mode and wait for the code.
+      if (res.data?.mfaRequired && res.data?.mfaToken) {
+        setMfaToken(res.data.mfaToken);
+        setLoading(false);
+        return;
+      }
       setAuth(res.data.user, res.data.token);
       const me = await loadContext();
       router.replace(me?.isPlatformAdmin ? '/admin' : '/dashboard');
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Login failed. Check your credentials and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMfaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mfaToken) return;
+    if (!/^\d{6}$/.test(mfaCode)) {
+      setError('Enter the 6-digit code from your authenticator app.');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      const res = await authApi.mfaLogin(mfaToken, mfaCode);
+      setAuth(res.data.user, res.data.token);
+      const me = await loadContext();
+      router.replace(me?.isPlatformAdmin ? '/admin' : '/dashboard');
+    } catch (err: any) {
+      setError(err?.response?.data?.error || 'Invalid code. Try again.');
     } finally {
       setLoading(false);
     }
@@ -79,9 +109,54 @@ export default function LoginPage() {
             <span className="font-bold text-lg text-slate-900">Kartriq</span>
           </Link>
 
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent tracking-tight">Welcome back</h1>
-          <p className="text-sm text-slate-500 mt-1">Sign in to continue to your dashboard</p>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#06D4B8] to-[#06B6D4] bg-clip-text text-transparent tracking-tight">
+            {mfaToken ? 'Two-factor authentication' : 'Welcome back'}
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            {mfaToken
+              ? 'Enter the 6-digit code from your authenticator app to continue.'
+              : 'Sign in to continue to your dashboard'}
+          </p>
 
+          {mfaToken && (
+            <form onSubmit={handleMfaSubmit} className="mt-8 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Authenticator code</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="\d{6}"
+                  maxLength={6}
+                  required
+                  autoFocus
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="123456"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-center text-2xl font-mono tracking-[0.5em] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none"
+                />
+              </div>
+              {error && (
+                <div className="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">{error}</div>
+              )}
+              <button
+                type="submit"
+                disabled={loading || mfaCode.length !== 6}
+                className="w-full px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? 'Verifying…' : 'Verify and sign in'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setMfaToken(null); setMfaCode(''); setError(''); }}
+                className="w-full text-xs text-slate-500 hover:text-slate-700"
+              >
+                ← Use a different account
+              </button>
+            </form>
+          )}
+
+          {!mfaToken && (
           <form onSubmit={handleLogin} className="mt-8 space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">Email</label>
@@ -144,6 +219,7 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+          )}
 
           <p className="text-center text-sm text-slate-500 mt-6">
             Don't have an account?{' '}

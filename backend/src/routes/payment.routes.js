@@ -28,6 +28,7 @@ const {
 const wallet = require('../services/wallet.service');
 const { audit } = require('../services/audit.service');
 const { snapshotInvoiceForSubscription } = require('../jobs/billing.job');
+const { idempotent } = require('../middleware/idempotency.middleware');
 
 const router = Router();
 
@@ -211,7 +212,7 @@ router.post('/webhook', async (req, res) => {
 router.use(authenticate, requireTenant);
 
 // ── Plan checkout: create Razorpay order for a plan upgrade ────────────────
-router.post('/checkout', requirePermission('billing.manage'), async (req, res) => {
+router.post('/checkout', requirePermission('billing.manage'), idempotent(), async (req, res) => {
   try {
     const { planCode, billingCycle = 'MONTHLY', savePaymentMethod } = req.body;
     const plan = await prisma.plan.findUnique({ where: { code: planCode } });
@@ -259,7 +260,7 @@ router.post('/checkout', requirePermission('billing.manage'), async (req, res) =
 });
 
 // ── Verify a successful plan checkout ──────────────────────────────────────
-router.post('/verify', requirePermission('billing.manage'), async (req, res) => {
+router.post('/verify', requirePermission('billing.manage'), idempotent(), async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature, planCode, billingCycle = 'MONTHLY', autoRenew } = req.body;
 
   const ok = await verifySignature({
@@ -316,7 +317,7 @@ router.post('/verify', requirePermission('billing.manage'), async (req, res) => 
 });
 
 // ── Wallet top-up checkout: create Razorpay order for arbitrary amount ─────
-router.post('/wallet-checkout', requirePermission('billing.manage'), async (req, res) => {
+router.post('/wallet-checkout', requirePermission('billing.manage'), idempotent(), async (req, res) => {
   try {
     const { amount, savePaymentMethod } = req.body;
     if (!amount || Number(amount) <= 0) return res.status(400).json({ error: 'amount must be positive' });
@@ -358,7 +359,7 @@ router.post('/wallet-checkout', requirePermission('billing.manage'), async (req,
 });
 
 // ── Verify wallet top-up + credit the wallet ───────────────────────────────
-router.post('/wallet-verify', requirePermission('billing.manage'), async (req, res) => {
+router.post('/wallet-verify', requirePermission('billing.manage'), idempotent(), async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount } = req.body;
 
   const ok = await verifySignature({

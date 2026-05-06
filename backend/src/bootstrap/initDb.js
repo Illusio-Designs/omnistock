@@ -55,6 +55,14 @@ async function initDb() {
     // platform_settings was originally created without createdAt; the prisma
     // shim auto-stamps it on every insert, so existing DBs need this column.
     { table: 'platform_settings', column: 'createdAt', ddl: 'DATETIME(3) NOT NULL DEFAULT current_timestamp(3)' },
+
+    // 2FA / MFA — TOTP secret + flag
+    { table: 'users', column: 'totpSecret', ddl: 'VARCHAR(64) DEFAULT NULL' },
+    { table: 'users', column: 'mfaEnabled', ddl: 'TINYINT(1) NOT NULL DEFAULT 0' },
+
+    // DPDP / GDPR — soft delete columns
+    { table: 'users',   column: 'deletedAt', ddl: 'DATETIME(3) DEFAULT NULL' },
+    { table: 'tenants', column: 'deletedAt', ddl: 'DATETIME(3) DEFAULT NULL' },
   ];
 
   // Create wallet tables if they don't exist (separate from column migrations)
@@ -119,6 +127,20 @@ async function initDb() {
       UNIQUE KEY \`pm_provider_token_unique\` (\`tenantId\`, \`providerTokenId\`),
       KEY \`pm_tenant_idx\` (\`tenantId\`, \`isActive\`),
       KEY \`pm_default_idx\` (\`tenantId\`, \`isDefault\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    // Idempotency keys — payment writes cache their response here for 24h
+    // so a network-retry of the exact same Idempotency-Key returns the
+    // original response instead of double-charging.
+    `CREATE TABLE IF NOT EXISTS \`idempotency_keys\` (
+      \`key\` varchar(191) NOT NULL,
+      \`tenantId\` varchar(191) DEFAULT NULL,
+      \`path\` varchar(191) NOT NULL,
+      \`statusCode\` int(11) NOT NULL,
+      \`response\` longtext NOT NULL,
+      \`createdAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+      \`expiresAt\` datetime(3) NOT NULL,
+      PRIMARY KEY (\`key\`, \`tenantId\`, \`path\`),
+      KEY \`idem_expires_idx\` (\`expiresAt\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   ];
   for (const sql of walletTables) {

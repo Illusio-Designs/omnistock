@@ -4,6 +4,7 @@ import './globals.css';
 import { Providers } from '@/components/layout/Providers';
 import { PageLoader } from '@/components/PageLoader';
 import { Analytics } from '@/components/Analytics';
+import { CookieConsent } from '@/components/CookieConsent';
 import { WebVitalsReporter } from '@/components/WebVitalsReporter';
 import { loadSeo } from '@/lib/seo';
 
@@ -134,6 +135,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <PageLoader />
           <div id="main-content">{children}</div>
         </Providers>
+        <CookieConsent />
       </body>
     </html>
   );
