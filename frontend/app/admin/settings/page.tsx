@@ -3,24 +3,26 @@
 import { useEffect, useMemo, useState } from 'react';
 import { adminApi } from '@/lib/api';
 import {
-  Save, Eye, EyeOff, CheckCircle2, Lock, Package2, Mail, CreditCard, ShoppingBag, Cable, Globe, Sparkles, Clock,
+  Save, Eye, EyeOff, CheckCircle2, Lock, Package2, Mail, CreditCard, ShoppingBag, Cable, Globe, Sparkles, Clock, BarChart3, Wrench,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Tabs, TabItem } from '@/components/ui';
 
 const CATEGORY_META: Record<string, { label: string; description: string; icon: any }> = {
-  amazon:   { label: 'Amazon SP-API',  description: 'Public app credentials used for OAuth. Every seller authorizes this one app.', icon: ShoppingBag },
-  shopify:  { label: 'Shopify',        description: 'Shopify public/custom app credentials for OAuth onboarding.',                icon: ShoppingBag },
-  flipkart: { label: 'Flipkart',       description: 'Flipkart Marketplace app credentials.',                                     icon: ShoppingBag },
-  meta:     { label: 'Meta (FB/IG/WA)',description: 'Meta app for Facebook Shop, Instagram Shopping, WhatsApp Business.',         icon: Globe },
-  google:   { label: 'Google OAuth',   description: 'Sign-in-with-Google credentials.',                                           icon: Globe },
-  razorpay: { label: 'Razorpay',       description: 'Payment gateway — rotating keys here takes effect within 60 seconds.',       icon: CreditCard },
-  smtp:     { label: 'SMTP Email',     description: 'Outbound email transport. Leave blank for console-stub mode in dev.',        icon: Mail },
-  billing:  { label: 'Billing',        description: 'Grace periods, invoice policy.',                                             icon: Sparkles },
-  reviews:  { label: 'Reviews',        description: 'Automated review-request cadence.',                                          icon: Clock },
+  amazon:      { label: 'Amazon SP-API',  description: 'Public app credentials used for OAuth. Every seller authorizes this one app.', icon: ShoppingBag },
+  shopify:     { label: 'Shopify',        description: 'Shopify public/custom app credentials for OAuth onboarding.',                icon: ShoppingBag },
+  flipkart:    { label: 'Flipkart',       description: 'Flipkart Marketplace app credentials.',                                     icon: ShoppingBag },
+  meta:        { label: 'Meta (FB/IG/WA)',description: 'Meta app for Facebook Shop, Instagram Shopping, WhatsApp Business.',         icon: Globe },
+  google:      { label: 'Google OAuth',   description: 'Sign-in-with-Google credentials.',                                           icon: Globe },
+  razorpay:    { label: 'Razorpay',       description: 'Payment gateway — rotating keys here takes effect within 60 seconds.',       icon: CreditCard },
+  smtp:        { label: 'SMTP Email',     description: 'Outbound email transport. Leave blank for console-stub mode in dev.',        icon: Mail },
+  billing:     { label: 'Billing',        description: 'Grace periods, invoice policy.',                                             icon: Sparkles },
+  reviews:     { label: 'Reviews',        description: 'Automated review-request cadence.',                                          icon: Clock },
+  tracking:    { label: 'Tracking',       description: 'Analytics IDs injected into the public site (GA, FB Pixel, Microsoft Clarity).', icon: BarChart3 },
+  maintenance: { label: 'Maintenance',    description: 'Toggle the dashboard maintenance page and customise the message users see.', icon: Wrench },
 };
 
-const CATEGORY_ORDER = ['amazon','shopify','flipkart','meta','google','razorpay','smtp','billing','reviews'];
+const CATEGORY_ORDER = ['amazon','shopify','flipkart','meta','google','razorpay','smtp','billing','reviews','tracking','maintenance'];
 
 export default function AdminSettingsPage() {
   const [data, setData] = useState<Record<string, any[]>>({});

@@ -2,6 +2,7 @@
 
 import Script from 'next/script';
 import { useEffect, useState } from 'react';
+import { getConsent, onConsentChange } from './CookieConsent';
 
 interface TrackingIds {
   gaId: string;
@@ -15,8 +16,15 @@ export function Analytics() {
     fbPixelId: process.env.NEXT_PUBLIC_FB_PIXEL_ID || '',
     clarityId: process.env.NEXT_PUBLIC_CLARITY_ID || '',
   });
+  const [consented, setConsented] = useState(false);
 
   useEffect(() => {
+    setConsented(getConsent() === 'all');
+    return onConsentChange((v) => setConsented(v === 'all'));
+  }, []);
+
+  useEffect(() => {
+    if (!consented) return;
     const api = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api/v1';
     fetch(`${api}/public/tracking`)
       .then(r => r.ok ? r.json() : null)
@@ -30,7 +38,24 @@ export function Analytics() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [consented]);
+
+  // Render no tracker scripts until the visitor has explicitly accepted them.
+  // The runtime error logger below is essential and stays.
+  if (!consented) {
+    return (
+      <Script id="error-logger" strategy="afterInteractive">
+        {`
+          window.addEventListener('error', function(e) {
+            console.error('[Runtime Error]', e.message, e.filename, e.lineno, e.colno);
+          });
+          window.addEventListener('unhandledrejection', function(e) {
+            console.error('[Unhandled Promise]', e.reason);
+          });
+        `}
+      </Script>
+    );
+  }
 
   return (
     <>

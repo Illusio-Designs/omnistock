@@ -5,6 +5,7 @@ const {
 } = require('../middleware/auth.middleware');
 const { audit } = require('../services/audit.service');
 const wallet = require('../services/wallet.service');
+const { idempotent } = require('../middleware/idempotency.middleware');
 
 const router = Router();
 router.use(authenticate, requireTenant);
@@ -48,7 +49,7 @@ router.get('/wallet/transactions', requirePermission('billing.read'), async (req
 // Tenants cannot self-credit by calling this endpoint directly with an
 // invented paymentRef — the payment is fetched from Razorpay and rejected
 // unless its status === 'captured' AND the amount matches.
-router.post('/wallet/topup', requirePermission('billing.manage'), async (req, res) => {
+router.post('/wallet/topup', requirePermission('billing.manage'), idempotent(), async (req, res) => {
   try {
     const { amount, paymentRef, description } = req.body || {};
     if (!amount || Number(amount) <= 0) return res.status(400).json({ error: 'amount must be positive' });

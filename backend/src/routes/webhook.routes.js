@@ -35,7 +35,11 @@ async function handleIncomingWebhook(channelId, req, res) {
   //   2. set skipSignatureVerification = true to explicitly opt-out
   //      (only for trusted internal channels: OFFLINE, CUSTOM_WEBHOOK with shared secret)
   if (typeof adapter.validateWebhookSignature === 'function') {
-    const rawBody = JSON.stringify(req.body);
+    // HMAC providers sign the exact bytes they sent. JSON.stringify(req.body)
+    // does NOT round-trip — key order, whitespace and unicode escaping all
+    // differ — so signatures over a re-stringified body would always fail.
+    // express.json() in index.js stashes the raw bytes on req.rawBody.
+    const rawBody = req.rawBody || JSON.stringify(req.body);
     const sig =
       req.headers['x-kartriq-signature'] ||
       req.headers['x-hub-signature-256'] || // Meta / FB / Insta / WhatsApp

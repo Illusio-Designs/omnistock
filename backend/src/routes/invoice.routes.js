@@ -3,6 +3,7 @@ const {
   authenticate, requireTenant, requirePermission,
 } = require('../middleware/auth.middleware');
 const prisma = require('../utils/prisma');
+const { idempotent } = require('../middleware/idempotency.middleware');
 
 const router = Router();
 router.use(authenticate, requireTenant);
@@ -29,7 +30,7 @@ router.get('/:id', requirePermission('invoices.read'), async (req, res) => {
   res.json(inv);
 });
 
-router.post('/:id/pay', requirePermission('invoices.update'), async (req, res) => {
+router.post('/:id/pay', requirePermission('invoices.update'), idempotent(), async (req, res) => {
   try {
     const tenantId = req.tenant.id;
     const invoice = await prisma.invoice.findFirst({

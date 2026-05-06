@@ -31,6 +31,8 @@ interface User {
   tenantId?: string | null;
   isPlatformAdmin?: boolean;
   avatar?: string | null;
+  mfaEnabled?: boolean;
+  provider?: string | null;
 }
 
 interface Tenant {

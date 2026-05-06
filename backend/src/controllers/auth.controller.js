@@ -44,6 +44,7 @@ function publicUser(user) {
     provider: user.provider,
     tenantId: user.tenantId || null,
     isPlatformAdmin: !!user.isPlatformAdmin,
+    mfaEnabled: !!user.mfaEnabled,
   };
 }
 
@@ -80,6 +81,19 @@ const login = async (req, res) => {
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) { res.status(401).json({ error: 'Invalid credentials' }); return; }
+
+    // 2FA challenge — if MFA is enabled, return a short-lived "mfa token"
+    // that the frontend exchanges for a real session JWT after submitting a
+    // valid TOTP code at /auth/2fa/login.
+    if (user.mfaEnabled) {
+      const mfaToken = jwt.sign(
+        { id: user.id, mfaPending: true },
+        process.env.JWT_SECRET,
+        { expiresIn: '5m' }
+      );
+      res.json({ mfaRequired: true, mfaToken });
+      return;
+    }
 
     const token = issueJwt(user);
     res.json({ token, user: publicUser(user) });
