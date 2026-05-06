@@ -10,6 +10,7 @@ import { useAuthStore, isTokenExpired } from '@/store/auth.store';
 import { MaintenancePage } from '@/components/MaintenancePage';
 import { setPlanLimitHandler, authApi, publicApi } from '@/lib/api';
 import { Loader } from '@/components/ui/Loader';
+import { TrialBanner } from '@/components/TrialBanner';
 import { Toaster } from '@/components/ui/Toaster';
 import { Eye, X, ArrowLeft, Zap } from 'lucide-react';
 
@@ -136,6 +137,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         )}
+        <TrialBanner />
         <div className="flex-1 p-4 sm:p-5 lg:p-6 xl:p-8 animate-fade-in">{children}</div>
       </main>
     </div>

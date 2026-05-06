@@ -105,4 +105,101 @@ const sendPastDue = ({ to, name, graceDays }) => send({
   `),
 });
 
-module.exports = { send, sendWelcome, sendTrialEndingSoon, sendInvoicePaid, sendPastDue };
+// Multi-stage dunning — escalates as more days elapse since the first failure.
+// Stages: 1, 3, 7, 14 days past due. The 14-day reminder warns of imminent
+// suspension; the actual suspension is performed by the billing job's
+// suspendOverdueTenants step.
+const sendDunningReminder = ({ to, name, daysPastDue, amountDue, currency = 'INR' }) => {
+  const stage = daysPastDue >= 14 ? 'final' : daysPastDue >= 7 ? 'warning' : daysPastDue >= 3 ? 'reminder' : 'first';
+  const headlines = {
+    first:    'Quick reminder — payment failed',
+    reminder: `Still pending after ${daysPastDue} days`,
+    warning:  `Action required — ${daysPastDue} days past due`,
+    final:    'Final notice — workspace will be suspended soon',
+  };
+  const accents = { first: '#f59e0b', reminder: '#f59e0b', warning: '#ef4444', final: '#ef4444' };
+  return send({
+    to,
+    subject: headlines[stage],
+    html: wrap(`
+      <h2 style="margin-top:0;color:${accents[stage]};">${headlines[stage]}</h2>
+      <p>Hi ${name}, we couldn't charge your card for ${currency} ${amountDue}.</p>
+      ${stage === 'final'
+        ? `<p><strong>Your workspace will be suspended in 24 hours</strong> unless we can collect payment. Update your card now to keep things running.</p>`
+        : `<p>Please update your card or top up your wallet to keep your workspace active.</p>`}
+      <p><a href="${siteUrl()}/dashboard/billing" style="background:${accents[stage]};color:white;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block;">Resolve now</a></p>
+      <p style="color:#64748b;font-size:12px;margin-top:24px;">If you've already paid, you can ignore this email — our system will catch up shortly.</p>
+    `),
+  });
+};
+
+const sendPasswordReset = ({ to, name, resetUrl }) => send({
+  to,
+  subject: 'Reset your Kartriq password',
+  html: wrap(`
+    <h2 style="margin-top:0;">Reset your password</h2>
+    <p>Hi ${name}, click the link below to choose a new password. The link expires in 60 minutes.</p>
+    <p><a href="${resetUrl}" style="background:#10b981;color:white;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block;">Reset password</a></p>
+    <p style="color:#64748b;font-size:12px;">If you didn't request this, ignore this email — your password stays unchanged.</p>
+  `),
+});
+
+const sendUserInvite = ({ to, inviterName, businessName, inviteUrl }) => send({
+  to,
+  subject: `${inviterName} invited you to ${businessName} on Kartriq`,
+  html: wrap(`
+    <h2 style="margin-top:0;">You're invited</h2>
+    <p><strong>${inviterName}</strong> has invited you to join <strong>${businessName}</strong> on Kartriq. Click below to accept and set your password.</p>
+    <p><a href="${inviteUrl}" style="background:#10b981;color:white;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block;">Accept invite</a></p>
+  `),
+});
+
+const sendPaymentFailed = ({ to, name, amount, currency = 'INR', reason }) => send({
+  to,
+  subject: 'Your payment to Kartriq failed',
+  html: wrap(`
+    <h2 style="margin-top:0;">Payment failed</h2>
+    <p>Hi ${name}, your payment of <strong>${currency} ${amount}</strong> didn't go through.</p>
+    ${reason ? `<p style="color:#64748b;">Reason: ${reason}</p>` : ''}
+    <p>We'll retry automatically over the next few days. You can also update your card now to retry immediately.</p>
+    <p><a href="${siteUrl()}/dashboard/billing" style="background:#ef4444;color:white;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block;">Update payment method</a></p>
+  `),
+});
+
+const sendPlanLimitAlert = ({ to, name, metric, used, limit }) => send({
+  to,
+  subject: `You're approaching your ${metric} limit`,
+  html: wrap(`
+    <h2 style="margin-top:0;">Plan limit nearing</h2>
+    <p>Hi ${name}, you've used <strong>${used} of ${limit}</strong> ${metric} on your current plan.</p>
+    <p>Enable Pay-As-You-Go in billing to keep going past the limit, or upgrade to a higher plan.</p>
+    <p><a href="${siteUrl()}/usage" style="background:#10b981;color:white;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block;">View usage</a></p>
+  `),
+});
+
+const sendTicketReply = ({ to, name, ticketSubject, ticketUrl, replyPreview }) => send({
+  to,
+  subject: `Re: ${ticketSubject}`,
+  html: wrap(`
+    <h2 style="margin-top:0;">New reply on your ticket</h2>
+    <p>Hi ${name}, support has replied to <strong>${ticketSubject}</strong>:</p>
+    <blockquote style="border-left:3px solid #10b981;background:#f0fdf4;padding:12px 16px;border-radius:0 8px 8px 0;color:#065f46;font-size:13px;margin:12px 0;">
+      ${replyPreview}
+    </blockquote>
+    <p><a href="${ticketUrl}" style="background:#10b981;color:white;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block;">View ticket</a></p>
+  `),
+});
+
+module.exports = {
+  send,
+  sendWelcome,
+  sendTrialEndingSoon,
+  sendInvoicePaid,
+  sendPastDue,
+  sendDunningReminder,
+  sendPasswordReset,
+  sendUserInvite,
+  sendPaymentFailed,
+  sendPlanLimitAlert,
+  sendTicketReply,
+};

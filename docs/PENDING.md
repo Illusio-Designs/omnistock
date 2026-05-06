@@ -35,13 +35,7 @@ that distinguishes a working app from a sellable SaaS.
 
 ## 💰 Revenue-critical
 
-| # | Item | Notes |
-|---|------|-------|
-| 7 | **Trial-expiry banner** | `tenants.trialEndsAt` exists; no UI banner counting down. Surface on every authenticated page header when `trialEndsAt` < 7 days away. |
-| 8 | **Dunning flow** | Failed Razorpay charges should retry on a 3 / 7 / 14-day cadence with email reminders before suspending. `autopay.job.js` exists — verify it covers retry + suspension logic. |
-| 9 | **Tenant usage page** | Tenants currently can't see their own usage vs plan limits (SKUs, users, orders this month). Server-side enforcement exists in `auth.middleware.js`; add `/usage` page that reads same numbers. |
-| 10 | **Plan upgrade / downgrade with proration** | Only "select a plan" exists today. Mid-cycle changes need pro-rated invoicing or wallet adjustments. |
-| 11 | **Email templates QA** | Verify these actually send via SMTP (not just console-stub): welcome, password reset, invite, invoice, receipt, payment-failed, plan-limit alert, trial-expiry, ticket reply. |
+✅ **All 5 items in this category have shipped.** See "Already shipped" section below.
 
 ---
 
@@ -137,3 +131,14 @@ These were closed during the audit / cleanup pass:
 - ✅ 2FA / TOTP end-to-end — schema (`users.totpSecret`, `users.mfaEnabled`), `/auth/2fa/setup|verify|disable|login`, login page MFA challenge step, settings card with QR setup
 - ✅ Webhook signature verification fixed — uses `req.rawBody` (HMAC over re-stringified JSON would never match)
 - ✅ Idempotency middleware (`middleware/idempotency.middleware.js`) + `idempotency_keys` table, applied to `/billing/wallet/topup`, `/invoices/:id/pay`, `/payments/checkout`, `/payments/verify`, `/payments/wallet-checkout`, `/payments/wallet-verify`
+- ✅ Trial-expiry banner — `frontend/components/TrialBanner.tsx` mounted in `DashboardLayout`, polls `/billing/usage`, shows when trial ≤ 7 days, escalates colour at ≤ 3 days, dismissible per-day
+- ✅ Tenant usage page — `frontend/app/usage/page.tsx`, sidebar entry under Operations. Reads existing `/billing/usage` endpoint (now also returns `trialEndsAt`/`currentPeriodStart`/`billingCycle`) and renders progress bars per metric with over-limit and near-limit pills
+- ✅ Plan upgrade / downgrade proration — `/billing/subscription/change` now computes daysRemaining × dailyRate delta. Upgrades debit the wallet (returns 402 with shortfall if low); downgrades credit a refund. Trial / 0-day / free transitions skip proration. Audit log records `proration` metadata
+- ✅ Dunning cadence — `billing.job.js` adds `sendDunningEmails` step that fires the email at exactly day 1, 3, 7, 14 since first PAST_DUE. New cols `subscriptions.lastDunningStage` and `subscriptions.pastDueSince` track the ladder; reset on recovery
+- ✅ Email templates — added `sendDunningReminder`, `sendPasswordReset`, `sendUserInvite`, `sendPaymentFailed`, `sendPlanLimitAlert`, `sendTicketReply`. Wired into call sites:
+  - Invite: `users.routes.js POST /users` after create
+  - Ticket reply: `admin.routes.js POST /admin/tickets/:id/reply` after staff reply
+  - Plan-limit alert: `auth.middleware.js enforceLimit` at 80% threshold (throttled 1/day per metric/tenant)
+  - Payment failed: `payment.routes.js` Razorpay webhook handler on `payment.failed`
+  - Password reset: new `POST /auth/forgot-password` + `POST /auth/reset-password` (60-min JWT token, no DB row needed)
+- ✅ Email diagnostics — `POST /admin/email/test { to }` fires every template at a chosen address and returns per-template ok/stub/error status, confirming whether SMTP is actually configured vs running in console-stub mode

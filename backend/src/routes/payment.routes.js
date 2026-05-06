@@ -197,6 +197,25 @@ router.post('/webhook', async (req, res) => {
           })
           .catch(() => {});
       }
+
+      // Notify the tenant owner — best-effort, never blocks the webhook ack.
+      if (tenantIdForFail) {
+        try {
+          const tenant = await prisma.tenant.findUnique({ where: { id: tenantIdForFail } });
+          if (tenant?.ownerEmail) {
+            const { sendPaymentFailed } = require('../services/email.service');
+            await sendPaymentFailed({
+              to: tenant.ownerEmail,
+              name: tenant.ownerName || 'there',
+              amount: ((paymentEntity?.amount || 0) / 100).toFixed(2),
+              currency: paymentEntity?.currency || 'INR',
+              reason: paymentEntity?.error_description || null,
+            });
+          }
+        } catch (mailErr) {
+          console.warn('[payment.webhook] failed-payment email failed:', mailErr.message);
+        }
+      }
     }
 
     res.json({ ok: true });

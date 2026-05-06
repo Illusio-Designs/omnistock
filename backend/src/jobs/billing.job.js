@@ -11,7 +11,7 @@
 
 const prisma = require('../utils/prisma');
 const logger = require('../utils/logger');
-const { sendTrialEndingSoon, sendPastDue, sendInvoicePaid } = require('../services/email.service');
+const { sendTrialEndingSoon, sendPastDue, sendInvoicePaid, sendDunningReminder } = require('../services/email.service');
 const settings = require('../services/settings.service');
 
 async function getGraceDays() {
@@ -235,6 +235,12 @@ async function rollForwardSubscriptions() {
       else if (renewBlocked) { nextStatus = 'PAST_DUE'; extend = false; autoRenewFailed++; }
       else { nextStatus = 'PAST_DUE'; extend = false; pastDue++; }
 
+      // Stamp the past-due transition so the dunning cadence has an anchor.
+      // Reset on a successful return to ACTIVE so a future failure starts a
+      // fresh count from day 0.
+      const enteredPastDue = nextStatus === 'PAST_DUE' && sub.status !== 'PAST_DUE';
+      const leftPastDue = nextStatus === 'ACTIVE' && sub.status === 'PAST_DUE';
+
       await prisma.subscription.update({
         where: { id: sub.id },
         data: {
@@ -243,6 +249,8 @@ async function rollForwardSubscriptions() {
           lastRenewalAt: charged ? new Date() : sub.lastRenewalAt,
           lastRenewalError: renewBlocked ? charge.reason : (charged ? null : sub.lastRenewalError),
           renewalFailureCount: charged ? 0 : (renewBlocked ? (sub.renewalFailureCount || 0) + 1 : sub.renewalFailureCount),
+          ...(enteredPastDue ? { pastDueSince: new Date(), lastDunningStage: 0 } : {}),
+          ...(leftPastDue ? { pastDueSince: null, lastDunningStage: 0 } : {}),
         },
       });
       if (extend) rolled++;
@@ -304,6 +312,9 @@ async function retryFailedRenewals() {
             lastRenewalAt: new Date(),
             lastRenewalError: null,
             renewalFailureCount: 0,
+            // Recovered — reset dunning so the next failure starts fresh.
+            pastDueSince: null,
+            lastDunningStage: 0,
           },
         });
         recovered++;
@@ -348,14 +359,68 @@ async function suspendOverdueTenants() {
   return { suspended };
 }
 
+// Dunning cadence — sends 1 / 3 / 7 / 14-day reminders to PAST_DUE tenants.
+// `lastDunningStage` records the highest stage already sent; we never email
+// the same stage twice. The 14-day "final notice" precedes suspension which
+// is performed by suspendOverdueTenants.
+const DUNNING_STAGES = [1, 3, 7, 14];
+
+async function sendDunningEmails() {
+  const overdue = await prisma.subscription.findMany({
+    where: { status: 'PAST_DUE' },
+    include: { plan: true, tenant: true },
+  });
+  let sent = 0;
+  for (const sub of overdue) {
+    try {
+      // Anchor "past-due since" to the first observation. We backfill on the
+      // first dunning pass so subs that turned past-due before this column
+      // existed still get a sensible cadence.
+      let pastDueSince = sub.pastDueSince ? new Date(sub.pastDueSince) : null;
+      if (!pastDueSince) {
+        pastDueSince = new Date(sub.updatedAt || Date.now());
+        await prisma.subscription.update({
+          where: { id: sub.id },
+          data: { pastDueSince },
+        }).catch(() => {});
+      }
+
+      const days = Math.floor((Date.now() - pastDueSince.getTime()) / 86_400_000);
+      // Find the highest stage threshold the tenant has hit but hasn't been
+      // emailed for yet.
+      const stage = [...DUNNING_STAGES].reverse().find((d) => days >= d && (sub.lastDunningStage || 0) < d);
+      if (!stage) continue;
+
+      const amountDue = Number(sub.billingCycle === 'YEARLY' ? sub.plan.yearlyPrice : sub.plan.monthlyPrice) || 0;
+      await sendDunningReminder({
+        to: sub.tenant.ownerEmail,
+        name: sub.tenant.ownerName || 'there',
+        daysPastDue: stage,
+        amountDue,
+        currency: sub.plan.currency || 'INR',
+      }).catch(() => {});
+
+      await prisma.subscription.update({
+        where: { id: sub.id },
+        data: { lastDunningStage: stage },
+      });
+      sent++;
+    } catch (err) {
+      logger.error({ err: err.message }, `[billing.job] dunning email failed for sub ${sub.id}:`);
+    }
+  }
+  return { dunningEmails: sent };
+}
+
 async function runBillingJob() {
   logger.info('[billing.job] starting…');
   const roll = await rollForwardSubscriptions();
   const retry = await retryFailedRenewals();
+  const dunning = await sendDunningEmails();
   const suspend = await suspendOverdueTenants();
   const reminders = await sendTrialReminders();
-  logger.info({ detail: { ...roll, ...retry, ...suspend, ...reminders } }, '[billing.job] done');
-  return { ...roll, ...retry, ...suspend, ...reminders };
+  logger.info({ detail: { ...roll, ...retry, ...dunning, ...suspend, ...reminders } }, '[billing.job] done');
+  return { ...roll, ...retry, ...dunning, ...suspend, ...reminders };
 }
 
 // Allow direct CLI invocation

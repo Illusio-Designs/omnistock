@@ -211,7 +211,10 @@ router.get('/usage', requirePermission('billing.read'), async (req, res) => {
       status: subscription.status,
       payAsYouGo: !!subscription.payAsYouGo,
       autoRenew: !!(fullSub?.autoRenew),
+      currentPeriodStart: subscription.currentPeriodStart,
       currentPeriodEnd: subscription.currentPeriodEnd,
+      trialEndsAt: subscription.trialEndsAt || null,
+      billingCycle: subscription.billingCycle,
       lastRenewalAt: fullSub?.lastRenewalAt || null,
       lastRenewalError: fullSub?.lastRenewalError || null,
       renewalFailureCount: fullSub?.renewalFailureCount || 0,
@@ -244,25 +247,114 @@ router.get('/usage', requirePermission('billing.read'), async (req, res) => {
   });
 });
 
-// Change plan (upgrade/downgrade) — payment provider stub
+// Change plan (upgrade/downgrade). Mid-cycle changes are pro-rated against
+// the wallet:
+//   • Upgrade   → wallet is debited for (newPlanDailyRate - oldPlanDailyRate)
+//                 × daysRemaining. Insufficient balance returns 402 so the
+//                 caller can top up first.
+//   • Downgrade → wallet is credited for (oldPlanDailyRate - newPlanDailyRate)
+//                 × daysRemaining as a refund.
+//   • Cycle keeps its original currentPeriodEnd; the next renewal charges
+//     the full new-plan amount.
 router.post('/subscription/change', requirePermission('billing.manage'), async (req, res) => {
   const { planCode, billingCycle, payAsYouGo } = req.body;
-  const plan = await prisma.plan.findUnique({ where: { code: planCode } });
-  if (!plan) return res.status(404).json({ error: 'Plan not found' });
+  const newPlan = await prisma.plan.findUnique({ where: { code: planCode } });
+  if (!newPlan) return res.status(404).json({ error: 'Plan not found' });
+
+  const sub = await prisma.subscription.findUnique({
+    where: { tenantId: req.tenant.id },
+    include: { plan: true },
+  });
+  if (!sub) return res.status(404).json({ error: 'No active subscription' });
+
+  const newCycle = billingCycle || sub.billingCycle || 'MONTHLY';
+  const oldPrice = Number(sub.billingCycle === 'YEARLY' ? sub.plan.yearlyPrice : sub.plan.monthlyPrice) || 0;
+  const newPrice = Number(newCycle === 'YEARLY' ? newPlan.yearlyPrice : newPlan.monthlyPrice) || 0;
+
+  // Days-remaining maths. We treat MONTHLY as 30 days and YEARLY as 365 to
+  // keep the daily rate stable regardless of which calendar month we're in.
+  const cycleDays = (cycle) => (cycle === 'YEARLY' ? 365 : 30);
+  const periodEnd = sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd) : null;
+  const daysRemaining = periodEnd
+    ? Math.max(0, Math.ceil((periodEnd.getTime() - Date.now()) / 86_400_000))
+    : 0;
+
+  const oldDaily = oldPrice / cycleDays(sub.billingCycle || 'MONTHLY');
+  const newDaily = newPrice / cycleDays(newCycle);
+  const delta = (newDaily - oldDaily) * daysRemaining; // +ve = upgrade owe, -ve = downgrade refund
+  const proration = Number(delta.toFixed(2));
+
+  const isUpgrade = proration > 0;
+  const isDowngrade = proration < 0;
+  const skipProration = sub.status === 'TRIALING' || daysRemaining === 0 || oldPrice === 0;
+
+  const wallet = require('../services/wallet.service');
+  let walletTxn = null;
+
+  if (!skipProration) {
+    if (isUpgrade) {
+      // Charge the wallet. If balance is short, return 402 so the caller can
+      // surface a "top up first" prompt instead of silently leaving the plan
+      // change incomplete.
+      const balance = await wallet.getBalance(req.tenant.id);
+      if (balance < proration) {
+        return res.status(402).json({
+          error: 'Insufficient wallet balance for prorated upgrade',
+          required: proration,
+          balance,
+          shortfall: Number((proration - balance).toFixed(2)),
+        });
+      }
+      walletTxn = await wallet.debit(req.tenant.id, proration, {
+        description: `Plan upgrade proration (${sub.plan.code} → ${newPlan.code})`,
+        type: 'PLAN_PRORATION',
+        reference: sub.id,
+      });
+    } else if (isDowngrade) {
+      walletTxn = await wallet.topup(req.tenant.id, Math.abs(proration), {
+        description: `Plan downgrade refund (${sub.plan.code} → ${newPlan.code})`,
+        type: 'PLAN_REFUND',
+        createdById: req.user.id,
+      });
+    }
+  }
 
   const updated = await prisma.subscription.update({
     where: { tenantId: req.tenant.id },
     data: {
-      planId: plan.id,
-      billingCycle: billingCycle || 'MONTHLY',
+      planId: newPlan.id,
+      billingCycle: newCycle,
       payAsYouGo: !!payAsYouGo,
       status: 'ACTIVE',
     },
     include: { plan: true },
   });
   invalidateUserCache(req.user.id);
-  audit({ req, action: 'billing.change_plan', resource: 'subscription', resourceId: updated.id, metadata: { planCode, billingCycle, payAsYouGo } });
-  res.json(updated);
+  audit({
+    req,
+    action: 'billing.change_plan',
+    resource: 'subscription',
+    resourceId: updated.id,
+    metadata: {
+      from: sub.plan.code,
+      to: planCode,
+      billingCycle: newCycle,
+      payAsYouGo,
+      daysRemaining,
+      proration,
+      walletTxnId: walletTxn?.transactionId || null,
+    },
+  });
+  res.json({
+    ...updated,
+    proration: skipProration ? null : {
+      amount: proration,
+      direction: isUpgrade ? 'charge' : 'refund',
+      daysRemaining,
+      oldDailyRate: Number(oldDaily.toFixed(4)),
+      newDailyRate: Number(newDaily.toFixed(4)),
+    },
+  });
 });
 
 // Toggle pay-as-you-go

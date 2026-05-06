@@ -63,6 +63,10 @@ async function initDb() {
     // DPDP / GDPR — soft delete columns
     { table: 'users',   column: 'deletedAt', ddl: 'DATETIME(3) DEFAULT NULL' },
     { table: 'tenants', column: 'deletedAt', ddl: 'DATETIME(3) DEFAULT NULL' },
+
+    // Dunning cadence — last reminder stage sent (0 = none, 1/3/7/14 = day)
+    { table: 'subscriptions', column: 'lastDunningStage', ddl: 'INT NOT NULL DEFAULT 0' },
+    { table: 'subscriptions', column: 'pastDueSince',     ddl: 'DATETIME(3) DEFAULT NULL' },
   ];
 
   // Create wallet tables if they don't exist (separate from column migrations)

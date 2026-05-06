@@ -62,6 +62,10 @@ export const authApi = {
   exportMe: () => api.get('/auth/me/export', { responseType: 'blob' }),
   deleteMe: (body: { password?: string; confirmEmail?: string }) =>
     api.post('/auth/me/delete', body),
+  // Password reset (public)
+  forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (token: string, newPassword: string) =>
+    api.post('/auth/reset-password', { token, newPassword }),
 };
 
 // ── SaaS: plans (public) ───────────────────────────────────────────

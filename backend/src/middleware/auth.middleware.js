@@ -1,6 +1,10 @@
 const jwt = require('jsonwebtoken');
 const prisma = require('../utils/prisma');
 
+// Plan-limit alerts are throttled to once per (tenant, metric) per day so a
+// busy import job doesn't trigger a flood of emails.
+const limitAlertsSent = new Map(); // `${tenantId}:${metric}:${YYYY-MM-DD}` -> true
+
 // ── In-process cache for permissions/plan to avoid hitting DB on every req
 const ctxCache = new Map(); // userId -> { ts, ctx }
 // Short TTL so role/permission changes propagate quickly; critical actions
@@ -267,6 +271,34 @@ const enforceLimit = (resource) => async (req, res, next) => {
       }
       default:
         return next();
+    }
+
+    // ── 80% threshold — fire-and-forget plan-limit alert (once per day)
+    if (limit !== null && limit > 0 && used >= Math.floor(limit * 0.8) && used < limit) {
+      const dayKey = `${tenantId}:${metric}:${new Date().toISOString().slice(0, 10)}`;
+      if (!limitAlertsSent.has(dayKey)) {
+        limitAlertsSent.set(dayKey, true);
+        // Trim cache to keep it bounded; older keys get cleaned up daily anyway.
+        if (limitAlertsSent.size > 5000) {
+          const today = new Date().toISOString().slice(0, 10);
+          for (const k of limitAlertsSent.keys()) if (!k.endsWith(today)) limitAlertsSent.delete(k);
+        }
+        // Best-effort — never delay the request on email send.
+        Promise.resolve().then(async () => {
+          try {
+            const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+            if (!tenant?.ownerEmail) return;
+            const { sendPlanLimitAlert } = require('../services/email.service');
+            await sendPlanLimitAlert({
+              to: tenant.ownerEmail,
+              name: tenant.ownerName || 'there',
+              metric,
+              used,
+              limit,
+            });
+          } catch (e) { console.warn('[enforceLimit] alert email failed:', e.message); }
+        });
+      }
     }
 
     if (limit !== null && used >= limit) {

@@ -7,6 +7,7 @@ const prisma = require('../utils/prisma');
 const db = require('../utils/db');
 const { generateSecret, verifyTOTP, otpauthUrl } = require('../utils/totp');
 const { audit } = require('../services/audit.service');
+const { sendPasswordReset } = require('../services/email.service');
 
 const router = Router();
 
@@ -57,6 +58,56 @@ router.post('/change-password', authenticate, async (req, res) => {
 router.post('/logout', authenticate, (req, res) => {
   invalidateUserCache(req.user.id);
   res.json({ ok: true });
+});
+
+// ───── Password reset (request + complete) ────────────────────────────────
+//
+// Request a reset email. Always returns 200 so the response cannot be used
+// to enumerate which emails are registered. Uses a short-lived (60 min) JWT
+// signed with JWT_SECRET as the reset token — no DB row needed.
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    if (!email) return res.json({ ok: true });
+    const user = await prisma.user.findUnique({ where: { email } });
+    // OAuth-only users have no password to reset; silently skip.
+    if (user && user.password && user.isActive) {
+      const token = jwt.sign({ id: user.id, purpose: 'reset' }, process.env.JWT_SECRET, { expiresIn: '60m' });
+      const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?reset=${encodeURIComponent(token)}`;
+      try {
+        await sendPasswordReset({ to: user.email, name: user.name || 'there', resetUrl });
+      } catch (mailErr) {
+        console.warn('[auth/forgot-password] email failed:', mailErr.message);
+      }
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body || {};
+    if (!token || !newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'token and newPassword (>=6 chars) required' });
+    }
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+      return res.status(401).json({ error: 'Reset link is invalid or expired' });
+    }
+    if (payload.purpose !== 'reset') return res.status(401).json({ error: 'Wrong token type' });
+    const user = await prisma.user.findUnique({ where: { id: payload.id } });
+    if (!user || !user.isActive) return res.status(401).json({ error: 'Account not found' });
+    const hashed = await bcrypt.hash(newPassword, 12);
+    await prisma.user.update({ where: { id: user.id }, data: { password: hashed } });
+    audit({ req, action: 'auth.password.reset', resource: 'user', resourceId: user.id });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ───── 2FA / TOTP ─────────────────────────────────────────────────────────

@@ -4,6 +4,7 @@ const prisma = require('../utils/prisma');
 const { authenticate, requirePlatformAdmin } = require('../middleware/auth.middleware');
 const settingsService = require('../services/settings.service');
 const cronJob = require('../jobs/cron.job');
+const { sendTicketReply } = require('../services/email.service');
 
 const router = Router();
 router.use(authenticate, requirePlatformAdmin);
@@ -472,6 +473,28 @@ router.post('/tickets/:id/reply', async (req, res) => {
       },
     }),
   ]);
+
+  // Notify the tenant who opened the ticket. Best-effort: never block the
+  // reply on email-send errors (SMTP could be down or unconfigured).
+  try {
+    const requester = ticket.userId
+      ? await prisma.user.findUnique({ where: { id: ticket.userId } })
+      : null;
+    const to = requester?.email || ticket.email;
+    if (to) {
+      const url = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/help/${ticket.id}`;
+      await sendTicketReply({
+        to,
+        name: requester?.name || 'there',
+        ticketSubject: ticket.subject || `Ticket #${ticket.id.slice(0, 6)}`,
+        ticketUrl: url,
+        replyPreview: String(body).slice(0, 280),
+      });
+    }
+  } catch (err) {
+    console.warn('[admin/tickets/reply] email failed:', err.message);
+  }
+
   res.json({ ok: true });
 });
 
@@ -508,6 +531,49 @@ router.get('/stats', async (_req, res) => {
     prisma.order.count(),
   ]);
   res.json({ tenants, activeSubs, trialing, totalUsers, totalOrders });
+});
+
+// ── EMAIL DIAGNOSTICS ──────────────────────────────────
+// Send a sample of every transactional template to a chosen address. Used to
+// verify SMTP credentials are working end-to-end before going live. Returns
+// per-template success/failure for ops visibility.
+router.post('/email/test', async (req, res) => {
+  const to = String(req.body?.to || req.user?.email || '').trim();
+  if (!to || !/^[^@\s]+@[^@\s]+$/.test(to)) {
+    return res.status(400).json({ error: 'Valid `to` email required' });
+  }
+
+  const e = require('../services/email.service');
+  const siteUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const tries = [
+    ['welcome',          () => e.sendWelcome({ to, name: 'Test User', businessName: 'Test Co.' })],
+    ['trial-ending',     () => e.sendTrialEndingSoon({ to, name: 'Test User', daysLeft: 3 })],
+    ['invoice-paid',     () => e.sendInvoicePaid({ to, name: 'Test User', invoiceNumber: 'INV-TEST-001', amount: '999.00' })],
+    ['past-due',         () => e.sendPastDue({ to, name: 'Test User', graceDays: 7 })],
+    ['dunning',          () => e.sendDunningReminder({ to, name: 'Test User', daysPastDue: 7, amountDue: '999.00' })],
+    ['password-reset',   () => e.sendPasswordReset({ to, name: 'Test User', resetUrl: `${siteUrl}/login?reset=test` })],
+    ['user-invite',      () => e.sendUserInvite({ to, inviterName: 'Test Admin', businessName: 'Test Co.', inviteUrl: `${siteUrl}/login?email=${encodeURIComponent(to)}` })],
+    ['payment-failed',   () => e.sendPaymentFailed({ to, name: 'Test User', amount: '999.00', reason: 'Card declined (test)' })],
+    ['plan-limit-alert', () => e.sendPlanLimitAlert({ to, name: 'Test User', metric: 'orders', used: 950, limit: 1000 })],
+    ['ticket-reply',     () => e.sendTicketReply({ to, name: 'Test User', ticketSubject: 'Demo ticket', ticketUrl: `${siteUrl}/help/test`, replyPreview: 'Thanks for reaching out…' })],
+  ];
+
+  const results = [];
+  for (const [name, fn] of tries) {
+    try {
+      const r = await fn();
+      results.push({ template: name, ok: true, stub: !!r?.stub });
+    } catch (err) {
+      results.push({ template: name, ok: false, error: err.message });
+    }
+  }
+  const allStub = results.every((r) => r.ok && r.stub);
+  res.json({
+    to,
+    smtpConfigured: !allStub,
+    note: allStub ? 'SMTP not configured — emails were logged to console only. Set smtp.* in /admin/settings.' : 'Check your inbox.',
+    results,
+  });
 });
 
 module.exports = router;

@@ -5,6 +5,7 @@ const {
   authenticate, requireTenant, requirePermission, enforceLimit, invalidateUserCache,
 } = require('../middleware/auth.middleware');
 const { audit } = require('../services/audit.service');
+const { sendUserInvite } = require('../services/email.service');
 
 const router = Router();
 router.use(authenticate, requireTenant);
@@ -65,6 +66,21 @@ router.post('/',
         });
       }
       audit({ req, action: 'users.create', resource: 'user', resourceId: user.id });
+
+      // Best-effort invite email — don't block the create on SMTP issues.
+      try {
+        const businessName = req.tenant?.businessName || 'your team';
+        const inviteUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?email=${encodeURIComponent(email)}`;
+        await sendUserInvite({
+          to: email,
+          inviterName: req.user?.name || req.user?.email || 'A teammate',
+          businessName,
+          inviteUrl,
+        });
+      } catch (mailErr) {
+        console.warn('[users.create] invite email failed:', mailErr.message);
+      }
+
       res.status(201).json(user);
     } catch (err) {
       res.status(400).json({ error: err.message });
