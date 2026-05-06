@@ -17,8 +17,8 @@ that distinguishes a working app from a sellable SaaS.
 
 ## Progress
 
-- ✅ Shipped: **13 of 39** numbered items + 4 build/UX fixes
-- 🔄 Remaining: **26 items**
+- ✅ Shipped: **14 of 39** numbered items + 4 build/UX fixes
+- 🔄 Remaining: **25 items**
 
 ---
 
@@ -103,7 +103,7 @@ that distinguishes a working app from a sellable SaaS.
 | # | Status | Item | Notes |
 |---|---|------|-------|
 | 29 | ✅ | **Cmd+K command palette** | `frontend/components/CommandPalette.tsx`, mounted in `DashboardLayout`. ⌘K / Ctrl+K toggles globally, Esc closes, ↑↓ navigates, Enter activates. Static commands (4 quick actions + 14 page navs + 6 settings shortcuts) plus debounced live search across products, orders, customers. Topbar gains a clickable `⌘K` button that dispatches `open-command-palette` so other UI can open it without re-implementing the keyboard handler. No external dep. Shipped in `aefc86d`. |
-| 30 | 🔄 | **In-app changelog / "What's new"** | Drawer accessible from topbar that shows recent releases — drives feature discovery. |
+| 30 | ✅ | **In-app changelog / "What's new"** | `frontend/components/ChangelogDrawer.tsx` + `frontend/data/changelog.ts`. Megaphone icon in the Topbar (with red unread dot) opens a slide-in drawer from the right. Entries grouped by tag (`feature` / `fix` / `security` / `improve`) with colour-coded badges. Last-seen entry id stored in localStorage; the dot clears the moment the drawer is opened. Listens for `open-changelog` event so other UI can trigger it. Shipped in this commit. |
 | 31 | 🔄 | **Public docs site** | API reference, integration guides, FAQs. Tools: Mintlify, Docusaurus, or extend the existing `/help` page. |
 | 32 | 🔄 | **Referral / affiliate program** | Track referrer codes on signup, credit wallet on conversion. |
 | 33 | 🔄 | **Empty-state illustrations + first-run tips** | Some pages have them; audit each list page (orders, products, channels) for a polished empty state with a clear primary CTA. |
@@ -158,3 +158,4 @@ These were closed during this audit / cleanup pass:
 - ✅ #10 Plan upgrade / downgrade with proration — `4e3abc1`
 - ✅ #11 Email templates + diagnostics — `4e3abc1`
 - ✅ #29 Cmd+K command palette — `aefc86d`
+- ✅ #30 In-app changelog drawer — this commit
