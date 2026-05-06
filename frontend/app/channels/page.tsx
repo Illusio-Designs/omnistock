@@ -18,6 +18,7 @@ import { Select } from '@/components/ui/Select';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { Avatar } from '@/components/ui/Avatar';
 import { getSchemaForType } from '@/lib/channel-schemas';
+import { CategorySectionSkeleton } from '@/components/Shimmer';
 import { domainFor, logoDevUrl, iconHorseUrl, googleFaviconUrl, getChannelInitials } from '@/lib/channel-logos';
 
 const CATEGORY_ORDER = [
@@ -303,7 +304,7 @@ export default function ChannelsPage() {
         {isLoading ? (
           <div className="space-y-5">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="card-premium p-8 animate-shimmer h-56" />
+              <CategorySectionSkeleton key={i} />
             ))}
           </div>
         ) : Object.keys(grouped).length === 0 ? (

@@ -7,6 +7,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, Button, Textarea, Badge, useConfirm } from '@/components/ui';
 import { ticketApi } from '@/lib/api';
 import { ArrowLeft, Send, Loader2, Lock, ShieldCheck, User } from 'lucide-react';
+import { DetailPageSkeleton } from '@/components/Shimmer';
 
 interface Message {
   id: string;
@@ -82,10 +83,7 @@ export default function TicketDetailPage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 w-1/3 bg-slate-100 rounded" />
-          <div className="h-48 bg-slate-100 rounded-2xl" />
-        </div>
+        <DetailPageSkeleton />
       </DashboardLayout>
     );
   }

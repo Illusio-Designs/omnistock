@@ -14,6 +14,7 @@ import { ConnectChannelModal } from '@/components/channels/ConnectChannelModal';
 import { Button } from '@/components/ui/Button';
 import { useConfirm } from '@/components/ui';
 import { toast } from '@/store/toast.store';
+import { DetailPageSkeleton } from '@/components/Shimmer';
 
 export default function ChannelDetailPage() {
   const params = useParams();
@@ -63,10 +64,7 @@ export default function ChannelDetailPage() {
   if (isLoading || !channel) {
     return (
       <DashboardLayout>
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-100 rounded w-1/3" />
-          <div className="h-32 bg-gray-100 rounded" />
-        </div>
+        <DetailPageSkeleton />
       </DashboardLayout>
     );
   }

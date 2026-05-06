@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { publicApi } from '@/lib/api';
 import { Award, ArrowRight } from 'lucide-react';
+import { CaseStudySkeleton } from '@/components/Shimmer';
 
 interface CaseStudy {
   id: string;
@@ -42,7 +43,7 @@ export default function CasesPage() {
           {loading ? (
             <div className="space-y-4">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-48 bg-slate-100 rounded-3xl animate-pulse" />
+                <CaseStudySkeleton key={i} />
               ))}
             </div>
           ) : cases.length === 0 ? (

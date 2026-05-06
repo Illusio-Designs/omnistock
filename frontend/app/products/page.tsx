@@ -9,6 +9,7 @@ import {
   Button, Card, Modal, Input, Textarea, Select, Pagination, FileUpload, Tooltip, EmptyState,
 } from '@/components/ui';
 import { Plus, Package, RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
+import { ProductCardSkeleton } from '@/components/Shimmer';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -69,7 +70,7 @@ export default function ProductsPage() {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
-              <Card key={i} className="p-4 animate-shimmer h-64" />
+              <ProductCardSkeleton key={i} />
             ))}
           </div>
         ) : data?.products?.length ? (

@@ -6,6 +6,7 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import { publicApi } from '@/lib/api';
 import { getIcon } from '@/lib/icon';
 import { Sparkles, ArrowRight } from 'lucide-react';
+import { ResourceTileSkeleton } from '@/components/Shimmer';
 
 interface Tile {
   id: string;
@@ -45,7 +46,7 @@ export default function ResourcesPage() {
           {tiles.length === 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-52 bg-slate-100 rounded-3xl animate-pulse" />
+                <ResourceTileSkeleton key={i} />
               ))}
             </div>
           ) : (

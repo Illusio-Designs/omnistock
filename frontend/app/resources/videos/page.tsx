@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { publicApi } from '@/lib/api';
 import { Sparkles, Play, Clock } from 'lucide-react';
+import { VideoCardSkeleton } from '@/components/Shimmer';
 
 interface Video {
   id: string;
@@ -45,7 +46,7 @@ export default function VideosPage() {
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-60 bg-slate-100 rounded-3xl animate-pulse" />
+                <VideoCardSkeleton key={i} />
               ))}
             </div>
           ) : videos.length === 0 ? (
