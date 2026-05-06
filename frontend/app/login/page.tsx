@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authApi } from '@/lib/api';
@@ -18,6 +18,14 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState('');
+  const mfaInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus the MFA code input the moment the form transitions into the
+  // 2FA challenge step — saves a click after the user just typed their
+  // password. Programmatic focus avoids the jsx-a11y/no-autofocus rule.
+  useEffect(() => {
+    if (mfaToken) mfaInputRef.current?.focus();
+  }, [mfaToken]);
 
   // Already logged in with a valid token? Redirect away. If expired, clear it.
   useEffect(() => {
@@ -123,13 +131,13 @@ export default function LoginPage() {
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">Authenticator code</label>
                 <input
+                  ref={mfaInputRef}
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
                   pattern="\d{6}"
                   maxLength={6}
                   required
-                  autoFocus
                   value={mfaCode}
                   onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
                   placeholder="123456"
