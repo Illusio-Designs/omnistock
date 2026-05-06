@@ -7,6 +7,7 @@ import { useSearchStore } from '@/store/search.store';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { Avatar } from '@/components/ui/Avatar';
 import { ChangelogTrigger } from '@/components/ChangelogDrawer';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { WalletPill } from '@/components/wallet/WalletPill';
 
 export function Topbar() {
@@ -65,6 +66,11 @@ export function Topbar() {
           <button className="hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 rounded-xl transition-colors">
             <Sparkles size={12} /> Ask AI
           </button>
+        </Tooltip>
+
+        {/* Theme toggle */}
+        <Tooltip content="Toggle theme (light · dark · system)" side="bottom">
+          <ThemeToggle />
         </Tooltip>
 
         {/* What's new */}

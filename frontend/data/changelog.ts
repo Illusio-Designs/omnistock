@@ -22,6 +22,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-05-06-dark-mode',
+    date: '2026-05-06',
+    title: 'Dark mode',
+    tag: 'feature',
+    highlights: [
+      'New theme toggle in the topbar — cycle Light → Dark → System',
+      'Your preference persists across devices for the same login',
+      'Cards, modals, inputs, and empty states all switch correctly; remaining pages will adopt the dark surfaces over the next few releases',
+    ],
+  },
+  {
     id: '2026-05-06-empty-states',
     date: '2026-05-06',
     title: 'Friendlier empty list pages',

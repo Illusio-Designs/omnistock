@@ -31,11 +31,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={autoId}
             className={cn(
-              'w-full px-4 py-2.5 text-sm bg-white border rounded-xl transition-all duration-200',
-              'placeholder:text-slate-400 focus:outline-none focus:ring-4',
+              'w-full px-4 py-2.5 text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border rounded-xl transition-all duration-200',
+              'placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-4',
               error
-                ? 'border-rose-300 focus:ring-rose-500/10 focus:border-rose-400'
-                : 'border-slate-200 focus:ring-emerald-500/10 focus:border-emerald-400',
+                ? 'border-rose-300 dark:border-rose-800 focus:ring-rose-500/10 focus:border-rose-400'
+                : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-500/10 focus:border-emerald-400',
               leftIcon && 'pl-10',
               rightIcon && 'pr-10',
               className
