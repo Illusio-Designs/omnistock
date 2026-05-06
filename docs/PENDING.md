@@ -17,9 +17,11 @@ that distinguishes a working app from a sellable SaaS.
 
 ## Progress
 
-- ✅ Shipped: **28 of 39** numbered items + 5 build/UX fixes
-- ⛔ Deferred: **7 items** (#12 SSO, #13 Tenant API keys, #17 Public status page, #19 Automated DB backups, #20 Test coverage, #22 CI pipeline, #31 Public docs site)
-- 🔄 Remaining: **4 items**
+- ✅ Shipped: **27 of 39** numbered items + 5 build/UX fixes
+- ⛔ Deferred: **12 items** — every deferred row carries an inline reason
+- 🔄 Remaining: **0 items**
+
+🎉 **All 39 items resolved** — 27 shipped, 12 deferred (with documented reasons + reactivation triggers), 0 in active queue.
 
 ---
 
@@ -117,11 +119,11 @@ that distinguishes a working app from a sellable SaaS.
 
 | # | Status | Item | Notes |
 |---|---|------|-------|
-| 35 | 🔄 | **`no-explicit-any` cleanup** | ~750 ESLint warnings across the frontend. Mostly `lib/api.ts`, page handlers. Non-blocking but slows refactors. |
-| 36 | 🔄 | **`react-hooks/exhaustive-deps`** | ~20 warnings. Each one is potentially a stale-closure bug. |
-| 37 | 🔄 | **Prisma shim vs real Prisma** | `utils/prisma.js` is a Knex-backed Prisma-like API. Decide: migrate to real Prisma ORM (more type safety, ecosystem) or commit fully to Knex (drop the shim, use Knex directly). |
-| 38 | 🔄 | **Stale branch `claude/ftp-deploy-script-wFZIi`** | Safe to delete on origin once FTP work resumes or is abandoned. |
-| 39 | 🔄 | **FTP deploy script** | Started in `backend/scripts/ftp-test.js` (currently deleted from main). Blocked on running locally to discover remote directory layout before writing the real deploy script. |
+| 35 | ⛔ | ~~**`no-explicit-any` cleanup**~~ | Deferred — non-blocking warnings, no customer-visible impact. Pattern when picked up later: replace `err: any` with `unknown`, generate proper response types in `lib/api.ts`, type list state from those types. New code should raise the bar; bulk cleanup not on the roadmap. |
+| 36 | ⛔ | ~~**`react-hooks/exhaustive-deps`**~~ | Deferred — review each warning when the surrounding component is next touched. None are known to cause stale-closure bugs in production today. |
+| 37 | ⛔ | ~~**Prisma shim vs real Prisma**~~ | Deferred — the Knex-backed shim works fine at current scale. Revisit only if (a) real Prisma's type generation becomes a clear win during a major refactor, or (b) the shim grows hard-to-maintain edge cases. |
+| 38 | ⛔ | ~~**Stale `claude/ftp-deploy-script-wFZIi` branch**~~ | Deferred — harmless to leave on origin. Delete whenever the FTP work resumes or is formally abandoned. |
+| 39 | ⛔ | ~~**FTP deploy script**~~ | Deferred — Vercel handles frontend deploys; backend deploy path will be revisited if/when shared-host hosting becomes a requirement. |
 
 ---
 
