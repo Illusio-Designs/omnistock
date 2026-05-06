@@ -10,6 +10,8 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import AnimatedSplash from '../components/SplashScreen';
 import IntroScreen from '../components/IntroScreen';
 import Toaster from '../components/ui/Toaster';
+import { BiometricLock } from '../components/BiometricLock';
+import { evaluateLockOnBoot, getLockNeeded } from '../lib/biometric';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -24,11 +26,17 @@ export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(true);
   const [showIntro, setShowIntro] = useState(false);
   const [introChecked, setIntroChecked] = useState(false);
+  const [locked, setLocked] = useState(false);
   const hydrated = useAuthStore((s) => s.hydrated);
 
   useEffect(() => {
     (async () => {
       await hydrateTokenCache();
+      // Decide on biometric lock BEFORE rendering the app shell. Reads
+      // 'biometric.enabled' + token presence from secure storage. If both
+      // hold, render BiometricLock until the user authenticates.
+      await evaluateLockOnBoot();
+      setLocked(getLockNeeded());
       const seen = await tokenStorage.get('intro-seen');
       if (!seen) setShowIntro(true);
       setIntroChecked(true);
@@ -68,6 +76,18 @@ export default function RootLayout() {
         <StatusBar style="light" />
         <IntroScreen onFinish={onIntroFinish} />
       </>
+    );
+  }
+
+  // Biometric gate — runs before the app shell when the user has opted
+  // in and there's a stored token. Once authenticated, the lock vanishes
+  // for this session.
+  if (locked) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        <BiometricLock onUnlocked={() => setLocked(false)} />
+      </SafeAreaProvider>
     );
   }
 

@@ -1,11 +1,20 @@
-import { Building2, CreditCard, Shield, User } from 'lucide-react-native';
-import { useEffect } from 'react';
-import { Text, View } from 'react-native';
+import { Building2, CreditCard, Shield, User, Fingerprint, ScanFace } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
+import { Alert, Pressable, Switch, Text, View } from 'react-native';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import PageShell from '../../components/ui/PageShell';
 import { useAuthStore } from '../../store/auth.store';
 import { authApi } from '../../lib/api';
+import {
+  isAvailable as biometricAvailable,
+  isEnabled as biometricIsEnabled,
+  setEnabled as biometricSetEnabled,
+  authenticate as biometricAuthenticate,
+  getBiometricKind,
+  biometricLabel,
+  type BiometricKind,
+} from '../../lib/biometric';
 
 type Row = { label: string; value: string };
 type Section = { title: string; icon: React.ReactNode; iconBg: string; rows: Row[] };
@@ -113,6 +122,88 @@ export default function SettingsScreen() {
           ))}
         </Card>
       ))}
+
+      <BiometricSettingsCard />
     </PageShell>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Biometric unlock toggle. Hidden entirely on devices without hardware /
+// enrolled biometrics so we don't tease a feature the user can't use.
+// Enabling re-prompts the OS for a current biometric proof so a stranger
+// holding an unlocked phone can't quietly turn it on.
+function BiometricSettingsCard() {
+  const [supported, setSupported] = useState(false);
+  const [kind, setKind] = useState<BiometricKind>('biometric');
+  const [enabled, setEnabledState] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const ok = await biometricAvailable();
+      setSupported(ok);
+      if (ok) {
+        setKind(await getBiometricKind());
+        setEnabledState(await biometricIsEnabled());
+      }
+    })();
+  }, []);
+
+  if (!supported) return null;
+  const label = biometricLabel(kind);
+  const Icon = kind === 'face' ? ScanFace : Fingerprint;
+
+  const toggle = async (next: boolean) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      // Always require a successful biometric proof before flipping the
+      // switch — works for both enable and disable so a thief can't bypass
+      // the lock from inside the app.
+      const ok = await biometricAuthenticate(
+        next ? `Enable ${label} unlock` : `Disable ${label} unlock`
+      );
+      if (!ok) {
+        Alert.alert('Cancelled', 'No changes made.');
+        return;
+      }
+      await biometricSetEnabled(next);
+      setEnabledState(next);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="p-5 mb-4">
+      <View className="flex-row items-center mb-4">
+        <View className="w-10 h-10 rounded-2xl bg-emerald-50 items-center justify-center mr-3">
+          <Icon size={18} color="#04AB94" />
+        </View>
+        <Text className="text-lg font-extrabold text-slate-900 tracking-tight">
+          Biometric unlock
+        </Text>
+      </View>
+      <View className="flex-row items-center justify-between py-2">
+        <View className="flex-1 pr-4">
+          <Text className="text-[14px] font-bold text-slate-900">
+            Use {label} to unlock the app
+          </Text>
+          <Text className="text-[12px] text-slate-500 mt-1 leading-snug">
+            Re-authenticate every time the app cold-starts. Your password
+            stays as the fallback.
+          </Text>
+        </View>
+        <Switch
+          value={enabled}
+          onValueChange={toggle}
+          disabled={busy}
+          trackColor={{ false: '#cbd5e1', true: '#06D4B8' }}
+          thumbColor="#ffffff"
+          ios_backgroundColor="#cbd5e1"
+        />
+      </View>
+    </Card>
   );
 }

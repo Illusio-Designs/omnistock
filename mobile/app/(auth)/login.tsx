@@ -16,6 +16,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { GoogleIcon } from '../../components/GoogleIcon';
 import { authApi } from '../../lib/api';
 import { useAuthStore } from '../../store/auth.store';
+import { tokenStorage } from '../../lib/storage';
+import {
+  isAvailable as biometricAvailable,
+  isEnabled as biometricIsEnabled,
+  setEnabled as biometricSetEnabled,
+  getBiometricKind,
+  biometricLabel,
+} from '../../lib/biometric';
 
 export default function LoginScreen() {
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -72,6 +80,7 @@ export default function LoginScreen() {
     try {
       const { data } = await authApi.login(email.trim(), password);
       await setAuth(data.user, data.token);
+      await maybeOfferBiometric();
       await fetchContextAndNavigate(data.user, data.token);
     } catch (err: any) {
       Alert.alert(
@@ -80,6 +89,50 @@ export default function LoginScreen() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  // After a successful password login, offer to enable biometric unlock
+  // for next time. Only prompts on the first login per device — once the
+  // user has answered (yes or no), we don't pester again. We surface the
+  // toggle in Settings → Security so they can flip it later.
+  const maybeOfferBiometric = async () => {
+    try {
+      if (!(await biometricAvailable())) return;
+      if (await biometricIsEnabled()) return;
+      // Have we already asked? Track via a flag distinct from the actual
+      // enabled flag so a "no" answer is sticky.
+      const askedKey = 'biometric.asked';
+      if (await tokenStorage.get(askedKey)) return;
+      const kind = await getBiometricKind();
+      const label = biometricLabel(kind);
+      await new Promise<void>((resolve) => {
+        Alert.alert(
+          `Enable ${label}?`,
+          `Use ${label} to unlock Kartriq next time. You can change this later in Settings.`,
+          [
+            {
+              text: 'Not now',
+              style: 'cancel',
+              onPress: async () => {
+                await tokenStorage.set(askedKey, 'true');
+                resolve();
+              },
+            },
+            {
+              text: `Enable ${label}`,
+              onPress: async () => {
+                await biometricSetEnabled(true);
+                await tokenStorage.set(askedKey, 'true');
+                resolve();
+              },
+            },
+          ],
+          { cancelable: false }
+        );
+      });
+    } catch {
+      // Best-effort — never block login on a biometric prompt failure
     }
   };
 

@@ -17,9 +17,9 @@ that distinguishes a working app from a sellable SaaS.
 
 ## Progress
 
-- ✅ Shipped: **22 of 39** numbered items + 5 build/UX fixes
+- ✅ Shipped: **23 of 39** numbered items + 5 build/UX fixes
 - ⛔ Deferred: **7 items** (#12 SSO, #13 Tenant API keys, #17 Public status page, #19 Automated DB backups, #20 Test coverage, #22 CI pipeline, #31 Public docs site)
-- 🔄 Remaining: **10 items**
+- 🔄 Remaining: **9 items**
 
 ---
 
@@ -93,7 +93,7 @@ that distinguishes a working app from a sellable SaaS.
 |---|---|------|-------|
 | 23 | 🔄 | **Audit stub vs functional screens** | `ScreenStub.tsx` exists. Catalog which `(app)/*.tsx` screens are real vs placeholders. |
 | 24 | 🔄 | **Push notifications** | Expo Notifications not wired. Need server-side device token registration + send on order events. |
-| 25 | 🔄 | **Biometric auth** | Face ID / fingerprint via `expo-local-authentication` after first login. |
+| 25 | ✅ | **Biometric auth** | Face ID / Touch ID / Fingerprint unlock for the Expo app via `expo-local-authentication`. New `mobile/lib/biometric.ts` (availability + kind detection, labelled prompts, `setEnabled`/`isEnabled` persisted to SecureStore, `evaluateLockOnBoot` flag) and `mobile/components/BiometricLock.tsx` (full-screen "unlock to continue" gate that auto-prompts on mount, with a "Sign in with password" fallback). Wired into `mobile/app/_layout.tsx` so the lock renders before the app shell on cold start when both `biometric.enabled` and a stored token exist. After password login, `maybeOfferBiometric()` asks the user once whether to enable it; the choice is sticky via a separate `biometric.asked` flag so we don't pester. Settings → "Biometric unlock" Switch toggles it later, requiring a fresh biometric proof to flip the value (so a thief inside the app can't disable it). Hidden entirely when the device has no enrolled biometric. Shipped in this commit. |
 | 26 | 🔄 | **Offline cache** | At least read-only inventory + order list should survive no-connection. SQLite or AsyncStorage cache. |
 | 27 | 🔄 | **App-store assets** | Icons, splash, screenshots, store listings, privacy nutrition labels (iOS), data safety form (Play). |
 | 28 | 🔄 | **Deep linking** | Opening an order URL from email should land directly in the app's order detail. |
@@ -169,4 +169,5 @@ These were closed during this audit / cleanup pass:
 - ✅ #18 `/healthz` + `/readyz` endpoints (consolidated route file) — `cca7e32`
 - ✅ #32 Referral / affiliate program (codes + wallet rewards on conversion) — `0b4a75e`
 - ✅ #33 Empty-state polish across 8 list pages — `e885a98`
-- ✅ #34 Dark mode (theme toggle + persisted pref + dark variants on shared chrome) — this commit
+- ✅ #34 Dark mode (theme toggle + persisted pref + dark variants on shared chrome) — `1fb2176`
+- ✅ #25 Biometric auth on mobile (Face ID / Touch ID / Fingerprint unlock) — this commit
