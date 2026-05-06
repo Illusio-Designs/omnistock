@@ -18,8 +18,8 @@ that distinguishes a working app from a sellable SaaS.
 ## Progress
 
 - ✅ Shipped: **18 of 39** numbered items + 5 build/UX fixes
-- ⛔ Deferred: **1 item** (#13 Tenant API keys)
-- 🔄 Remaining: **20 items**
+- ⛔ Deferred: **2 items** (#12 SSO, #13 Tenant API keys)
+- 🔄 Remaining: **19 items**
 
 ---
 
@@ -66,7 +66,7 @@ that distinguishes a working app from a sellable SaaS.
 
 | # | Status | Item | Notes |
 |---|---|------|-------|
-| 12 | 🔄 | **SSO (SAML / OIDC)** | Only Google OAuth today. Enterprise prospects will ask for Okta / Azure AD. Stick this behind a feature flag on the Enterprise plan. |
+| 12 | ⛔ | ~~**SSO (SAML / OIDC)**~~ | Deferred — not on the roadmap. Existing Google OAuth + email/password covers current customers. Will revisit if/when an Enterprise prospect requires it; for that case the path is WorkOS for ~1 day integration, then native OIDC later if volume justifies. |
 | 13 | ⛔ | ~~**Tenant API keys**~~ | Deferred — not on the roadmap. Tenants will use the existing JWT session for any programmatic access. |
 | 14 | ✅ | **Tenant-visible audit log** | `frontend/app/audit/page.tsx` — backed by `GET /billing/audit` (tenant-scoped server-side, gated by `settings.read`). Endpoint enriched with `limit`, `action`, and `before` query params plus a `total` count and a top-30 distinct-actions list for the filter dropdown. UI mirrors the admin audit page (verb/method colour pills, status colours, click-to-expand metadata) but drops cross-tenant fields. Sidebar gains an "Activity log" entry; Cmd+K palette adds a shortcut. Shipped in this commit. |
 | 15 | ✅ | **Team invitations via email** | Magic-link signup end-to-end. Admins now leave the password field blank in `/dashboard/team` to send a 7-day JWT-signed invite to the recipient's inbox. Public `POST /auth/accept-invite` (paired with `GET /auth/invite/:token` for preview) sets the password, marks the user active, and returns a real session JWT. New `/accept-invite` page renders the workspace name, invitee email, and expiry before the password prompt. Pending invites are surfaced in the team list with a "Pending invite" pill and a Resend button. Shipped in this commit. |
