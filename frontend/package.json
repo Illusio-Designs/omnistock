@@ -20,7 +20,9 @@
     "build-storybook": "storybook build",
     "build:big": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096 --max-semi-space-size=64\" next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "vercel:status": "node scripts/vercel-status.js",
+    "vercel:watch": "node scripts/vercel-status.js"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.0.4",
