@@ -26,16 +26,21 @@ export function Topbar() {
         <Menu size={18} />
       </button>
 
-      {/* Search */}
+      {/* Search — single visible control. Type into it to filter the
+          current page (per-page useSearchStore). Press ⌘K (or click the
+          kbd hint on the right) to open the global command palette
+          instead. The two used to be separate controls in the top bar;
+          combining them removes the visual duplication while keeping
+          both behaviours. */}
       <div className="relative flex-1 max-w-xl">
         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
         <input
-          placeholder="Search this page"
+          placeholder="Search this page · or press ⌘K for command palette"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full pl-11 pr-10 py-2.5 text-sm text-white bg-white/[0.06] border border-white/10 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/15 focus:border-emerald-400/60 placeholder:text-white/40 transition-all"
+          className="w-full pl-11 pr-20 py-2.5 text-sm text-white bg-white/[0.06] border border-white/10 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/15 focus:border-emerald-400/60 placeholder:text-white/40 transition-all"
         />
-        {query && (
+        {query ? (
           <button
             type="button"
             onClick={clear}
@@ -44,23 +49,20 @@ export function Topbar() {
           >
             <X size={14} />
           </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event('open-command-palette'))}
+            aria-label="Open command palette (⌘K)"
+            title="Open command palette"
+            className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-[10px] font-mono font-bold text-white/50 hover:text-white bg-white/[0.06] hover:bg-white/10 border border-white/10 rounded-md transition-colors"
+          >
+            ⌘K
+          </button>
         )}
       </div>
 
       <div className="flex items-center gap-1 ml-auto">
-        {/* Command palette shortcut */}
-        <Tooltip content="Command palette" side="bottom">
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new Event('open-command-palette'))}
-            aria-label="Open command palette"
-            className="hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white/70 hover:text-white bg-white/[0.06] hover:bg-white/10 border border-white/10 rounded-xl transition-colors"
-          >
-            <Search size={12} />
-            <kbd className="font-mono">⌘K</kbd>
-          </button>
-        </Tooltip>
-
         {/* AI */}
         <Tooltip content="Ask AI" side="bottom">
           <button className="hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 rounded-xl transition-colors">
