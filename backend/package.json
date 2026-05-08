@@ -1,21 +1,20 @@
 {
-  "name": "kartriq-backend",
+  "name": "omnistock-backend",
   "version": "1.0.0",
-  "description": "Kartriq ERP Backend - Node.js + Express + Knex + MySQL",
+  "description": "OmniStock ERP Backend - Node.js + Express + Knex + MySQL",
   "main": "src/index.js",
   "scripts": {
-    "dev": "nodemon --exec \"node --disable-warning=DEP0040\" src/index.js",
-    "start": "node --disable-warning=DEP0040 src/index.js",
-    "billing:run": "node --disable-warning=DEP0040 src/jobs/billing.job.js",
-    "cron:run": "node --disable-warning=DEP0040 src/jobs/cron.job.js",
-    "seed": "node --disable-warning=DEP0040 src/scripts/seed.js",
-    "test:backend": "node --disable-warning=DEP0040 src/scripts/test.js",
-    "test:backend:server": "DISABLE_RATE_LIMIT=true node --disable-warning=DEP0040 src/index.js"
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "billing:run": "node src/jobs/billing.job.js",
+    "cron:run": "node src/jobs/cron.job.js",
+    "seed": "node src/scripts/seed.js",
+    "test:backend": "node src/scripts/test.js",
+    "test:backend:server": "DISABLE_RATE_LIMIT=true node src/index.js"
   },
   "dependencies": {
-    "@sentry/node": "^8.40.0",
     "axios": "^1.7.0",
-    "axios-retry": "^4.5.0",
+    "basic-ftp": "^6.0.1",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
@@ -28,9 +27,6 @@
     "knex": "^3.2.9",
     "morgan": "^1.10.0",
     "mysql2": "^3.22.0",
-    "pino": "^9.5.0",
-    "pino-pretty": "^11.3.0",
-    "razorpay": "^2.9.4",
     "uuid": "^9.0.1",
     "zod": "^3.22.4"
   },
