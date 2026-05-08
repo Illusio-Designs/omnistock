@@ -5,7 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { authApi, planApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 import { ArrowRight, Sparkles, Building2, User, Lock, CheckCircle2 } from 'lucide-react';
-import { PhoneField, isPhoneEmpty, validatePhone } from '@/components/ui';
+import { PhoneField, isPhoneEmpty } from '@/components/ui';
+import {
+  collectErrors, validateEmail, validateGstin, validatePassword, validatePhone, validateText,
+} from '@/lib/validators';
 
 function OnboardingInner() {
   const router = useRouter();
@@ -18,6 +21,8 @@ function OnboardingInner() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [step1Errs, setStep1Errs] = useState<{ ownerName?: string; email?: string; password?: string }>({});
+  const [step2Errs, setStep2Errs] = useState<{ businessName?: string; gstin?: string }>({});
   const [form, setForm] = useState({
     ownerName: '', email: '', password: '',
     businessName: '', phone: '', gstin: '',
@@ -45,7 +50,33 @@ function OnboardingInner() {
     planApi.list().then((r) => setPlans(r.data || [])).catch(() => {});
   }, []);
 
-  const update = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const update = (k: string, v: string) => {
+    setForm((f) => ({ ...f, [k]: v }));
+    if (k in step1Errs) setStep1Errs((e) => ({ ...e, [k]: undefined }));
+    if (k in step2Errs) setStep2Errs((e) => ({ ...e, [k]: undefined }));
+  };
+
+  const validateStep1 = (): boolean => {
+    const errs = collectErrors([
+      ['ownerName', validateText(form.ownerName, { required: true, fieldName: 'Full name' })],
+      ['email',     validateEmail(form.email, { required: true })],
+      ['password',  validatePassword(form.password, { required: true })],
+    ]);
+    setStep1Errs(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const validateStep2 = (): boolean => {
+    const errs = collectErrors([
+      ['businessName', validateText(form.businessName, { required: true, fieldName: 'Business name' })],
+      // GSTIN is optional in onboarding (some businesses don't have one yet)
+      ['gstin',        validateGstin(form.gstin)],
+    ]);
+    setStep2Errs(errs);
+    const pErr = validatePhone(form.phone);
+    setPhoneError(pErr);
+    return Object.keys(errs).length === 0 && !pErr;
+  };
 
   const submit = async () => {
     setErr('');
@@ -100,13 +131,12 @@ function OnboardingInner() {
               <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                 <User size={18} /> Your account
               </h2>
-              <Field label="Full name"   value={form.ownerName} onChange={(v) => update('ownerName', v)} />
-              <Field label="Work email"  value={form.email}     onChange={(v) => update('email', v)} type="email" />
-              <Field label="Password"    value={form.password}  onChange={(v) => update('password', v)} type="password" />
+              <Field label="Full name"   value={form.ownerName} onChange={(v) => update('ownerName', v)} error={step1Errs.ownerName} />
+              <Field label="Work email"  value={form.email}     onChange={(v) => update('email', v)} type="email" error={step1Errs.email} />
+              <Field label="Password"    value={form.password}  onChange={(v) => update('password', v)} type="password" error={step1Errs.password} placeholder="At least 8 characters with a letter and a number" />
               <button
-                onClick={() => setStep(2)}
-                disabled={!form.ownerName || !form.email || form.password.length < 6}
-                className="btn-primary w-full mt-4 disabled:opacity-50"
+                onClick={() => { if (validateStep1()) setStep(2); }}
+                className="btn-primary w-full mt-4"
               >
                 Continue <ArrowRight size={16} className="inline ml-1" />
               </button>
@@ -118,7 +148,7 @@ function OnboardingInner() {
               <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                 <Building2 size={18} /> Your business
               </h2>
-              <Field label="Business name"  value={form.businessName} onChange={(v) => update('businessName', v)} />
+              <Field label="Business name"  value={form.businessName} onChange={(v) => update('businessName', v)} error={step2Errs.businessName} />
               <div className="grid grid-cols-2 gap-4">
                 <PhoneField
                   label="Phone"
@@ -126,7 +156,7 @@ function OnboardingInner() {
                   onChange={(v) => { update('phone', v); if (phoneError) setPhoneError(null); }}
                   error={phoneError || undefined}
                 />
-                <Field label="GSTIN"   value={form.gstin}   onChange={(v) => update('gstin', v.toUpperCase())} />
+                <Field label="GSTIN (optional)" value={form.gstin} onChange={(v) => update('gstin', v.toUpperCase())} error={step2Errs.gstin} placeholder="22AAAAA0000A1Z5" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Industry"     value={form.industry}     onChange={(v) => update('industry', v)} />
@@ -135,14 +165,8 @@ function OnboardingInner() {
               <div className="flex gap-2 mt-4">
                 <button onClick={() => setStep(1)} className="btn-secondary flex-1">Back</button>
                 <button
-                  onClick={() => {
-                    const pErr = validatePhone(form.phone);
-                    if (pErr) { setPhoneError(pErr); return; }
-                    setPhoneError(null);
-                    setStep(3);
-                  }}
-                  disabled={!form.businessName}
-                  className="btn-primary flex-1 disabled:opacity-50"
+                  onClick={() => { if (validateStep2()) setStep(3); }}
+                  className="btn-primary flex-1"
                 >
                   Continue <ArrowRight size={16} className="inline ml-1" />
                 </button>
@@ -194,11 +218,13 @@ function OnboardingInner() {
   );
 }
 
-function Field({ label, value, onChange, type = 'text' }: {
+function Field({ label, value, onChange, type = 'text', error, placeholder }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
+  error?: string | null;
+  placeholder?: string;
 }) {
   return (
     <div>
@@ -207,8 +233,14 @@ function Field({ label, value, onChange, type = 'text' }: {
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none"
+        placeholder={placeholder}
+        className={`w-full px-4 py-2.5 rounded-xl border outline-none focus:ring-2 focus:ring-emerald-100 ${
+          error
+            ? 'border-rose-300 focus:border-rose-400'
+            : 'border-slate-200 focus:border-emerald-500'
+        }`}
       />
+      {error && <p className="text-xs text-rose-600 mt-1 font-medium">{error}</p>}
     </div>
   );
 }

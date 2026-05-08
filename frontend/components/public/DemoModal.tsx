@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { PhoneField, isPhoneEmpty, validatePhone } from '@/components/ui/PhoneField';
+import { PhoneField, isPhoneEmpty } from '@/components/ui/PhoneField';
 import { CheckCircle2, Sparkles, Send, AlertCircle } from 'lucide-react';
 import { leadsApi, type LeadSource } from '@/lib/api';
+import { collectErrors, validateEmail, validatePhone, validateText } from '@/lib/validators';
 
 interface DemoModalProps {
   open: boolean;
@@ -59,13 +60,11 @@ export function DemoModal({
   }, [open]);
 
   const validate = (): boolean => {
-    const errs: { name?: string; email?: string; phone?: string } = {};
-    if (!form.name.trim()) errs.name = 'Name is required';
-    else if (form.name.trim().length < 2) errs.name = 'Name is too short';
-    if (!form.email.trim()) errs.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errs.email = 'Enter a valid email';
-    const phoneErr = validatePhone(form.phone);
-    if (phoneErr) errs.phone = phoneErr;
+    const errs = collectErrors([
+      ['name',  validateText(form.name, { required: true, fieldName: 'Name' })],
+      ['email', validateEmail(form.email, { required: true })],
+      ['phone', validatePhone(form.phone)],
+    ]);
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };

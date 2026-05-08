@@ -7,6 +7,7 @@ import { authApi } from '@/lib/api';
 import { useAuthStore, isTokenExpired } from '@/store/auth.store';
 import { Sparkles, ArrowRight, Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
 import { PasswordInput } from '@/components/ui/PasswordInput';
+import { validateEmail, validateRequired } from '@/lib/validators';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,6 +17,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const mfaInputRef = useRef<HTMLInputElement>(null);
@@ -59,10 +62,13 @@ export default function LoginPage() {
     const formData = new FormData(e.currentTarget);
     const emailValue = ((formData.get('email') as string) || email).trim();
     const passwordValue = (formData.get('password') as string) || password;
-    if (!emailValue || !passwordValue) {
-      setError('Enter your email and password.');
-      return;
-    }
+
+    const eErr = validateEmail(emailValue, { required: true });
+    const pErr = validateRequired(passwordValue, 'Password');
+    setEmailError(eErr);
+    setPasswordError(pErr);
+    if (eErr || pErr) return;
+
     setError('');
     setLoading(true);
     try {
@@ -176,11 +182,12 @@ export default function LoginPage() {
                   autoComplete="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(null); }}
                   placeholder="you@company.com"
                   className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none"
                 />
               </div>
+              {emailError && <p className="text-xs text-rose-600 mt-1 font-medium">{emailError}</p>}
             </div>
 
             <div>
@@ -197,11 +204,12 @@ export default function LoginPage() {
               <PasswordInput
                 name="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); if (passwordError) setPasswordError(null); }}
                 placeholder="••••••••"
                 autoComplete="current-password"
                 required
               />
+              {passwordError && <p className="text-xs text-rose-600 mt-1 font-medium">{passwordError}</p>}
             </div>
 
             {error && (

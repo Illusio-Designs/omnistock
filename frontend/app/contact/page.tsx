@@ -6,17 +6,30 @@ import {
   Sparkles, Mail, MessageCircle, Phone, MapPin, Send, CheckCircle2, AlertCircle,
 } from 'lucide-react';
 import { leadsApi } from '@/lib/api';
+import { collectErrors, validateEmail, validateText } from '@/lib/validators';
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string; message?: string }>({});
+
+  const validate = (): boolean => {
+    const errs = collectErrors([
+      ['name',    validateText(form.name, { required: true, fieldName: 'Name' })],
+      ['email',   validateEmail(form.email, { required: true })],
+      ['message', validateText(form.message, { required: true, fieldName: 'Message', min: 5, max: 5000 })],
+    ]);
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submitting) return;
     setError(null);
+    if (!validate()) return;
     setSubmitting(true);
     try {
       await leadsApi.submit({
@@ -29,6 +42,7 @@ export default function ContactPage() {
       });
       setSubmitted(true);
       setForm({ name: '', email: '', subject: '', message: '' });
+      setFieldErrors({});
     } catch (err: any) {
       const msg = err?.response?.data?.error;
       setError(
@@ -111,10 +125,14 @@ export default function ContactPage() {
                     <input
                       required
                       value={form.name}
-                      onChange={e => setForm({ ...form, name: e.target.value })}
+                      onChange={e => {
+                        setForm({ ...form, name: e.target.value });
+                        if (fieldErrors.name) setFieldErrors({ ...fieldErrors, name: undefined });
+                      }}
                       className="input-premium"
                       placeholder="Your name"
                     />
+                    {fieldErrors.name && <p className="text-xs text-rose-600 mt-1 font-medium">{fieldErrors.name}</p>}
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Email</label>
@@ -122,10 +140,14 @@ export default function ContactPage() {
                       required
                       type="email"
                       value={form.email}
-                      onChange={e => setForm({ ...form, email: e.target.value })}
+                      onChange={e => {
+                        setForm({ ...form, email: e.target.value });
+                        if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: undefined });
+                      }}
                       className="input-premium"
                       placeholder="you@company.com"
                     />
+                    {fieldErrors.email && <p className="text-xs text-rose-600 mt-1 font-medium">{fieldErrors.email}</p>}
                   </div>
                 </div>
                 <div>
@@ -149,10 +171,14 @@ export default function ContactPage() {
                     required
                     rows={5}
                     value={form.message}
-                    onChange={e => setForm({ ...form, message: e.target.value })}
+                    onChange={e => {
+                      setForm({ ...form, message: e.target.value });
+                      if (fieldErrors.message) setFieldErrors({ ...fieldErrors, message: undefined });
+                    }}
                     className="input-premium"
                     placeholder="Tell us how we can help…"
                   />
+                  {fieldErrors.message && <p className="text-xs text-rose-600 mt-1 font-medium">{fieldErrors.message}</p>}
                 </div>
                 {error && (
                   <div className="flex items-start gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-700">
