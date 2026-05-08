@@ -396,13 +396,13 @@ export default function LandingPage() {
               const rating = Number(t.data?.rating ?? 5);
               const avatar = t.data?.avatar || t.title.split(' ').map((s: string) => s[0]).slice(0, 2).join('');
               return (
-                <div key={t.id} data-reveal className="bg-white rounded-2xl border border-slate-200 p-6 hover-lift hover:shadow-xl transition-all">
+                <div key={t.id} data-reveal className="bg-white rounded-2xl border border-slate-200 p-6 hover-lift hover:shadow-xl transition-all flex flex-col h-full">
                   <div className="flex gap-0.5 mb-4">
                     {Array.from({ length: rating }).map((_, i) => (
                       <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
                     ))}
                   </div>
-                  <p className="text-slate-700 text-sm leading-relaxed font-medium">"{t.body}"</p>
+                  <p className="text-slate-700 text-sm leading-relaxed font-medium flex-1">"{t.body}"</p>
                   <div className="flex items-center gap-3 mt-5 pt-5 border-t border-slate-100">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
                       {avatar}

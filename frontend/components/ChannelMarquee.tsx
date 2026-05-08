@@ -95,7 +95,7 @@ function ChannelChip({ name, color, domain }: { name: string; color: string; log
     : googleFavUrl(domain);
 
   return (
-    <div className="flex items-center gap-3 px-5 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-lg hover:border-emerald-300 hover:-translate-y-1 transition-all duration-300 flex-shrink-0">
+    <div className="flex items-center gap-3 px-5 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-lg hover:border-emerald-300 hover:-translate-y-1 hover:bg-emerald-50/30 transition-[transform,box-shadow,border-color,background-color] duration-300 ease-out flex-shrink-0 cursor-default">
       {stage === 3 ? (
         <div
           className={`w-10 h-10 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center text-white text-xs font-extrabold tracking-tight shadow-md ring-1 ring-white/40 flex-shrink-0`}

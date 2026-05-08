@@ -198,8 +198,17 @@
     mask-image: linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%);
     -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%);
   }
-  .group:hover .animate-marquee {
+  /* Pause BOTH rows on container hover (was only matching .animate-marquee) */
+  .group:hover .animate-marquee,
+  .group:hover .animate-marquee-reverse {
     animation-play-state: paused;
+  }
+  /* Honor users who opted out of motion */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-marquee,
+    .animate-marquee-reverse {
+      animation: none;
+    }
   }
 
   /* ── Scroll reveal — modern section-by-section animations ──
