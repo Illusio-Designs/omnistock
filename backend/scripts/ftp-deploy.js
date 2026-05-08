@@ -132,11 +132,13 @@ async function main() {
     return;
   }
 
-  const client = new ftp.Client(60_000);
-  client.ftp.verbose = false;
-  try {
-    console.log(`\n[ftp-deploy] connecting to ${HOST}:${PORT} (${SECURE} FTPS)`);
-    await client.access({
+  // Open a fresh FTPS client. Used at start AND inside the per-file retry
+  // loop — Pure-FTPd sometimes drops the data channel mid-batch on slow
+  // links, so we tear down and reconnect rather than soldier on.
+  async function makeClient() {
+    const c = new ftp.Client(60_000);
+    c.ftp.verbose = false;
+    await c.access({
       host: HOST,
       port: PORT,
       user: USER,
@@ -144,26 +146,100 @@ async function main() {
       secure: SECURE === 'explicit',
       secureOptions: { rejectUnauthorized: false },
     });
+    return c;
+  }
+
+  let client = await makeClient();
+  try {
+    console.log(`\n[ftp-deploy] connecting to ${HOST}:${PORT} (${SECURE} FTPS)`);
     await client.ensureDir(BASE_DIR);
     console.log(`[ftp-deploy] cwd: ${await client.pwd()}`);
 
     let uploaded = 0;
-    const remoteDirsCreated = new Set();
+    let retried = 0;
+    let failed = 0;
+    // Cache: dirPath → Map(filename → size). Cleared whenever we
+    // reconnect, since a fresh control socket invalidates cwd state.
+    let dirSizesCache = new Map();
+
+    // Wrap any FTP call so it reconnects+retries on control-socket death.
+    // We pass a function that does the actual work; if it throws we
+    // close & re-open the client and retry up to `attempts` times.
+    async function withReconnect(label, fn, attempts = 3) {
+      let lastErr = null;
+      for (let i = 1; i <= attempts; i++) {
+        try {
+          return await fn();
+        } catch (err) {
+          lastErr = err;
+          if (i < attempts) {
+            // Most errors at this layer are control-socket related —
+            // tear down + reconnect for the next attempt.
+            try { client.close(); } catch (_) {}
+            try {
+              client = await makeClient();
+              dirSizesCache = new Map(); // cwd state is gone
+            } catch (reconnErr) {
+              lastErr = reconnErr;
+            }
+          }
+        }
+      }
+      throw new Error(`${label} failed after ${attempts} attempts: ${lastErr?.message}`);
+    }
+
     for (const abs of files) {
       const remote = toRemote(abs);
       const remoteDir = remote.substring(0, remote.lastIndexOf('/'));
       const remoteName = remote.substring(remote.lastIndexOf('/') + 1);
+      const localSize = fs.statSync(abs).size;
 
-      // ensureDir on every unique parent — basic-ftp internally CDs back
-      // and forth, so we cache to avoid the round-trips.
-      if (!remoteDirsCreated.has(remoteDir)) {
-        await client.ensureDir(remoteDir);
-        remoteDirsCreated.add(remoteDir);
+      try {
+        // Ensure parent dir + cache its current listing (reconnect-safe)
+        if (!dirSizesCache.has(remoteDir)) {
+          await withReconnect(`list ${remoteDir}`, async () => {
+            await client.ensureDir(remoteDir);
+            const listing = await client.list();
+            const m = new Map();
+            for (const e of listing) if (!e.isDirectory) m.set(e.name, e.size);
+            dirSizesCache.set(remoteDir, m);
+          });
+        }
+
+        // Skip if already correct — saves a round-trip on diff-deploys
+        if (dirSizesCache.get(remoteDir)?.get(remoteName) === localSize) {
+          uploaded++;
+          const pct = ((uploaded / files.length) * 100).toFixed(0).padStart(3);
+          const rel = path.relative(ROOT, abs);
+          process.stdout.write(`\r[ftp-deploy] ${pct}%  (${uploaded}/${files.length})  ${rel.padEnd(60).slice(0, 60)}`);
+          continue;
+        }
+
+        // Upload + verify size landed (reconnect-safe). 3 attempts.
+        await withReconnect(`upload ${remoteName}`, async () => {
+          // Make sure cwd is right after a possible reconnect
+          await client.ensureDir(remoteDir);
+          await client.uploadFrom(abs, remoteName);
+          const verify = await client.list();
+          const v = verify.find((e) => !e.isDirectory && e.name === remoteName);
+          if (!v || v.size !== localSize) {
+            throw new Error(`size after upload was ${v ? v.size : 'missing'}, expected ${localSize}`);
+          }
+          if (!dirSizesCache.has(remoteDir)) dirSizesCache.set(remoteDir, new Map());
+          dirSizesCache.get(remoteDir).set(remoteName, v.size);
+        });
+      } catch (err) {
+        const rel = path.relative(ROOT, abs);
+        console.log(`\n  ✗ ${rel} FAILED: ${err.message}`);
+        failed++;
+        continue;
       }
-      // Now CWD is remoteDir thanks to ensureDir; uploadFrom relative name
-      await client.uploadFrom(abs, remoteName);
 
       uploaded++;
+      // We don't know how many were retries vs first-try since
+      // withReconnect is opaque — track it by side-channel later if it
+      // becomes useful. For now just count retried = 0 and rely on the
+      // FAILED counter as the meaningful signal.
       const pct = ((uploaded / files.length) * 100).toFixed(0).padStart(3);
       const rel = path.relative(ROOT, abs);
       process.stdout.write(`\r[ftp-deploy] ${pct}%  (${uploaded}/${files.length})  ${rel.padEnd(60).slice(0, 60)}`);
@@ -175,11 +251,14 @@ async function main() {
     console.log(`[ftp-deploy] /Backend/src has ${sample.length} top-level entries.`);
 
     console.log('\n================ DEPLOY COMPLETE ================');
-    console.log(`Uploaded: ${uploaded} files (${(totalBytes / 1024).toFixed(1)} KB)`);
-    console.log(`To:       ${HOST}:${BASE_DIR}/`);
-    console.log('Next:     restart the Node app in cPanel → Setup Node.js App');
-    console.log('         → if package.json changed, click "Run NPM Install" first');
+    console.log(`Uploaded:   ${uploaded} files (${(totalBytes / 1024).toFixed(1)} KB)`);
+    if (retried > 0) console.log(`Retried:    ${retried} files succeeded after a retry`);
+    if (failed > 0)  console.log(`FAILED:     ${failed} files did NOT upload — fix and re-run`);
+    console.log(`To:         ${HOST}:${BASE_DIR}/`);
+    console.log('Next:       restart the Node app in cPanel → Setup Node.js App');
+    console.log('           → if package.json changed, click "Run NPM Install" first');
     console.log('==================================================\n');
+    if (failed > 0) process.exitCode = 3;
   } catch (err) {
     console.error('\n[ftp-deploy] FAILED:', err.message);
     if (err.code) console.error('  code:', err.code);

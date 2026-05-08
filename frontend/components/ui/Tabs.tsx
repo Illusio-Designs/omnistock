@@ -44,40 +44,48 @@ export function Tabs<K extends string = string>({
 }: TabsProps<K>) {
   const s = SIZES[size];
   return (
-    <div className={cn(
-      'inline-flex bg-slate-100 rounded-xl',
-      s.wrap,
-      fullWidth && 'w-full',
-      className
-    )}>
-      {items.map((it) => {
-        const active = it.key === value;
-        return (
-          <button
-            key={it.key}
-            type="button"
-            onClick={() => !it.disabled && onChange(it.key)}
-            disabled={it.disabled}
-            className={cn(
-              'flex items-center gap-2 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
-              s.btn,
-              active ? 'bg-white text-slate-900 shadow' : 'text-slate-500 hover:text-slate-700',
-              fullWidth && 'flex-1 justify-center'
-            )}
-          >
-            {it.icon}
-            {it.label}
-            {it.badge !== undefined && it.badge !== null && it.badge !== 0 && (
-              <span className={cn(
-                'inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-[10px] font-bold',
-                active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
-              )}>
-                {it.badge}
-              </span>
-            )}
-          </button>
-        );
-      })}
+    <div
+      className={cn(
+        // Scroll container — hides scrollbar but keeps horizontal scroll/wheel/swipe
+        'overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+        fullWidth ? 'w-full' : 'max-w-full'
+      )}
+    >
+      <div className={cn(
+        'inline-flex bg-slate-100 rounded-xl',
+        s.wrap,
+        fullWidth && 'w-full',
+        className
+      )}>
+        {items.map((it) => {
+          const active = it.key === value;
+          return (
+            <button
+              key={it.key}
+              type="button"
+              onClick={() => !it.disabled && onChange(it.key)}
+              disabled={it.disabled}
+              className={cn(
+                'flex items-center gap-2 rounded-lg font-bold transition-colors whitespace-nowrap shrink-0 disabled:opacity-50 disabled:cursor-not-allowed',
+                s.btn,
+                active ? 'bg-white text-slate-900 shadow' : 'text-slate-500 hover:text-slate-700',
+                fullWidth && 'flex-1 justify-center'
+              )}
+            >
+              {it.icon}
+              {it.label}
+              {it.badge !== undefined && it.badge !== null && it.badge !== 0 && (
+                <span className={cn(
+                  'inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-[10px] font-bold',
+                  active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
+                )}>
+                  {it.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

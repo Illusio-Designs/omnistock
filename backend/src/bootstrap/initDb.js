@@ -208,6 +208,31 @@ async function initDb() {
       KEY \`referrals_referrer_idx\` (\`referrerTenantId\`, \`status\`),
       KEY \`referrals_code_idx\` (\`code\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    // Marketing leads — captures the demo modal, contact form, and pricing
+    // "Talk to Sales" submissions. Public/unauthenticated POST. Status field
+    // is the sales-pipeline stage so the founder admin can manage follow-up.
+    `CREATE TABLE IF NOT EXISTS \`leads\` (
+      \`id\` varchar(191) NOT NULL,
+      \`name\` varchar(191) NOT NULL,
+      \`email\` varchar(191) NOT NULL,
+      \`phone\` varchar(64) DEFAULT NULL,
+      \`company\` varchar(191) DEFAULT NULL,
+      \`subject\` varchar(191) DEFAULT NULL,
+      \`message\` text DEFAULT NULL,
+      \`source\` varchar(32) NOT NULL DEFAULT 'demo',
+      \`status\` varchar(32) NOT NULL DEFAULT 'NEW',
+      \`notes\` text DEFAULT NULL,
+      \`metadata\` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(\`metadata\`)),
+      \`ip\` varchar(64) DEFAULT NULL,
+      \`userAgent\` text DEFAULT NULL,
+      \`contactedAt\` datetime(3) DEFAULT NULL,
+      \`createdAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+      \`updatedAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3) ON UPDATE current_timestamp(3),
+      PRIMARY KEY (\`id\`),
+      KEY \`leads_status_idx\` (\`status\`),
+      KEY \`leads_source_idx\` (\`source\`),
+      KEY \`leads_createdAt_idx\` (\`createdAt\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
     // Idempotency keys — payment writes cache their response here for 24h
     // so a network-retry of the exact same Idempotency-Key returns the
     // original response instead of double-charging.

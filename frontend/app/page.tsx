@@ -9,6 +9,7 @@ import { publicApi } from '@/lib/api';
 import { getIcon } from '@/lib/icon';
 import { Sparkles, ArrowRight, Play, Users, Globe, Star, ChevronDown } from 'lucide-react';
 import { CardSkeleton, ShimmerTheme } from '@/components/Shimmer';
+import { useDemoTrigger } from '@/components/public/DemoTrigger';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
@@ -37,6 +38,7 @@ export default function LandingPage() {
   const [hero, setHero] = useState<ContentRow | null>(null);
   const [loading, setLoading] = useState(true);
   usePublicLoading('landing', loading);
+  const { open: openDemo } = useDemoTrigger();
 
   useEffect(() => {
     Promise.all([
@@ -94,12 +96,13 @@ export default function LandingPage() {
               {ctaPrimary.label}
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link
-              href={ctaSecondary.href}
+            <button
+              type="button"
+              onClick={() => openDemo({ source: 'demo', title: ctaSecondary.label || 'Schedule a Demo' })}
               className="inline-flex items-center gap-2 px-6 py-3 bg-[#0B1220] hover:bg-[#0B1220]/90 text-white text-sm font-semibold rounded-full transition-all group"
             >
               <Play size={12} fill="white" className="group-hover:scale-125 transition-transform" /> {ctaSecondary.label}
-            </Link>
+            </button>
           </div>
         </div>
 

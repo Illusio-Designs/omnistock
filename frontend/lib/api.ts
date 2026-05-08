@@ -266,6 +266,34 @@ export const publicApi = {
   maintenance: () => api.get('/public/maintenance'),
 };
 
+// ── Leads / demo requests ──────────────────────────────────────────
+// Public POST is unauthenticated; admin endpoints are platform-admin-only.
+export type LeadSource = 'demo' | 'contact' | 'pricing' | 'footer' | 'other';
+export type LeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'WON' | 'LOST';
+
+export interface LeadInput {
+  name: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  subject?: string;
+  message?: string;
+  source?: LeadSource;
+  metadata?: Record<string, any>;
+}
+
+export const leadsApi = {
+  // Public — no auth required
+  submit: (data: LeadInput) => api.post('/leads', data),
+  // Admin — platform-admin only
+  list: (params?: { search?: string; status?: LeadStatus | ''; source?: LeadSource | ''; page?: number; limit?: number }) =>
+    api.get('/leads/admin', { params }),
+  get: (id: string) => api.get(`/leads/admin/${id}`),
+  update: (id: string, data: { status?: LeadStatus; notes?: string | null }) =>
+    api.patch(`/leads/admin/${id}`, data),
+  delete: (id: string) => api.delete(`/leads/admin/${id}`),
+};
+
 export const dashboardApi = {
   get: () => api.get('/dashboard'),
 };

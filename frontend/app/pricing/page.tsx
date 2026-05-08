@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { PublicLayout, usePublicLoading } from '@/components/layout/PublicLayout';
 import { CheckCircle2, Sparkles, ArrowRight, X } from 'lucide-react';
 import { planApi } from '@/lib/api';
+import { useDemoTrigger } from '@/components/public/DemoTrigger';
 
 // ── Feature label catalog (mirrors backend Plan.features keys) ──────
 const FEATURE_LABELS: Record<string, string> = {
@@ -145,6 +146,7 @@ export default function PricingPage() {
   const [plans, setPlans] = useState<PlanView[]>(FALLBACK_PLANS as PlanView[]);
   const [loading, setLoading] = useState(true);
   usePublicLoading('pricing', loading);
+  const { open: openDemo } = useDemoTrigger();
 
   useEffect(() => {
     planApi.list()
@@ -248,16 +250,35 @@ export default function PricingPage() {
                 )}
               </div>
 
-              <Link
-                href={`/onboarding${plan.code ? `?plan=${plan.code}` : ''}`}
-                className={`mt-6 flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl font-bold text-sm transition-all ${
-                  plan.highlight
-                    ? 'bg-white text-emerald-700 hover:bg-emerald-50 shadow-lg'
-                    : 'bg-[#0B1220] text-white hover:bg-[#0B1220]/90'
-                }`}
-              >
-                {plan.cta} <ArrowRight size={14} />
-              </Link>
+              {plan.cta === 'Talk to Sales' ? (
+                <button
+                  type="button"
+                  onClick={() => openDemo({
+                    source: 'pricing',
+                    subject: `${plan.name} plan inquiry`,
+                    title: 'Talk to Sales',
+                    description: `Tell us about your business and we'll show you how Kartriq's ${plan.name} plan fits.`,
+                  })}
+                  className={`mt-6 flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                    plan.highlight
+                      ? 'bg-white text-emerald-700 hover:bg-emerald-50 shadow-lg'
+                      : 'bg-[#0B1220] text-white hover:bg-[#0B1220]/90'
+                  }`}
+                >
+                  {plan.cta} <ArrowRight size={14} />
+                </button>
+              ) : (
+                <Link
+                  href={`/onboarding${plan.code ? `?plan=${plan.code}` : ''}`}
+                  className={`mt-6 flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                    plan.highlight
+                      ? 'bg-white text-emerald-700 hover:bg-emerald-50 shadow-lg'
+                      : 'bg-[#0B1220] text-white hover:bg-[#0B1220]/90'
+                  }`}
+                >
+                  {plan.cta} <ArrowRight size={14} />
+                </Link>
+              )}
 
               <div className="mt-8 pt-8 border-t border-slate-200/50 space-y-3">
                 {plan.features.map(f => (

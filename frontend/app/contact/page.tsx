@@ -3,17 +3,42 @@
 import { useState } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import {
-  Sparkles, Mail, MessageCircle, Phone, MapPin, Send, CheckCircle2,
+  Sparkles, Mail, MessageCircle, Phone, MapPin, Send, CheckCircle2, AlertCircle,
 } from 'lucide-react';
+import { leadsApi } from '@/lib/api';
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 4000);
+    if (submitting) return;
+    setError(null);
+    setSubmitting(true);
+    try {
+      await leadsApi.submit({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        subject: form.subject || undefined,
+        message: form.message.trim() || undefined,
+        source: 'contact',
+        metadata: typeof window !== 'undefined' ? { path: window.location.pathname } : undefined,
+      });
+      setSubmitted(true);
+      setForm({ name: '', email: '', subject: '', message: '' });
+    } catch (err: any) {
+      const msg = err?.response?.data?.error;
+      setError(
+        Array.isArray(msg)
+          ? msg.map((m: any) => m.message || m).join(', ')
+          : (typeof msg === 'string' ? msg : 'Could not send your message. Please try again.')
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -129,8 +154,14 @@ export default function ContactPage() {
                     placeholder="Tell us how we can help…"
                   />
                 </div>
-                <button type="submit" className="btn-primary w-full justify-center py-3">
-                  Send Message <Send size={14} />
+                {error && (
+                  <div className="flex items-start gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-700">
+                    <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+                <button type="submit" disabled={submitting} className="btn-primary w-full justify-center py-3 disabled:opacity-60 disabled:cursor-not-allowed">
+                  {submitting ? 'Sending…' : (<>Send Message <Send size={14} /></>)}
                 </button>
               </form>
             )}

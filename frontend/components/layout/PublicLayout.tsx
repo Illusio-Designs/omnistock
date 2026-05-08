@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { publicApi } from '@/lib/api';
 import { getIcon } from '@/lib/icon';
 import { Loader } from '@/components/ui/Loader';
+import { DemoTriggerProvider, useDemoTrigger } from '@/components/public/DemoTrigger';
 
 interface NavLink {
   id: string;
@@ -123,6 +124,7 @@ export function PublicNav() {
 
         <div className="hidden md:flex items-center gap-2">
           <Link href="/login" className="px-3 py-2 text-sm font-semibold text-white/70 hover:text-white rounded-lg hover:bg-white/10 transition-colors">Log in</Link>
+          <NavBookDemoButton />
           <Link href="/onboarding" className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full shadow-md shadow-emerald-500/20 transition-colors">
             Get Started <ArrowRight size={13} />
           </Link>
@@ -143,6 +145,7 @@ export function PublicNav() {
           {groups.solutions.length > 0 && <MobileGroup label="Solutions" items={groups.solutions} onClick={() => setOpen(false)} />}
           {groups.resources.length > 0 && <MobileGroup label="Resources" items={groups.resources} onClick={() => setOpen(false)} />}
           {groups.company.length > 0 && <MobileGroup label="Company" items={groups.company} onClick={() => setOpen(false)} />}
+          <MobileBookDemoRow onClose={() => setOpen(false)} />
           <div className="flex gap-2 pt-3 border-t border-white/10">
             <Link href="/login" className="flex-1 justify-center inline-flex items-center px-4 py-2.5 text-sm font-semibold text-white/80 rounded-xl bg-white/10 hover:bg-white/15 transition-colors">Log in</Link>
             <Link href="/onboarding" className="btn-primary flex-1 justify-center">Get Started</Link>
@@ -150,6 +153,32 @@ export function PublicNav() {
         </div>
       )}
     </header>
+  );
+}
+
+function NavBookDemoButton() {
+  const { open } = useDemoTrigger();
+  return (
+    <button
+      type="button"
+      onClick={() => open({ source: 'demo' })}
+      className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold text-white/85 border border-white/15 hover:border-emerald-300/60 hover:bg-white/10 rounded-full transition-colors"
+    >
+      Book a Demo
+    </button>
+  );
+}
+
+function MobileBookDemoRow({ onClose }: { onClose: () => void }) {
+  const { open } = useDemoTrigger();
+  return (
+    <button
+      type="button"
+      onClick={() => { onClose(); open({ source: 'demo' }); }}
+      className="w-full text-left px-3 py-2 text-sm font-semibold text-white/80 rounded-lg hover:bg-white/10"
+    >
+      Book a Demo
+    </button>
   );
 }
 
@@ -362,16 +391,18 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <PublicLoadingContext.Provider value={ctxValue}>
-      <div className="min-h-screen flex flex-col bg-white">
-        <PublicNav />
-        <main className="flex-1">{children}</main>
-        <PublicFooter />
-      </div>
-      {isLoading && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white">
-          <Loader size="lg" />
+      <DemoTriggerProvider>
+        <div className="min-h-screen flex flex-col bg-white">
+          <PublicNav />
+          <main className="flex-1">{children}</main>
+          <PublicFooter />
         </div>
-      )}
+        {isLoading && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white">
+            <Loader size="lg" />
+          </div>
+        )}
+      </DemoTriggerProvider>
     </PublicLoadingContext.Provider>
   );
 }

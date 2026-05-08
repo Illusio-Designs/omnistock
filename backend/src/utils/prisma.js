@@ -287,6 +287,7 @@ const TABLE_MAP = {
   return: 'returns', invoice: 'invoices', payment: 'payments', shipment: 'shipments',
   supportTicket: 'support_tickets', ticketMessage: 'ticket_messages',
   tenantWallet: 'tenant_wallets', walletTransaction: 'wallet_transactions',
+  lead: 'leads',
 };
 
 // ── UPDATE data builder (handles { increment } etc.) ────────────────
