@@ -52,12 +52,11 @@ export function PhoneField({
         value={value}
         onChange={(phone) => onChange(phone)}
         disabled={disabled}
-        placeholder={placeholder ?? '98765 43210'}
-        // Visual: hide the +91 from the input, render it as a small chip
-        // between the country button and the digits — Swiggy/Zomato style.
-        // onChange still emits the full E.164 value.
-        disableDialCodeAndPrefix
-        showDisabledDialCodeAndPrefix
+        placeholder={placeholder ?? 'Phone number'}
+        // Keep the dial code inline with the digits ("+91 98765 43210") and
+        // lock it so the user can't accidentally delete it. Matches the
+        // reference design and modern intl phone-input UX.
+        forceDialCode
         className={cn('phone-field', error && 'phone-field--error')}
         inputClassName="phone-field__input"
         countrySelectorStyleProps={{
@@ -65,10 +64,11 @@ export function PhoneField({
           dropdownStyleProps: {
             className: 'phone-field__dropdown',
             listItemClassName: 'phone-field__dropdown-item',
+            listItemSelectedClassName: 'phone-field__dropdown-item--selected',
+            listItemFocusedClassName: 'phone-field__dropdown-item--focused',
+            listItemCountryNameClassName: 'phone-field__dropdown-name',
+            listItemDialCodeClassName: 'phone-field__dropdown-dial',
           },
-        }}
-        dialCodePreviewStyleProps={{
-          className: 'phone-field__dial-code',
         }}
       />
       {hint && !error && <p className="text-xs text-slate-500 mt-1">{hint}</p>}
