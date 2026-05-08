@@ -17,6 +17,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { HelpCircle, X, LifeBuoy, Send, Check, Keyboard, BookOpen, MessageSquare, ChevronDown, Mail } from 'lucide-react';
 import { ticketApi } from '@/lib/api';
+import { Select } from '@/components/ui/Select';
 
 interface FaqItem {
   q: string;
@@ -334,33 +335,33 @@ function ContactForm({ onSent }: { onSent: () => void }) {
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">Category</label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/15 focus:border-emerald-400"
-          >
-            <option value="billing">Billing</option>
-            <option value="technical">Technical issue</option>
-            <option value="account">Account</option>
-            <option value="feature">Feature request</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">Priority</label>
-          <select
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/15 focus:border-emerald-400"
-          >
-            <option value="low">Low</option>
-            <option value="normal">Normal</option>
-            <option value="high">High</option>
-            <option value="urgent">Urgent</option>
-          </select>
-        </div>
+        <Select
+          fullWidth
+          size="sm"
+          label="Category"
+          value={category}
+          onChange={setCategory}
+          options={[
+            { value: 'billing', label: 'Billing' },
+            { value: 'technical', label: 'Technical issue' },
+            { value: 'account', label: 'Account' },
+            { value: 'feature', label: 'Feature request' },
+            { value: 'other', label: 'Other' },
+          ]}
+        />
+        <Select
+          fullWidth
+          size="sm"
+          label="Priority"
+          value={priority}
+          onChange={setPriority}
+          options={[
+            { value: 'low', label: 'Low' },
+            { value: 'normal', label: 'Normal' },
+            { value: 'high', label: 'High' },
+            { value: 'urgent', label: 'Urgent' },
+          ]}
+        />
       </div>
 
       <div>
