@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { publicApi } from '@/lib/api';
+import { useDemoTrigger } from '@/components/public/DemoTrigger';
 import {
   domainFor, logoDevUrl, iconHorseUrl, googleFaviconUrl, getChannelInitials,
 } from '@/lib/channel-logos';
@@ -88,6 +89,7 @@ export default function IntegrationsPage() {
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'live' | 'soon'>('all');
+  const { open: openDemo } = useDemoTrigger();
 
   useEffect(() => {
     publicApi.integrations()
@@ -266,12 +268,13 @@ export default function IntegrationsPage() {
               >
                 Try Kartriq Free <ArrowRight size={14} />
               </Link>
-              <Link
-                href="/contact"
+              <button
+                type="button"
+                onClick={() => openDemo({ source: 'demo', subject: 'Integrations inquiry' })}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 hover:border-emerald-300 text-sm font-bold rounded-full transition-all"
               >
                 Schedule a Demo
-              </Link>
+              </button>
             </div>
           </div>
         </section>

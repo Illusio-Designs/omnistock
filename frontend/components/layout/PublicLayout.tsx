@@ -122,10 +122,10 @@ export function PublicNav() {
           )}
         </nav>
 
-        <div className="hidden md:flex items-center gap-2">
-          <Link href="/login" className="px-3 py-2 text-sm font-semibold text-white/70 hover:text-white rounded-lg hover:bg-white/10 transition-colors">Log in</Link>
+        <div className="hidden md:flex items-center gap-2 shrink-0">
+          <Link href="/login" className="px-3 py-2 text-sm font-semibold text-white/70 hover:text-white rounded-lg hover:bg-white/10 whitespace-nowrap transition-colors">Log in</Link>
           <NavBookDemoButton />
-          <Link href="/onboarding" className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full shadow-md shadow-emerald-500/20 transition-colors">
+          <Link href="/onboarding" className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full shadow-md shadow-emerald-500/20 whitespace-nowrap transition-colors">
             Get Started <ArrowRight size={13} />
           </Link>
         </div>
@@ -162,7 +162,7 @@ function NavBookDemoButton() {
     <button
       type="button"
       onClick={() => open({ source: 'demo' })}
-      className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold text-white/85 border border-white/15 hover:border-emerald-300/60 hover:bg-white/10 rounded-full transition-colors"
+      className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold text-white/85 border border-white/15 hover:border-emerald-300/60 hover:bg-white/10 rounded-full whitespace-nowrap transition-colors"
     >
       Book a Demo
     </button>
@@ -188,7 +188,7 @@ function NavLinkRow({ href, current, children }: { href: string; current: string
     <Link
       href={href}
       className={cn(
-        'px-4 py-2 text-sm font-semibold rounded-lg transition-colors',
+        'px-4 py-2 text-sm font-semibold rounded-lg whitespace-nowrap transition-colors',
         active ? 'text-white bg-white/10' : 'text-white/70 hover:text-white hover:bg-white/10'
       )}
     >
@@ -210,7 +210,7 @@ function Dropdown({
     <div className="relative" onMouseEnter={onEnter} onMouseLeave={onLeave}>
       <button
         className={cn(
-          'flex items-center gap-1 px-4 py-2 text-sm font-semibold rounded-lg transition-colors',
+          'flex items-center gap-1 px-4 py-2 text-sm font-semibold rounded-lg whitespace-nowrap transition-colors',
           active ? 'text-white bg-white/10' : 'text-white/70 hover:text-white hover:bg-white/10'
         )}
       >
