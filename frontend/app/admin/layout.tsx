@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useAuthStore } from '@/store/auth.store';
 import { Sidebar, type SidebarNavGroup } from '@/components/layout/Sidebar';
 import { Topbar } from '@/components/layout/Topbar';
+import { CommandPalette } from '@/components/CommandPalette';
 import {
   LayoutDashboard, Package2, Building2, LifeBuoy, FileText, FileEdit,
   Search, Settings, Activity, Users, BarChart3, Cpu, Inbox,
@@ -66,6 +67,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="flex-1 animate-fade-in">
           {children}
         </div>
+        {/* Mount the global command palette so ⌘K / Ctrl+K works on
+            admin pages too — same component used by DashboardLayout. */}
+        <CommandPalette />
       </main>
     </div>
   );

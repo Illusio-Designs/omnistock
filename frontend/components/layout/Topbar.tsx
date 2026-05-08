@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Search, Mail, ChevronDown, Menu, Sparkles, X } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useUIStore } from '@/store/ui.store';
@@ -17,6 +18,17 @@ export function Topbar() {
   const { query, setQuery, clear } = useSearchStore();
   const displayUser = user || { name: 'Dev User', role: 'SUPER_ADMIN', email: 'dev@kartriq.in' };
 
+  // Render the platform-correct shortcut label after mount (Mac glyphs would
+  // render as a missing-character box on most Windows fonts). Rendering "⌘K"
+  // by default during SSR + swapping after hydration avoids hydration warnings.
+  const [shortcutLabel, setShortcutLabel] = useState('Ctrl+K');
+  useEffect(() => {
+    const isMac = /Mac|iPod|iPhone|iPad/i.test(
+      navigator.platform || navigator.userAgent || ''
+    );
+    setShortcutLabel(isMac ? '⌘K' : 'Ctrl+K');
+  }, []);
+
   return (
     <header className="sticky top-0 z-30 bg-[#0B1220]/95 backdrop-blur-xl border-b border-white/10 px-4 md:px-6 h-16 flex items-center gap-3">
       {/* Mobile menu toggle */}
@@ -28,25 +40,23 @@ export function Topbar() {
       </button>
 
       {/* Search — single visible control. Type into it to filter the
-          current page (per-page useSearchStore). Press ⌘K (or click the
-          kbd hint on the right) to open the global command palette
-          instead. The two used to be separate controls in the top bar;
-          combining them removes the visual duplication while keeping
-          both behaviours. */}
-      <div className="relative flex-1 max-w-xl">
-        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+          current page (per-page useSearchStore). Press ⌘K / Ctrl+K (or
+          click the kbd chip on the right) to open the global command
+          palette instead. */}
+      <div className="relative flex-1 max-w-xl group">
+        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 group-focus-within:text-emerald-300 transition-colors" />
         <input
-          placeholder="Search this page · or press ⌘K for command palette"
+          placeholder={`Search this page  ·  ${shortcutLabel} for command palette`}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full pl-11 pr-20 py-2.5 text-sm text-white bg-white/[0.06] border border-white/10 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/15 focus:border-emerald-400/60 placeholder:text-white/40 transition-all"
+          className="w-full pl-11 pr-24 py-2.5 text-sm text-white bg-white/[0.06] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/15 focus:border-emerald-400/60 placeholder:text-white/45 transition-all"
         />
         {query ? (
           <button
             type="button"
             onClick={clear}
             aria-label="Clear search"
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-white/40 hover:text-white rounded-md"
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 rounded-md transition-colors"
           >
             <X size={14} />
           </button>
@@ -54,11 +64,11 @@ export function Topbar() {
           <button
             type="button"
             onClick={() => window.dispatchEvent(new Event('open-command-palette'))}
-            aria-label="Open command palette (⌘K)"
+            aria-label={`Open command palette (${shortcutLabel})`}
             title="Open command palette"
-            className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-[10px] font-mono font-bold text-white/50 hover:text-white bg-white/[0.06] hover:bg-white/10 border border-white/10 rounded-md transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center px-2 py-1 text-[11px] font-bold tracking-tight text-white/70 hover:text-white bg-white/10 hover:bg-white/20 border border-white/15 rounded-md shadow-inner transition-colors whitespace-nowrap"
           >
-            ⌘K
+            {shortcutLabel}
           </button>
         )}
       </div>
