@@ -282,6 +282,32 @@ export interface LeadInput {
   metadata?: Record<string, any>;
 }
 
+// ── Changelog ("What's new") ───────────────────────────────────────
+// Public GET is unauthenticated; admin endpoints are platform-admin-only.
+export type ChangelogTag = 'feature' | 'fix' | 'security' | 'improve';
+
+export interface ChangelogEntry {
+  id: string;
+  title: string;
+  tag: ChangelogTag;
+  highlights: string[];
+  publishedAt?: string | null;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const changelogApi = {
+  list: () => api.get('/changelog'),
+  adminList: () => api.get('/changelog/admin'),
+  adminGet: (id: string) => api.get(`/changelog/admin/${id}`),
+  adminCreate: (data: { title: string; tag: ChangelogTag; highlights: string[]; isPublished?: boolean; publishedAt?: string | null }) =>
+    api.post('/changelog/admin', data),
+  adminUpdate: (id: string, data: Partial<{ title: string; tag: ChangelogTag; highlights: string[]; isPublished: boolean; publishedAt: string | null }>) =>
+    api.patch(`/changelog/admin/${id}`, data),
+  adminDelete: (id: string) => api.delete(`/changelog/admin/${id}`),
+};
+
 export const leadsApi = {
   // Public — no auth required
   submit: (data: LeadInput) => api.post('/leads', data),

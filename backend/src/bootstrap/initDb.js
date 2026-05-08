@@ -208,6 +208,22 @@ async function initDb() {
       KEY \`referrals_referrer_idx\` (\`referrerTenantId\`, \`status\`),
       KEY \`referrals_code_idx\` (\`code\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    // Changelog entries — "What's new" releases shown in the topbar drawer.
+    // CMS-managed by platform admins via /admin/changelog so we don't need a
+    // code deploy for every release note. Tag controls the badge colour;
+    // highlights is a JSON array of bullet strings.
+    `CREATE TABLE IF NOT EXISTS \`changelog_entries\` (
+      \`id\` varchar(191) NOT NULL,
+      \`title\` varchar(191) NOT NULL,
+      \`tag\` varchar(16) NOT NULL DEFAULT 'feature',
+      \`highlights\` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(\`highlights\`)),
+      \`publishedAt\` datetime(3) DEFAULT NULL,
+      \`isPublished\` tinyint(1) NOT NULL DEFAULT 0,
+      \`createdAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+      \`updatedAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3) ON UPDATE current_timestamp(3),
+      PRIMARY KEY (\`id\`),
+      KEY \`changelog_published_idx\` (\`isPublished\`, \`publishedAt\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
     // Marketing leads — captures the demo modal, contact form, and pricing
     // "Talk to Sales" submissions. Public/unauthenticated POST. Status field
     // is the sales-pipeline stage so the founder admin can manage follow-up.

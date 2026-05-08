@@ -288,6 +288,7 @@ const TABLE_MAP = {
   supportTicket: 'support_tickets', ticketMessage: 'ticket_messages',
   tenantWallet: 'tenant_wallets', walletTransaction: 'wallet_transactions',
   lead: 'leads',
+  changelogEntry: 'changelog_entries',
 };
 
 // ── UPDATE data builder (handles { increment } etc.) ────────────────

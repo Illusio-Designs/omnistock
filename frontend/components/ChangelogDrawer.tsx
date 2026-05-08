@@ -17,7 +17,13 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Megaphone, X, Sparkles } from 'lucide-react';
-import { CHANGELOG, type ChangelogEntry, type ChangelogTag } from '@/data/changelog';
+import { CHANGELOG as STATIC_CHANGELOG, type ChangelogEntry as StaticChangelogEntry, type ChangelogTag } from '@/data/changelog';
+import { changelogApi } from '@/lib/api';
+
+// Drawer-internal entry shape — same fields whether sourced from the API or
+// the legacy data/changelog.ts fallback. The API returns `date` as the
+// publishedAt timestamp.
+type ChangelogEntry = StaticChangelogEntry;
 
 const STORAGE_KEY = 'changelog-last-seen';
 
@@ -34,21 +40,35 @@ function formatDate(iso: string) {
   } catch { return iso; }
 }
 
-/** Hook for the Topbar trigger — returns whether there's a new entry. */
+/** Hook for the Topbar trigger — returns whether there's a new entry.
+ *  Pulls the newest entry id from the API (falls back to the static data
+ *  file if the request fails so the dot still works in offline / dev). */
 export function useChangelogUnread() {
   const [unread, setUnread] = useState(false);
 
   useEffect(() => {
-    const check = () => {
+    let cancelled = false;
+    const check = async () => {
       if (typeof window === 'undefined') return;
+      let newestId = '';
+      try {
+        const r = await changelogApi.list();
+        const list: ChangelogEntry[] = r.data || [];
+        newestId = list[0]?.id || '';
+      } catch {
+        newestId = STATIC_CHANGELOG[0]?.id || '';
+      }
+      if (cancelled) return;
       const seen = window.localStorage.getItem(STORAGE_KEY);
-      const newest = CHANGELOG[0]?.id || '';
-      setUnread(!!newest && seen !== newest);
+      setUnread(!!newestId && seen !== newestId);
     };
     check();
     const onSeen = () => check();
     window.addEventListener('changelog-seen', onSeen);
-    return () => window.removeEventListener('changelog-seen', onSeen);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('changelog-seen', onSeen);
+    };
   }, []);
 
   return unread;
@@ -56,6 +76,8 @@ export function useChangelogUnread() {
 
 export function ChangelogDrawer() {
   const [open, setOpen] = useState(false);
+  const [entries, setEntries] = useState<ChangelogEntry[] | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const onOpen = () => setOpen(true);
@@ -68,15 +90,37 @@ export function ChangelogDrawer() {
     };
   }, [open]);
 
+  // Fetch entries when the drawer opens (cached for the lifetime of the
+  // page; if you publish a new entry while the user has the app open,
+  // a refresh picks it up). Falls back to the static file on failure.
+  useEffect(() => {
+    if (!open || entries) return;
+    setLoading(true);
+    changelogApi.list()
+      .then((r) => {
+        const list: any[] = r.data || [];
+        const normalised: ChangelogEntry[] = list.map((e) => ({
+          id: e.id,
+          title: e.title,
+          tag: e.tag as ChangelogTag,
+          highlights: Array.isArray(e.highlights) ? e.highlights : [],
+          date: typeof e.date === 'string' ? e.date.slice(0, 10) : new Date().toISOString().slice(0, 10),
+        }));
+        setEntries(normalised.length ? normalised : STATIC_CHANGELOG);
+      })
+      .catch(() => setEntries(STATIC_CHANGELOG))
+      .finally(() => setLoading(false));
+  }, [open, entries]);
+
   // Mark the newest entry as seen the first time the drawer is opened.
   useEffect(() => {
-    if (!open) return;
-    const newest = CHANGELOG[0]?.id;
+    if (!open || !entries || entries.length === 0) return;
+    const newest = entries[0]?.id;
     if (newest) {
       window.localStorage.setItem(STORAGE_KEY, newest);
       window.dispatchEvent(new Event('changelog-seen'));
     }
-  }, [open]);
+  }, [open, entries]);
 
   if (!open || typeof document === 'undefined') return null;
 
@@ -119,10 +163,12 @@ export function ChangelogDrawer() {
 
         {/* Entries */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
-          {CHANGELOG.length === 0 ? (
+          {loading && !entries ? (
+            <div className="text-center py-12 text-sm text-slate-400">Loading…</div>
+          ) : !entries || entries.length === 0 ? (
             <div className="text-center py-12 text-sm text-slate-400">No releases yet.</div>
           ) : (
-            CHANGELOG.map((entry) => <ChangelogCard key={entry.id} entry={entry} />)
+            entries.map((entry) => <ChangelogCard key={entry.id} entry={entry} />)
           )}
         </div>
 

@@ -17,6 +17,9 @@ export function Topbar() {
   const { setMobileSidebar } = useUIStore();
   const { query, setQuery, clear } = useSearchStore();
   const displayUser = user || { name: 'Dev User', role: 'SUPER_ADMIN', email: 'dev@kartriq.in' };
+  // Platform admins don't have a per-tenant wallet — hide the pill so they
+  // don't see a "₹0.00" widget that has no meaning for their account.
+  const isPlatformAdmin = !!user?.isPlatformAdmin;
 
   // Render the platform-correct shortcut label after mount (Mac glyphs would
   // render as a missing-character box on most Windows fonts). Rendering "⌘K"
@@ -96,8 +99,8 @@ export function Topbar() {
           <HelpTrigger />
         </Tooltip>
 
-        {/* Wallet balance */}
-        <WalletPill />
+        {/* Wallet balance — tenant-only, hidden from platform admins */}
+        {!isPlatformAdmin && <WalletPill />}
 
         {/* Mail */}
         <Tooltip content="Inbox" side="bottom">

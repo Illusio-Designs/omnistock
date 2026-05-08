@@ -77,6 +77,7 @@ const metricsRoutes = require('./routes/metrics.routes');
 const referralRoutes = require('./routes/referral.routes');
 const devicesRoutes = require('./routes/devices.routes');
 const leadsRoutes = require('./routes/leads.routes');
+const changelogRoutes = require('./routes/changelog.routes');
 const { autoAudit } = require('./services/audit.service');
 
 const { initDb } = require('./bootstrap/initDb');
@@ -217,6 +218,7 @@ app.use(`${api}/admin`,      adminRoutes);
 app.use(`${api}/roles`,      roleRoutes);
 app.use(`${api}/public`,     publicRoutes);
 app.use(`${api}/leads`,      leadsRoutes);
+app.use(`${api}/changelog`,  changelogRoutes);
 app.use(`${api}/webhooks`,   webhookRoutes);
 app.use(`${api}/payments`,   paymentRoutes);
 app.use(`${api}/users`,      usersRoutes);

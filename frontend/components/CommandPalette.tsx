@@ -20,9 +20,10 @@ import { useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Package, ShoppingBag, Users, Plug, Truck, FileText, Building2,
   Store, Wallet, Settings, BarChart3, Gauge, Plus, Search, ArrowRight, CornerDownLeft,
-  ShoppingCart, Tag, Briefcase, LifeBuoy,
+  ShoppingCart, Tag, Briefcase, LifeBuoy, Activity, Cpu, FileEdit, Inbox, Megaphone,
 } from 'lucide-react';
-import { productApi, orderApi, customerApi } from '@/lib/api';
+import { productApi, orderApi, customerApi, leadsApi, adminApi } from '@/lib/api';
+import { useAuthStore } from '@/store/auth.store';
 
 type CmdItem = {
   id: string;
@@ -41,6 +42,7 @@ function isMac() {
 
 export function CommandPalette() {
   const router = useRouter();
+  const isAdmin = useAuthStore((s) => !!s.user?.isPlatformAdmin);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
@@ -86,8 +88,42 @@ export function CommandPalette() {
   }, [open]);
 
   // ── Static commands ─────────────────────────────────────────────────────
+  // Two distinct command sets: the Founder/platform-admin one (manages the
+  // SaaS itself) and the tenant one (manages their own business). We pick
+  // based on isPlatformAdmin so a founder doesn't get useless "Create new
+  // product" entries and a tenant doesn't see /admin pages they can't open.
   const staticItems: CmdItem[] = useMemo(() => {
     const go = (href: string) => () => { setOpen(false); router.push(href); };
+
+    if (isAdmin) {
+      return [
+        // Quick actions
+        { id: 'admin-tenants',  group: 'Quick actions', label: 'View all tenants',   icon: Building2, run: go('/admin/tenants') },
+        { id: 'admin-leads',    group: 'Quick actions', label: 'View leads inbox',   icon: Inbox,     run: go('/admin/leads') },
+        { id: 'admin-tickets',  group: 'Quick actions', label: 'Open support tickets', icon: LifeBuoy, run: go('/admin/tickets') },
+
+        // Platform pages
+        { id: 'admin-overview',   group: 'Platform', label: 'Overview',       icon: LayoutDashboard, run: go('/admin') },
+        { id: 'admin-tenants-p',  group: 'Platform', label: 'Tenants',        icon: Building2,       run: go('/admin/tenants') },
+        { id: 'admin-plans',      group: 'Platform', label: 'Subscriptions',  keywords: 'plans pricing billing tiers', icon: Wallet, run: go('/admin/plans') },
+        { id: 'admin-tickets-p',  group: 'Platform', label: 'Tickets',        icon: LifeBuoy,        run: go('/admin/tickets') },
+        { id: 'admin-leads-p',    group: 'Platform', label: 'Leads',          keywords: 'demo contact form inquiries', icon: Inbox, run: go('/admin/leads') },
+        { id: 'admin-analytics',  group: 'Platform', label: 'Analytics',      icon: BarChart3,       run: go('/admin/analytics') },
+
+        // Content
+        { id: 'admin-blog',      group: 'Content', label: 'Blog',         icon: FileText,  run: go('/admin/blog') },
+        { id: 'admin-content',   group: 'Content', label: 'Page content', icon: FileEdit,  run: go('/admin/content') },
+        { id: 'admin-changelog', group: 'Content', label: "What's new",   keywords: 'changelog release notes', icon: Megaphone, run: go('/admin/changelog') },
+        { id: 'admin-seo',       group: 'Content', label: 'SEO',          icon: Search,    run: go('/admin/seo') },
+
+        // System
+        { id: 'admin-audit',    group: 'System', label: 'Audit log',       icon: Activity, run: go('/admin/audit') },
+        { id: 'admin-jobs',     group: 'System', label: 'Background jobs', icon: Cpu,      run: go('/admin/jobs') },
+        { id: 'admin-settings', group: 'System', label: 'Platform settings', icon: Settings, run: go('/admin/settings') },
+      ];
+    }
+
+    // Tenant set
     return [
       // Quick actions
       { id: 'new-order',    group: 'Quick actions', label: 'Create new order',    icon: Plus, run: go('/orders?new=1') },
@@ -120,7 +156,7 @@ export function CommandPalette() {
       { id: 'go-2fa',      group: 'Settings', label: 'Two-factor authentication', keywords: '2fa mfa security totp', icon: Settings, run: go('/settings?tab=security') },
       { id: 'go-export',   group: 'Settings', label: 'Export my data',   keywords: 'gdpr dpdp download data', icon: FileText, run: go('/settings?tab=security') },
     ];
-  }, [router]);
+  }, [router, isAdmin]);
 
   // ── Fuzzy filter on static items ────────────────────────────────────────
   const filteredStatic = useMemo(() => {
@@ -134,7 +170,10 @@ export function CommandPalette() {
     });
   }, [query, staticItems]);
 
-  // ── Debounced remote search (products + orders + customers) ─────────────
+  // ── Debounced remote search ────────────────────────────────────────────
+  // Tenant: products + orders + customers. Founder: tenants + leads + tickets.
+  // The two sets are mutually exclusive — calling tenant APIs as a founder
+  // would either fail (no req.tenant) or return arbitrary impersonated data.
   useEffect(() => {
     if (!open) return;
     const q = query.trim();
@@ -142,49 +181,100 @@ export function CommandPalette() {
     setSearching(true);
     const handle = setTimeout(async () => {
       try {
-        const [p, o, c] = await Promise.allSettled([
-          productApi.list({ search: q, limit: 5 }),
-          orderApi.list({ search: q, limit: 5 }),
-          customerApi.list({ search: q, limit: 5 }),
-        ]);
         const items: CmdItem[] = [];
-        if (p.status === 'fulfilled') {
-          const arr = p.value.data?.products || p.value.data || [];
-          for (const r of arr) {
-            items.push({
-              id: `prod:${r.id}`,
-              group: 'Products',
-              label: r.name || r.sku || r.id,
-              hint: r.sku ? `SKU: ${r.sku}` : undefined,
-              icon: Package,
-              run: () => { setOpen(false); router.push(`/products/${r.id}`); },
-            });
+        if (isAdmin) {
+          const [t, l, k] = await Promise.allSettled([
+            adminApi.tenants({ search: q, limit: 5 }),
+            leadsApi.list({ search: q, limit: 5 }),
+            adminApi.tickets({ status: undefined } as any).catch(() => ({ data: [] })),
+          ]);
+          if (t.status === 'fulfilled') {
+            const arr = t.value.data?.tenants || t.value.data || [];
+            for (const r of arr.slice(0, 5)) {
+              items.push({
+                id: `tenant:${r.id}`,
+                group: 'Tenants',
+                label: r.businessName || r.slug || r.id,
+                hint: r.ownerEmail || r.status,
+                icon: Building2,
+                run: () => { setOpen(false); router.push(`/admin/tenants/${r.id}`); },
+              });
+            }
           }
-        }
-        if (o.status === 'fulfilled') {
-          const arr = o.value.data?.orders || o.value.data || [];
-          for (const r of arr) {
-            items.push({
-              id: `ord:${r.id}`,
-              group: 'Orders',
-              label: r.orderNumber || r.id,
-              hint: [r.status, r.totalAmount && `₹${r.totalAmount}`].filter(Boolean).join(' · '),
-              icon: ShoppingBag,
-              run: () => { setOpen(false); router.push(`/orders?id=${r.id}`); },
-            });
+          if (l.status === 'fulfilled') {
+            const arr = l.value.data?.leads || [];
+            for (const r of arr) {
+              items.push({
+                id: `lead:${r.id}`,
+                group: 'Leads',
+                label: r.name || r.email || r.id,
+                hint: [r.email, r.status].filter(Boolean).join(' · '),
+                icon: Inbox,
+                run: () => { setOpen(false); router.push(`/admin/leads?id=${r.id}`); },
+              });
+            }
           }
-        }
-        if (c.status === 'fulfilled') {
-          const arr = c.value.data?.customers || c.value.data || [];
-          for (const r of arr) {
-            items.push({
-              id: `cus:${r.id}`,
-              group: 'Customers',
-              label: r.name || r.email || r.id,
-              hint: r.email || r.phone,
-              icon: Users,
-              run: () => { setOpen(false); router.push(`/customers?id=${r.id}`); },
-            });
+          if (k.status === 'fulfilled') {
+            const arr = (k.value as any).data || [];
+            const ql = q.toLowerCase();
+            for (const r of arr.filter((x: any) =>
+              (x.subject || '').toLowerCase().includes(ql) ||
+              (x.tenant?.businessName || '').toLowerCase().includes(ql)
+            ).slice(0, 5)) {
+              items.push({
+                id: `ticket:${r.id}`,
+                group: 'Tickets',
+                label: r.subject || r.id,
+                hint: [r.tenant?.businessName, r.status].filter(Boolean).join(' · '),
+                icon: LifeBuoy,
+                run: () => { setOpen(false); router.push(`/admin/tickets/${r.id}`); },
+              });
+            }
+          }
+        } else {
+          const [p, o, c] = await Promise.allSettled([
+            productApi.list({ search: q, limit: 5 }),
+            orderApi.list({ search: q, limit: 5 }),
+            customerApi.list({ search: q, limit: 5 }),
+          ]);
+          if (p.status === 'fulfilled') {
+            const arr = p.value.data?.products || p.value.data || [];
+            for (const r of arr) {
+              items.push({
+                id: `prod:${r.id}`,
+                group: 'Products',
+                label: r.name || r.sku || r.id,
+                hint: r.sku ? `SKU: ${r.sku}` : undefined,
+                icon: Package,
+                run: () => { setOpen(false); router.push(`/products/${r.id}`); },
+              });
+            }
+          }
+          if (o.status === 'fulfilled') {
+            const arr = o.value.data?.orders || o.value.data || [];
+            for (const r of arr) {
+              items.push({
+                id: `ord:${r.id}`,
+                group: 'Orders',
+                label: r.orderNumber || r.id,
+                hint: [r.status, r.totalAmount && `₹${r.totalAmount}`].filter(Boolean).join(' · '),
+                icon: ShoppingBag,
+                run: () => { setOpen(false); router.push(`/orders?id=${r.id}`); },
+              });
+            }
+          }
+          if (c.status === 'fulfilled') {
+            const arr = c.value.data?.customers || c.value.data || [];
+            for (const r of arr) {
+              items.push({
+                id: `cus:${r.id}`,
+                group: 'Customers',
+                label: r.name || r.email || r.id,
+                hint: r.email || r.phone,
+                icon: Users,
+                run: () => { setOpen(false); router.push(`/customers?id=${r.id}`); },
+              });
+            }
           }
         }
         setRemote(items);
@@ -193,7 +283,7 @@ export function CommandPalette() {
       }
     }, 200);
     return () => clearTimeout(handle);
-  }, [open, query, router]);
+  }, [open, query, router, isAdmin]);
 
   const allItems = useMemo(() => [...filteredStatic, ...remote], [filteredStatic, remote]);
 

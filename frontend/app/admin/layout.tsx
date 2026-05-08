@@ -10,7 +10,7 @@ import { ChangelogDrawer } from '@/components/ChangelogDrawer';
 import { HelpDrawer } from '@/components/HelpDrawer';
 import {
   LayoutDashboard, Package2, Building2, LifeBuoy, FileText, FileEdit,
-  Search, Settings, Activity, Users, BarChart3, Cpu, Inbox,
+  Search, Settings, Activity, Users, BarChart3, Cpu, Inbox, Megaphone,
 } from 'lucide-react';
 
 // Admin nav — same visual layout as the tenant sidebar, different items.
@@ -31,6 +31,7 @@ const ADMIN_NAV_GROUPS: SidebarNavGroup[] = [
     items: [
       { label: 'Blog',           href: '/admin/blog',       icon: FileText },
       { label: 'Page Content',   href: '/admin/content',    icon: FileEdit },
+      { label: "What's new",     href: '/admin/changelog',  icon: Megaphone },
       { label: 'SEO',            href: '/admin/seo',        icon: Search },
     ],
   },
