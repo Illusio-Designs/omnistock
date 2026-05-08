@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { publicApi } from '@/lib/api';
 import { getIcon } from '@/lib/icon';
 import { Loader } from '@/components/ui/Loader';
-import { DemoTriggerProvider, useDemoTrigger } from '@/components/public/DemoTrigger';
+import { useDemoTrigger } from '@/components/public/DemoTrigger';
 
 interface NavLink {
   id: string;
@@ -391,18 +391,16 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <PublicLoadingContext.Provider value={ctxValue}>
-      <DemoTriggerProvider>
-        <div className="min-h-screen flex flex-col bg-white">
-          <PublicNav />
-          <main className="flex-1">{children}</main>
-          <PublicFooter />
+      <div className="min-h-screen flex flex-col bg-white">
+        <PublicNav />
+        <main className="flex-1">{children}</main>
+        <PublicFooter />
+      </div>
+      {isLoading && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white">
+          <Loader size="lg" />
         </div>
-        {isLoading && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white">
-            <Loader size="lg" />
-          </div>
-        )}
-      </DemoTriggerProvider>
+      )}
     </PublicLoadingContext.Provider>
   );
 }
