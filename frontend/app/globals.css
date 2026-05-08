@@ -163,87 +163,9 @@
       transition-all duration-200;
   }
 
-  /* ── Phone field (react-international-phone) ────────────────────────
-     Layout: [🇮🇳 ▼ | +91 98765 43210]
-     One cohesive pill with the country button on the left and the
-     dial-code-prefixed digits as a single input. Reference: modern
-     international phone inputs (Adyen, Stripe Identity, Razorpay). */
-  .phone-field {
-    @apply flex w-full items-stretch rounded-xl border border-slate-200
-      dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden
-      transition-all duration-200
-      hover:border-slate-300 dark:hover:border-slate-600
-      focus-within:ring-4 focus-within:ring-emerald-500/10
-      focus-within:border-emerald-400 dark:focus-within:border-emerald-500;
-  }
-  .phone-field--error {
-    @apply border-rose-300 dark:border-rose-800
-      focus-within:ring-rose-500/10 focus-within:border-rose-400;
-  }
-  /* Country button: flag + tiny chevron, with a subtle right divider. */
-  .phone-field .phone-field__country-button {
-    @apply bg-transparent border-0 border-r border-slate-100
-      dark:border-slate-700/60 pl-3 pr-2 gap-1 rounded-none
-      hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors
-      flex items-center;
-    height: auto;
-  }
-  /* Inner flag — keep it 20px square so it reads at a glance. */
-  .phone-field .phone-field__country-button .react-international-phone-flag-emoji,
-  .phone-field .phone-field__country-button img {
-    width: 1.25rem;
-    height: 1.25rem;
-  }
-  /* Dropdown chevron — small, muted. */
-  .phone-field .phone-field__country-button .react-international-phone-country-selector-button__dropdown-arrow {
-    @apply text-slate-400 dark:text-slate-500;
-    border-top-color: currentColor !important;
-    margin-left: 2px;
-  }
-  /* Phone input: dial code + digits inline, comfortable padding. */
-  .phone-field .phone-field__input {
-    @apply flex-1 min-w-0 bg-transparent border-0 pl-3 pr-3 py-2.5 text-sm
-      text-slate-900 dark:text-slate-100 tracking-wide
-      placeholder:text-slate-400 dark:placeholder:text-slate-500
-      focus:outline-none focus:ring-0;
-    height: auto;
-  }
-
-  /* ── Dropdown panel ── flag + name (+code) rows, with a brand-tinted
-     selected row carrying a right-aligned checkmark like the reference. */
-  .phone-field .phone-field__dropdown {
-    @apply bg-white dark:bg-slate-800 border border-slate-200
-      dark:border-slate-700 rounded-xl shadow-xl overflow-hidden mt-1
-      max-h-72;
-  }
-  .phone-field .phone-field__dropdown-item {
-    @apply flex items-center gap-2.5 text-sm text-slate-700
-      dark:text-slate-200 px-3 py-2.5 cursor-pointer transition-colors;
-  }
-  .phone-field .phone-field__dropdown-item:hover,
-  .phone-field .phone-field__dropdown-item--focused {
-    @apply bg-slate-50 dark:bg-slate-700/40;
-  }
-  .phone-field .phone-field__dropdown-item--selected {
-    @apply bg-emerald-50/70 dark:bg-emerald-500/10 font-semibold
-      text-emerald-700 dark:text-emerald-300 relative;
-  }
-  /* Right-side checkmark on the selected row. */
-  .phone-field .phone-field__dropdown-item--selected::after {
-    content: '✓';
-    @apply ml-auto text-emerald-600 dark:text-emerald-400 font-bold;
-  }
-  /* Country name (left of dial code). */
-  .phone-field .phone-field__dropdown-name {
-    @apply text-sm;
-  }
-  /* Dial code (e.g. "(+91)") — muted, parenthesised look. */
-  .phone-field .phone-field__dropdown-dial {
-    @apply text-xs text-slate-500 dark:text-slate-400 font-medium;
-  }
-  .phone-field .phone-field__dropdown-item--selected .phone-field__dropdown-dial {
-    @apply text-emerald-600/80 dark:text-emerald-300/80;
-  }
+  /* The PhoneField component now ships its own Tailwind UI built on top
+     of usePhoneInput + FlagImage from react-international-phone. No
+     library-class overrides needed — see components/ui/PhoneField.tsx. */
 
   .badge {
     @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium;
