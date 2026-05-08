@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { CheckCircle2, Sparkles, Send, AlertCircle } from 'lucide-react';
@@ -39,14 +39,19 @@ export function DemoModal({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Reset state every time the modal re-opens
+  // Reset state every time the modal re-opens, then focus the first field.
+  // Imperative focus instead of autoFocus prop (jsx-a11y/no-autofocus).
   useEffect(() => {
     if (open) {
       setForm(EMPTY);
       setSubmitted(false);
       setError(null);
       setSubmitting(false);
+      // Defer focus until the modal's enter animation has placed the input
+      const t = setTimeout(() => nameInputRef.current?.focus(), 50);
+      return () => clearTimeout(t);
     }
   }, [open]);
 
@@ -105,8 +110,8 @@ export function DemoModal({
                 Full name <span className="text-rose-500">*</span>
               </label>
               <input
+                ref={nameInputRef}
                 required
-                autoFocus
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 className="input-premium"
