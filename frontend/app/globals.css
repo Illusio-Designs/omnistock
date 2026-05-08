@@ -163,11 +163,15 @@
       transition-all duration-200;
   }
 
-  /* ── Phone field (react-international-phone) — match input-premium ── */
+  /* ── Phone field (react-international-phone) — Swiggy/Zomato style ──
+     Layout: [flag ▼] [+91] [98765 43210]  in one cohesive pill.
+     Country button is compact (flag + chevron only). Dial code is a soft
+     mid-grey chip with no border. Input takes the remaining width. */
   .phone-field {
-    @apply flex w-full rounded-xl border border-slate-200
-      dark:border-slate-700 bg-white dark:bg-slate-800
+    @apply flex w-full items-stretch rounded-xl border border-slate-200
+      dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden
       transition-all duration-200
+      hover:border-slate-300 dark:hover:border-slate-600
       focus-within:ring-4 focus-within:ring-emerald-500/10
       focus-within:border-emerald-400 dark:focus-within:border-emerald-500;
   }
@@ -175,24 +179,47 @@
     @apply border-rose-300 dark:border-rose-800
       focus-within:ring-rose-500/10 focus-within:border-rose-400;
   }
+  /* Country button: just flag + tiny chevron, tight padding, subtle hover. */
   .phone-field .phone-field__country-button {
-    @apply bg-transparent border-0 border-r border-slate-200
-      dark:border-slate-700 rounded-l-xl px-3 hover:bg-slate-50
-      dark:hover:bg-slate-700/40 transition-colors;
+    @apply bg-transparent border-0 px-2.5 gap-1 rounded-none
+      hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors
+      flex items-center;
     height: auto;
   }
+  /* The library's inner flag wrapper — keep flag a tidy 18px square. */
+  .phone-field .phone-field__country-button .react-international-phone-flag-emoji,
+  .phone-field .phone-field__country-button img {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+  /* The dropdown chevron icon — make it small and muted. */
+  .phone-field .phone-field__country-button .react-international-phone-country-selector-button__dropdown-arrow {
+    @apply text-slate-400 dark:text-slate-500;
+    border-top-color: currentColor !important;
+    margin-left: 2px;
+  }
+  /* Dial code chip — sits between flag button and input. */
+  .phone-field .phone-field__dial-code {
+    @apply flex items-center px-2 text-sm font-semibold
+      text-slate-600 dark:text-slate-300 select-none
+      border-l border-slate-200 dark:border-slate-700;
+    background: transparent;
+  }
+  /* Phone input: digits only, no border, takes remaining space. */
   .phone-field .phone-field__input {
-    @apply flex-1 bg-transparent border-0 px-3 py-2.5 text-sm
+    @apply flex-1 min-w-0 bg-transparent border-0 px-3 py-2.5 text-sm
       text-slate-900 dark:text-slate-100
       placeholder:text-slate-400 dark:placeholder:text-slate-500
-      focus:outline-none focus:ring-0 rounded-r-xl;
+      focus:outline-none focus:ring-0;
+    height: auto;
   }
+  /* Dropdown panel + items. */
   .phone-field .phone-field__dropdown {
     @apply bg-white dark:bg-slate-800 border border-slate-200
       dark:border-slate-700 rounded-xl shadow-xl overflow-hidden mt-1;
   }
   .phone-field .phone-field__dropdown-item {
-    @apply text-sm text-slate-700 dark:text-slate-200
+    @apply text-sm text-slate-700 dark:text-slate-200 px-3 py-2
       hover:bg-emerald-50 dark:hover:bg-slate-700/60;
   }
   .phone-field .phone-field__dropdown-item[data-selected="true"] {

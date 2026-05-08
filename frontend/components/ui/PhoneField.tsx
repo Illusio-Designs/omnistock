@@ -50,10 +50,14 @@ export function PhoneField({
       <PhoneInput
         defaultCountry={defaultCountry}
         value={value}
-        onChange={onChange}
+        onChange={(phone) => onChange(phone)}
         disabled={disabled}
-        placeholder={placeholder}
-        // The library uses inline className wiring for its slots.
+        placeholder={placeholder ?? '98765 43210'}
+        // Visual: hide the +91 from the input, render it as a small chip
+        // between the country button and the digits — Swiggy/Zomato style.
+        // onChange still emits the full E.164 value.
+        disableDialCodeAndPrefix
+        showDisabledDialCodeAndPrefix
         className={cn('phone-field', error && 'phone-field--error')}
         inputClassName="phone-field__input"
         countrySelectorStyleProps={{
@@ -62,6 +66,9 @@ export function PhoneField({
             className: 'phone-field__dropdown',
             listItemClassName: 'phone-field__dropdown-item',
           },
+        }}
+        dialCodePreviewStyleProps={{
+          className: 'phone-field__dial-code',
         }}
       />
       {hint && !error && <p className="text-xs text-slate-500 mt-1">{hint}</p>}
