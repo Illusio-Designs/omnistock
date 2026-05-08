@@ -1,12 +1,13 @@
 'use client';
 
-import { Search, HelpCircle, Mail, ChevronDown, Menu, Sparkles, X } from 'lucide-react';
+import { Search, Mail, ChevronDown, Menu, Sparkles, X } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useUIStore } from '@/store/ui.store';
 import { useSearchStore } from '@/store/search.store';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { Avatar } from '@/components/ui/Avatar';
 import { ChangelogTrigger } from '@/components/ChangelogDrawer';
+import { HelpTrigger } from '@/components/HelpDrawer';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { WalletPill } from '@/components/wallet/WalletPill';
 
@@ -82,9 +83,7 @@ export function Topbar() {
 
         {/* Help */}
         <Tooltip content="Help & Support" side="bottom">
-          <button aria-label="Help and support" className="w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.06] hover:bg-white/10 text-white/60 hover:text-white transition-colors">
-            <HelpCircle size={17} aria-hidden="true" />
-          </button>
+          <HelpTrigger />
         </Tooltip>
 
         {/* Wallet balance */}
