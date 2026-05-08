@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { PublicLayout } from '@/components/layout/PublicLayout';
+import { PublicLayout, usePublicLoading } from '@/components/layout/PublicLayout';
 import { publicApi } from '@/lib/api';
 import { getIcon } from '@/lib/icon';
 import { HelpCircle, Search, ArrowRight } from 'lucide-react';
@@ -24,10 +24,14 @@ function HelpCenterInner() {
   const [query, setQuery] = useState('');
   const [categories, setCategories] = useState<Row[]>([]);
   const [faqs, setFaqs] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
+  usePublicLoading('help', loading);
 
   useEffect(() => {
-    publicApi.content('HELP_CATEGORY').then((r) => setCategories(r.data || []));
-    publicApi.content('HELP_FAQ').then((r) => setFaqs(r.data || []));
+    Promise.all([
+      publicApi.content('HELP_CATEGORY').then((r) => setCategories(r.data || [])).catch(() => {}),
+      publicApi.content('HELP_FAQ').then((r) => setFaqs(r.data || [])).catch(() => {}),
+    ]).finally(() => setLoading(false));
   }, []);
 
   const filteredFaqs = faqs

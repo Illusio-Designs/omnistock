@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { PublicLayout } from '@/components/layout/PublicLayout';
+import { PublicLayout, usePublicLoading } from '@/components/layout/PublicLayout';
 import { CheckCircle2, Sparkles, ArrowRight, X } from 'lucide-react';
 import { planApi } from '@/lib/api';
 
@@ -143,13 +143,16 @@ export default function PricingPage() {
     excluded: string[];
   }
   const [plans, setPlans] = useState<PlanView[]>(FALLBACK_PLANS as PlanView[]);
+  const [loading, setLoading] = useState(true);
+  usePublicLoading('pricing', loading);
 
   useEffect(() => {
     planApi.list()
       .then(r => {
         if (Array.isArray(r.data) && r.data.length) setPlans(r.data.map(planToView));
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const PLANS = plans;

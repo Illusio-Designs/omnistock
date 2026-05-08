@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PublicLayout } from '@/components/layout/PublicLayout';
+import { PublicLayout, usePublicLoading } from '@/components/layout/PublicLayout';
 import { publicApi } from '@/lib/api';
 import { getIcon } from '@/lib/icon';
 import { Sparkles, ArrowRight } from 'lucide-react';
@@ -20,11 +20,15 @@ export default function AboutPage() {
   const [sections, setSections] = useState<Row[]>([]);
   const [values, setValues] = useState<Row[]>([]);
   const [timeline, setTimeline] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
+  usePublicLoading('about', loading);
 
   useEffect(() => {
-    publicApi.content('ABOUT_SECTION').then((r) => setSections(r.data || []));
-    publicApi.content('ABOUT_VALUE').then((r) => setValues(r.data || []));
-    publicApi.content('ABOUT_TIMELINE').then((r) => setTimeline(r.data || []));
+    Promise.all([
+      publicApi.content('ABOUT_SECTION').then((r) => setSections(r.data || [])).catch(() => {}),
+      publicApi.content('ABOUT_VALUE').then((r) => setValues(r.data || [])).catch(() => {}),
+      publicApi.content('ABOUT_TIMELINE').then((r) => setTimeline(r.data || [])).catch(() => {}),
+    ]).finally(() => setLoading(false));
   }, []);
 
   return (

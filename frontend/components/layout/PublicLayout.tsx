@@ -5,10 +5,11 @@ import { usePathname } from 'next/navigation';
 import {
   Sparkles, Menu, X, Github, Twitter, Linkedin, ChevronDown, ArrowRight,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { publicApi } from '@/lib/api';
 import { getIcon } from '@/lib/icon';
+import { Loader } from '@/components/ui/Loader';
 
 interface NavLink {
   id: string;
@@ -316,12 +317,61 @@ function FooterCol({ title, items }: { title: string; items: NavLink[] }) {
   );
 }
 
+// ── Loading coordination ──────────────────────────────────────────────────
+// PublicLayout renders an overlay full-screen Loader until every registered
+// loader (nav/footer fetch + each page's data fetch) has resolved. Pages
+// register their own loading state via `usePublicLoading(key, loading)`.
+type LoadingCtx = { setLoader: (key: string, loading: boolean) => void };
+const PublicLoadingContext = createContext<LoadingCtx | null>(null);
+
+export function usePublicLoading(key: string, loading: boolean) {
+  const ctx = useContext(PublicLoadingContext);
+  useEffect(() => {
+    if (!ctx) return;
+    ctx.setLoader(key, loading);
+    return () => ctx.setLoader(key, false);
+  }, [ctx, key, loading]);
+}
+
 export function PublicLayout({ children }: { children: React.ReactNode }) {
+  const [loaders, setLoaders] = useState<Record<string, boolean>>({ _layout: true });
+
+  const setLoader = useCallback((key: string, loading: boolean) => {
+    setLoaders((prev) => {
+      if (loading) {
+        if (prev[key]) return prev;
+        return { ...prev, [key]: true };
+      }
+      if (!prev[key]) return prev;
+      const { [key]: _, ...rest } = prev;
+      return rest;
+    });
+  }, []);
+
+  // Wait for nav + footer data before clearing the layout's own loader.
+  // PublicNav/PublicFooter share the same in-flight promises via navCache/footerCache,
+  // so this doesn't double-fetch.
+  useEffect(() => {
+    Promise.all([fetchNav(), fetchFooter()])
+      .catch(() => {})
+      .finally(() => setLoader('_layout', false));
+  }, [setLoader]);
+
+  const isLoading = Object.keys(loaders).length > 0;
+  const ctxValue = useMemo<LoadingCtx>(() => ({ setLoader }), [setLoader]);
+
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <PublicNav />
-      <main className="flex-1">{children}</main>
-      <PublicFooter />
-    </div>
+    <PublicLoadingContext.Provider value={ctxValue}>
+      <div className="min-h-screen flex flex-col bg-white">
+        <PublicNav />
+        <main className="flex-1">{children}</main>
+        <PublicFooter />
+      </div>
+      {isLoading && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white">
+          <Loader size="lg" />
+        </div>
+      )}
+    </PublicLoadingContext.Provider>
   );
 }

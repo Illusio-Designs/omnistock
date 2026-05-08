@@ -1,14 +1,19 @@
 # Kartriq — Omnichannel ERP
 
-A full-stack ERP (EasyEcom-style) for D2C brands, marketplaces and warehouses:
-inventory, orders, purchases, invoices, returns, shipments and reconciliation
-across every sales channel.
+A multi-tenant SaaS ERP for D2C brands, marketplaces and warehouses: inventory,
+orders, purchases, invoices, returns, shipments and reconciliation across every
+sales channel (Amazon, Shopify, Flipkart and 50+ others).
 
 **Stack**
-- **Backend**: Node.js + Express + Prisma (JavaScript, CommonJS)
-- **Database**: MySQL (runs on XAMPP locally)
-- **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind + Zustand
-- **Auth**: JWT + Google Identity Services
+- **Backend**: Node.js + Express + Knex.js + MySQL (JavaScript, CommonJS)
+- **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind + Zustand + React Query
+- **Mobile**: Expo (React Router) + NativeWind + Zustand
+- **Auth**: JWT (7-day) + Google Identity Services
+- **Multi-tenancy**: every resource scoped by `tenantId`; User → Roles → Permissions RBAC
+
+> **Heads-up:** `backend/src/utils/prisma.js` is **not** real Prisma ORM. It is a
+> custom Knex-backed shim that exposes a Prisma-like API. The DB schema lives
+> in raw SQL at [backend/src/config/schema.sql.js](backend/src/config/schema.sql.js).
 
 ---
 
@@ -18,27 +23,34 @@ across every sales channel.
 e:/kartriq/
 ├── backend/                    ← Express API (port 5001)
 │   ├── src/
-│   │   ├── index.js            ← Entry point — runs initDb then listens
-│   │   ├── bootstrap/
-│   │   │   └── initDb.js       ← Auto migrate + seed on boot
-│   │   ├── routes/             ← Route files per module
-│   │   ├── controllers/        ← Business logic
-│   │   ├── middleware/         ← Auth, validation, rate limit
-│   │   └── utils/              ← Prisma client, helpers
-│   ├── prisma/
-│   │   ├── schema.prisma       ← DB schema (source of truth)
-│   │   ├── migrations/         ← Prisma migration history
-│   │   └── seed.js             ← Idempotent seed (upserts)
-│   ├── .env                    ← DATABASE_URL, JWT_SECRET, etc.
-│   └── .seed-state.json        ← Auto-generated, tracks last seed
+│   │   ├── index.js               ← Entry point — runs initDb then listens
+│   │   ├── bootstrap/initDb.js    ← Auto-migrate + conditional seed on boot
+│   │   ├── config/schema.sql.js   ← All CREATE TABLE statements (source of truth)
+│   │   ├── routes/                ← Route files per module
+│   │   ├── controllers/
+│   │   ├── services/
+│   │   ├── middleware/auth.middleware.js  ← JWT, RBAC, plan limits
+│   │   ├── jobs/                  ← cron + billing background jobs
+│   │   ├── scripts/seed.js        ← Idempotent seeder (upserts)
+│   │   ├── scripts/test.js        ← e2e test suite (vanilla http.request)
+│   │   └── utils/
+│   │       ├── prisma.js          ← Knex-backed Prisma-like shim (NOT real Prisma)
+│   │       ├── db.js              ← Raw Knex instance
+│   │       └── crypto.js          ← AES-256-GCM for channel credentials
+│   ├── .env                       ← DATABASE_URL, JWT_SECRET, ENCRYPTION_KEY
+│   └── .seed-state.json           ← Auto-generated, gates re-seeding
 │
-├── frontend/                   ← Next.js app (port 3000)
-│   ├── app/                    ← App Router pages
-│   ├── components/             ← Layout, UI components
-│   ├── lib/                    ← API client
-│   └── store/                  ← Zustand auth store
+├── frontend/                      ← Next.js app (port 3000)
+│   ├── app/                       ← App Router pages
+│   ├── components/
+│   ├── lib/api.ts                 ← Axios + typed API methods
+│   └── store/auth.store.ts        ← Zustand: user, token, tenant, plan, permissions
 │
-└── docs/                       ← Design notes, specs
+├── mobile/                        ← Expo app
+│   └── app/                       ← expo-router entry
+│
+├── docs/                          ← Design notes, specs
+└── CLAUDE.md                      ← Architecture & contributor guide
 ```
 
 ---
@@ -48,6 +60,7 @@ e:/kartriq/
 - **Node.js** 18+
 - **XAMPP** (for MySQL on `localhost:3306`)
 - **npm**
+- For mobile: **Expo Go** app on a device, or iOS/Android simulator
 
 ---
 
@@ -55,7 +68,7 @@ e:/kartriq/
 
 ### 1. Start MySQL (XAMPP)
 
-Open the XAMPP control panel → start **Apache** + **MySQL**.
+Open the XAMPP control panel → start **MySQL**.
 
 Open phpMyAdmin at `http://localhost/phpmyadmin` and create an empty database
 named **`kartriq`** (one time only).
@@ -88,7 +101,9 @@ App runs on `http://localhost:3000`.
 
 ---
 
-## Environment Variables — `backend/.env`
+## Environment Variables
+
+### `backend/.env`
 
 ```env
 # MySQL on XAMPP — default root password is empty
@@ -105,86 +120,119 @@ JWT_SECRET=your_super_secret_jwt_key_change_this_in_production_min_32_chars
 # Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ENCRYPTION_KEY=0000000000000000000000000000000000000000000000000000000000000000
 
-# Hours to wait after delivery before triggering review requests
-REVIEW_REQUEST_DELAY_HOURS=72
-
 # Google Sign-In (Google Identity Services — ID tokens, no redirect URI)
 GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# Dev convenience
+DEV_AUTH_BYPASS=true        # enables `Authorization: Bearer dev:<email>` for seeded users
+DISABLE_RATE_LIMIT=true     # required when running the e2e test suite
 ```
+
+### `frontend/.env.local`
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5001/api/v1
+```
+
+The fallback baseURL in [frontend/lib/api.ts](frontend/lib/api.ts) is
+`http://localhost:5001/api/v1` — the file is optional in dev.
 
 ---
 
 ## Database Workflow
 
-The backend uses **Prisma** with an auto-bootstrap step in
-[backend/src/bootstrap/initDb.js](backend/src/bootstrap/initDb.js).
+The DB is bootstrapped by [backend/src/bootstrap/initDb.js](backend/src/bootstrap/initDb.js)
+on every `npm run dev`:
 
-### What happens on every `npm run dev`
-
-1. `npx prisma migrate deploy` — applies any pending migration files (no-op if none).
-2. Reads the latest applied migration from `_prisma_migrations`.
-3. Compares it to `backend/.seed-state.json`:
-   - **same** → skip seed (logs `seed up-to-date`)
-   - **different / missing** → runs `prisma/seed.js` then writes new state.
+1. Runs every `CREATE TABLE IF NOT EXISTS` from `schema.sql.js`.
+2. Applies the additive `ALTER TABLE ADD COLUMN IF NOT EXISTS` list inside `initDb.js`.
+3. Inspects row counts in `plans` and `users` — if either is empty, runs `seed.js`.
 4. Starts Express on `PORT`.
 
-The seed uses `upsert` everywhere, so it's safe to re-run any time.
+The seed is idempotent (everything upserts), so it's safe to re-run any time.
+To force a re-seed, delete `backend/.seed-state.json` and restart.
 
 ### Changing the schema
 
-```bash
-# 1. Stop the dev server (Ctrl+C) — frees the Prisma query engine DLL on Windows
-# 2. Edit backend/prisma/schema.prisma
-cd backend
-npx prisma migrate dev --name describe_change
-# 3. Start again — initDb applies the migration and re-seeds
-npm run dev
-```
+- **New table** → add the `CREATE TABLE` statement to
+  [backend/src/config/schema.sql.js](backend/src/config/schema.sql.js).
+- **New column on an existing table** → add an `ALTER TABLE … ADD COLUMN IF NOT EXISTS …`
+  entry to the `migrations` array in `initDb.js`. (Editing `CREATE TABLE` alone
+  will NOT alter tables that already exist on a teammate's DB.)
 
-Teammates just `git pull && npm install && npm run dev` — migrations apply
-and the seed re-runs automatically because their `.seed-state.json` is behind.
+Restart the dev server to apply. Teammates just `git pull && npm run dev`.
 
 ### Useful scripts — `backend/package.json`
 
-| Script             | Purpose                                  |
-|--------------------|------------------------------------------|
-| `npm run dev`      | nodemon + auto migrate + seed            |
-| `npm start`        | `node src/index.js` (same init flow)     |
-| `npm run db:migrate` | `prisma migrate dev` (new migration)   |
-| `npm run db:push`  | Push schema without creating migration   |
-| `npm run db:seed`  | Run seed manually                        |
-| `npm run db:studio`| Prisma Studio GUI                        |
-| `npm run db:generate` | Regenerate Prisma client              |
+| Script                          | Purpose                                       |
+|---------------------------------|-----------------------------------------------|
+| `npm run dev`                   | nodemon + auto-migrate + conditional seed     |
+| `npm start`                     | `node src/index.js` (same init flow)          |
+| `npm run seed`                  | Run the seed manually                         |
+| `npm run cron:run`              | Run channel sync background jobs              |
+| `npm run billing:run`           | Run billing/metering background jobs          |
+| `npm run test:backend:server`   | Start the API with rate limits disabled       |
+| `npm run test:backend`          | Run the e2e suite against a running server    |
+
+### Running the e2e tests
+
+```bash
+# Terminal 1
+cd backend
+$env:DISABLE_RATE_LIMIT="true"; npm run test:backend:server
+
+# Terminal 2
+cd backend
+npm run test:backend
+```
+
+Tests use vanilla `http.request` (no framework). Comment out test groups in
+[backend/src/scripts/test.js](backend/src/scripts/test.js) to run a subset.
 
 ---
 
 ## API Endpoints (v1)
 
-All routes live under `/api/v1`.
+All routes live under `/api/v1`. Health check: `GET /health`.
 
-| Module           | Base path                 |
-|------------------|---------------------------|
-| Auth             | `/auth` (login, register, google) |
-| Products         | `/products`               |
-| Inventory        | `/inventory`              |
-| Orders           | `/orders`                 |
-| Purchases        | `/purchases`              |
-| Vendors          | `/vendors`                |
-| Warehouses       | `/warehouses`             |
-| Channels         | `/channels`               |
-| Customers        | `/customers`              |
-| Invoices         | `/invoices`               |
-| Dashboard        | `/dashboard`              |
-| Reports          | `/reports`                |
-| Shipments        | `/shipments`              |
-| Plans            | `/plans`                  |
-| Billing          | `/billing`                |
-| Admin            | `/admin`                  |
-| Roles            | `/roles`                  |
-| Public           | `/public` (SEO, blog, pricing) |
+| Module           | Base path                          |
+|------------------|------------------------------------|
+| Auth             | `/auth` (login, register, google, me, change-password) |
+| Products         | `/products`                        |
+| Inventory        | `/inventory`                       |
+| Orders           | `/orders`                          |
+| Purchases        | `/purchases`                       |
+| Vendors          | `/vendors`                         |
+| Warehouses       | `/warehouses`                      |
+| Channels         | `/channels`                        |
+| Customers        | `/customers`                       |
+| Invoices         | `/invoices`                        |
+| Shipments        | `/shipments`                       |
+| Movements        | `/movements`                       |
+| Dashboard        | `/dashboard`                       |
+| Reports          | `/reports`                         |
+| Plans            | `/plans`                           |
+| Billing          | `/billing` (wallet, tenant, top-up) |
+| Roles & Users    | `/roles`, `/users`                 |
+| Admin            | `/admin` (platform-admin only)     |
+| Public           | `/public` (SEO, blog, pricing)     |
 
-Health check: `GET /health`.
+### Response shape contracts
+
+LIST endpoints return an envelope (the frontend depends on this — never return a bare array except for the noted resources):
+
+| Resource    | Shape                                       |
+|-------------|---------------------------------------------|
+| orders      | `{ orders, total, page, limit }`            |
+| products    | `{ products, total }`                       |
+| inventory   | `{ items, total, page, limit }`             |
+| customers   | `{ customers, total }`                      |
+| invoices    | `{ invoices, total }`                       |
+| shipments   | `{ shipments, total, page, limit }`         |
+| movements   | `{ movements, total, page, limit }`         |
+| vendors     | plain array (always full set)               |
+| warehouses  | plain array (always full set)               |
 
 ---
 
@@ -193,27 +241,38 @@ Health check: `GET /health`.
 - **Inventory** — Real-time stock across warehouses, low-stock alerts, adjustments
 - **Orders** — Omnichannel order management, fulfillment, cancellation
 - **Purchase Orders** — Vendor POs, approval, receiving, cost tracking
-- **Warehouses** — Multi-warehouse, per-warehouse stock
-- **Channels** — Amazon, Flipkart, Shopify, offline; sync + credential encryption
-- **Customers** — Profiles, order history
-- **Invoices** — Billing, payment recording, GST
-- **Shipments** — Courier tracking
+- **Warehouses** — Multi-warehouse, per-warehouse stock (soft-delete on remove)
+- **Channels** — Amazon SP-API, Shopify, Flipkart, Instagram, WhatsApp, Shiprocket, Delhivery; AES-256-GCM credential storage; cron sync
+- **Customers** — B2B/retail profiles, GSTIN, order history
+- **Invoices** — Billing, payment recording (idempotent pay), GST
+- **Shipments** — Courier tracking (`trackingNumber`, no `awb` column)
 - **Returns** — Return requests, approvals, restocking
 - **Reports** — Sales analytics, inventory valuation, top products
 - **Dashboard** — KPIs, recent orders, revenue trends
-- **RBAC** — Tenant-scoped roles + permission catalog (module × action)
-- **Plans & Billing** — Standard/Professional/Enterprise + pay-as-you-go
+- **RBAC** — Tenant-scoped roles + permission catalog (module × action); `*` = full access
+- **Plans & Billing** — Hard plan limits + Pay-As-You-Go wallet (Razorpay top-up)
 - **Public site** — SEO settings, blog, pricing page
+
+---
+
+## Multi-Tenancy & RBAC at a glance
+
+- Every authenticated request has `req.tenant`, `req.user`, `req.plan`, `req.permissions`
+  attached by [backend/src/middleware/auth.middleware.js](backend/src/middleware/auth.middleware.js).
+- All DB queries **must** filter by `tenantId` (except global resources like `plans`).
+- Permission model: User → Roles → Permissions (e.g. `products.create`, `orders.view`).
+  Permission checks are cached in-process for 10s and invalidated on logout.
+- Platform admins (founders) can pass `x-tenant-id` to impersonate any tenant.
+- `enforceLimit()` gates resource creation against plan ceilings; once exhausted,
+  Pay-As-You-Go tenants draw from their wallet balance.
 
 ---
 
 ## Troubleshooting
 
-**`EPERM: operation not permitted, rename query_engine-windows.dll.node`**
-The running Node process holds the Prisma query engine DLL on Windows. Stop
-the dev server before running `prisma generate` or `prisma migrate dev`.
-`npm run dev` itself does **not** run `generate` — that's handled by the
-`postinstall` hook on `npm install`.
+**`EPERM: operation not permitted, rename …query_engine-windows.dll.node`**
+A leftover from a previous Prisma install. Stop any running `node` / `nodemon`
+processes — the file is held open. (The current codebase doesn't use Prisma ORM.)
 
 **`Can't reach database server at localhost:3306`**
 XAMPP MySQL isn't running. Start it from the XAMPP control panel.
@@ -226,11 +285,30 @@ XAMPP's default MySQL root password is empty. In `backend/.env`, use
 **`Database 'kartriq' doesn't exist`**
 Create it once in phpMyAdmin — Prisma migrations create tables, not the database.
 
-**Prisma `Update available 5.22.0 -> 7.7.0` notice**
-Ignore it. v7 is a major upgrade with breaking changes — stay on 5.x.
+**Added a column to `schema.sql.js` but the table still has no such column**
+`CREATE TABLE IF NOT EXISTS` is a no-op when the table already exists. Add an
+`ALTER TABLE … ADD COLUMN IF NOT EXISTS …` entry to the `migrations` array in
+`initDb.js` and restart.
 
-**Seed didn't re-run after schema change**
-Delete `backend/.seed-state.json` and restart — it will re-seed on next boot.
+**`Unknown column 'foo' in 'field list'`**
+The Prisma shim silently passes through unknown fields to the SQL layer. Check
+[backend/src/config/schema.sql.js](backend/src/config/schema.sql.js) for the
+exact column name (e.g. `trackingNumber` not `awb`; `gstIn` not `gstin`;
+`isB2B` boolean not a `type` enum).
+
+**Seed didn't re-run after a fresh DB**
+Delete `backend/.seed-state.json` and restart — it re-seeds when `plans` or
+`users` are empty on next boot.
+
+**E2E tests rejected with 429**
+Start the server with `DISABLE_RATE_LIMIT=true` (see "Running the e2e tests").
+
+---
+
+## Further reading
+
+- [CLAUDE.md](CLAUDE.md) — full architecture + contributor checklist (route conventions, field-name gotchas, page checklist)
+- [docs/](docs/) — design notes and specs
 
 ---
 

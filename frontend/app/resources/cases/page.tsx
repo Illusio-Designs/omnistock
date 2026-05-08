@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PublicLayout } from '@/components/layout/PublicLayout';
+import { PublicLayout, usePublicLoading } from '@/components/layout/PublicLayout';
 import { publicApi } from '@/lib/api';
 import { Award, ArrowRight } from 'lucide-react';
 import { CaseStudySkeleton } from '@/components/Shimmer';
@@ -17,6 +17,7 @@ interface CaseStudy {
 export default function CasesPage() {
   const [cases, setCases] = useState<CaseStudy[]>([]);
   const [loading, setLoading] = useState(true);
+  usePublicLoading('cases', loading);
 
   useEffect(() => {
     publicApi.content('CASE_STUDY')

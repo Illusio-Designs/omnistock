@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { PublicLayout } from '@/components/layout/PublicLayout';
+import { PublicLayout, usePublicLoading } from '@/components/layout/PublicLayout';
 import { ChannelMarquee, ALL_CHANNELS } from '@/components/ChannelMarquee';
 import { CountUp } from '@/components/CountUp';
 import { publicApi } from '@/lib/api';
@@ -35,14 +35,18 @@ export default function LandingPage() {
   const [testimonials, setTestimonials] = useState<ContentRow[]>([]);
   const [faqs, setFaqs] = useState<ContentRow[]>([]);
   const [hero, setHero] = useState<ContentRow | null>(null);
+  const [loading, setLoading] = useState(true);
+  usePublicLoading('landing', loading);
 
   useEffect(() => {
-    publicApi.stats().then((r) => setStats(r.data)).catch(() => {});
-    publicApi.content('HERO').then((r) => setHero((r.data || [])[0] || null)).catch(() => {});
-    publicApi.content('LANDING_CHALLENGE').then((r) => setChallenges(r.data)).catch(() => {});
-    publicApi.content('LANDING_FEATURE_TOOL').then((r) => setFeatureTools(r.data)).catch(() => {});
-    publicApi.content('TESTIMONIAL').then((r) => setTestimonials(r.data)).catch(() => {});
-    publicApi.content('LANDING_FAQ').then((r) => setFaqs(r.data)).catch(() => {});
+    Promise.all([
+      publicApi.stats().then((r) => setStats(r.data)).catch(() => {}),
+      publicApi.content('HERO').then((r) => setHero((r.data || [])[0] || null)).catch(() => {}),
+      publicApi.content('LANDING_CHALLENGE').then((r) => setChallenges(r.data)).catch(() => {}),
+      publicApi.content('LANDING_FEATURE_TOOL').then((r) => setFeatureTools(r.data)).catch(() => {}),
+      publicApi.content('TESTIMONIAL').then((r) => setTestimonials(r.data)).catch(() => {}),
+      publicApi.content('LANDING_FAQ').then((r) => setFaqs(r.data)).catch(() => {}),
+    ]).finally(() => setLoading(false));
   }, []);
 
   const ctaPrimary = hero?.data?.ctaPrimary || { label: 'Try for Free', href: '/onboarding' };

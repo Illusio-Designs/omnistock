@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { PublicLayout } from '@/components/layout/PublicLayout';
+import { PublicLayout, usePublicLoading } from '@/components/layout/PublicLayout';
 import { publicApi } from '@/lib/api';
 import { Sparkles, ArrowRight, Calendar, FileText } from 'lucide-react';
 
@@ -41,6 +41,7 @@ const fmtDate = (iso: string | null) => {
 export default function BlogPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  usePublicLoading('blog-list', loading);
 
   useEffect(() => {
     publicApi.blog()

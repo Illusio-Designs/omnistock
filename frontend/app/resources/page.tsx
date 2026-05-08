@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PublicLayout } from '@/components/layout/PublicLayout';
+import { PublicLayout, usePublicLoading } from '@/components/layout/PublicLayout';
 import { publicApi } from '@/lib/api';
 import { getIcon } from '@/lib/icon';
 import { Sparkles, ArrowRight } from 'lucide-react';
@@ -19,9 +19,14 @@ interface Tile {
 
 export default function ResourcesPage() {
   const [tiles, setTiles] = useState<Tile[]>([]);
+  const [loading, setLoading] = useState(true);
+  usePublicLoading('resources', loading);
 
   useEffect(() => {
-    publicApi.content('RESOURCE_TILE').then((r) => setTiles(r.data || []));
+    publicApi.content('RESOURCE_TILE')
+      .then((r) => setTiles(r.data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   return (

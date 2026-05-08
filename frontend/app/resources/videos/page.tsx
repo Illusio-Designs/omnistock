@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PublicLayout } from '@/components/layout/PublicLayout';
+import { PublicLayout, usePublicLoading } from '@/components/layout/PublicLayout';
 import { publicApi } from '@/lib/api';
 import { Sparkles, Play, Clock } from 'lucide-react';
 import { VideoCardSkeleton } from '@/components/Shimmer';
@@ -17,6 +17,7 @@ interface Video {
 export default function VideosPage() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  usePublicLoading('videos', loading);
 
   useEffect(() => {
     publicApi.content('VIDEO')

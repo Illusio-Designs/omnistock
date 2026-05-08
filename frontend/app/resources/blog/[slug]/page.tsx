@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { PublicLayout } from '@/components/layout/PublicLayout';
+import { PublicLayout, usePublicLoading } from '@/components/layout/PublicLayout';
 import { publicApi } from '@/lib/api';
 import { ArrowLeft, Calendar, User, Tag } from 'lucide-react';
 
@@ -83,6 +83,7 @@ export default function BlogPostPage() {
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  usePublicLoading('blog-post', loading);
 
   useEffect(() => {
     if (!slug) return;

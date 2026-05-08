@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PublicLayout } from '@/components/layout/PublicLayout';
+import { PublicLayout, usePublicLoading } from '@/components/layout/PublicLayout';
 import { publicApi } from '@/lib/api';
 import { getIcon } from '@/lib/icon';
 import { Sparkles, ArrowRight } from 'lucide-react';
@@ -18,6 +18,7 @@ interface Feature {
 export default function FeaturesPage() {
   const [features, setFeatures] = useState<Feature[]>([]);
   const [loading, setLoading] = useState(true);
+  usePublicLoading('features', loading);
 
   useEffect(() => {
     publicApi.content('FEATURE')
