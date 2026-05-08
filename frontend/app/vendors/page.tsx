@@ -7,6 +7,7 @@ import { vendorApi } from '@/lib/api';
 import { useFilteredBySearch } from '@/lib/useGlobalSearch';
 import {
   Button, Badge, Card, Modal, Input, Textarea, Tooltip, Checkbox, EmptyState, Avatar,
+  PhoneField, isPhoneEmpty, validatePhone,
 } from '@/components/ui';
 import { Plus, Building2, Mail, Phone, Pencil, Trash2 } from 'lucide-react';
 
@@ -158,13 +159,14 @@ function VendorModal({ open, onClose, mode, vendor }: {
     isActive:     vendor?.isActive ?? true,
   });
   const [error, setError] = useState('');
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: () => {
       const payload = {
         name: form.name,
         email: form.email || undefined,
-        phone: form.phone || undefined,
+        phone: isPhoneEmpty(form.phone) ? undefined : form.phone,
         gstin: form.gstin || undefined,
         paymentTerms: form.paymentTerms || undefined,
         address: form.address ? { line1: form.address } : undefined,
@@ -180,6 +182,14 @@ function VendorModal({ open, onClose, mode, vendor }: {
     onError: (err: any) => setError(err.response?.data?.error || err.message),
   });
 
+  const submit = () => {
+    setError('');
+    const pErr = validatePhone(form.phone);
+    if (pErr) { setPhoneError(pErr); return; }
+    setPhoneError(null);
+    mutation.mutate();
+  };
+
   return (
     <Modal
       open={open}
@@ -191,7 +201,7 @@ function VendorModal({ open, onClose, mode, vendor }: {
         <>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button
-            onClick={() => { setError(''); mutation.mutate(); }}
+            onClick={submit}
             loading={mutation.isPending}
             disabled={!form.name}
           >
@@ -204,7 +214,12 @@ function VendorModal({ open, onClose, mode, vendor }: {
         <Input label="Vendor Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Mumbai Textiles Co." />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input label="Email" type="email" leftIcon={<Mail size={14} />} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          <Input label="Phone" leftIcon={<Phone size={14} />} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          <PhoneField
+            label="Phone"
+            value={form.phone}
+            onChange={(v) => { setForm({ ...form, phone: v }); if (phoneError) setPhoneError(null); }}
+            error={phoneError || undefined}
+          />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input label="GSTIN" value={form.gstin} onChange={(e) => setForm({ ...form, gstin: e.target.value.toUpperCase() })} placeholder="22AAAAA0000A1Z5" />

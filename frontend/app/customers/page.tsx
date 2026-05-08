@@ -7,9 +7,10 @@ import { customerApi } from '@/lib/api';
 import { useFilteredBySearch } from '@/lib/useGlobalSearch';
 import {
   Button, Badge, Card, Modal, Input, Pagination, Tooltip, Checkbox, Loader, Avatar, EmptyState,
+  PhoneField, isPhoneEmpty, validatePhone,
 } from '@/components/ui';
 import {
-  Plus, Users, Mail, Phone, UserPlus, TrendingUp, Crown, Pencil, Trash2,
+  Plus, Users, Mail, UserPlus, TrendingUp, Crown, Pencil, Trash2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -248,6 +249,7 @@ function CustomerModal({
     isB2B: customer?.isB2B || false,
   });
   const [error, setError] = useState('');
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   // Reset form when customer changes (switching between rows)
   const resetToCustomer = (c: any) => setForm({
@@ -255,10 +257,12 @@ function CustomerModal({
     gstIn: c?.gstIn || '', isB2B: c?.isB2B || false,
   });
 
+  const phoneForApi = isPhoneEmpty(form.phone) ? undefined : form.phone;
+
   const mutation = useMutation({
     mutationFn: () => mode === 'create'
-      ? customerApi.create({ ...form, email: form.email || undefined, phone: form.phone || undefined, gstIn: form.gstIn || undefined })
-      : customerApi.update(customer.id, { ...form, email: form.email || undefined, phone: form.phone || undefined, gstIn: form.gstIn || undefined }),
+      ? customerApi.create({ ...form, email: form.email || undefined, phone: phoneForApi, gstIn: form.gstIn || undefined })
+      : customerApi.update(customer.id, { ...form, email: form.email || undefined, phone: phoneForApi, gstIn: form.gstIn || undefined }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['customers'] });
       setError('');
@@ -266,6 +270,14 @@ function CustomerModal({
     },
     onError: (err: any) => setError(err.response?.data?.error || err.message),
   });
+
+  const submit = () => {
+    setError('');
+    const pErr = validatePhone(form.phone);
+    if (pErr) { setPhoneError(pErr); return; }
+    setPhoneError(null);
+    mutation.mutate();
+  };
 
   return (
     <Modal
@@ -278,7 +290,7 @@ function CustomerModal({
         <>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button
-            onClick={() => { setError(''); mutation.mutate(); }}
+            onClick={submit}
             loading={mutation.isPending}
             disabled={!form.name}
           >
@@ -291,7 +303,12 @@ function CustomerModal({
         <Input label="Full Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Priya Mehta" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input label="Email" type="email" leftIcon={<Mail size={14} />} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="priya@example.com" />
-          <Input label="Phone" leftIcon={<Phone size={14} />} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+91 90000 00000" />
+          <PhoneField
+            label="Phone"
+            value={form.phone}
+            onChange={(v) => { setForm({ ...form, phone: v }); if (phoneError) setPhoneError(null); }}
+            error={phoneError || undefined}
+          />
         </div>
         <Input label="GSTIN (optional)" value={form.gstIn} onChange={(e) => setForm({ ...form, gstIn: e.target.value.toUpperCase() })} placeholder="22AAAAA0000A1Z5" />
         <Checkbox

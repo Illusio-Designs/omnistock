@@ -8,6 +8,7 @@ export { DatePicker } from './DatePicker';
 export { Pagination } from './Pagination';
 export { Input, Textarea } from './Input';
 export { PasswordInput } from './PasswordInput';
+export { PhoneField, isPhoneEmpty, validatePhone } from './PhoneField';
 export { FileUpload } from './FileUpload';
 export { Select } from './Select';
 export { Dropdown } from './Dropdown';

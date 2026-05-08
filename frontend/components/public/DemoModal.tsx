@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { PhoneField, isPhoneEmpty, validatePhone } from '@/components/ui/PhoneField';
 import { CheckCircle2, Sparkles, Send, AlertCircle } from 'lucide-react';
 import { leadsApi, type LeadSource } from '@/lib/api';
 
@@ -39,6 +40,7 @@ export function DemoModal({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string; phone?: string }>({});
   const nameInputRef = useRef<HTMLInputElement | null>(null);
 
   // Reset state every time the modal re-opens, then focus the first field.
@@ -49,22 +51,36 @@ export function DemoModal({
       setSubmitted(false);
       setError(null);
       setSubmitting(false);
+      setFieldErrors({});
       // Defer focus until the modal's enter animation has placed the input
       const t = setTimeout(() => nameInputRef.current?.focus(), 50);
       return () => clearTimeout(t);
     }
   }, [open]);
 
+  const validate = (): boolean => {
+    const errs: { name?: string; email?: string; phone?: string } = {};
+    if (!form.name.trim()) errs.name = 'Name is required';
+    else if (form.name.trim().length < 2) errs.name = 'Name is too short';
+    if (!form.email.trim()) errs.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errs.email = 'Enter a valid email';
+    const phoneErr = validatePhone(form.phone);
+    if (phoneErr) errs.phone = phoneErr;
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submitting) return;
     setError(null);
+    if (!validate()) return;
     setSubmitting(true);
     try {
       await leadsApi.submit({
         name: form.name.trim(),
         email: form.email.trim(),
-        phone: form.phone.trim() || undefined,
+        phone: isPhoneEmpty(form.phone) ? undefined : form.phone,
         company: form.company.trim() || undefined,
         subject: defaultSubject || undefined,
         message: form.message.trim() || undefined,
@@ -113,11 +129,15 @@ export function DemoModal({
                 ref={nameInputRef}
                 required
                 value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, name: e.target.value });
+                  if (fieldErrors.name) setFieldErrors({ ...fieldErrors, name: undefined });
+                }}
                 className="input-premium"
                 placeholder="Jane Doe"
                 maxLength={120}
               />
+              {fieldErrors.name && <p className="text-xs text-rose-600 mt-1 font-medium">{fieldErrors.name}</p>}
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
@@ -127,27 +147,27 @@ export function DemoModal({
                 required
                 type="email"
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, email: e.target.value });
+                  if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: undefined });
+                }}
                 className="input-premium"
                 placeholder="jane@company.com"
                 maxLength={190}
               />
+              {fieldErrors.email && <p className="text-xs text-rose-600 mt-1 font-medium">{fieldErrors.email}</p>}
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                Phone
-              </label>
-              <input
-                type="tel"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="input-premium"
-                placeholder="+91 98765 43210"
-                maxLength={40}
-              />
-            </div>
+            <PhoneField
+              label="Phone"
+              value={form.phone}
+              onChange={(value) => {
+                setForm({ ...form, phone: value });
+                if (fieldErrors.phone) setFieldErrors({ ...fieldErrors, phone: undefined });
+              }}
+              error={fieldErrors.phone}
+            />
             <div>
               <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
                 Company

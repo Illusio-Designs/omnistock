@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { authApi, planApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 import { ArrowRight, Sparkles, Building2, User, Lock, CheckCircle2 } from 'lucide-react';
+import { PhoneField, isPhoneEmpty, validatePhone } from '@/components/ui';
 
 function OnboardingInner() {
   const router = useRouter();
@@ -16,6 +17,7 @@ function OnboardingInner() {
   const [planCode, setPlanCode] = useState(params.get('plan') || 'STANDARD');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const [form, setForm] = useState({
     ownerName: '', email: '', password: '',
     businessName: '', phone: '', gstin: '',
@@ -51,6 +53,7 @@ function OnboardingInner() {
     try {
       const { data } = await authApi.onboard({
         ...form,
+        phone: isPhoneEmpty(form.phone) ? '' : form.phone,
         planCode,
         ...(referralCode ? { referralCode } : {}),
       });
@@ -117,7 +120,12 @@ function OnboardingInner() {
               </h2>
               <Field label="Business name"  value={form.businessName} onChange={(v) => update('businessName', v)} />
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Phone"   value={form.phone}   onChange={(v) => update('phone', v)} />
+                <PhoneField
+                  label="Phone"
+                  value={form.phone}
+                  onChange={(v) => { update('phone', v); if (phoneError) setPhoneError(null); }}
+                  error={phoneError || undefined}
+                />
                 <Field label="GSTIN"   value={form.gstin}   onChange={(v) => update('gstin', v.toUpperCase())} />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -127,7 +135,12 @@ function OnboardingInner() {
               <div className="flex gap-2 mt-4">
                 <button onClick={() => setStep(1)} className="btn-secondary flex-1">Back</button>
                 <button
-                  onClick={() => setStep(3)}
+                  onClick={() => {
+                    const pErr = validatePhone(form.phone);
+                    if (pErr) { setPhoneError(pErr); return; }
+                    setPhoneError(null);
+                    setStep(3);
+                  }}
                   disabled={!form.businessName}
                   className="btn-primary flex-1 disabled:opacity-50"
                 >

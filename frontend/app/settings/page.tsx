@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import {
   Button, Card, Input, Textarea, Select, Switch, PasswordInput, FileUpload, Badge, Avatar,
+  PhoneField, isPhoneEmpty, validatePhone,
 } from '@/components/ui';
 import {
-  User, Building2, Bell, Shield, CreditCard, Mail, Phone, Save, Check,
+  User, Building2, Bell, Shield, CreditCard, Mail, Save, Check,
   Download, Trash2, Smartphone, AlertTriangle,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
@@ -52,6 +53,7 @@ export default function SettingsPage() {
   const [tab, setTab] = useState('profile');
   const [saved, setSaved] = useState(false);
   const [profile, setProfile] = useState({ name: '', email: '', phone: '' });
+  const [profilePhoneError, setProfilePhoneError] = useState<string | null>(null);
   const [company, setCompany] = useState({
     name: '', gstin: '', address: '', currency: 'INR', timezone: 'Asia/Kolkata',
   });
@@ -88,8 +90,14 @@ export default function SettingsPage() {
 
   const saveProfile = async () => {
     setProfileError('');
+    const pErr = validatePhone(profile.phone);
+    if (pErr) { setProfilePhoneError(pErr); return; }
+    setProfilePhoneError(null);
     try {
-      await authApi.updateMe({ name: profile.name, phone: profile.phone });
+      await authApi.updateMe({
+        name: profile.name,
+        phone: isPhoneEmpty(profile.phone) ? '' : profile.phone,
+      });
       await refreshFromServer();
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
@@ -185,7 +193,12 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <Input label="Full Name" value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
                   <Input label="Email" type="email" leftIcon={<Mail size={14} />} value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} />
-                  <Input label="Phone" leftIcon={<Phone size={14} />} value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} />
+                  <PhoneField
+                    label="Phone"
+                    value={profile.phone}
+                    onChange={(v) => { setProfile({ ...profile, phone: v }); if (profilePhoneError) setProfilePhoneError(null); }}
+                    error={profilePhoneError || undefined}
+                  />
                 </div>
 
                 {profileError && <p className="text-xs text-rose-600 font-medium mt-2">{profileError}</p>}
