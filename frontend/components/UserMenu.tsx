@@ -35,12 +35,29 @@ export function UserMenu() {
   const pathname = usePathname();
   const {
     user, tenant, logout,
-    impersonatingTenant, stopImpersonation, isPlatformAdmin,
+    impersonatingTenant, stopImpersonation, isPlatformAdmin, hasPermission,
   } = useAuthStore();
 
   const displayUser = user || { name: 'Dev User', role: 'SUPER_ADMIN', email: 'dev@kartriq.in', isPlatformAdmin: false };
   const isFounder = !!isPlatformAdmin?.();
   const isOnAdmin = pathname?.startsWith('/admin') ?? false;
+
+  // Permission flags drive which tenant-side menu items appear. We only
+  // evaluate them for non-founders since founders skip the whole tenant
+  // section anyway. hasPermission resolves the user's role-derived
+  // permission set against the requested code(s); platform admins get a
+  // blanket *yes* but we never reach here for them.
+  // Billing & Usage — readable by anyone with a billing permission
+  // (ADMIN, ACCOUNTANT). STAFF technically gets every *.read in the
+  // default seed but the page itself is more useful to roles that can
+  // act on it, so we gate on read|manage and accept that a STAFF row
+  // who has had billing.read explicitly granted will see them.
+  const canSeeBilling = !isFounder && hasPermission('billing.read', 'billing.manage');
+  const canSeeUsage   = !isFounder && hasPermission('billing.read', 'billing.manage');
+  // Team management — gated on invite (write) rather than read so STAFF
+  // doesn't get a "Team" link that lands them on a manage UI they can't
+  // act on. ADMIN + MANAGER get this; ACCOUNTANT + STAFF do not.
+  const canSeeTeam    = !isFounder && hasPermission('users.invite', 'users.update');
 
   // Close on outside click + Esc
   useEffect(() => {
@@ -140,20 +157,27 @@ export function UserMenu() {
             </button>
           )}
 
-          {/* Account — different items per audience. Founders only see
-              their own profile/settings; tenant-shaped links (billing,
-              team, usage, refer-a-friend) are hidden from them so the
-              menu can't be a back-door into the tenant shell. */}
+          {/* Account — items reflect the user's role-derived permissions:
+                ADMIN sees everything (billing, team, usage)
+                MANAGER sees team + usage; billing only if their custom
+                  role grants billing.read
+                ACCOUNTANT sees billing + usage but not team
+                STAFF sees only profile + settings + quick links
+                Founders see only profile + settings (tenant-shaped links
+                  are gated by !isFounder so the menu can't bridge into
+                  the tenant shell). */}
           <div className="py-1">
             <SectionLabel>Account</SectionLabel>
             <MenuItem icon={User}     label="My profile" onClick={() => go('/settings?tab=profile')} />
             <MenuItem icon={Settings} label="Settings"   onClick={() => go('/settings')} />
-            {!isFounder && (
-              <>
-                <MenuItem icon={CreditCard} label="Billing & wallet" onClick={() => go('/dashboard/billing')} />
-                <MenuItem icon={Users}      label="Team"             onClick={() => go('/dashboard/team')} />
-                <MenuItem icon={BarChart3}  label="Usage"            onClick={() => go('/usage')} />
-              </>
+            {canSeeBilling && (
+              <MenuItem icon={CreditCard} label="Billing & wallet" onClick={() => go('/dashboard/billing')} />
+            )}
+            {canSeeTeam && (
+              <MenuItem icon={Users} label="Team" onClick={() => go('/dashboard/team')} />
+            )}
+            {canSeeUsage && (
+              <MenuItem icon={BarChart3} label="Usage" onClick={() => go('/usage')} />
             )}
           </div>
 
