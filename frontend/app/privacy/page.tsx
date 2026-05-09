@@ -61,11 +61,11 @@ export default function PrivacyPage() {
             <Section title="6. Data Retention &amp; Account Deletion">
               <p>We retain your data for as long as your account is active or as needed to provide our services. When you delete your account from <strong>Settings &rarr; Security &rarr; Delete my account</strong>:</p>
               <ul className="list-disc pl-5 space-y-2 mt-3">
-                <li><strong>Personal identifiers are scrubbed immediately</strong> — your name, email, and phone are removed from your user record so they no longer appear in our systems.</li>
-                <li><strong>Login is disabled</strong> — both password and Google sign-in stop working at once.</li>
-                <li><strong>Workspace is closed</strong> — if you own the tenant, its status is set to DELETED and it becomes inaccessible to all team members.</li>
-                <li><strong>Business records are retained</strong> — invoices, orders, audit logs, and tax-relevant documents are preserved as required by Indian GST and accounting regulations (typically 8 years). They are <em>de-linked from your personal identifiers</em> but remain in our records to satisfy legal and audit obligations.</li>
-                <li><strong>You can request a full erasure</strong> in writing to <a href="mailto:privacy@kartriq.com" className="text-emerald-600 hover:underline">privacy@kartriq.com</a> — we&apos;ll review the request against our legal retention obligations and respond within 30 days.</li>
+                <li><strong>Login is disabled at once</strong> — both password and Google sign-in stop working immediately, and your workspace status is set to DELETED so the team loses access.</li>
+                <li><strong>30-day recovery window</strong> — your name, email, and phone are kept on file for 30 days so you can ask us to undo the deletion if you change your mind. Email <a href="mailto:privacy@kartriq.com" className="text-emerald-600 hover:underline">privacy@kartriq.com</a> from the same email address you signed up with to request a restore.</li>
+                <li><strong>After 30 days, personal identifiers are scrubbed</strong> — name, email, phone, password, avatar, and OAuth identifiers are removed permanently. Restoration is no longer possible after this point.</li>
+                <li><strong>Business records are retained</strong> — invoices, orders, audit logs, and tax-relevant documents are preserved as required by Indian GST and accounting regulations (typically 8 years). They&apos;re <em>de-linked from your personal identifiers</em> but remain in our records to satisfy legal and audit obligations.</li>
+                <li><strong>You can request a full erasure</strong> in writing to <a href="mailto:privacy@kartriq.com" className="text-emerald-600 hover:underline">privacy@kartriq.com</a> at any time — we&apos;ll review against our legal retention duties and respond within 30 days.</li>
               </ul>
             </Section>
 
@@ -94,7 +94,7 @@ export default function PrivacyPage() {
               <div className="mt-3 space-y-1">
                 <p>Email: <a href="mailto:info@kartriq.com" className="text-emerald-600 hover:underline">info@kartriq.com</a></p>
                 <p>Phone: <a href="tel:+918490009684" className="text-emerald-600 hover:underline">+91 84900 09684</a></p>
-                <p>Address: Bangalore, Karnataka, India</p>
+                <p>Address: 211-212, Runway Heights, Ayodhya Chowk, 150ft Ring Road, Rajkot 360001, Gujarat, India</p>
               </div>
             </Section>
           </div>

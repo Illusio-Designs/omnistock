@@ -438,7 +438,7 @@ export default function LandingPage() {
                 <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
                   <Users size={14} className="text-emerald-600" />
                 </div>
-                Bangalore, KA, India
+                Rajkot, Gujarat, India
               </div>
               <div className="flex items-center gap-2 text-sm text-slate-600">
                 <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">

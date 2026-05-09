@@ -86,7 +86,7 @@ export default function TermsPage() {
             </Section>
 
             <Section title="12. Governing Law">
-              These Terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts in Bangalore, Karnataka.
+              These Terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts in Rajkot, Gujarat.
             </Section>
 
             <Section title="13. Changes to Terms">
@@ -98,7 +98,7 @@ export default function TermsPage() {
               <div className="mt-3 space-y-1">
                 <p>Email: <a href="mailto:info@kartriq.com" className="text-emerald-600 hover:underline">info@kartriq.com</a></p>
                 <p>Phone: <a href="tel:+918490009684" className="text-emerald-600 hover:underline">+91 84900 09684</a></p>
-                <p>Address: Bangalore, Karnataka, India</p>
+                <p>Address: 211-212, Runway Heights, Ayodhya Chowk, 150ft Ring Road, Rajkot 360001, Gujarat, India</p>
               </div>
             </Section>
           </div>

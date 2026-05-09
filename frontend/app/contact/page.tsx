@@ -89,7 +89,7 @@ export default function ContactPage() {
               { icon: Mail, title: 'Email', value: 'info@kartriq.com', link: 'mailto:info@kartriq.com' },
               { icon: MessageCircle, title: 'Chat', value: 'Live chat 9am – 9pm IST', link: '#' },
               { icon: Phone, title: 'Call', value: '+91 84900 09684', link: 'tel:+918490009684' },
-              { icon: MapPin, title: 'Office', value: 'Koramangala, Bangalore, India', link: '#' },
+              { icon: MapPin, title: 'Office', value: '211-212, Runway Heights, Ayodhya Chowk, 150ft Ring Road, Rajkot 360001, Gujarat, India', link: '#' },
             ].map(c => {
               const Icon = c.icon;
               return (
