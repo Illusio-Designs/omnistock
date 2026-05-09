@@ -11,6 +11,7 @@ import { MaintenancePage } from '@/components/MaintenancePage';
 import { setPlanLimitHandler, authApi, publicApi } from '@/lib/api';
 import { Loader } from '@/components/ui/Loader';
 import { TrialBanner } from '@/components/TrialBanner';
+import { BillingLock } from '@/components/BillingLock';
 import { CommandPalette } from '@/components/CommandPalette';
 import { ChangelogDrawer } from '@/components/ChangelogDrawer';
 import { HelpDrawer } from '@/components/HelpDrawer';
@@ -60,10 +61,26 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ── Global 402 plan-limit handler
+  // Two flavours of 402:
+  //   1. Real plan-limit hits (e.g. SKU cap) — show the dismissable banner
+  //      so the user can review their usage / upgrade.
+  //   2. Trial / past-due lockouts — the backend tags those with an
+  //      `upgradeUrl`. Don't bother with the banner; the BillingLock
+  //      component already overlays the children with a hard lockscreen,
+  //      and a route push gets the user straight to the right page.
   useEffect(() => {
-    setPlanLimitHandler((info) => setPlanLimit(info));
+    setPlanLimitHandler((info) => {
+      if (info?.upgradeUrl && typeof window !== 'undefined') {
+        // Avoid a redirect loop if we're already there
+        if (!window.location.pathname.startsWith(info.upgradeUrl)) {
+          router.push(info.upgradeUrl);
+        }
+        return;
+      }
+      setPlanLimit(info);
+    });
     return () => setPlanLimitHandler(null);
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     publicApi.maintenance()
@@ -150,7 +167,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </div>
         )}
         <TrialBanner />
-        <div className="flex-1 p-4 sm:p-5 lg:p-6 xl:p-8 animate-fade-in">{children}</div>
+        <div className="flex-1 p-4 sm:p-5 lg:p-6 xl:p-8 animate-fade-in flex flex-col">
+          <BillingLock>{children}</BillingLock>
+        </div>
         <CommandPalette />
         <ChangelogDrawer />
         <HelpDrawer />
