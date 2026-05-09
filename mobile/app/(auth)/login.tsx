@@ -1,6 +1,6 @@
 import { Link, router } from 'expo-router';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -24,6 +24,7 @@ import {
   getBiometricKind,
   biometricLabel,
 } from '../../lib/biometric';
+import { useGoogleSignIn } from '../../lib/google-signin';
 
 export default function LoginScreen() {
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -33,6 +34,31 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const { promptAsync, idToken, clear: clearGoogle, configured: googleConfigured, request } = useGoogleSignIn();
+
+  // Once expo-auth-session hands us back an id_token, exchange it with
+  // the backend for a real session JWT. Mirrors what the web flow does
+  // via Google Identity Services.
+  useEffect(() => {
+    if (!idToken) return;
+    (async () => {
+      try {
+        const { data } = await authApi.google(idToken);
+        await setAuth(data.user, data.token);
+        await maybeOfferBiometric();
+        await fetchContextAndNavigate(data.user, data.token);
+      } catch (err: any) {
+        Alert.alert(
+          'Google sign-in failed',
+          err?.response?.data?.error || err?.message || 'Could not sign you in'
+        );
+      } finally {
+        clearGoogle();
+        setGoogleLoading(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idToken]);
 
   const fetchContextAndNavigate = async (loginUser: any, token: string) => {
     try {
@@ -137,14 +163,30 @@ export default function LoginScreen() {
   };
 
   const onGoogleLogin = async () => {
+    if (!googleConfigured) {
+      Alert.alert(
+        'Google sign-in not configured',
+        'Ask the founder admin to add Google OAuth client IDs in mobile/app.json (extra.googleIosClientId / Android / Web).'
+      );
+      return;
+    }
+    if (!request) {
+      // The auth-session request prepares lazily on first render; this
+      // window is short and the user can just tap again.
+      Alert.alert('Hold on', 'Google sign-in is still warming up — tap again in a moment.');
+      return;
+    }
     setGoogleLoading(true);
     try {
-      // Placeholder: In production, use expo-auth-session to get Google ID token
-      // then send it to authApi.google(credential)
-      Alert.alert('Coming soon', 'Google sign-in will be available shortly.');
+      const result = await promptAsync();
+      if (result.type !== 'success') {
+        // User dismissed — don't toast, that's expected.
+        setGoogleLoading(false);
+      }
+      // Success branch is finished by the useEffect above once the
+      // id_token lands in state.
     } catch (err: any) {
       Alert.alert('Google sign-in failed', err?.message || 'Try again');
-    } finally {
       setGoogleLoading(false);
     }
   };
