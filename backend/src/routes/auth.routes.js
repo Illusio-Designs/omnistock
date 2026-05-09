@@ -349,10 +349,15 @@ router.get('/me/export', authenticate, async (req, res) => {
   }
 });
 
-// Soft-delete the calling user. If they own the tenant, the tenant is also
-// soft-deleted and a hard-purge is scheduled (manual ops job — out of scope
-// for this MVP). Requires password confirmation; OAuth-only users must
-// supply confirmEmail matching their email instead.
+// Soft-delete the calling user. If they own the tenant, the tenant is
+// also soft-deleted. PII is intentionally KEPT for 30 days so an admin
+// can restore the account on user request (POST /admin/tenants/:id/restore).
+// After 30 days the daily cron (billing.job.js → purgeStaleSoftDeletes)
+// scrubs name/email/phone for DPDP compliance — at that point the
+// account is unrecoverable.
+//
+// Requires password confirmation; OAuth-only users must supply
+// confirmEmail matching their email instead.
 router.post('/me/delete', authenticate, async (req, res) => {
   try {
     const { password, confirmEmail } = req.body || {};
@@ -370,14 +375,11 @@ router.post('/me/delete', authenticate, async (req, res) => {
     }
 
     const now = new Date();
+    // Disable login at once but KEEP PII so an admin can restore inside the
+    // 30-day window. The daily purge cron deletes PII once that window closes.
     await db('users').where({ id: user.id }).update({
       isActive: 0,
       deletedAt: now,
-      // Scrub PII immediately; the row stays for audit FK integrity.
-      email: `deleted-${user.id}@kartriq.invalid`,
-      name: 'Deleted user',
-      phone: null,
-      password: null,
     });
 
     // If this user owns the tenant, soft-delete the tenant too.

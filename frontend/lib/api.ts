@@ -208,6 +208,7 @@ export const adminApi = {
   updateTenant: (id: string, data: any) => api.put(`/admin/tenants/${id}`, data),
   suspendTenant: (id: string) => api.post(`/admin/tenants/${id}/suspend`, {}),
   activateTenant: (id: string) => api.post(`/admin/tenants/${id}/activate`, {}),
+  restoreTenant: (id: string) => api.post(`/admin/tenants/${id}/restore`, {}),
   assignPlan: (id: string, data: any) => api.post(`/admin/tenants/${id}/assign-plan`, data),
   // subscriptions
   subscriptions: () => api.get('/admin/subscriptions'),

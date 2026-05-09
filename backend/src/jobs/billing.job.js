@@ -458,6 +458,39 @@ async function sendDunningEmails() {
   return { dunningEmails: sent };
 }
 
+// DPDP-compliant PII purge. Self-deleted users keep their PII for a 30-day
+// recovery window so an admin can restore the account if the user changes
+// their mind. Past 30 days the email / name / phone / password are scrubbed
+// permanently — only the row id, audit trail, and business records remain.
+// Days are configurable via the platform setting `billing.softDeleteDays`.
+async function purgeStaleSoftDeletes() {
+  const daysStr = await settings.get('billing.softDeleteDays').catch(() => null);
+  const days = parseInt(daysStr || '30', 10);
+  const cutoff = new Date(Date.now() - days * 86_400_000);
+  const db = _db();
+  // Only scrub rows that still have PII (email is the canary — once we've
+  // scrubbed it, it starts with "deleted-").
+  const rows = await db('users')
+    .whereNotNull('deletedAt')
+    .andWhere('deletedAt', '<=', cutoff)
+    .andWhere('email', 'NOT LIKE', 'deleted-%@kartriq.invalid')
+    .select('id');
+  if (!rows.length) return { piiPurged: 0 };
+  for (const r of rows) {
+    await db('users').where({ id: r.id }).update({
+      email: `deleted-${r.id}@kartriq.invalid`,
+      name: 'Deleted user',
+      phone: null,
+      password: null,
+      avatar: null,
+      providerId: null,
+      totpSecret: null,
+    });
+  }
+  logger.info(`[billing.job] PII purged for ${rows.length} stale soft-deletes (>${days}d).`);
+  return { piiPurged: rows.length };
+}
+
 async function runBillingJob() {
   logger.info('[billing.job] starting…');
   const roll = await rollForwardSubscriptions();
@@ -465,8 +498,9 @@ async function runBillingJob() {
   const dunning = await sendDunningEmails();
   const suspend = await suspendOverdueTenants();
   const reminders = await sendTrialReminders();
-  logger.info({ detail: { ...roll, ...retry, ...dunning, ...suspend, ...reminders } }, '[billing.job] done');
-  return { ...roll, ...retry, ...dunning, ...suspend, ...reminders };
+  const purge = await purgeStaleSoftDeletes();
+  logger.info({ detail: { ...roll, ...retry, ...dunning, ...suspend, ...reminders, ...purge } }, '[billing.job] done');
+  return { ...roll, ...retry, ...dunning, ...suspend, ...reminders, ...purge };
 }
 
 // Allow direct CLI invocation

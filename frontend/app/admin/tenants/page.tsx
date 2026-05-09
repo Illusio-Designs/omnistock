@@ -1,14 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 import { useSearchStore } from '@/store/search.store';
-import { Power, PowerOff, Crown, LayoutDashboard } from 'lucide-react';
+import { Power, PowerOff, Crown, LayoutDashboard, RotateCcw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { Modal } from '@/components/ui/Modal';
+import { Tabs } from '@/components/ui';
+import { toast } from '@/store/toast.store';
+
+const STATUSES = ['ACTIVE', 'TRIAL', 'PAST_DUE', 'SUSPENDED', 'CANCELLED', 'DELETED'] as const;
+type StatusFilter = '' | typeof STATUSES[number];
+
+// Recovery window — must match backend `billing.softDeleteDays`
+// (default 30) so admins can read the same number we enforce.
+const SOFT_DELETE_DAYS = 30;
+
+function daysSince(iso?: string | null) {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return null;
+  return Math.max(0, Math.floor((Date.now() - t) / 86_400_000));
+}
 
 export default function AdminTenantsPage() {
   const router = useRouter();
@@ -17,6 +33,8 @@ export default function AdminTenantsPage() {
   const [tenants, setTenants] = useState<any[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
   const [assigning, setAssigning] = useState<any>(null);
+  const [filter, setFilter] = useState<StatusFilter>('');
+  const [restoring, setRestoring] = useState<string | null>(null);
 
   const openAsTenant = (t: any) => {
     startImpersonation({
@@ -28,12 +46,36 @@ export default function AdminTenantsPage() {
     router.push('/dashboard');
   };
 
-  const load = () => adminApi.tenants(query ? { search: query } : undefined).then((r) => setTenants(r.data));
-  useEffect(() => { load(); }, [query]);
+  const load = () => adminApi.tenants({
+    ...(query ? { search: query } : {}),
+    ...(filter ? { status: filter } : {}),
+  }).then((r) => setTenants(r.data));
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [query, filter]);
   useEffect(() => { adminApi.plans().then((r) => setPlans(r.data)); }, []);
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { ALL: tenants.length };
+    for (const s of STATUSES) c[s] = 0;
+    for (const t of tenants) if (c[t.status] !== undefined) c[t.status] += 1;
+    return c;
+  }, [tenants]);
 
   const suspend = async (id: string) => { await adminApi.suspendTenant(id); load(); };
   const activate = async (id: string) => { await adminApi.activateTenant(id); load(); };
+
+  const restore = async (t: any) => {
+    setRestoring(t.id);
+    try {
+      const r = await adminApi.restoreTenant(t.id);
+      if (r.data?.warning) toast.warning(r.data.warning);
+      else toast.success(`${t.businessName} restored.`);
+      load();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.error || 'Restore failed');
+    } finally {
+      setRestoring(null);
+    }
+  };
 
   return (
     <div className="p-8">
@@ -42,7 +84,26 @@ export default function AdminTenantsPage() {
       </h1>
       <p className="text-slate-500 mt-1">All businesses signed up to Kartriq.</p>
 
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mt-6">
+      {/* Status filter — includes DELETED so admins can find self-deleted
+          tenants and restore them within the {SOFT_DELETE_DAYS}-day window. */}
+      <div className="mt-5">
+        <Tabs
+          size="sm"
+          value={filter}
+          onChange={(k) => setFilter(k as StatusFilter)}
+          items={[
+            { key: '',          label: 'All',       badge: counts.ALL || undefined },
+            { key: 'ACTIVE',    label: 'Active',    badge: counts.ACTIVE || undefined },
+            { key: 'TRIAL',     label: 'Trial',     badge: counts.TRIAL || undefined },
+            { key: 'PAST_DUE',  label: 'Past due',  badge: counts.PAST_DUE || undefined },
+            { key: 'SUSPENDED', label: 'Suspended', badge: counts.SUSPENDED || undefined },
+            { key: 'CANCELLED', label: 'Cancelled', badge: counts.CANCELLED || undefined },
+            { key: 'DELETED',   label: 'Deleted',   badge: counts.DELETED || undefined },
+          ]}
+        />
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mt-4">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
@@ -72,24 +133,59 @@ export default function AdminTenantsPage() {
                   <span className={`text-xs font-bold px-2 py-1 rounded-full ${
                     t.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' :
                     t.status === 'TRIAL' ? 'bg-blue-100 text-blue-700' :
+                    t.status === 'DELETED' ? 'bg-slate-200 text-slate-700' :
                     'bg-red-100 text-red-700'
                   }`}>{t.status}</span>
+                  {t.status === 'DELETED' && t.deletedAt && (() => {
+                    const d = daysSince(t.deletedAt);
+                    if (d === null) return null;
+                    const remaining = SOFT_DELETE_DAYS - d;
+                    return (
+                      <div className={`mt-1 text-[10px] font-medium ${
+                        remaining <= 0
+                          ? 'text-rose-600'
+                          : remaining <= 7
+                            ? 'text-amber-700'
+                            : 'text-slate-500'
+                      }`}>
+                        {remaining <= 0
+                          ? 'PII purged · only data shell remains'
+                          : `Restorable for ${remaining}d (deleted ${d}d ago)`}
+                      </div>
+                    );
+                  })()}
                 </td>
                 <td className="p-3 text-right">{t._count?.users || 0}</td>
                 <td className="p-3 text-right">{t._count?.orders || 0}</td>
                 <td className="p-3 text-right">{t._count?.products || 0}</td>
                 <td className="p-3 flex gap-2 justify-end">
-                  <Tooltip content="Open dashboard as this tenant">
-                    <Button variant="ghost" size="icon" onClick={() => openAsTenant(t)}>
-                      <LayoutDashboard size={14} />
-                    </Button>
-                  </Tooltip>
-                  <Tooltip content="Assign plan">
-                    <Button variant="ghost" size="icon" onClick={() => setAssigning(t)}>
-                      <Crown size={14} />
-                    </Button>
-                  </Tooltip>
-                  {t.status === 'SUSPENDED' ? (
+                  {t.status !== 'DELETED' && (
+                    <>
+                      <Tooltip content="Open dashboard as this tenant">
+                        <Button variant="ghost" size="icon" onClick={() => openAsTenant(t)}>
+                          <LayoutDashboard size={14} />
+                        </Button>
+                      </Tooltip>
+                      <Tooltip content="Assign plan">
+                        <Button variant="ghost" size="icon" onClick={() => setAssigning(t)}>
+                          <Crown size={14} />
+                        </Button>
+                      </Tooltip>
+                    </>
+                  )}
+                  {t.status === 'DELETED' ? (
+                    <Tooltip content="Restore this tenant — re-enables login and all team access">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => restore(t)}
+                        loading={restoring === t.id}
+                        leftIcon={<RotateCcw size={13} />}
+                      >
+                        Restore
+                      </Button>
+                    </Tooltip>
+                  ) : t.status === 'SUSPENDED' ? (
                     <Tooltip content="Activate tenant">
                       <Button variant="ghost" size="icon" onClick={() => activate(t.id)}>
                         <Power size={14} />

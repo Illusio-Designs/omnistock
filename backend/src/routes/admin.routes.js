@@ -155,6 +155,58 @@ router.post('/tenants/:id/activate', async (req, res) => {
   res.json(t);
 });
 
+// Restore a self-deleted tenant. Available during the 30-day recovery
+// window before the daily cron scrubs PII. After the purge has run, the
+// row's email/name/phone are gone — restore still works mechanically but
+// the owner won't be able to log in (their email no longer exists), so
+// the admin should warn the user before clicking.
+router.post('/tenants/:id/restore', async (req, res) => {
+  try {
+    const db = require('../utils/db');
+    const tenant = await prisma.tenant.findUnique({ where: { id: req.params.id } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+    if (tenant.status !== 'DELETED' && !tenant.deletedAt) {
+      return res.status(400).json({ error: 'Tenant is not in a deleted state' });
+    }
+
+    // Restore the tenant.
+    await db('tenants').where({ id: tenant.id }).update({
+      status: 'ACTIVE',
+      deletedAt: null,
+    });
+
+    // Restore every soft-deleted user attached to this tenant. We scope
+    // to the tenant so a per-user soft delete elsewhere isn't accidentally
+    // un-done by a tenant restore.
+    const restored = await db('users')
+      .where({ tenantId: tenant.id })
+      .whereNotNull('deletedAt')
+      .update({
+        isActive: 1,
+        deletedAt: null,
+      });
+
+    // Detect whether PII has already been purged so the admin can warn the
+    // user that login won't work without manual email re-set.
+    const owner = await prisma.user.findFirst({
+      where: { tenantId: tenant.id, email: tenant.ownerEmail },
+    });
+    const piiPurged = !owner || /^deleted-[^@]+@kartriq\.invalid$/.test(owner.email);
+
+    res.json({
+      ok: true,
+      tenant: { id: tenant.id, status: 'ACTIVE' },
+      restoredUsers: restored,
+      piiPurged,
+      ...(piiPurged ? {
+        warning: "Tenant restored, but the owner's PII was already purged. They cannot log in until their email is reassigned (PUT /admin/users/:id).",
+      } : {}),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Force-assign a plan
 router.post('/tenants/:id/assign-plan', async (req, res) => {
   try {
