@@ -299,7 +299,7 @@ export function PublicFooter() {
           <span>
             Managed by{' '}
             <a
-              href="https://finvera.in"
+              href="https://finvera.solutions"
               target="_blank"
               rel="noopener noreferrer"
               className="text-white/70 hover:text-emerald-300 transition-colors"
