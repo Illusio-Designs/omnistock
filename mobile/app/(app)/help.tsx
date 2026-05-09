@@ -9,6 +9,7 @@
 
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
+import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronDown, LifeBuoy, MessageSquare, Send } from 'lucide-react-native';
 import Button from '../../components/ui/Button';
@@ -73,6 +74,18 @@ function BrowseHelp({ onContact }: { onContact: () => void }) {
           <View className="flex-1">
             <Text className="text-sm font-bold text-slate-900">Contact support</Text>
             <Text className="text-xs text-slate-500">Open a new ticket — replies arrive by email</Text>
+          </View>
+        </Pressable>
+        <Pressable
+          onPress={() => router.push('/tickets' as any)}
+          className="flex-row items-center gap-3 p-4 rounded-2xl border border-slate-200 bg-white"
+        >
+          <View className="w-10 h-10 rounded-xl bg-sky-50 items-center justify-center">
+            <MessageSquare size={18} color="#2563eb" />
+          </View>
+          <View className="flex-1">
+            <Text className="text-sm font-bold text-slate-900">My tickets</Text>
+            <Text className="text-xs text-slate-500">View threads and reply to support</Text>
           </View>
         </Pressable>
       </View>

@@ -37,6 +37,7 @@ type Item = {
 const ITEMS: Item[] = [
   { href: '/inbox',     label: 'Inbox',           icon: <Bell size={18} color="#06D4B8" />,      iconBg: 'bg-emerald-50' },
   { href: '/help',      label: 'Help & Support',  icon: <LifeBuoy size={18} color="#2563eb" />,  iconBg: 'bg-sky-50' },
+  { href: '/tickets',   label: 'My tickets',      icon: <FileText size={18} color="#04AB94" />,  iconBg: 'bg-emerald-50' },
   { href: '/changelog', label: "What's new",      icon: <Megaphone size={18} color="#7c3aed" />, iconBg: 'bg-violet-50' },
   { href: '/audit',     label: 'Activity log',    icon: <Activity size={18} color="#64748b" />,  iconBg: 'bg-slate-100' },
   { href: '/inventory', label: 'Inventory', icon: <Boxes size={18} color="#04AB94" />, iconBg: 'bg-emerald-50' },

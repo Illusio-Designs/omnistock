@@ -139,6 +139,7 @@ export default function AppLayout() {
       {/* Hidden — reached from the dashboard bell icon and the More menu */}
       <Tabs.Screen name="inbox"     options={{ href: null, title: 'Inbox' }} />
       <Tabs.Screen name="help"      options={{ href: null, title: 'Help & Support' }} />
+      <Tabs.Screen name="tickets"   options={{ href: null, title: 'Support tickets' }} />
       <Tabs.Screen name="audit"     options={{ href: null, title: 'Activity log' }} />
       <Tabs.Screen name="changelog" options={{ href: null, title: "What's new" }} />
     </Tabs>
