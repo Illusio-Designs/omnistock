@@ -76,7 +76,27 @@ export const billingApi = {
   }) => api.patch('/billing/wallet/settings', body),
   updateTenant: (data: { businessName?: string; gstin?: string }) =>
     api.patch('/billing/tenant', data),
+  // Tenant-visible audit log (own tenant only) — same endpoint the web
+  // /audit page uses. The platform-wide /admin/audit feed stays
+  // desktop-only since founders run admin from a real keyboard.
+  audit: (params?: { limit?: number; action?: string; before?: string }) =>
+    api.get<AuditRow[]>('/billing/audit', { params }),
 };
+
+export interface AuditRow {
+  id: string;
+  userId: string | null;
+  userEmail: string | null;
+  action: string;
+  resource: string | null;
+  resourceId: string | null;
+  ip: string | null;
+  method: string | null;
+  path: string | null;
+  statusCode: number | null;
+  metadata: unknown;
+  createdAt: string;
+}
 
 export const userApi = {
   list: () => api.get('/users'),
@@ -194,6 +214,29 @@ export interface HelpFaq {
 export const helpApi = {
   faqs: (audience: ContentAudience = 'tenant') =>
     api.get<HelpFaq[]>('/help/faqs', { params: { audience } }),
+};
+
+// ── Changelog ("What's new") ───────────────────────────────────────
+// CMS-backed by /admin/changelog on the founder side. Mobile is read-only.
+export type ChangelogTag = 'feature' | 'fix' | 'security' | 'improve';
+
+export interface ChangelogEntry {
+  id: string;
+  title: string;
+  tag: ChangelogTag;
+  highlights: string[];
+  publishedAt?: string | null;
+  isPublished: boolean;
+  audience: ContentAudience;
+  createdAt: string;
+  updatedAt: string;
+  // Public list endpoint flattens to a `date` field (publishedAt or createdAt)
+  date?: string | null;
+}
+
+export const changelogApi = {
+  list: (audience: ContentAudience = 'tenant') =>
+    api.get<ChangelogEntry[]>('/changelog', { params: { audience } }),
 };
 
 // ── Razorpay checkout / verification ──────────────────────────────

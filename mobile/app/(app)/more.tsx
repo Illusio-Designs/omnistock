@@ -1,6 +1,7 @@
 import { Link, router } from 'expo-router';
 import Constants from 'expo-constants';
 import {
+  Activity,
   Bell,
   Boxes,
   ChevronRight,
@@ -9,6 +10,7 @@ import {
   Info,
   LifeBuoy,
   LogOut,
+  Megaphone,
   Palette,
   Plug,
   Settings as SettingsIcon,
@@ -33,8 +35,10 @@ type Item = {
 };
 
 const ITEMS: Item[] = [
-  { href: '/inbox', label: 'Inbox', icon: <Bell size={18} color="#06D4B8" />, iconBg: 'bg-emerald-50' },
-  { href: '/help',  label: 'Help & Support', icon: <LifeBuoy size={18} color="#2563eb" />, iconBg: 'bg-sky-50' },
+  { href: '/inbox',     label: 'Inbox',           icon: <Bell size={18} color="#06D4B8" />,      iconBg: 'bg-emerald-50' },
+  { href: '/help',      label: 'Help & Support',  icon: <LifeBuoy size={18} color="#2563eb" />,  iconBg: 'bg-sky-50' },
+  { href: '/changelog', label: "What's new",      icon: <Megaphone size={18} color="#7c3aed" />, iconBg: 'bg-violet-50' },
+  { href: '/audit',     label: 'Activity log',    icon: <Activity size={18} color="#64748b" />,  iconBg: 'bg-slate-100' },
   { href: '/inventory', label: 'Inventory', icon: <Boxes size={18} color="#04AB94" />, iconBg: 'bg-emerald-50' },
   { href: '/purchases', label: 'Purchases', icon: <FileText size={18} color="#0ea5e9" />, iconBg: 'bg-sky-50' },
   { href: '/vendors', label: 'Vendors', icon: <Truck size={18} color="#8b5cf6" />, iconBg: 'bg-violet-50' },
