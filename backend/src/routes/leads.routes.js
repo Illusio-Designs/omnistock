@@ -2,6 +2,7 @@ const { Router } = require('express');
 const { z } = require('zod');
 const prisma = require('../utils/prisma');
 const { authenticate, requirePlatformAdmin } = require('../middleware/auth.middleware');
+const { notifyAdmins } = require('../services/notifications.service');
 
 const router = Router();
 
@@ -42,6 +43,15 @@ router.post('/', async (req, res) => {
       },
     });
 
+    notifyAdmins({
+      type: 'lead.new',
+      category: 'leads',
+      severity: 'info',
+      title: `New lead from ${data.name}${data.company ? ` · ${data.company}` : ''}`,
+      body: data.message ? String(data.message).slice(0, 280) : `${data.email}${data.phone ? ` · ${data.phone}` : ''}`,
+      link: '/admin/leads',
+      metadata: { leadId: lead.id, source: data.source || 'demo' },
+    });
     res.status(201).json({ id: lead.id, ok: true });
   } catch (err) {
     if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });

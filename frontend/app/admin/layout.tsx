@@ -8,6 +8,7 @@ import { Topbar } from '@/components/layout/Topbar';
 import { CommandPalette } from '@/components/CommandPalette';
 import { ChangelogDrawer } from '@/components/ChangelogDrawer';
 import { HelpDrawer } from '@/components/HelpDrawer';
+import { InboxDrawer } from '@/components/InboxDrawer';
 import {
   LayoutDashboard, Package2, Building2, LifeBuoy, FileText, FileEdit,
   Search, Settings, Activity, Users, BarChart3, Cpu, Inbox, Megaphone,
@@ -78,6 +79,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <CommandPalette />
         <ChangelogDrawer />
         <HelpDrawer />
+        <InboxDrawer />
       </main>
     </div>
   );

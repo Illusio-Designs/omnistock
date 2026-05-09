@@ -14,6 +14,7 @@ import { TrialBanner } from '@/components/TrialBanner';
 import { CommandPalette } from '@/components/CommandPalette';
 import { ChangelogDrawer } from '@/components/ChangelogDrawer';
 import { HelpDrawer } from '@/components/HelpDrawer';
+import { InboxDrawer } from '@/components/InboxDrawer';
 import { Toaster } from '@/components/ui/Toaster';
 import { Eye, X, ArrowLeft, Zap } from 'lucide-react';
 
@@ -145,6 +146,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <CommandPalette />
         <ChangelogDrawer />
         <HelpDrawer />
+        <InboxDrawer />
       </main>
     </div>
   );

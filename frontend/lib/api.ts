@@ -308,6 +308,63 @@ export const helpApi = {
   adminDeleteFaq: (id: string) => api.delete(`/help/admin/faqs/${id}`),
 };
 
+// ── Notifications inbox ───────────────────────────────────────────
+export type NotificationCategory =
+  | 'orders' | 'inventory' | 'tickets' | 'leads' | 'payments'
+  | 'signup' | 'system' | 'plan' | 'channel' | 'team';
+export type NotificationSeverity = 'info' | 'success' | 'warning' | 'error';
+
+export interface InboxNotification {
+  id: string;
+  scope: 'tenant' | 'platform';
+  tenantId: string | null;
+  userId: string | null;
+  type: string;
+  category: NotificationCategory;
+  severity: NotificationSeverity;
+  title: string;
+  body: string | null;
+  link: string | null;
+  metadata: Record<string, any> | null;
+  isRead: boolean;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface InboxListResponse {
+  notifications: InboxNotification[];
+  total: number;
+  unread: number;
+  limit: number;
+  offset: number;
+}
+
+interface ListParams {
+  unreadOnly?: boolean;
+  category?: NotificationCategory | '';
+  limit?: number;
+  offset?: number;
+}
+
+export const notificationApi = {
+  // Tenant inbox — current user's notifications (broadcast + targeted)
+  list: (params: ListParams = {}) =>
+    api.get<InboxListResponse>('/notifications', { params }),
+  unreadCount: () => api.get<{ count: number }>('/notifications/unread-count'),
+  markRead: (id: string) => api.post(`/notifications/${id}/read`, {}),
+  markAllRead: () => api.post('/notifications/read-all', {}),
+  remove: (id: string) => api.delete(`/notifications/${id}`),
+  clearRead: () => api.delete('/notifications'),
+
+  // Platform inbox — founders only
+  platformList: (params: ListParams = {}) =>
+    api.get<InboxListResponse>('/notifications/platform', { params }),
+  platformUnreadCount: () => api.get<{ count: number }>('/notifications/platform/unread-count'),
+  platformMarkRead: (id: string) => api.post(`/notifications/platform/${id}/read`, {}),
+  platformMarkAllRead: () => api.post('/notifications/platform/read-all', {}),
+  platformRemove: (id: string) => api.delete(`/notifications/platform/${id}`),
+};
+
 // ── Changelog ("What's new") ───────────────────────────────────────
 // Public GET is unauthenticated; admin endpoints are platform-admin-only.
 export type ChangelogTag = 'feature' | 'fix' | 'security' | 'improve';

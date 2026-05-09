@@ -290,6 +290,7 @@ const TABLE_MAP = {
   lead: 'leads',
   changelogEntry: 'changelog_entries',
   helpFaq: 'help_faqs',
+  notification: 'notifications',
 };
 
 // ── UPDATE data builder (handles { increment } etc.) ────────────────

@@ -1,5 +1,8 @@
 const { z } = require('zod');
 const prisma = require('../utils/prisma');
+const { notifyTenant } = require('../services/notifications.service');
+
+const LOW_STOCK_THRESHOLD = 10;
 
 const adjustSchema = z.object({
   warehouseId: z.string(),
@@ -50,10 +53,14 @@ const adjustInventory = async (req, res) => {
     if (!wh) return res.status(404).json({ error: 'Warehouse not found' });
     if (!variant) return res.status(404).json({ error: 'Variant not found' });
 
+    // Capture the pre-tx quantity so the low-stock check below can see
+    // whether this adjustment crossed the threshold.
+    const beforeRow = await prisma.inventoryItem.findUnique({
+      where: { warehouseId_variantId: { warehouseId: data.warehouseId, variantId: data.variantId } },
+    });
+
     await prisma.$transaction(async (tx) => {
-      const existing = await tx.inventoryItem.findUnique({
-        where: { warehouseId_variantId: { warehouseId: data.warehouseId, variantId: data.variantId } },
-      });
+      const existing = beforeRow;
       const qty = data.type === 'OUTBOUND' ? -Math.abs(data.quantity) : Math.abs(data.quantity);
 
       if (existing) {
@@ -86,6 +93,34 @@ const adjustInventory = async (req, res) => {
         },
       });
     });
+
+    // Fire a low-stock notification when an OUTBOUND/ADJUSTMENT crosses
+    // the threshold from above. Re-read post-tx so the row reflects the
+    // committed quantity.
+    if (data.type !== 'INBOUND') {
+      try {
+        const after = await prisma.inventoryItem.findUnique({
+          where: { warehouseId_variantId: { warehouseId: data.warehouseId, variantId: data.variantId } },
+          include: { variant: { include: { product: true } }, warehouse: true },
+        });
+        const before = (beforeRow?.quantityAvailable ?? 0);
+        const now = after?.quantityAvailable ?? 0;
+        if (after && before > LOW_STOCK_THRESHOLD && now <= LOW_STOCK_THRESHOLD) {
+          notifyTenant(tenantId, {
+            type: now <= 0 ? 'inventory.out_of_stock' : 'inventory.low',
+            category: 'inventory',
+            severity: now <= 0 ? 'error' : 'warning',
+            title: now <= 0
+              ? `${after.variant?.product?.name || 'Item'} is out of stock`
+              : `Low stock: ${after.variant?.product?.name || 'Item'} (${now} left)`,
+            body: `Warehouse: ${after.warehouse?.name || '—'} · SKU ${after.variant?.sku || '—'}`,
+            link: '/inventory?lowStock=true',
+            metadata: { variantId: data.variantId, warehouseId: data.warehouseId, qty: now },
+          });
+        }
+      } catch (e) { /* low-stock notify is best-effort */ }
+    }
+
     res.json({ message: 'Inventory adjusted' });
   } catch (err) {
     if (err instanceof z.ZodError) { res.status(400).json({ error: err.errors }); return; }

@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const { z } = require('zod');
 const prisma = require('../utils/prisma');
+const { notifyUser } = require('../services/notifications.service');
 const { authenticate, requirePlatformAdmin } = require('../middleware/auth.middleware');
 const settingsService = require('../services/settings.service');
 const cronJob = require('../jobs/cron.job');
@@ -503,6 +504,20 @@ router.post('/tickets/:id/reply', async (req, res) => {
     }
   } catch (err) {
     console.warn('[admin/tickets/reply] enqueue email failed:', err.message);
+  }
+
+  // In-app notification on the requester's tenant inbox so they see the
+  // reply even before opening the email.
+  if (ticket.tenantId && ticket.userId) {
+    notifyUser(ticket.tenantId, ticket.userId, {
+      type: 'ticket.reply.staff',
+      category: 'tickets',
+      severity: 'info',
+      title: `Support reply on: ${ticket.subject || 'your ticket'}`,
+      body: String(body).slice(0, 280),
+      link: `/tickets/${ticket.id}`,
+      metadata: { ticketId: ticket.id },
+    });
   }
 
   res.json({ ok: true });

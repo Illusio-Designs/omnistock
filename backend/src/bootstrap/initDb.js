@@ -278,6 +278,39 @@ async function initDb() {
       PRIMARY KEY (\`key\`, \`tenantId\`, \`path\`),
       KEY \`idem_expires_idx\` (\`expiresAt\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    // In-app notifications inbox — backs the topbar bell drawer.
+    //   scope='tenant'   → tenantId required; userId null = visible to
+    //                      all users of that tenant, set to a userId to
+    //                      target a single recipient (e.g. ticket-reply
+    //                      for the specific user who opened the ticket).
+    //   scope='platform' → tenantId null; visible to all platform admins.
+    // category drives the filter chips on the drawer (orders / inventory
+    // / tickets / leads / payments / signup / system). severity tints the
+    // row icon (info | success | warning | error). link is a relative URL
+    // that the drawer navigates to on click. metadata is opaque JSON for
+    // future enrichment (resource id, before/after, etc.) and is not
+    // surfaced in the UI today.
+    `CREATE TABLE IF NOT EXISTS \`notifications\` (
+      \`id\` varchar(191) NOT NULL,
+      \`scope\` varchar(16) NOT NULL DEFAULT 'tenant',
+      \`tenantId\` varchar(191) DEFAULT NULL,
+      \`userId\` varchar(191) DEFAULT NULL,
+      \`type\` varchar(64) NOT NULL,
+      \`category\` varchar(32) NOT NULL DEFAULT 'system',
+      \`severity\` varchar(16) NOT NULL DEFAULT 'info',
+      \`title\` varchar(255) NOT NULL,
+      \`body\` text DEFAULT NULL,
+      \`link\` varchar(500) DEFAULT NULL,
+      \`metadata\` longtext DEFAULT NULL,
+      \`isRead\` tinyint(1) NOT NULL DEFAULT 0,
+      \`readAt\` datetime(3) DEFAULT NULL,
+      \`createdAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+      PRIMARY KEY (\`id\`),
+      KEY \`notif_tenant_idx\` (\`scope\`, \`tenantId\`, \`isRead\`, \`createdAt\`),
+      KEY \`notif_user_idx\` (\`userId\`, \`isRead\`, \`createdAt\`),
+      KEY \`notif_platform_idx\` (\`scope\`, \`isRead\`, \`createdAt\`),
+      KEY \`notif_type_idx\` (\`type\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   ];
   for (const sql of walletTables) {
     try { await db.raw(sql); } catch (e) { console.warn('[initDb] wallet table:', e.message); }

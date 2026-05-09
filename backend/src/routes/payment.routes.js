@@ -27,6 +27,7 @@ const {
 } = require('../services/payment.service');
 const wallet = require('../services/wallet.service');
 const { audit } = require('../services/audit.service');
+const { notifyTenant } = require('../services/notifications.service');
 const { snapshotInvoiceForSubscription } = require('../jobs/billing.job');
 const { idempotent } = require('../middleware/idempotency.middleware');
 
@@ -94,6 +95,22 @@ router.post('/webhook', async (req, res) => {
       }
       if (tenantId) {
         await prisma.tenant.update({ where: { id: tenantId }, data: { status: 'ACTIVE' } });
+
+        notifyTenant(tenantId, {
+          type: 'payment.captured',
+          category: 'payments',
+          severity: 'success',
+          title: amountInr
+            ? `Payment received · ₹${amountInr.toLocaleString('en-IN')}`
+            : 'Payment received',
+          body: purpose === 'wallet'
+            ? 'Wallet topped up — overage usage will draw from this balance.'
+            : purpose === 'autopay'
+              ? 'Auto top-up successful.'
+              : 'Plan payment captured. Subscription is active.',
+          link: '/billing',
+          metadata: { paymentId: paymentEntity?.id, purpose, amountInr },
+        });
 
         // Wallet top-ups (manual or autopay) flow through the webhook so the
         // ledger is the source of truth even if the client never returns.
@@ -200,6 +217,17 @@ router.post('/webhook', async (req, res) => {
 
       // Notify the tenant owner — best-effort, never blocks the webhook ack.
       if (tenantIdForFail) {
+        notifyTenant(tenantIdForFail, {
+          type: 'payment.failed',
+          category: 'payments',
+          severity: 'error',
+          title: 'Payment failed',
+          body: paymentEntity?.error_description
+            ? `Reason: ${paymentEntity.error_description}. Update your payment method to avoid suspension.`
+            : 'A scheduled payment did not go through. Update your payment method to avoid suspension.',
+          link: '/billing',
+          metadata: { paymentId: paymentEntity?.id, reason: paymentEntity?.error_description || null },
+        });
         try {
           const tenant = await prisma.tenant.findUnique({ where: { id: tenantIdForFail } });
           if (tenant?.ownerEmail) {

@@ -1,5 +1,6 @@
 const { z } = require('zod');
 const prisma = require('../utils/prisma');
+const { notifyTenant } = require('../services/notifications.service');
 
 // Accept either full variant reference (variantId) or a lightweight one (sku / productName).
 // If sku is provided, we look up the variant server-side. If neither works, a placeholder
@@ -286,6 +287,16 @@ const createOrder = async (req, res) => {
         });
       }
     }
+
+    notifyTenant(tenantId, {
+      type: 'order.new',
+      category: 'orders',
+      severity: 'success',
+      title: `New order ${order.orderNumber} · ₹${total}`,
+      body: `${resolvedItems.reduce((n, i) => n + i.qty, 0)} item(s) · ${channel.name || channel.type || 'Manual'}`,
+      link: `/orders/${order.id}`,
+      metadata: { orderId: order.id, channelId: channel.id, total },
+    });
 
     res.status(201).json(order);
   } catch (err) {

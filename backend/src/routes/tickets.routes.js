@@ -2,6 +2,7 @@ const { Router } = require('express');
 const prisma = require('../utils/prisma');
 const { authenticate, requireTenant } = require('../middleware/auth.middleware');
 const { audit } = require('../services/audit.service');
+const { notifyAdmins, notifyUser } = require('../services/notifications.service');
 
 const router = Router();
 router.use(authenticate, requireTenant);
@@ -55,6 +56,16 @@ router.post('/', async (req, res) => {
     });
 
     audit({ req, action: 'tickets.create', resource: 'ticket', resourceId: ticket.id });
+    // Founder inbox: every new tenant ticket lands as a platform notification
+    notifyAdmins({
+      type: 'ticket.opened',
+      category: 'tickets',
+      severity: priority === 'URGENT' || priority === 'HIGH' ? 'warning' : 'info',
+      title: `New ${priority?.toLowerCase() || 'normal'} ticket: ${subject}`,
+      body: body.slice(0, 280),
+      link: `/admin/tickets`,
+      metadata: { ticketId: ticket.id, tenantId: req.tenant.id, userId: req.user.id },
+    });
     res.status(201).json(ticket);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -88,6 +99,16 @@ router.post('/:id/reply', async (req, res) => {
     }),
   ]);
   audit({ req, action: 'tickets.reply', resource: 'ticket', resourceId: ticket.id });
+  // Tenant replied → ping platform admins so they pick it back up.
+  notifyAdmins({
+    type: 'ticket.reply.tenant',
+    category: 'tickets',
+    severity: 'info',
+    title: `Tenant reply on: ${ticket.subject}`,
+    body: body.slice(0, 280),
+    link: `/admin/tickets`,
+    metadata: { ticketId: ticket.id, tenantId: req.tenant.id, userId: req.user.id },
+  });
   res.json({ ok: true });
 });
 

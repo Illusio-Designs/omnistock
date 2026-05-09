@@ -4,6 +4,7 @@ const { z } = require('zod');
 const { OAuth2Client } = require('google-auth-library');
 const prisma = require('../utils/prisma');
 const { sendWelcome } = require('../services/email.service');
+const { notifyAdmins, notifyTenant } = require('../services/notifications.service');
 
 const registerSchema = z.object({
   name: z.string().min(2),
@@ -325,6 +326,27 @@ const onboardBusiness = async (req, res) => {
       name: result.user.name,
       businessName: result.tenant.businessName,
     }).catch((e) => console.error('[welcome email]', e.message));
+
+    // Founder inbox — every new signup
+    notifyAdmins({
+      type: 'tenant.signup',
+      category: 'signup',
+      severity: 'success',
+      title: `New signup: ${result.tenant.businessName}`,
+      body: `${result.user.email}${data.industry ? ` · ${data.industry}` : ''}${data.companySize ? ` · ${data.companySize}` : ''} · plan ${planCode}`,
+      link: `/admin/tenants`,
+      metadata: { tenantId: result.tenant.id, plan: planCode, source: data.referralCode ? 'referral' : 'direct' },
+    });
+    // Tenant inbox — first-run welcome message
+    notifyTenant(result.tenant.id, {
+      type: 'tenant.welcome',
+      category: 'system',
+      severity: 'info',
+      title: `Welcome to Kartriq, ${result.user.name?.split(' ')[0] || 'there'} 👋`,
+      body: 'Your 14-day trial is active. Start by adding products, connecting a sales channel, or inviting your team.',
+      link: '/dashboard',
+      metadata: { trialEndsAt: trialEnds.toISOString() },
+    });
 
     // Record the inbound referral, if any. Unknown / self-referred / invalid
     // codes are ignored by the service so the signup itself never fails.
