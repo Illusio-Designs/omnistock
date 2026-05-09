@@ -1,15 +1,17 @@
-// Wallet auto-topup job
+// ⚠ DEPRECATED — wallet auto-topup is disabled.
 //
-// Walks every tenant_wallet with `autoTopupEnabled=1` and balance below
-// `autoTopupTriggerBelow`, finds the default saved Razorpay token, and
-// charges it for `autoTopupAmount`. On success we credit the wallet via
-// the standard wallet.topup() path so the ledger stays consistent.
+// The wallet is for ad-hoc PAYG overage funding. Tenants top it up manually
+// via /dashboard/billing → "Top up wallet". Subscription auto-renewal still
+// uses the saved-card token, but that runs from billing.job.js, not here.
 //
-// We rely on Razorpay's webhook (payment.captured) as the source of truth
-// for credit when both the synchronous response and the webhook arrive —
-// wallet.topup is idempotent on `paymentRef`, so the first one wins.
+// This file is left in the tree (rather than deleted) as a no-op shim so:
+//   • Any external scheduler still pointing at `node src/jobs/autopay.job.js`
+//     exits cleanly without crashing.
+//   • The require() in cron.job.js (now commented out) can be re-enabled if
+//     wallet autopay is ever brought back.
 //
-// Runs every CRON_AUTOPAY_MIN minutes (default 15) when CRON_LEADER=true.
+// findCandidates() retains its original implementation purely for tests; the
+// runner short-circuits before any charge is attempted.
 
 const db = require('../utils/db');
 const logger = require('../utils/logger');
@@ -182,21 +184,10 @@ async function chargeOne(row) {
 }
 
 async function runAutopayJob() {
-  // Don't even bother if we're in stub/no-creds mode — autopay needs a real key.
-  const { isLive } = await getCreds();
-  if (!isLive) {
-    return { skipped: true, reason: 'razorpay not configured (stub mode)' };
-  }
-
-  const candidates = await findCandidates();
-  if (!candidates.length) return { processed: 0 };
-
-  const results = [];
-  for (const row of candidates) {
-    results.push(await chargeOne(row));
-  }
-  console.log(`[autopay] processed ${results.length} wallets`, results.map(r => ({ tenantId: r.tenantId, ok: r.ok })));
-  return { processed: results.length, results };
+  // DEPRECATED — see file header. Wallet is manual top-up only; do not
+  // charge any saved cards from this path.
+  logger.info('[autopay] disabled — wallet is manual top-up only. Skipping.');
+  return { skipped: true, reason: 'wallet auto-topup is disabled (manual top-up only)' };
 }
 
 if (require.main === module) {

@@ -25,11 +25,9 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(false);
   const [topupOpen, setTopupOpen] = useState(false);
   const [showWalletSettings, setShowWalletSettings] = useState(false);
+  // Wallet is for manual PAYG overage funding only — no autopay.
   const [walletSettings, setWalletSettings] = useState({
     lowBalanceThreshold: '',
-    autoTopupEnabled: false,
-    autoTopupAmount: '',
-    autoTopupTriggerBelow: '',
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
@@ -51,9 +49,6 @@ export default function BillingPage() {
     if (walletData) {
       setWalletSettings({
         lowBalanceThreshold: walletData.lowBalanceThreshold ?? '',
-        autoTopupEnabled: !!walletData.autoTopupEnabled,
-        autoTopupAmount: walletData.autoTopupAmount ?? '',
-        autoTopupTriggerBelow: walletData.autoTopupTriggerBelow ?? '',
       });
     }
   };
@@ -83,9 +78,6 @@ export default function BillingPage() {
     try {
       await billingApi.walletSettings({
         lowBalanceThreshold: walletSettings.lowBalanceThreshold ? Number(walletSettings.lowBalanceThreshold) : undefined,
-        autoTopupEnabled: walletSettings.autoTopupEnabled,
-        autoTopupAmount: walletSettings.autoTopupAmount ? Number(walletSettings.autoTopupAmount) : undefined,
-        autoTopupTriggerBelow: walletSettings.autoTopupTriggerBelow ? Number(walletSettings.autoTopupTriggerBelow) : undefined,
       });
       toast.success('Wallet settings saved');
       setShowWalletSettings(false);
@@ -321,7 +313,7 @@ export default function BillingPage() {
           open={showWalletSettings && canManage}
           onClose={() => setShowWalletSettings(false)}
           title="Wallet settings"
-          description="Configure low balance alerts and automatic top-ups"
+          description="Wallet covers usage above your plan limit. Top up manually whenever you want."
           size="md"
           footer={
             <>
@@ -332,75 +324,55 @@ export default function BillingPage() {
             </>
           }
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Input
-              label="Low balance alert below (₹)"
-              type="number"
-              value={walletSettings.lowBalanceThreshold}
-              onChange={(e) => setWalletSettings(s => ({ ...s, lowBalanceThreshold: e.target.value }))}
-              placeholder="e.g. 500"
-            />
-            <div className="flex items-end pb-1">
-              <Checkbox
-                label="Enable auto top-up"
-                checked={walletSettings.autoTopupEnabled}
-                onCheckedChange={(v) => setWalletSettings(s => ({ ...s, autoTopupEnabled: v }))}
-              />
-            </div>
-            {walletSettings.autoTopupEnabled && (
-              <>
-                <Input
-                  label="Top-up amount (₹)"
-                  type="number"
-                  value={walletSettings.autoTopupAmount}
-                  onChange={(e) => setWalletSettings(s => ({ ...s, autoTopupAmount: e.target.value }))}
-                  placeholder="e.g. 1000"
-                />
-                <Input
-                  label="Trigger when balance below (₹)"
-                  type="number"
-                  value={walletSettings.autoTopupTriggerBelow}
-                  onChange={(e) => setWalletSettings(s => ({ ...s, autoTopupTriggerBelow: e.target.value }))}
-                  placeholder="e.g. 200"
-                />
-              </>
-            )}
+          <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-3 text-xs text-slate-600 dark:text-slate-300 mb-4">
+            <strong className="font-bold text-slate-900 dark:text-slate-100">How the wallet works:</strong>{' '}
+            it&apos;s a prepaid balance for usage above your plan ceiling (extra orders, extra SKUs, etc.).
+            Top up manually whenever it gets low — there&apos;s no auto-charge.
+            Your subscription renewal is handled separately via your saved card under Subscription settings.
           </div>
 
-          {/* Saved payment methods — drives the autopay charge */}
-          <div className="mt-5 pt-5 border-t border-slate-100">
-            <div className="text-sm font-bold text-slate-900 mb-2">Saved payment methods</div>
+          <Input
+            label="Low balance alert below (₹)"
+            hint="We'll email you when the wallet drops under this threshold so you can top up before it runs out."
+            type="number"
+            value={walletSettings.lowBalanceThreshold}
+            onChange={(e) => setWalletSettings(s => ({ ...s, lowBalanceThreshold: e.target.value }))}
+            placeholder="e.g. 500"
+          />
+
+          {/* Saved cards live here for visibility + management. They are
+              used by SUBSCRIPTION renewal — never the wallet. */}
+          <div className="mt-5 pt-5 border-t border-slate-100 dark:border-slate-700">
+            <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Saved cards</div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              Used to auto-renew your subscription. Wallet top-ups are always one-shot manual charges and never use these.
+            </p>
             {paymentMethods.length === 0 ? (
-              <div className="text-xs text-slate-500 bg-slate-50 rounded-2xl p-3 border border-slate-200">
-                No saved cards yet. Tick <b>Enable Auto Top-up</b> on your next manual top-up and we'll save the card so future top-ups happen automatically.
+              <div className="mt-3 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3 border border-slate-200 dark:border-slate-700">
+                No saved cards yet. Tick <b>Save card for subscription auto-renewal</b> the next time you top up your wallet to add one.
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="mt-3 space-y-2">
                 {paymentMethods.map((m: any) => (
-                  <div key={m.id} className="flex items-center gap-3 p-3 rounded-2xl border border-slate-200">
-                    <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-xs font-bold text-slate-700">
+                  <div key={m.id} className="flex items-center gap-3 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-200">
                       {(m.brand || m.method || 'CARD').slice(0, 4).toUpperCase()}
                     </div>
                     <div className="flex-1">
-                      <div className="text-sm font-bold text-slate-900">{m.label || `${m.brand || 'Card'} •••• ${m.last4 || ''}`}</div>
-                      <div className="text-[11px] text-slate-500">
+                      <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{m.label || `${m.brand || 'Card'} •••• ${m.last4 || ''}`}</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
                         {m.expiryMonth ? `Expires ${String(m.expiryMonth).padStart(2,'0')}/${m.expiryYear}` : (m.upiVpa || 'Saved at checkout')}
                         {m.failureCount ? ` · last failed (${m.failureCount}x)` : ''}
                       </div>
                     </div>
                     {m.isDefault ? (
-                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg">DEFAULT</span>
+                      <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 px-2 py-1 rounded-lg">DEFAULT</span>
                     ) : (
                       <Button variant="ghost" size="sm" onClick={() => setDefaultMethod(m.id)}>Set default</Button>
                     )}
                     <Button variant="ghost" size="sm" onClick={() => removeMethod(m.id)}>Remove</Button>
                   </div>
                 ))}
-              </div>
-            )}
-            {walletSettings.autoTopupEnabled && paymentMethods.filter((m: any) => m.isDefault).length === 0 && (
-              <div className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-2xl p-3">
-                ⚠ Auto top-up is on but no default payment method is set. Save a card on your next top-up to activate it.
               </div>
             )}
           </div>

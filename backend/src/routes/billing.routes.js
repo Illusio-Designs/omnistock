@@ -17,15 +17,15 @@ router.get('/wallet', requirePermission('billing.read'), async (req, res) => {
   try {
     const w = await wallet.getOrCreateWallet(req.tenant.id);
     const low = Number(w.balance) < Number(w.lowBalanceThreshold);
+    // Wallet is manual top-up only — auto-topup fields are intentionally NOT
+    // returned anymore. The DB columns are kept for back-compat but the cron
+    // that consumed them (autopay.job.js) is now a no-op.
     res.json({
       id: w.id,
       balance: Number(w.balance),
       currency: w.currency,
       lowBalanceThreshold: Number(w.lowBalanceThreshold),
       lowBalance: low,
-      autoTopupEnabled: !!w.autoTopupEnabled,
-      autoTopupAmount: w.autoTopupAmount ? Number(w.autoTopupAmount) : null,
-      autoTopupTriggerBelow: w.autoTopupTriggerBelow ? Number(w.autoTopupTriggerBelow) : null,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -113,13 +113,18 @@ router.post('/wallet/topup', requirePermission('billing.manage'), idempotent(), 
 
 router.patch('/wallet/settings', requirePermission('billing.manage'), async (req, res) => {
   try {
-    const { lowBalanceThreshold, autoTopupEnabled, autoTopupAmount, autoTopupTriggerBelow } = req.body || {};
+    // Only the low-balance alert threshold is user-configurable now.
+    // autoTopup* fields are silently ignored — wallet is manual top-up only.
+    // Older clients sending those fields won't fail; we just drop them on
+    // the floor and disable any pre-existing auto-topup so nothing fires.
+    const { lowBalanceThreshold } = req.body || {};
     const updates = [];
     const values = [];
-    if (lowBalanceThreshold != null)     { updates.push('lowBalanceThreshold = ?'); values.push(Number(lowBalanceThreshold)); }
-    if (autoTopupEnabled != null)        { updates.push('autoTopupEnabled = ?'); values.push(autoTopupEnabled ? 1 : 0); }
-    if (autoTopupAmount != null)         { updates.push('autoTopupAmount = ?'); values.push(Number(autoTopupAmount)); }
-    if (autoTopupTriggerBelow != null)   { updates.push('autoTopupTriggerBelow = ?'); values.push(Number(autoTopupTriggerBelow)); }
+    if (lowBalanceThreshold != null) { updates.push('lowBalanceThreshold = ?'); values.push(Number(lowBalanceThreshold)); }
+    // Defensive: any wallet that still has auto-topup enabled in the DB
+    // gets disabled on the next save so the (already-no-op) cron never
+    // re-activates if someone re-enables it later.
+    updates.push('autoTopupEnabled = 0');
     if (!updates.length) return res.json({ ok: true });
 
     values.push(req.tenant.id);
