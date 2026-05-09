@@ -20,7 +20,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Lock, ArrowRight } from 'lucide-react';
+import { Lock, ArrowRight, AlertTriangle, CreditCard } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { billingApi } from '@/lib/api';
 
@@ -30,12 +30,32 @@ interface SubLite {
   status?: string;
   trialEndsAt?: string | null;
   currentPeriodEnd?: string | null;
+  pastDueSince?: string | null;
+  gracePeriodEndsAt?: string | null;
+  lastRenewalError?: string | null;
+}
+
+interface MethodLite {
+  brand?: string | null;
+  last4?: string | null;
+  isActive?: boolean;
+  failureCount?: number;
+  lastFailureReason?: string | null;
+}
+
+interface UsageData {
+  subscription?: SubLite;
+  paymentMethod?: MethodLite | null;
+}
+
+function daysBetween(a: Date, b: Date) {
+  return Math.max(0, Math.ceil((b.getTime() - a.getTime()) / 86_400_000));
 }
 
 export function BillingLock({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { subscription, tenant, user } = useAuthStore();
-  const [fresh, setFresh] = useState<SubLite | null>(subscription || null);
+  const [fresh, setFresh] = useState<UsageData>({ subscription: subscription || undefined });
 
   // Platform admins are not tenants — never lock them.
   const isPlatformAdmin = !!user?.isPlatformAdmin;
@@ -48,7 +68,11 @@ export function BillingLock({ children }: { children: ReactNode }) {
     const refresh = () => billingApi.usage()
       .then((r) => {
         if (cancelled) return;
-        if (r.data?.subscription) setFresh(r.data.subscription);
+        const data = r.data || {};
+        setFresh({
+          subscription: data.subscription || undefined,
+          paymentMethod: data.paymentMethod || null,
+        });
       })
       .catch(() => { /* fail silent — fall back to whatever state we already have */ });
     refresh();
@@ -58,9 +82,10 @@ export function BillingLock({ children }: { children: ReactNode }) {
 
   if (isPlatformAdmin) return <>{children}</>;
 
-  const sub = fresh || subscription || {};
-  const status = (sub as SubLite).status;
-  const trialEnd = (sub as SubLite).trialEndsAt || (sub as SubLite).currentPeriodEnd;
+  const sub: SubLite = fresh.subscription || subscription || {};
+  const method: MethodLite | null = fresh.paymentMethod ?? null;
+  const status = sub.status;
+  const trialEnd = sub.trialEndsAt || sub.currentPeriodEnd;
   const trialExpired =
     status === 'TRIALING' && trialEnd && new Date(trialEnd).getTime() < Date.now();
   const pastDue = status === 'PAST_DUE';
@@ -97,6 +122,25 @@ export function BillingLock({ children }: { children: ReactNode }) {
     cta = 'Contact billing';
   }
 
+  // Surface the actual Razorpay error so users can act without guessing.
+  // We prefer the most-recent payment-method failure reason because it's
+  // refreshed on every retry attempt; fall back to subscription.lastRenewalError
+  // for older databases that don't have the per-method row populated.
+  const failureReason = method?.lastFailureReason || sub.lastRenewalError || null;
+  const cardLabel = method?.last4
+    ? `${method.brand ? method.brand + ' ' : ''}card ending ${method.last4}`
+    : 'saved card';
+  const cardDeactivated = method && method.isActive === false;
+
+  // Grace-period countdown — only meaningful while PAST_DUE
+  let graceCountdown: { days: number; endsAt: Date } | null = null;
+  if (pastDue && sub.gracePeriodEndsAt) {
+    const endsAt = new Date(sub.gracePeriodEndsAt);
+    if (endsAt.getTime() > Date.now()) {
+      graceCountdown = { days: daysBetween(new Date(), endsAt), endsAt };
+    }
+  }
+
   return (
     <div className="flex-1 px-6 py-12 flex items-start sm:items-center justify-center">
       <div className="max-w-lg w-full text-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-8 sm:p-10 shadow-xl shadow-slate-900/5 dark:shadow-black/20">
@@ -105,6 +149,40 @@ export function BillingLock({ children }: { children: ReactNode }) {
         </div>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{title}</h2>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-3 leading-relaxed">{body}</p>
+
+        {/* Why the autopay failed — only shown for past-due / expired states */}
+        {(pastDue || expired) && failureReason && (
+          <div className="mt-5 text-left p-4 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30">
+            <div className="flex items-start gap-2.5">
+              <CreditCard size={16} className="text-rose-600 dark:text-rose-400 mt-0.5 flex-shrink-0" />
+              <div className="flex-1 min-w-0 text-sm">
+                <p className="font-bold text-rose-900 dark:text-rose-200">
+                  Last attempt on your {cardLabel}
+                </p>
+                <p className="text-rose-800 dark:text-rose-300 mt-0.5 break-words">{failureReason}</p>
+                {cardDeactivated && (
+                  <p className="text-xs text-rose-700 dark:text-rose-300 mt-2 font-medium">
+                    We&apos;ve stopped retrying this card. Add a fresh one to resume.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Grace-period countdown — urgent if ≤ 2 days, warning otherwise */}
+        {graceCountdown && (
+          <div className={`mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${
+            graceCountdown.days <= 2
+              ? 'bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300'
+              : 'bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300'
+          }`}>
+            <AlertTriangle size={12} />
+            {graceCountdown.days === 0
+              ? 'Account suspends today'
+              : `${graceCountdown.days} day${graceCountdown.days === 1 ? '' : 's'} until suspension`}
+          </div>
+        )}
 
         <Link
           href="/dashboard/billing"

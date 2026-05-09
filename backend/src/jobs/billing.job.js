@@ -11,8 +11,16 @@
 
 const prisma = require('../utils/prisma');
 const logger = require('../utils/logger');
-const { sendTrialEndingSoon, sendPastDue, sendInvoicePaid, sendDunningReminder } = require('../services/email.service');
+const {
+  sendTrialEndingSoon, sendPastDue, sendInvoicePaid, sendDunningReminder,
+  sendPaymentFailed, sendCardDeactivated,
+} = require('../services/email.service');
 const settings = require('../services/settings.service');
+
+// Stop retrying a saved card after this many consecutive failures and
+// require the tenant to add a fresh one. Shared between subscription
+// auto-renewal and wallet auto-topup so the threshold is consistent.
+const MAX_AUTOPAY_FAILURES = 5;
 
 async function getGraceDays() {
   const v = await settings.get('billing.graceDays');
@@ -151,14 +159,52 @@ async function autoRenewSubscription(sub) {
     return { ok: true, paymentId: payment.id };
   } catch (err) {
     const reason = err?.error?.description || err?.message || 'Charge failed';
+    const newFailureCount = (method.failureCount || 0) + 1;
+    const wasFirstFailure = (method.failureCount || 0) === 0;
+    const reachedThreshold = newFailureCount >= MAX_AUTOPAY_FAILURES;
+
     await _db()('tenant_payment_methods')
       .where({ id: method.id })
       .update({
         failureCount: _db().raw('failureCount + 1'),
         lastFailureAt: new Date(),
         lastFailureReason: reason,
+        // Auto-deactivate after MAX_AUTOPAY_FAILURES so the cron stops
+        // retrying. Tenant must add a fresh card via /dashboard/billing.
+        ...(reachedThreshold ? { isActive: 0 } : {}),
         updatedAt: new Date(),
       });
+
+    // Loud email on the very first failure (so they know NOW, not on the
+    // 24h dunning) and a separate "we gave up on this card" email when we
+    // hit the deactivation threshold. Best-effort — never fail the cron.
+    try {
+      const tenant = await prisma.tenant.findFirst({ where: { id: sub.tenantId } });
+      if (tenant?.ownerEmail) {
+        if (reachedThreshold) {
+          await sendCardDeactivated({
+            to: tenant.ownerEmail,
+            name: tenant.ownerName || 'there',
+            cardLast4: method.last4,
+            failureCount: newFailureCount,
+            kind: 'subscription',
+          });
+        } else if (wasFirstFailure) {
+          await sendPaymentFailed({
+            to: tenant.ownerEmail,
+            name: tenant.ownerName || 'there',
+            amount,
+            currency: sub.plan.currency || 'INR',
+            reason,
+            cardLast4: method.last4,
+            kind: 'subscription',
+          });
+        }
+      }
+    } catch (e) {
+      logger.warn({ err: e.message }, '[billing.job] autopay-failed email skipped');
+    }
+
     return { ok: false, reason };
   }
 }

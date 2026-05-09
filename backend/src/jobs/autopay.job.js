@@ -15,6 +15,11 @@ const db = require('../utils/db');
 const logger = require('../utils/logger');
 const wallet = require('../services/wallet.service');
 const { chargeRecurringToken, getCreds } = require('../services/payment.service');
+const { sendPaymentFailed, sendCardDeactivated } = require('../services/email.service');
+
+// Match the subscription-renewal threshold so the policy is consistent
+// regardless of which autopay path tripped first.
+const MAX_AUTOPAY_FAILURES = 5;
 
 // Cooldown after a failed charge so we don't hammer Razorpay (or the user's
 // card) when something is off. Each failure increments failureCount; we
@@ -33,7 +38,7 @@ async function findCandidates() {
     .where('w.autoTopupEnabled', 1)
     .whereRaw('w.balance < w.autoTopupTriggerBelow')
     .select('w.tenantId', 'w.balance', 'w.autoTopupAmount', 'w.autoTopupTriggerBelow',
-            't.businessName', 't.ownerEmail');
+            't.businessName', 't.ownerEmail', 't.ownerName');
 
   if (!wallets.length) return [];
 
@@ -47,7 +52,7 @@ async function findCandidates() {
     .andWhere({ isDefault: 1, isActive: 1 })
     .whereNotNull('providerTokenId')
     .select('id as methodId', 'tenantId', 'providerTokenId as token',
-            'providerCustomerId as customerId', 'failureCount', 'lastFailureAt')
+            'providerCustomerId as customerId', 'failureCount', 'lastFailureAt', 'last4')
     .orderBy('createdAt', 'desc');
 
   // Pick the first default method per tenant (orderBy desc → latest).
@@ -128,14 +133,49 @@ async function chargeOne(row) {
     return { ok: true, tenantId: row.tenantId, amount, paymentId: payment.id, balanceAfter: credit.balanceAfter };
   } catch (err) {
     const reason = err?.error?.description || err?.message || 'Charge failed';
+    const newFailureCount = (row.failureCount || 0) + 1;
+    const wasFirstFailure = (row.failureCount || 0) === 0;
+    const reachedThreshold = newFailureCount >= MAX_AUTOPAY_FAILURES;
+
     await db('tenant_payment_methods')
       .where({ id: row.methodId })
       .update({
         failureCount: db.raw('failureCount + 1'),
         lastFailureAt: new Date(),
         lastFailureReason: reason,
+        // Auto-deactivate after MAX_AUTOPAY_FAILURES so the cron stops
+        // hammering. Tenant must add a fresh card to resume.
+        ...(reachedThreshold ? { isActive: 0 } : {}),
         updatedAt: new Date(),
       });
+
+    // Best-effort notification — never fail the job if email is down.
+    try {
+      if (row.ownerEmail) {
+        if (reachedThreshold) {
+          await sendCardDeactivated({
+            to: row.ownerEmail,
+            name: row.ownerName || 'there',
+            cardLast4: row.last4,
+            failureCount: newFailureCount,
+            kind: 'wallet',
+          });
+        } else if (wasFirstFailure) {
+          await sendPaymentFailed({
+            to: row.ownerEmail,
+            name: row.ownerName || 'there',
+            amount,
+            currency: 'INR',
+            reason,
+            cardLast4: row.last4,
+            kind: 'wallet',
+          });
+        }
+      }
+    } catch (e) {
+      logger.warn(`[autopay] notification email skipped for tenant ${row.tenantId}: ${e.message}`);
+    }
+
     logger.warn(`[autopay] charge failed for tenant ${row.tenantId}: ${reason}`);
     return { ok: false, tenantId: row.tenantId, error: reason };
   }

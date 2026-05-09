@@ -154,15 +154,34 @@ const sendUserInvite = ({ to, inviterName, businessName, inviteUrl }) => send({
   `),
 });
 
-const sendPaymentFailed = ({ to, name, amount, currency = 'INR', reason }) => send({
+const sendPaymentFailed = ({ to, name, amount, currency = 'INR', reason, kind = 'subscription', cardLast4 }) => {
+  const target = kind === 'wallet' ? 'wallet auto-topup' : 'subscription renewal';
+  const cardLine = cardLast4 ? `card ending <strong>${cardLast4}</strong>` : 'saved card';
+  return send({
+    to,
+    subject: `${kind === 'wallet' ? 'Wallet auto-topup' : 'Payment'} to Kartriq failed`,
+    html: wrap(`
+      <h2 style="margin-top:0;">${kind === 'wallet' ? 'Auto-topup' : 'Payment'} failed</h2>
+      <p>Hi ${name}, we couldn't charge your ${cardLine} ${amount ? `for <strong>${currency} ${amount}</strong>` : ''} (${target}).</p>
+      ${reason ? `<p style="background:#fef2f2;border-left:3px solid #ef4444;padding:10px 12px;color:#991b1b;font-size:13px;border-radius:0 6px 6px 0;"><strong>Reason from your bank:</strong> ${reason}</p>` : ''}
+      <p>We'll retry automatically with a backoff schedule, but you can fix this now to skip the wait:</p>
+      <p><a href="${siteUrl()}/dashboard/billing" style="background:#ef4444;color:white;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block;">Update payment method</a></p>
+      <p style="color:#64748b;font-size:12px;margin-top:24px;">If you've already fixed it, you can ignore this email — the next retry will pick up the change.</p>
+    `),
+  });
+};
+
+// Sent when a saved card has failed too many times in a row and we've
+// stopped retrying it. The user MUST add a fresh card to resume.
+const sendCardDeactivated = ({ to, name, cardLast4, failureCount, kind = 'subscription' }) => send({
   to,
-  subject: 'Your payment to Kartriq failed',
+  subject: 'We stopped retrying your saved card',
   html: wrap(`
-    <h2 style="margin-top:0;">Payment failed</h2>
-    <p>Hi ${name}, your payment of <strong>${currency} ${amount}</strong> didn't go through.</p>
-    ${reason ? `<p style="color:#64748b;">Reason: ${reason}</p>` : ''}
-    <p>We'll retry automatically over the next few days. You can also update your card now to retry immediately.</p>
-    <p><a href="${siteUrl()}/dashboard/billing" style="background:#ef4444;color:white;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block;">Update payment method</a></p>
+    <h2 style="margin-top:0;color:#ef4444;">Saved card disabled</h2>
+    <p>Hi ${name}, after <strong>${failureCount} failed attempts</strong> we stopped trying to charge your ${cardLast4 ? `card ending <strong>${cardLast4}</strong>` : 'saved card'} for ${kind === 'wallet' ? 'wallet auto-topup' : 'subscription renewal'}.</p>
+    <p>This usually means the card has expired, the bank has revoked it, or there were repeatedly insufficient funds. To restore ${kind === 'wallet' ? 'auto-topup' : 'service'}, add a fresh card from the billing page:</p>
+    <p><a href="${siteUrl()}/dashboard/billing" style="background:#ef4444;color:white;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block;">Add a new card</a></p>
+    <p style="color:#64748b;font-size:12px;margin-top:24px;">Until then, ${kind === 'wallet' ? 'overage charges may be blocked when your wallet runs low' : 'your account will be suspended once the grace period ends'}.</p>
   `),
 });
 
@@ -200,6 +219,7 @@ module.exports = {
   sendPasswordReset,
   sendUserInvite,
   sendPaymentFailed,
+  sendCardDeactivated,
   sendPlanLimitAlert,
   sendTicketReply,
 };

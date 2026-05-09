@@ -1,5 +1,7 @@
 const { Router } = require('express');
 const prisma = require('../utils/prisma');
+const db = require('../utils/db');
+const settings = require('../services/settings.service');
 const {
   authenticate, requireTenant, requirePermission, invalidateUserCache,
 } = require('../middleware/auth.middleware');
@@ -204,6 +206,27 @@ router.get('/usage', requirePermission('billing.read'), async (req, res) => {
   // Wallet info (lazy-create if missing)
   const walletInfo = await wallet.getOrCreateWallet(tenantId).catch(() => null);
 
+  // Default payment method (only the most recently saved active default).
+  // Used by the lockscreen + billing page to show "we couldn't charge your
+  // Visa ending 4242 — card expired" instead of a generic message.
+  const defaultMethod = await db('tenant_payment_methods')
+    .where({ tenantId, isDefault: 1 })
+    .orderBy('createdAt', 'desc')
+    .first()
+    .catch(() => null);
+
+  // Grace-period countdown — only meaningful while PAST_DUE. Anchor is
+  // pastDueSince (set the first time the cron flipped status) plus the
+  // platform-wide billing.graceDays setting. After that, suspendOverdueTenants
+  // flips tenant.status to SUSPENDED.
+  let gracePeriodEndsAt = null;
+  if (fullSub?.status === 'PAST_DUE' && fullSub?.pastDueSince) {
+    const graceDaysStr = await settings.get('billing.graceDays').catch(() => null);
+    const graceDays = parseInt(graceDaysStr || '7', 10);
+    const start = new Date(fullSub.pastDueSince);
+    gracePeriodEndsAt = new Date(start.getTime() + graceDays * 86_400_000).toISOString();
+  }
+
   res.json({
     period,
     plan,
@@ -218,7 +241,20 @@ router.get('/usage', requirePermission('billing.read'), async (req, res) => {
       lastRenewalAt: fullSub?.lastRenewalAt || null,
       lastRenewalError: fullSub?.lastRenewalError || null,
       renewalFailureCount: fullSub?.renewalFailureCount || 0,
+      pastDueSince: fullSub?.pastDueSince || null,
+      gracePeriodEndsAt,
     },
+    paymentMethod: defaultMethod ? {
+      brand: defaultMethod.brand || null,
+      last4: defaultMethod.last4 || null,
+      method: defaultMethod.method || null,
+      expiryMonth: defaultMethod.expiryMonth || null,
+      expiryYear: defaultMethod.expiryYear || null,
+      isActive: !!defaultMethod.isActive,
+      failureCount: defaultMethod.failureCount || 0,
+      lastFailureReason: defaultMethod.lastFailureReason || null,
+      lastFailureAt: defaultMethod.lastFailureAt || null,
+    } : null,
     wallet: walletInfo ? {
       balance: Number(walletInfo.balance),
       currency: walletInfo.currency,
