@@ -16,6 +16,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { billingApi } from '@/lib/api';
 import { Activity, RefreshCw, Search, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 
 interface AuditRow {
   id: string;
@@ -163,18 +164,14 @@ export default function TenantAuditPage() {
               className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none"
             />
           </div>
-          <select
+          <Select
             value={actionFilter}
-            onChange={(e) => { setActionFilter(e.target.value); load(e.target.value); }}
-            className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none"
-          >
-            <option value="">All actions</option>
-            {actions.map((a) => (
-              <option key={a.action} value={a.action}>
-                {a.action} ({a.count})
-              </option>
-            ))}
-          </select>
+            onChange={(v) => { setActionFilter(v); load(v); }}
+            options={[
+              { value: '', label: 'All actions' },
+              ...actions.map((a) => ({ value: a.action, label: `${a.action} (${a.count})` })),
+            ]}
+          />
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">

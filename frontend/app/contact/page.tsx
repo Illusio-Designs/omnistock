@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { leadsApi } from '@/lib/api';
 import { collectErrors, validateEmail, validateText } from '@/lib/validators';
+import { Select } from '@/components/ui/Select';
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -150,21 +151,20 @@ export default function ContactPage() {
                     {fieldErrors.email && <p className="text-xs text-rose-600 mt-1 font-medium">{fieldErrors.email}</p>}
                   </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Subject</label>
-                  <select
-                    value={form.subject}
-                    onChange={e => setForm({ ...form, subject: e.target.value })}
-                    className="input-premium"
-                  >
-                    <option value="">Select…</option>
-                    <option>Sales inquiry</option>
-                    <option>Product support</option>
-                    <option>Partnership</option>
-                    <option>Careers</option>
-                    <option>Other</option>
-                  </select>
-                </div>
+                <Select
+                  fullWidth
+                  label="Subject"
+                  placeholder="Select…"
+                  value={form.subject}
+                  onChange={(v) => setForm({ ...form, subject: v })}
+                  options={[
+                    { value: 'Sales inquiry',   label: 'Sales inquiry' },
+                    { value: 'Product support', label: 'Product support' },
+                    { value: 'Partnership',     label: 'Partnership' },
+                    { value: 'Careers',         label: 'Careers' },
+                    { value: 'Other',           label: 'Other' },
+                  ]}
+                />
                 <div>
                   <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Message</label>
                   <textarea

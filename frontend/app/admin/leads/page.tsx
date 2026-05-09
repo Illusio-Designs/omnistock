@@ -5,6 +5,7 @@ import { leadsApi, type LeadStatus, type LeadSource } from '@/lib/api';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Tabs } from '@/components/ui';
+import { Select } from '@/components/ui/Select';
 import {
   Inbox, Search, Mail, Phone, Building2, Trash2, MessageSquare,
   ExternalLink, CheckCircle2, X,
@@ -178,16 +179,14 @@ export default function AdminLeadsPage() {
             className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
           />
         </div>
-        <select
+        <Select
           value={source}
-          onChange={(e) => { setSource(e.target.value as LeadSource | ''); setPage(1); }}
-          className="px-3 py-2 text-sm rounded-xl border border-slate-200 bg-white font-semibold text-slate-700"
-        >
-          <option value="">All sources</option>
-          {(Object.keys(SOURCE_LABEL) as LeadSource[]).map((s) => (
-            <option key={s} value={s}>{SOURCE_LABEL[s]}</option>
-          ))}
-        </select>
+          onChange={(v) => { setSource(v as LeadSource | ''); setPage(1); }}
+          options={[
+            { value: '', label: 'All sources' },
+            ...(Object.keys(SOURCE_LABEL) as LeadSource[]).map((s) => ({ value: s, label: SOURCE_LABEL[s] })),
+          ]}
+        />
       </div>
 
       {/* Table */}
@@ -304,16 +303,13 @@ export default function AdminLeadsPage() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Status</label>
-                <select
-                  value={draftStatus}
-                  onChange={(e) => setDraftStatus(e.target.value as LeadStatus)}
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 bg-white font-semibold"
-                >
-                  {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
+              <Select
+                fullWidth
+                label="Status"
+                value={draftStatus}
+                onChange={(v) => setDraftStatus(v as LeadStatus)}
+                options={STATUSES.map((s) => ({ value: s, label: s }))}
+              />
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">First contacted</label>
                 <div className="px-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 text-slate-600">

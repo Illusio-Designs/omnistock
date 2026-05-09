@@ -16,9 +16,10 @@ import { adminApi } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Loader } from '@/components/ui/Loader';
 import { useConfirm } from '@/components/ui';
+import { Select } from '@/components/ui/Select';
 import {
   Activity, RefreshCw, Trash2, RotateCcw, AlertCircle, CheckCircle2, Clock, PlayCircle,
-  Filter, ChevronDown, Search,
+  ChevronDown, Search,
 } from 'lucide-react';
 
 type Stats = { pending: number; running: number; done: number; dead: number };
@@ -193,20 +194,14 @@ export default function AdminJobsPage() {
             className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none"
           />
         </div>
-        <div className="relative">
-          <Filter size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="pl-8 pr-8 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none appearance-none"
-          >
-            <option value="">All types</option>
-            {types.map((t) => (
-              <option key={t.type} value={t.type}>{t.type} ({t.count})</option>
-            ))}
-          </select>
-          <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-        </div>
+        <Select
+          value={typeFilter}
+          onChange={setTypeFilter}
+          options={[
+            { value: '', label: 'All types' },
+            ...types.map((t) => ({ value: t.type, label: `${t.type} (${t.count})` })),
+          ]}
+        />
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
