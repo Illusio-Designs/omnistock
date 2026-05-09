@@ -10,10 +10,19 @@ const TAGS = ['feature', 'fix', 'security', 'improve'];
 // ── Public: list published entries (newest first) ──────────────────
 // Read by the in-app "What's new" drawer. Cached for 60s on the
 // browser since changelog content updates rarely.
-router.get('/', async (_req, res) => {
+//
+// Audience targeting: ?audience=tenant|founder returns rows tagged
+// for that audience plus the universal 'all' rows. Without the param
+// only 'all' is returned (safe default for unauthenticated callers).
+const AUDIENCES = ['all', 'tenant', 'founder'];
+router.get('/', async (req, res) => {
   try {
+    const audience = String(req.query.audience || '').trim().toLowerCase();
+    const audienceFilter = AUDIENCES.includes(audience) && audience !== 'all'
+      ? { in: ['all', audience] }
+      : 'all';
     const entries = await prisma.changelogEntry.findMany({
-      where: { isPublished: true },
+      where: { isPublished: true, audience: audienceFilter },
       orderBy: { publishedAt: 'desc' },
     });
     const list = (entries || []).map((e) => ({
@@ -43,6 +52,7 @@ const writeSchema = z.object({
   highlights: z.array(z.string().trim().min(1).max(500)).min(1, 'At least one highlight'),
   isPublished: z.boolean().optional().default(false),
   publishedAt: z.union([z.string(), z.date(), z.null()]).optional(),
+  audience: z.enum(AUDIENCES).optional(),
 });
 
 adminRouter.get('/', async (_req, res) => {
@@ -75,6 +85,7 @@ adminRouter.post('/', async (req, res) => {
         highlights: JSON.stringify(data.highlights),
         isPublished: !!data.isPublished,
         publishedAt: data.isPublished ? (data.publishedAt ? new Date(data.publishedAt) : now) : null,
+        audience: data.audience || 'all',
       },
     });
     res.status(201).json(entry);
@@ -104,6 +115,7 @@ adminRouter.patch('/:id', async (req, res) => {
     if (data.publishedAt !== undefined && data.isPublished !== false) {
       patch.publishedAt = data.publishedAt ? new Date(data.publishedAt) : null;
     }
+    if (data.audience !== undefined) patch.audience = data.audience;
 
     const entry = await prisma.changelogEntry.update({
       where: { id: req.params.id },

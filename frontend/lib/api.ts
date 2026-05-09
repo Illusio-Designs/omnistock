@@ -284,6 +284,8 @@ export interface LeadInput {
 
 // ── Help & Support FAQs ────────────────────────────────────────────
 // Public GET is unauthenticated; admin endpoints are platform-admin-only.
+export type ContentAudience = 'all' | 'tenant' | 'founder';
+
 export interface HelpFaq {
   id: string;
   question: string;
@@ -291,17 +293,22 @@ export interface HelpFaq {
   category?: string | null;
   sortOrder: number;
   isPublished: boolean;
+  audience: ContentAudience;
   createdAt: string;
   updatedAt: string;
 }
 
 export const helpApi = {
-  faqs: () => api.get('/help/faqs'),
+  // Pass audience='tenant' (or 'founder') to receive only rows tagged
+  // for that audience, plus universal 'all' rows. Without it the API
+  // returns only 'all'.
+  faqs: (audience?: ContentAudience) =>
+    api.get('/help/faqs', { params: audience ? { audience } : {} }),
   adminFaqs: () => api.get('/help/admin/faqs'),
   adminFaq: (id: string) => api.get(`/help/admin/faqs/${id}`),
-  adminCreateFaq: (data: { question: string; answer: string; category?: string | null; sortOrder?: number; isPublished?: boolean }) =>
+  adminCreateFaq: (data: { question: string; answer: string; category?: string | null; sortOrder?: number; isPublished?: boolean; audience?: ContentAudience }) =>
     api.post('/help/admin/faqs', data),
-  adminUpdateFaq: (id: string, data: Partial<{ question: string; answer: string; category: string | null; sortOrder: number; isPublished: boolean }>) =>
+  adminUpdateFaq: (id: string, data: Partial<{ question: string; answer: string; category: string | null; sortOrder: number; isPublished: boolean; audience: ContentAudience }>) =>
     api.patch(`/help/admin/faqs/${id}`, data),
   adminReorderFaqs: (items: { id: string; sortOrder: number }[]) =>
     api.post('/help/admin/faqs/reorder', items),
@@ -376,17 +383,19 @@ export interface ChangelogEntry {
   highlights: string[];
   publishedAt?: string | null;
   isPublished: boolean;
+  audience: ContentAudience;
   createdAt: string;
   updatedAt: string;
 }
 
 export const changelogApi = {
-  list: () => api.get('/changelog'),
+  list: (audience?: ContentAudience) =>
+    api.get('/changelog', { params: audience ? { audience } : {} }),
   adminList: () => api.get('/changelog/admin'),
   adminGet: (id: string) => api.get(`/changelog/admin/${id}`),
-  adminCreate: (data: { title: string; tag: ChangelogTag; highlights: string[]; isPublished?: boolean; publishedAt?: string | null }) =>
+  adminCreate: (data: { title: string; tag: ChangelogTag; highlights: string[]; isPublished?: boolean; publishedAt?: string | null; audience?: ContentAudience }) =>
     api.post('/changelog/admin', data),
-  adminUpdate: (id: string, data: Partial<{ title: string; tag: ChangelogTag; highlights: string[]; isPublished: boolean; publishedAt: string | null }>) =>
+  adminUpdate: (id: string, data: Partial<{ title: string; tag: ChangelogTag; highlights: string[]; isPublished: boolean; publishedAt: string | null; audience: ContentAudience }>) =>
     api.patch(`/changelog/admin/${id}`, data),
   adminDelete: (id: string) => api.delete(`/changelog/admin/${id}`),
 };

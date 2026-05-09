@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { changelogApi, type ChangelogEntry, type ChangelogTag } from '@/lib/api';
+import { changelogApi, type ChangelogEntry, type ChangelogTag, type ContentAudience } from '@/lib/api';
 import { Button, Modal, Input, Textarea, Tabs, EmptyState } from '@/components/ui';
+import { Select } from '@/components/ui/Select';
 import {
   Megaphone, Plus, Pencil, Trash2, CheckCircle2, EyeOff, Sparkles, Wrench, ShieldAlert, ArrowUpRight, X,
 } from 'lucide-react';
@@ -47,7 +48,7 @@ export default function AdminChangelogPage() {
   }, [entries, filter]);
 
   const onSave = async (
-    data: { title: string; tag: ChangelogTag; highlights: string[]; isPublished: boolean },
+    data: { title: string; tag: ChangelogTag; highlights: string[]; isPublished: boolean; audience: ContentAudience },
     id?: string
   ) => {
     setBusy(true);
@@ -139,6 +140,7 @@ export default function AdminChangelogPage() {
                         <EyeOff size={10} /> Draft
                       </span>
                     )}
+                    <AudienceBadge audience={entry.audience} />
                   </div>
                   <ul className="mt-2 space-y-1">
                     {entry.highlights.slice(0, 4).map((h, i) => (
@@ -208,7 +210,7 @@ function EntryFormModal({
 }: {
   entry: ChangelogEntry | null;
   onClose: () => void;
-  onSave: (data: { title: string; tag: ChangelogTag; highlights: string[]; isPublished: boolean }, id?: string) => Promise<void>;
+  onSave: (data: { title: string; tag: ChangelogTag; highlights: string[]; isPublished: boolean; audience: ContentAudience }, id?: string) => Promise<void>;
   busy: boolean;
 }) {
   const [title, setTitle] = useState(entry?.title || '');
@@ -216,6 +218,7 @@ function EntryFormModal({
   // Edit highlights as one bullet per line in a textarea.
   const [highlightsText, setHighlightsText] = useState((entry?.highlights || []).join('\n'));
   const [isPublished, setIsPublished] = useState(entry?.isPublished ?? false);
+  const [audience, setAudience] = useState<ContentAudience>(entry?.audience || 'all');
   const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
@@ -224,7 +227,7 @@ function EntryFormModal({
     const lines = highlightsText.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
     if (!t) return setError('Title is required');
     if (lines.length === 0) return setError('Add at least one highlight');
-    await onSave({ title: t, tag, highlights: lines, isPublished }, entry?.id);
+    await onSave({ title: t, tag, highlights: lines, isPublished, audience }, entry?.id);
   };
 
   return (
@@ -277,6 +280,17 @@ function EntryFormModal({
           onChange={(e) => setHighlightsText(e.target.value)}
           placeholder={'Real-time sync across 56+ channels\nNew Razorpay autopay flow\nFixed: stuck shipments on Delhivery'}
         />
+        <Select
+          fullWidth
+          label="Audience"
+          value={audience}
+          onChange={(v) => setAudience(v as ContentAudience)}
+          options={[
+            { value: 'all',     label: 'Everyone (all)' },
+            { value: 'tenant',  label: 'Tenant users only' },
+            { value: 'founder', label: 'Founders only' },
+          ]}
+        />
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -294,5 +308,30 @@ function EntryFormModal({
         )}
       </div>
     </Modal>
+  );
+}
+
+// Mirror the badge from /admin/help so the changelog list shows audience
+// targeting at a glance. Server filters on /changelog?audience=…; this is
+// editorial colour for the founder admin only.
+function AudienceBadge({ audience }: { audience: ContentAudience }) {
+  if (audience === 'all') {
+    return (
+      <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-100 text-slate-600">
+        Everyone
+      </span>
+    );
+  }
+  if (audience === 'tenant') {
+    return (
+      <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+        Tenants only
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold rounded bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200">
+      Founders only
+    </span>
   );
 }

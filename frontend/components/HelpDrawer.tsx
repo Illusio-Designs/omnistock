@@ -17,6 +17,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { HelpCircle, X, LifeBuoy, Send, Check, Keyboard, BookOpen, MessageSquare, ChevronDown, Mail } from 'lucide-react';
 import { ticketApi, helpApi, type HelpFaq } from '@/lib/api';
+import { useAuthStore } from '@/store/auth.store';
 import { Select } from '@/components/ui/Select';
 
 interface FaqItem {
@@ -51,6 +52,8 @@ export function HelpDrawer() {
   const [tab, setTab] = useState<'help' | 'contact'>('help');
   const [faqs, setFaqs] = useState<FaqItem[] | null>(null);
   const [loadingFaqs, setLoadingFaqs] = useState(false);
+  const { isPlatformAdmin } = useAuthStore();
+  const audience: 'tenant' | 'founder' = isPlatformAdmin?.() ? 'founder' : 'tenant';
 
   useEffect(() => {
     const onOpen = () => { setOpen(true); setTab('help'); };
@@ -69,7 +72,7 @@ export function HelpDrawer() {
   useEffect(() => {
     if (!open || faqs) return;
     setLoadingFaqs(true);
-    helpApi.faqs()
+    helpApi.faqs(audience)
       .then((r) => {
         const list: HelpFaq[] = r.data || [];
         const mapped: FaqItem[] = list.map((f) => ({ q: f.question, a: f.answer }));
@@ -77,7 +80,7 @@ export function HelpDrawer() {
       })
       .catch(() => setFaqs(FAQ_FALLBACK))
       .finally(() => setLoadingFaqs(false));
-  }, [open, faqs]);
+  }, [open, faqs, audience]);
 
   if (!open || typeof document === 'undefined') return null;
 

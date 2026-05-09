@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { helpApi, type HelpFaq } from '@/lib/api';
+import { helpApi, type HelpFaq, type ContentAudience } from '@/lib/api';
 import { Button, Modal, Input, Textarea, Tabs, EmptyState } from '@/components/ui';
+import { Select } from '@/components/ui/Select';
 import {
   LifeBuoy, Plus, Pencil, Trash2, CheckCircle2, EyeOff, ChevronUp, ChevronDown,
   ChevronRight, X,
@@ -41,7 +42,7 @@ export default function AdminHelpPage() {
   }, [items, filter]);
 
   const onSave = async (
-    data: { question: string; answer: string; category: string | null; isPublished: boolean },
+    data: { question: string; answer: string; category: string | null; isPublished: boolean; audience: ContentAudience },
     id?: string
   ) => {
     setBusy(true);
@@ -184,6 +185,7 @@ export default function AdminHelpPage() {
                             {faq.category}
                           </span>
                         )}
+                        <AudienceBadge audience={faq.audience} />
                       </div>
                       {!isExpanded && (
                         <p className="text-xs text-slate-500 mt-1 line-clamp-1">{faq.answer}</p>
@@ -253,13 +255,14 @@ function FaqFormModal({
 }: {
   faq: HelpFaq | null;
   onClose: () => void;
-  onSave: (data: { question: string; answer: string; category: string | null; isPublished: boolean }, id?: string) => Promise<void>;
+  onSave: (data: { question: string; answer: string; category: string | null; isPublished: boolean; audience: ContentAudience }, id?: string) => Promise<void>;
   busy: boolean;
 }) {
   const [question, setQuestion] = useState(faq?.question || '');
   const [answer, setAnswer] = useState(faq?.answer || '');
   const [category, setCategory] = useState(faq?.category || '');
   const [isPublished, setIsPublished] = useState(faq?.isPublished ?? true);
+  const [audience, setAudience] = useState<ContentAudience>(faq?.audience || 'all');
   const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
@@ -269,7 +272,7 @@ function FaqFormModal({
     if (q.length < 3) return setError('Question is too short');
     if (a.length < 3) return setError('Answer is too short');
     await onSave(
-      { question: q, answer: a, category: category.trim() || null, isPublished },
+      { question: q, answer: a, category: category.trim() || null, isPublished, audience },
       faq?.id
     );
   };
@@ -313,6 +316,17 @@ function FaqFormModal({
           maxLength={64}
           hint="Used as a tag pill on the row in /admin/help."
         />
+        <Select
+          fullWidth
+          label="Audience"
+          value={audience}
+          onChange={(v) => setAudience(v as ContentAudience)}
+          options={[
+            { value: 'all',     label: 'Everyone (all)' },
+            { value: 'tenant',  label: 'Tenant users only' },
+            { value: 'founder', label: 'Founders only' },
+          ]}
+        />
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -330,5 +344,31 @@ function FaqFormModal({
         )}
       </div>
     </Modal>
+  );
+}
+
+// Small badge that mirrors the audience targeting in the row list so a
+// founder can see at a glance which entries are tenant- or
+// founder-only. The drawer itself filters on the server, so this is
+// purely an editorial cue.
+function AudienceBadge({ audience }: { audience: ContentAudience }) {
+  if (audience === 'all') {
+    return (
+      <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-100 text-slate-600">
+        Everyone
+      </span>
+    );
+  }
+  if (audience === 'tenant') {
+    return (
+      <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+        Tenants only
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold rounded bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200">
+      Founders only
+    </span>
   );
 }

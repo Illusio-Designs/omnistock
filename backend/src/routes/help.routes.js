@@ -8,10 +8,20 @@ const router = Router();
 // ── Public: list published FAQs (sorted) ───────────────────────────
 // Read by the in-app Help & Support drawer. Cached for 60s — FAQ
 // content updates rarely.
-router.get('/faqs', async (_req, res) => {
+//
+// Audience targeting: pass ?audience=tenant or ?audience=founder to
+// receive rows tagged for that audience (plus rows tagged 'all').
+// Without the param we only return 'all' rows — safe default for the
+// unauthenticated public site.
+const AUDIENCES = ['all', 'tenant', 'founder'];
+router.get('/faqs', async (req, res) => {
   try {
+    const audience = String(req.query.audience || '').trim().toLowerCase();
+    const audienceFilter = AUDIENCES.includes(audience) && audience !== 'all'
+      ? { in: ['all', audience] }
+      : 'all';
     const items = await prisma.helpFaq.findMany({
-      where: { isPublished: true },
+      where: { isPublished: true, audience: audienceFilter },
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
     res.set('Cache-Control', 'public, max-age=60');
@@ -31,6 +41,7 @@ const writeSchema = z.object({
   category: z.string().trim().max(64).optional().nullable(),
   sortOrder: z.number().int().optional(),
   isPublished: z.boolean().optional(),
+  audience: z.enum(['all', 'tenant', 'founder']).optional(),
 });
 
 adminRouter.get('/faqs', async (_req, res) => {
@@ -62,6 +73,7 @@ adminRouter.post('/faqs', async (req, res) => {
         category: data.category || null,
         sortOrder,
         isPublished: data.isPublished ?? true,
+        audience: data.audience || 'all',
       },
     });
     res.status(201).json(item);
@@ -83,6 +95,7 @@ adminRouter.patch('/faqs/:id', async (req, res) => {
     if (data.category !== undefined) patch.category = data.category || null;
     if (data.sortOrder !== undefined) patch.sortOrder = data.sortOrder;
     if (data.isPublished !== undefined) patch.isPublished = !!data.isPublished;
+    if (data.audience !== undefined) patch.audience = data.audience;
 
     const item = await prisma.helpFaq.update({
       where: { id: req.params.id },

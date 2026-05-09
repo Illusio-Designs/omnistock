@@ -19,6 +19,7 @@ import { createPortal } from 'react-dom';
 import { Megaphone, X, Sparkles } from 'lucide-react';
 import { CHANGELOG as STATIC_CHANGELOG, type ChangelogEntry as StaticChangelogEntry, type ChangelogTag } from '@/data/changelog';
 import { changelogApi } from '@/lib/api';
+import { useAuthStore } from '@/store/auth.store';
 
 // Drawer-internal entry shape — same fields whether sourced from the API or
 // the legacy data/changelog.ts fallback. The API returns `date` as the
@@ -45,6 +46,8 @@ function formatDate(iso: string) {
  *  file if the request fails so the dot still works in offline / dev). */
 export function useChangelogUnread() {
   const [unread, setUnread] = useState(false);
+  const { isPlatformAdmin } = useAuthStore();
+  const audience: 'tenant' | 'founder' = isPlatformAdmin?.() ? 'founder' : 'tenant';
 
   useEffect(() => {
     let cancelled = false;
@@ -52,7 +55,7 @@ export function useChangelogUnread() {
       if (typeof window === 'undefined') return;
       let newestId = '';
       try {
-        const r = await changelogApi.list();
+        const r = await changelogApi.list(audience);
         const list: ChangelogEntry[] = r.data || [];
         newestId = list[0]?.id || '';
       } catch {
@@ -69,7 +72,7 @@ export function useChangelogUnread() {
       cancelled = true;
       window.removeEventListener('changelog-seen', onSeen);
     };
-  }, []);
+  }, [audience]);
 
   return unread;
 }
@@ -78,6 +81,8 @@ export function ChangelogDrawer() {
   const [open, setOpen] = useState(false);
   const [entries, setEntries] = useState<ChangelogEntry[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const { isPlatformAdmin } = useAuthStore();
+  const audience: 'tenant' | 'founder' = isPlatformAdmin?.() ? 'founder' : 'tenant';
 
   useEffect(() => {
     const onOpen = () => setOpen(true);
@@ -96,7 +101,7 @@ export function ChangelogDrawer() {
   useEffect(() => {
     if (!open || entries) return;
     setLoading(true);
-    changelogApi.list()
+    changelogApi.list(audience)
       .then((r) => {
         const list: any[] = r.data || [];
         const normalised: ChangelogEntry[] = list.map((e) => ({
@@ -110,7 +115,7 @@ export function ChangelogDrawer() {
       })
       .catch(() => setEntries(STATIC_CHANGELOG))
       .finally(() => setLoading(false));
-  }, [open, entries]);
+  }, [open, entries, audience]);
 
   // Mark the newest entry as seen the first time the drawer is opened.
   useEffect(() => {

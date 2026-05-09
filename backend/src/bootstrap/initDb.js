@@ -73,6 +73,15 @@ async function initDb() {
     // referredByCode  — code that brought the tenant in, set at signup
     { table: 'tenants', column: 'referralCode',    ddl: 'VARCHAR(32) DEFAULT NULL' },
     { table: 'tenants', column: 'referredByCode',  ddl: 'VARCHAR(32) DEFAULT NULL' },
+
+    // Audience targeting for tenant-facing CMS content. 'all' is the
+    // default (visible to everyone — public site + tenants + founders),
+    // 'tenant' restricts to logged-in tenant users, 'founder' is
+    // founder-only content (internal release notes, founder runbooks).
+    // The public list endpoints filter by the audience query param so
+    // the topbar drawers can ask only for what's relevant to them.
+    { table: 'help_faqs',          column: 'audience', ddl: "VARCHAR(16) NOT NULL DEFAULT 'all'" },
+    { table: 'changelog_entries',  column: 'audience', ddl: "VARCHAR(16) NOT NULL DEFAULT 'all'" },
   ];
 
   // Push-notification device registry — one row per (user, expo token).
