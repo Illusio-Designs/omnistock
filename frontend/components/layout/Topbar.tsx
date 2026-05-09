@@ -14,12 +14,21 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { WalletPill } from '@/components/wallet/WalletPill';
 
 export function Topbar() {
-  const { user } = useAuthStore();
+  const { user, hasPermission } = useAuthStore();
   const { setMobileSidebar } = useUIStore();
   const { query, setQuery, clear } = useSearchStore();
-  // Platform admins don't have a per-tenant wallet — hide the pill so they
-  // don't see a "₹0.00" widget that has no meaning for their account.
   const isPlatformAdmin = !!user?.isPlatformAdmin;
+
+  // Topbar visibility, per audience:
+  //   • Ask AI — tenant-only product surface; founders work in /admin
+  //     where the AI assistant doesn't apply yet.
+  //   • Wallet pill — only the roles that actually own the wallet
+  //     numbers (billing.read|manage). STAFF / MANAGER without billing
+  //     don't get a meaningless balance widget; founders never have a
+  //     per-tenant wallet to show.
+  // Theme, search, what's-new, help, inbox, user-menu remain universal.
+  const showAskAi  = !isPlatformAdmin;
+  const showWallet = !isPlatformAdmin && hasPermission('billing.read', 'billing.manage');
 
   // Render the platform-correct shortcut label after mount (Mac glyphs would
   // render as a missing-character box on most Windows fonts). Rendering "⌘K"
@@ -77,12 +86,14 @@ export function Topbar() {
       </div>
 
       <div className="flex items-center gap-1 ml-auto">
-        {/* AI */}
-        <Tooltip content="Ask AI" side="bottom">
-          <button className="hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 rounded-xl transition-colors">
-            <Sparkles size={12} /> Ask AI
-          </button>
-        </Tooltip>
+        {/* AI — tenant-only */}
+        {showAskAi && (
+          <Tooltip content="Ask AI" side="bottom">
+            <button className="hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 rounded-xl transition-colors">
+              <Sparkles size={12} /> Ask AI
+            </button>
+          </Tooltip>
+        )}
 
         {/* Theme toggle */}
         <Tooltip content="Toggle theme (light · dark · system)" side="bottom">
@@ -99,8 +110,8 @@ export function Topbar() {
           <HelpTrigger />
         </Tooltip>
 
-        {/* Wallet balance — tenant-only, hidden from platform admins */}
-        {!isPlatformAdmin && <WalletPill />}
+        {/* Wallet — only roles that have a billing permission */}
+        {showWallet && <WalletPill />}
 
         {/* Inbox */}
         <Tooltip content="Inbox" side="bottom">
