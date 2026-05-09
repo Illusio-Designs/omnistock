@@ -8,6 +8,7 @@ import {
 import { leadsApi } from '@/lib/api';
 import { collectErrors, validateEmail, validateText } from '@/lib/validators';
 import { Select } from '@/components/ui/Select';
+import { track, upgradeSession } from '@/lib/analytics';
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -41,6 +42,11 @@ export default function ContactPage() {
         source: 'contact',
         metadata: typeof window !== 'undefined' ? { path: window.location.pathname } : undefined,
       });
+      track('contact_form_submit', {
+        subject: form.subject || 'unspecified',
+        has_message: !!form.message.trim(),
+      });
+      upgradeSession('contact_form_submit');
       setSubmitted(true);
       setForm({ name: '', email: '', subject: '', message: '' });
       setFieldErrors({});

@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { DemoModal } from './DemoModal';
 import type { LeadSource } from '@/lib/api';
+import { track } from '@/lib/analytics';
 
 interface OpenOptions {
   source?: LeadSource;
@@ -38,6 +39,12 @@ export function DemoTriggerProvider({ children }: { children: ReactNode }) {
   const handleOpen = useCallback((o?: OpenOptions) => {
     setOpts(o || {});
     setOpen(true);
+    // Fires once per CTA click so Clarity / GA can attribute which
+    // surface (pricing, footer, header, etc.) drove demo opens.
+    track('demo_open', {
+      source: o?.source || 'demo',
+      path: typeof window !== 'undefined' ? window.location.pathname : '',
+    });
   }, []);
 
   const handleClose = useCallback(() => {

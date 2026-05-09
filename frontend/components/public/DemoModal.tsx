@@ -7,6 +7,7 @@ import { PhoneField, isPhoneEmpty } from '@/components/ui/PhoneField';
 import { CheckCircle2, Sparkles, Send, AlertCircle } from 'lucide-react';
 import { leadsApi, type LeadSource } from '@/lib/api';
 import { collectErrors, validateEmail, validatePhone, validateText } from '@/lib/validators';
+import { track, upgradeSession } from '@/lib/analytics';
 
 interface DemoModalProps {
   open: boolean;
@@ -86,6 +87,15 @@ export function DemoModal({
         source,
         metadata: typeof window !== 'undefined' ? { path: window.location.pathname } : undefined,
       });
+      // Conversion event — high signal so we also flag the Clarity
+      // recording as worth keeping (free tier samples otherwise).
+      track('demo_request_submit', {
+        source: source || 'demo',
+        has_phone: !isPhoneEmpty(form.phone),
+        has_company: !!form.company.trim(),
+        subject: defaultSubject || '',
+      });
+      upgradeSession('demo_request_submit');
       setSubmitted(true);
     } catch (err: any) {
       const msg = err?.response?.data?.error;
