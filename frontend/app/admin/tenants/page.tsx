@@ -104,7 +104,8 @@ export default function AdminTenantsPage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mt-4">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
               <th className="text-left p-3">#</th>
@@ -202,7 +203,8 @@ export default function AdminTenantsPage() {
               </tr>
             ))}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       <Modal

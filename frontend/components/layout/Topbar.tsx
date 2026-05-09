@@ -55,13 +55,17 @@ export function Topbar() {
           current page (per-page useSearchStore). Press ⌘K / Ctrl+K (or
           click the kbd chip on the right) to open the global command
           palette instead. */}
-      <div className="relative flex-1 max-w-xl group">
+      <div className="relative flex-1 min-w-0 max-w-xl group">
         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 group-focus-within:text-emerald-300 transition-colors" />
         <input
-          placeholder={`Search this page  ·  ${shortcutLabel} for command palette`}
+          // Short placeholder so it doesn't truncate on a 375px phone
+          // where the input shrinks to ~210px. The visible ⌘K chip on
+          // the right still communicates the command-palette shortcut
+          // for desktop users.
+          placeholder="Search…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full pl-11 pr-24 py-2.5 text-sm text-white bg-white/[0.06] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/15 focus:border-emerald-400/60 placeholder:text-white/45 transition-all"
+          className="w-full pl-11 pr-12 sm:pr-20 py-2.5 text-sm text-white bg-white/[0.06] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/15 focus:border-emerald-400/60 placeholder:text-white/45 transition-all"
         />
         {query ? (
           <button
@@ -78,7 +82,10 @@ export function Topbar() {
             onClick={() => window.dispatchEvent(new Event('open-command-palette'))}
             aria-label={`Open command palette (${shortcutLabel})`}
             title="Open command palette"
-            className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center px-2 py-1 text-[11px] font-bold tracking-tight text-white/70 hover:text-white bg-white/10 hover:bg-white/20 border border-white/15 rounded-md shadow-inner transition-colors whitespace-nowrap"
+            // Hidden below `sm:` so the input doesn't have to share its
+            // already-tight width with a non-essential keyboard hint on
+            // phones — the same shortcut still works regardless.
+            className="hidden sm:inline-flex absolute right-2 top-1/2 -translate-y-1/2 items-center px-2 py-1 text-[11px] font-bold tracking-tight text-white/70 hover:text-white bg-white/10 hover:bg-white/20 border border-white/15 rounded-md shadow-inner transition-colors whitespace-nowrap"
           >
             {shortcutLabel}
           </button>
@@ -86,7 +93,7 @@ export function Topbar() {
       </div>
 
       <div className="flex items-center gap-1 ml-auto">
-        {/* AI — tenant-only */}
+        {/* AI — tenant-only, already md+ only */}
         {showAskAi && (
           <Tooltip content="Ask AI" side="bottom">
             <button className="hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 rounded-xl transition-colors">
@@ -95,30 +102,38 @@ export function Topbar() {
           </Tooltip>
         )}
 
-        {/* Theme toggle */}
-        <Tooltip content="Toggle theme (light · dark · system)" side="bottom">
-          <ThemeToggle />
-        </Tooltip>
+        {/* Tablet+ utilities — Theme / What's new / Help. All three are
+            also reachable from the user-menu Quick Links, so hiding them
+            on phones (< sm) is safe and stops the topbar from squashing
+            the search input on 375px screens. */}
+        <div className="hidden sm:flex items-center gap-1">
+          <Tooltip content="Toggle theme (light · dark · system)" side="bottom">
+            <ThemeToggle />
+          </Tooltip>
+          <Tooltip content="What's new" side="bottom">
+            <ChangelogTrigger />
+          </Tooltip>
+          <Tooltip content="Help & Support" side="bottom">
+            <HelpTrigger />
+          </Tooltip>
+        </div>
 
-        {/* What's new */}
-        <Tooltip content="What's new" side="bottom">
-          <ChangelogTrigger />
-        </Tooltip>
+        {/* Wallet — md+ only on phones, since the balance label widens
+            the row past the inbox/avatar pair. ADMIN/ACCOUNTANT can
+            still get to it from the menu's Billing & wallet link. */}
+        {showWallet && (
+          <div className="hidden md:flex">
+            <WalletPill />
+          </div>
+        )}
 
-        {/* Help */}
-        <Tooltip content="Help & Support" side="bottom">
-          <HelpTrigger />
-        </Tooltip>
-
-        {/* Wallet — only roles that have a billing permission */}
-        {showWallet && <WalletPill />}
-
-        {/* Inbox */}
+        {/* Inbox — kept on every breakpoint because the unread badge is
+            the primary signal that something needs attention. */}
         <Tooltip content="Inbox" side="bottom">
           <InboxTrigger />
         </Tooltip>
 
-        {/* Avatar + dropdown */}
+        {/* Avatar + dropdown — also always visible. */}
         <UserMenu />
       </div>
     </header>

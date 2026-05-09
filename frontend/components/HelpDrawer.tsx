@@ -172,7 +172,11 @@ function QuickLinks({ onClose, onContact }: { onClose: () => void; onContact: ()
   return (
     <section>
       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Quick links</h3>
-      <div className="grid grid-cols-2 gap-2">
+      {/* Single column on phones — at 375px the drawer is full-width and
+          two columns squeeze the labels to 130-ish px each, truncating
+          "Command palette" and "Contact support". One column gives every
+          row room and still fits four tiles in a tap-friendly height. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => { onClose(); window.dispatchEvent(new Event('open-command-palette')); }}

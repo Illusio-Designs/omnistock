@@ -120,7 +120,10 @@ export function UserMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl shadow-slate-900/30 border border-slate-200 z-[100] overflow-hidden animate-slide-up"
+          // w-72 ≈ 288px is the desktop width; on a 375px viewport with
+          // surrounding 4px padding the calc cap keeps the menu fully
+          // on-screen if a future ancestor adds wider padding.
+          className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-1rem)] bg-white rounded-2xl shadow-2xl shadow-slate-900/30 border border-slate-200 z-[100] overflow-hidden animate-slide-up"
         >
           {/* Header — profile snapshot */}
           <div className="px-4 py-3 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100 flex items-start gap-3">
