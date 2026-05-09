@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { PublicLayout, usePublicLoading } from '@/components/layout/PublicLayout';
 import { publicApi } from '@/lib/api';
 import { getIcon } from '@/lib/icon';
-import { HelpCircle, Search, ArrowRight } from 'lucide-react';
+import { HelpCircle, Search, ArrowRight, ChevronDown } from 'lucide-react';
 
 interface Row {
   id: string;
@@ -106,14 +106,14 @@ function HelpCenterInner() {
           ) : (
             <div className="space-y-2">
               {filteredFaqs.map((f) => (
-                <details key={f.id} className="group bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-emerald-200 transition-colors">
-                  <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none">
-                    <span className="text-sm font-bold text-slate-900 pr-4">{f.title}</span>
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 group-open:bg-emerald-100 flex items-center justify-center text-lg leading-none text-slate-600 group-open:text-emerald-700 group-open:rotate-45 transition-all">
-                      +
+                <details key={f.id} className="group bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-emerald-200 hover:shadow-md transition-all duration-300">
+                  <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none select-none">
+                    <span className="text-sm font-bold text-slate-900 group-open:text-emerald-700 pr-4 transition-colors">{f.title}</span>
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 group-open:bg-emerald-600 flex items-center justify-center transition-all duration-300">
+                      <ChevronDown size={16} className="text-slate-500 group-open:text-white group-open:rotate-180 transition-transform duration-300" />
                     </span>
                   </summary>
-                  <div className="px-5 pb-4 -mt-1 text-sm text-slate-600 leading-relaxed">
+                  <div className="px-5 pb-5 text-sm text-slate-600 leading-relaxed animate-fade-in">
                     {f.body}
                   </div>
                 </details>

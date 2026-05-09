@@ -2,7 +2,7 @@ const { Router } = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { register, login, googleAuth, getMe, onboardBusiness } = require('../controllers/auth.controller');
-const { authenticate, invalidateUserCache } = require('../middleware/auth.middleware');
+const { authenticate, invalidateUserCache, requirePermission } = require('../middleware/auth.middleware');
 const prisma = require('../utils/prisma');
 const db = require('../utils/db');
 const { generateSecret, verifyTOTP, otpauthUrl } = require('../utils/totp');
@@ -314,31 +314,90 @@ router.post('/2fa/login', async (req, res) => {
 // ───── DPDP / GDPR — data export & account deletion ────────────────────────
 
 // Bundles every tenant-scoped row into a JSON document the user can download.
-// Authenticated tenant owners only — platform admins should use direct DB
-// dumps for cross-tenant exports.
-router.get('/me/export', authenticate, async (req, res) => {
+// Gated on `billing.manage` so a STAFF user can't pull the entire tenant's
+// data dump (which would include every customer, every order, etc).
+//
+// Sensitive fields are redacted before serialisation:
+//   • users.password / users.totpSecret / users.providerId  → null
+//   • channels.credentials (AES-256-GCM blob)                → "[redacted]"
+// The export is meant to satisfy DPDP/GDPR data-portability requests, not
+// to be a credential dump.
+const SENSITIVE_USER_FIELDS = ['password', 'totpSecret', 'providerId'];
+
+router.get('/me/export', authenticate, requirePermission('billing.manage'), async (req, res) => {
   try {
     const tenantId = req.user.tenantId;
     if (!tenantId) return res.status(400).json({ error: 'No tenant on this account' });
 
-    const TABLES = [
-      'tenants', 'users', 'products', 'product_variants', 'inventory_movements',
-      'orders', 'order_items', 'customers', 'invoices', 'shipments', 'vendors',
-      'warehouses', 'channels', 'tenant_wallets', 'wallet_transactions',
+    // Tables keyed directly by tenantId. Order roughly matches dependency
+    // direction so the resulting JSON reads top-down (account → catalog →
+    // operations → financial).
+    const TENANT_TABLES = [
+      'users', 'tenant_roles', 'user_roles', 'role_permissions',
+      'subscriptions', 'usage_meters', 'billing_invoices',
+      'tenant_wallets', 'wallet_transactions', 'tenant_payment_methods',
+      'brands', 'categories', 'products', 'product_variants',
+      'warehouses', 'inventory_items', 'stock_movements',
+      'channels', 'channel_listings', 'channel_requests',
+      'vendors', 'purchase_orders', 'purchase_order_items',
+      'customers', 'orders', 'order_items', 'returns', 'shipments',
+      'invoices', 'payments',
+      'support_tickets',
+      'audit_logs',
+      'leads', // not tenant-scoped today; included for completeness if it ever is
     ];
 
-    const bundle = { exportedAt: new Date().toISOString(), tenantId };
-    for (const table of TABLES) {
+    const bundle = {
+      exportedAt: new Date().toISOString(),
+      tenantId,
+      exportedBy: { userId: req.user.id, email: req.user.email },
+      // Field-level redactions applied in this dump (so the recipient knows
+      // why some columns look empty in the JSON).
+      redacted: {
+        users: SENSITIVE_USER_FIELDS,
+        channels: ['credentials'],
+      },
+    };
+
+    // Tenant row (keyed by id, not tenantId)
+    try {
+      bundle.tenants = await db('tenants').where({ id: tenantId });
+    } catch (e) {
+      bundle.tenants = { error: e.message };
+    }
+
+    for (const table of TENANT_TABLES) {
       try {
-        // tenants is keyed by id, not tenantId
-        const rows = table === 'tenants'
-          ? await db(table).where({ id: tenantId })
-          : await db(table).where({ tenantId });
+        let rows = await db(table).where({ tenantId });
+
+        // Sensitive-field redaction
+        if (table === 'users') {
+          rows = rows.map((r) => {
+            const out = { ...r };
+            for (const f of SENSITIVE_USER_FIELDS) out[f] = null;
+            return out;
+          });
+        } else if (table === 'channels') {
+          rows = rows.map((r) => ({ ...r, credentials: '[redacted]' }));
+        }
+
         bundle[table] = rows;
       } catch (e) {
-        // table may not exist on every install (e.g. wallet tables) — skip
+        // Table may not exist on every install (different migration history).
+        // We surface the error rather than silently dropping so the caller
+        // can tell "no rows" apart from "schema doesn't have this".
         bundle[table] = { error: e.message };
       }
+    }
+
+    // ticket_messages is keyed by ticketId, so join via the tenant's tickets.
+    try {
+      const ticketIds = (bundle.support_tickets || []).map((t) => t.id);
+      bundle.ticket_messages = ticketIds.length
+        ? await db('ticket_messages').whereIn('ticketId', ticketIds)
+        : [];
+    } catch (e) {
+      bundle.ticket_messages = { error: e.message };
     }
 
     audit({ req, action: 'tenant.export', resource: 'tenant', resourceId: tenantId });
