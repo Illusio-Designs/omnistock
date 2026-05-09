@@ -187,7 +187,7 @@ export default function HelpPage() {
                 <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
                   <Mail size={13} className="text-emerald-600" />
                 </div>
-                <span>hello@kartriq.in</span>
+                <a href="mailto:info@kartriq.com" className="hover:text-emerald-700 transition-colors">info@kartriq.com</a>
               </div>
               <div className="flex items-center gap-3 text-sm text-slate-600">
                 <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">

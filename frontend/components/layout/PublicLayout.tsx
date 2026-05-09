@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Sparkles, Menu, X, Github, Twitter, Linkedin, ChevronDown, ArrowRight,
+  Mail, Phone,
 } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -278,6 +279,22 @@ export function PublicFooter() {
           <p className="text-sm text-white/60 mt-4 max-w-sm leading-relaxed">
             One platform for all your channels. Sell everywhere, ship anything, grow faster.
           </p>
+          <div className="mt-5 space-y-2 text-sm">
+            <a
+              href="mailto:info@kartriq.com"
+              className="flex items-center gap-2 text-white/70 hover:text-emerald-300 transition-colors"
+            >
+              <Mail size={14} className="text-white/50 group-hover:text-emerald-300" />
+              <span>info@kartriq.com</span>
+            </a>
+            <a
+              href="tel:+918490009684"
+              className="flex items-center gap-2 text-white/70 hover:text-emerald-300 transition-colors"
+            >
+              <Phone size={14} className="text-white/50" />
+              <span>+91 84900 09684</span>
+            </a>
+          </div>
           <div className="flex items-center gap-2 mt-5">
             {[Twitter, Linkedin, Github].map((Icon, i) => (
               <a key={i} href="#" className="w-9 h-9 flex items-center justify-center rounded-lg text-white/50 hover:text-emerald-300 hover:bg-emerald-500/15 transition-colors">

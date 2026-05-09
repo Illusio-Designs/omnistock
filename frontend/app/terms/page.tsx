@@ -96,7 +96,8 @@ export default function TermsPage() {
             <Section title="14. Contact">
               For questions about these Terms, contact us at:
               <div className="mt-3 space-y-1">
-                <p>Email: <a href="mailto:hello@kartriq.in" className="text-emerald-600 hover:underline">hello@kartriq.in</a></p>
+                <p>Email: <a href="mailto:info@kartriq.com" className="text-emerald-600 hover:underline">info@kartriq.com</a></p>
+                <p>Phone: <a href="tel:+918490009684" className="text-emerald-600 hover:underline">+91 84900 09684</a></p>
                 <p>Address: Bangalore, Karnataka, India</p>
               </div>
             </Section>

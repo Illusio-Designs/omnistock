@@ -83,7 +83,8 @@ export default function PrivacyPage() {
             <Section title="10. Contact Us">
               If you have questions about this Privacy Policy, contact us at:
               <div className="mt-3 space-y-1">
-                <p>Email: <a href="mailto:hello@kartriq.in" className="text-emerald-600 hover:underline">hello@kartriq.in</a></p>
+                <p>Email: <a href="mailto:info@kartriq.com" className="text-emerald-600 hover:underline">info@kartriq.com</a></p>
+                <p>Phone: <a href="tel:+918490009684" className="text-emerald-600 hover:underline">+91 84900 09684</a></p>
                 <p>Address: Bangalore, Karnataka, India</p>
               </div>
             </Section>
