@@ -24,7 +24,11 @@ const cspDirectives = [
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'self'",
-  "upgrade-insecure-requests",
+  // NOTE: `upgrade-insecure-requests` is intentionally NOT in this report-only
+  // policy — browsers ignore enforcement-only directives in report-only mode
+  // and log a console warning about it. We send the upgrade as its own tiny
+  // enforcing CSP below, which keeps http→https upgrades active without
+  // moving the bigger policy out of report-only.
 ].join('; ');
 
 const securityHeaders = [
@@ -35,6 +39,10 @@ const securityHeaders = [
   { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
   { key: 'Content-Security-Policy-Report-Only', value: cspDirectives },
+  // Enforcing — only the upgrade directive. Safe to enforce because it just
+  // tells the browser to load http:// subresources over https:// instead of
+  // failing/mixing. No risk to the rest of the policy still being report-only.
+  { key: 'Content-Security-Policy', value: 'upgrade-insecure-requests' },
 ];
 
 const nextConfig = {
