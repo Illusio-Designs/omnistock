@@ -293,7 +293,21 @@ export function PublicFooter() {
         <FooterCol title="Company"   items={groups.company} />
       </div>
       <div className="border-t border-white/10 py-6 px-6 flex flex-col md:flex-row items-center justify-center md:justify-between gap-3 text-xs text-white/50">
-        <span>© {new Date().getFullYear()} Kartriq. Built for the next generation of commerce.</span>
+        <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 text-center md:text-left">
+          <span>© {new Date().getFullYear()} Kartriq. All rights reserved.</span>
+          <span className="hidden md:inline text-white/30">·</span>
+          <span>
+            Managed by{' '}
+            <a
+              href="https://finvera.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/70 hover:text-emerald-300 transition-colors"
+            >
+              Finvera Solutions LLP
+            </a>
+          </span>
+        </div>
         <button
           type="button"
           onClick={() => {
