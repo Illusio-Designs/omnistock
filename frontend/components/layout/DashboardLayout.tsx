@@ -43,6 +43,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           subscription: subscription ?? null,
           permissions: permissions ?? [],
         });
+        // Mirror admin layout's behaviour: a platform admin who lands on
+        // /dashboard/* without an active impersonation belongs in /admin.
+        // We allow them through when impersonating so the orange "viewing
+        // as <tenant>" banner has somewhere to be shown.
+        if (userFields?.isPlatformAdmin && !impersonatingTenant) {
+          router.replace('/admin');
+          return;
+        }
         setAuthChecked(true);
       })
       .catch(() => {
