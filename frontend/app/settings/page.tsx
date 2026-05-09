@@ -604,11 +604,26 @@ function DataPrivacyCard() {
 
       <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Delete your account" size="md">
         <div className="space-y-4">
-          <div className="flex items-start gap-2 bg-rose-50 border border-rose-200 text-rose-800 rounded-lg p-3 text-xs">
+          <div className="flex items-start gap-2 bg-rose-50 border border-rose-200 text-rose-800 rounded-lg p-3 text-xs dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
             <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
-            <span>
-              This is irreversible. Your login is disabled, your name, email and phone are scrubbed, and if you own this tenant the entire workspace is marked for deletion.
-            </span>
+            <div className="space-y-2">
+              <p className="font-semibold">This action is final.</p>
+              <p>
+                Your login will be disabled at once and your name, email, and phone will be removed from our systems.
+                {' '}If you own this workspace it will be marked DELETED and the team will lose access.
+              </p>
+            </div>
+          </div>
+          <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 p-3 text-xs text-slate-600 dark:text-slate-300 space-y-1.5">
+            <p className="font-semibold text-slate-900 dark:text-slate-100">What happens to your data</p>
+            <p>
+              Business records (invoices, orders, audit logs, tax documents) are <strong>retained</strong> as required by Indian GST and accounting regulations.
+              They&apos;re de-linked from your personal identifiers but stay in our books for legal compliance — typically up to 8 years.
+            </p>
+            <p>
+              For a full erasure beyond what regulations allow, email{' '}
+              <a href="mailto:privacy@kartriq.com" className="font-semibold text-emerald-700 dark:text-emerald-300 hover:underline">privacy@kartriq.com</a> after deletion.
+            </p>
           </div>
           {hasPassword ? (
             <div>

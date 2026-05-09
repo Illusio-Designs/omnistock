@@ -58,17 +58,26 @@ export default function PrivacyPage() {
               </ul>
             </Section>
 
-            <Section title="6. Data Retention">
-              We retain your data for as long as your account is active or as needed to provide our services. Upon account deletion, your data is permanently removed within 30 days, except where retention is required by law.
+            <Section title="6. Data Retention &amp; Account Deletion">
+              <p>We retain your data for as long as your account is active or as needed to provide our services. When you delete your account from <strong>Settings &rarr; Security &rarr; Delete my account</strong>:</p>
+              <ul className="list-disc pl-5 space-y-2 mt-3">
+                <li><strong>Personal identifiers are scrubbed immediately</strong> — your name, email, and phone are removed from your user record so they no longer appear in our systems.</li>
+                <li><strong>Login is disabled</strong> — both password and Google sign-in stop working at once.</li>
+                <li><strong>Workspace is closed</strong> — if you own the tenant, its status is set to DELETED and it becomes inaccessible to all team members.</li>
+                <li><strong>Business records are retained</strong> — invoices, orders, audit logs, and tax-relevant documents are preserved as required by Indian GST and accounting regulations (typically 8 years). They are <em>de-linked from your personal identifiers</em> but remain in our records to satisfy legal and audit obligations.</li>
+                <li><strong>You can request a full erasure</strong> in writing to <a href="mailto:privacy@kartriq.com" className="text-emerald-600 hover:underline">privacy@kartriq.com</a> — we&apos;ll review the request against our legal retention obligations and respond within 30 days.</li>
+              </ul>
             </Section>
 
             <Section title="7. Your Rights">
-              You have the right to:
+              <p>Under the Indian DPDP Act 2023 and applicable international laws (GDPR, CCPA), you have the right to:</p>
               <ul className="list-disc pl-5 space-y-2 mt-3">
-                <li>Access, update, or delete your personal data from your account settings.</li>
-                <li>Export all your data via CSV or the REST API.</li>
-                <li>Opt out of non-essential communications.</li>
-                <li>Request a copy of all data we hold about you.</li>
+                <li><strong>Access &amp; correct</strong> your personal data from <strong>Settings &rarr; Profile</strong>.</li>
+                <li><strong>Export</strong> your full tenant data as JSON from <strong>Settings &rarr; Security &rarr; Download my data</strong>.</li>
+                <li><strong>Delete your account</strong> from <strong>Settings &rarr; Security &rarr; Delete my account</strong> (see Section 6 for what happens).</li>
+                <li><strong>Opt out</strong> of non-essential communications via the unsubscribe link in any marketing email.</li>
+                <li><strong>Withdraw consent</strong> for data processing — note that some processing (e.g. tax records) is required by law and cannot be withdrawn.</li>
+                <li><strong>Lodge a complaint</strong> with the Data Protection Board of India if you believe your rights have been violated.</li>
               </ul>
             </Section>
 

@@ -190,7 +190,7 @@ const isBillingPath = (req) => BILLING_PATHS.some((p) => req.originalUrl.startsW
 const requireTenant = (req, res, next) => {
   if (req.user?.isPlatformAdmin) return next();
   if (!req.tenant?.id) return res.status(403).json({ error: 'No tenant context' });
-  if (req.tenant.status === 'SUSPENDED' || req.tenant.status === 'CANCELLED') {
+  if (req.tenant.status === 'SUSPENDED' || req.tenant.status === 'CANCELLED' || req.tenant.status === 'DELETED') {
     return res.status(402).json({ error: `Tenant ${req.tenant.status.toLowerCase()}` });
   }
   // Trial expired: allow billing routes so tenants can upgrade, block everything else

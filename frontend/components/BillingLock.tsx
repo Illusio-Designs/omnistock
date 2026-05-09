@@ -91,7 +91,7 @@ export function BillingLock({ children }: { children: ReactNode }) {
   const pastDue = status === 'PAST_DUE';
   const expired = status === 'EXPIRED';
   const tenantStatus = tenant?.status;
-  const suspended = tenantStatus === 'SUSPENDED' || tenantStatus === 'CANCELLED';
+  const suspended = tenantStatus === 'SUSPENDED' || tenantStatus === 'CANCELLED' || tenantStatus === 'DELETED';
 
   const locked = trialExpired || pastDue || expired || suspended;
   if (!locked) return <>{children}</>;
@@ -117,9 +117,15 @@ export function BillingLock({ children }: { children: ReactNode }) {
     body = 'Your subscription lapsed beyond the grace period. Reactivate to regain access.';
     cta = 'Reactivate subscription';
   } else if (suspended) {
-    title = tenantStatus === 'CANCELLED' ? 'Account cancelled' : 'Account suspended';
-    body = 'Contact support if you believe this is an error, or reactivate to continue.';
-    cta = 'Contact billing';
+    if (tenantStatus === 'DELETED') {
+      title = 'Account deleted';
+      body = 'You (or another owner) deleted this workspace. The data is retained for our records but is no longer accessible. Contact support if this was a mistake.';
+      cta = 'Contact support';
+    } else {
+      title = tenantStatus === 'CANCELLED' ? 'Account cancelled' : 'Account suspended';
+      body = 'Contact support if you believe this is an error, or reactivate to continue.';
+      cta = 'Contact billing';
+    }
   }
 
   // Surface the actual Razorpay error so users can act without guessing.

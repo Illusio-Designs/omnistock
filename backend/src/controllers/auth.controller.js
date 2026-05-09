@@ -71,7 +71,10 @@ const login = async (req, res) => {
   try {
     const { email, password } = loginSchema.parse(req.body);
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || !user.isActive) { res.status(401).json({ error: 'Invalid credentials' }); return; }
+    // Soft-deleted users have deletedAt set + isActive=0 + scrubbed email so
+    // findUnique by the original email won't match anyway, but we double-check
+    // both flags to defend against any future code path that drifts.
+    if (!user || !user.isActive || user.deletedAt) { res.status(401).json({ error: 'Invalid credentials' }); return; }
 
     if (!user.password) {
       res.status(401).json({
@@ -169,7 +172,9 @@ const googleAuth = async (req, res) => {
       }
     }
 
-    if (!user.isActive) {
+    // Google looks the user up by providerId (line above) which is preserved
+    // through soft-delete, so we have to explicitly reject deletedAt here.
+    if (!user.isActive || user.deletedAt) {
       return res.status(403).json({ error: 'Account is disabled' });
     }
 

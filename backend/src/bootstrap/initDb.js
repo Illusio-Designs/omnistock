@@ -357,6 +357,16 @@ async function initDb() {
       ddl: "ENUM('ECOM','QUICKCOM','LOGISTICS','OWNSTORE','SOCIAL','B2B','CUSTOM','ACCOUNTING','POS_SYSTEM','PAYMENT','TAX','CRM','RETURNS','FULFILLMENT') NOT NULL DEFAULT 'CUSTOM'",
       sentinel: 'ACCOUNTING',
     },
+    // Tenant lifecycle adds 'DELETED' for self-service account deletion
+    // (POST /auth/me/delete). The tenant is preserved with deletedAt set so
+    // historical orders / invoices / audit references stay intact — the row
+    // is just marked unreachable.
+    {
+      table: 'tenants',
+      column: 'status',
+      ddl: "ENUM('TRIAL','ACTIVE','PAST_DUE','SUSPENDED','CANCELLED','DELETED') NOT NULL DEFAULT 'TRIAL'",
+      sentinel: 'DELETED',
+    },
   ];
   for (const m of enumExtensions) {
     try {
