@@ -45,6 +45,20 @@ export function onConsentChange(cb: (v: ConsentValue) => void): () => void {
   return () => window.removeEventListener(CHANGE_EVENT, handler);
 }
 
+/**
+ * Wipe the stored consent so the banner re-appears. Use this from a
+ * "Manage cookies" footer link or a dev-tools shortcut. Also fires
+ * cookie-consent-change with null so any loaded trackers can react
+ * (today they don't actively unload — a refresh is needed for a clean
+ * state — but the event is here for future use).
+ */
+export function resetConsent() {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(STORAGE_KEY);
+  window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: null as any }));
+  window.dispatchEvent(new Event('cookie-consent-reset'));
+}
+
 export function CookieConsent() {
   const [visible, setVisible] = useState(false);
 
@@ -53,7 +67,14 @@ export function CookieConsent() {
     const t = setTimeout(() => {
       if (!getConsent()) setVisible(true);
     }, 600);
-    return () => clearTimeout(t);
+    // Listen for "Manage cookies" clicks elsewhere on the page so we can
+    // re-open the banner without a full reload.
+    const onReset = () => setVisible(true);
+    window.addEventListener('cookie-consent-reset', onReset);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('cookie-consent-reset', onReset);
+    };
   }, []);
 
   if (!visible) return null;

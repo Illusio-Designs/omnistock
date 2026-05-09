@@ -292,8 +292,18 @@ export function PublicFooter() {
         <FooterCol title="Resources" items={groups.resources} />
         <FooterCol title="Company"   items={groups.company} />
       </div>
-      <div className="border-t border-white/10 py-6 px-6 text-center text-xs text-white/50">
-        © {new Date().getFullYear()} Kartriq. Built for the next generation of commerce.
+      <div className="border-t border-white/10 py-6 px-6 flex flex-col md:flex-row items-center justify-center md:justify-between gap-3 text-xs text-white/50">
+        <span>© {new Date().getFullYear()} Kartriq. Built for the next generation of commerce.</span>
+        <button
+          type="button"
+          onClick={() => {
+            // Lazy import to keep CookieConsent off the SSR critical path.
+            import('@/components/CookieConsent').then((m) => m.resetConsent());
+          }}
+          className="hover:text-white transition-colors underline-offset-4 hover:underline"
+        >
+          Manage cookies
+        </button>
       </div>
     </footer>
   );
