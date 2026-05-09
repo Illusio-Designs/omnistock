@@ -140,14 +140,21 @@ export function UserMenu() {
             </button>
           )}
 
-          {/* Account section */}
+          {/* Account — different items per audience. Founders only see
+              their own profile/settings; tenant-shaped links (billing,
+              team, usage, refer-a-friend) are hidden from them so the
+              menu can't be a back-door into the tenant shell. */}
           <div className="py-1">
             <SectionLabel>Account</SectionLabel>
-            <MenuItem icon={User}     label="My profile"  onClick={() => go('/settings?tab=profile')} />
-            <MenuItem icon={CreditCard} label="Billing & wallet" onClick={() => go('/dashboard/billing')} />
-            <MenuItem icon={Users}    label="Team"        onClick={() => go('/dashboard/team')} />
-            <MenuItem icon={BarChart3} label="Usage"       onClick={() => go('/usage')} />
-            <MenuItem icon={Settings} label="Settings"    onClick={() => go('/settings')} />
+            <MenuItem icon={User}     label="My profile" onClick={() => go('/settings?tab=profile')} />
+            <MenuItem icon={Settings} label="Settings"   onClick={() => go('/settings')} />
+            {!isFounder && (
+              <>
+                <MenuItem icon={CreditCard} label="Billing & wallet" onClick={() => go('/dashboard/billing')} />
+                <MenuItem icon={Users}      label="Team"             onClick={() => go('/dashboard/team')} />
+                <MenuItem icon={BarChart3}  label="Usage"            onClick={() => go('/usage')} />
+              </>
+            )}
           </div>
 
           <div className="border-t border-slate-100 py-1">
@@ -162,21 +169,26 @@ export function UserMenu() {
               label="Help & support"
               onClick={() => { setOpen(false); window.dispatchEvent(new Event('open-help')); }}
             />
-            <MenuItem
-              icon={Sparkles}
-              label="Refer a friend"
-              onClick={() => go('/referrals')}
-            />
+            {!isFounder && (
+              <MenuItem
+                icon={Sparkles}
+                label="Refer a friend"
+                onClick={() => go('/referrals')}
+              />
+            )}
           </div>
 
-          {/* Founder-only */}
-          {isFounder && (
+          {/* Founder-only — only show "Back to admin" when they have
+              somehow ended up off the admin shell (e.g. mid-impersonation
+              or a stray deep link). On /admin/* itself we don't surface
+              a self-referencing link. */}
+          {isFounder && !isOnAdmin && (
             <div className="border-t border-slate-100 py-1">
               <SectionLabel>Platform</SectionLabel>
               <MenuItem
                 icon={ShieldCheck}
-                label={isOnAdmin ? 'Switch to my dashboard' : 'Platform admin'}
-                onClick={() => go(isOnAdmin ? '/dashboard' : '/admin')}
+                label="Back to admin"
+                onClick={() => go('/admin')}
               />
             </div>
           )}
