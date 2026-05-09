@@ -1,23 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Search, ChevronDown, Menu, Sparkles, X } from 'lucide-react';
+import { Search, Menu, Sparkles, X } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useUIStore } from '@/store/ui.store';
 import { useSearchStore } from '@/store/search.store';
 import { Tooltip } from '@/components/ui/Tooltip';
-import { Avatar } from '@/components/ui/Avatar';
 import { ChangelogTrigger } from '@/components/ChangelogDrawer';
 import { HelpTrigger } from '@/components/HelpDrawer';
 import { InboxTrigger } from '@/components/InboxDrawer';
+import { UserMenu } from '@/components/UserMenu';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { WalletPill } from '@/components/wallet/WalletPill';
 
 export function Topbar() {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const { setMobileSidebar } = useUIStore();
   const { query, setQuery, clear } = useSearchStore();
-  const displayUser = user || { name: 'Dev User', role: 'SUPER_ADMIN', email: 'dev@kartriq.in' };
   // Platform admins don't have a per-tenant wallet — hide the pill so they
   // don't see a "₹0.00" widget that has no meaning for their account.
   const isPlatformAdmin = !!user?.isPlatformAdmin;
@@ -108,13 +107,8 @@ export function Topbar() {
           <InboxTrigger />
         </Tooltip>
 
-        {/* Avatar */}
-        <Tooltip content={displayUser.name} side="bottom">
-          <button aria-label={`Account menu for ${displayUser.name}`} className="ml-2 flex items-center gap-2 pl-1 pr-3 py-1 rounded-full hover:bg-white/10 transition-colors">
-            <Avatar name={displayUser.name} size="sm" shape="circle" />
-            <ChevronDown size={14} aria-hidden="true" className="text-white/50 hidden sm:block" />
-          </button>
-        </Tooltip>
+        {/* Avatar + dropdown */}
+        <UserMenu />
       </div>
     </header>
   );
