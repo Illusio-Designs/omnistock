@@ -32,6 +32,7 @@ const ADMIN_NAV_GROUPS: SidebarNavGroup[] = [
       { label: 'Blog',           href: '/admin/blog',       icon: FileText },
       { label: 'Page Content',   href: '/admin/content',    icon: FileEdit },
       { label: "What's new",     href: '/admin/changelog',  icon: Megaphone },
+      { label: 'Help & Support', href: '/admin/help',       icon: LifeBuoy },
       { label: 'SEO',            href: '/admin/seo',        icon: Search },
     ],
   },

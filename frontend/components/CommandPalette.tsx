@@ -114,6 +114,7 @@ export function CommandPalette() {
         { id: 'admin-blog',      group: 'Content', label: 'Blog',         icon: FileText,  run: go('/admin/blog') },
         { id: 'admin-content',   group: 'Content', label: 'Page content', icon: FileEdit,  run: go('/admin/content') },
         { id: 'admin-changelog', group: 'Content', label: "What's new",   keywords: 'changelog release notes', icon: Megaphone, run: go('/admin/changelog') },
+        { id: 'admin-help',      group: 'Content', label: 'Help & Support', keywords: 'faq help drawer', icon: LifeBuoy, run: go('/admin/help') },
         { id: 'admin-seo',       group: 'Content', label: 'SEO',          icon: Search,    run: go('/admin/seo') },
 
         // System

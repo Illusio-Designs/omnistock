@@ -208,6 +208,21 @@ async function initDb() {
       KEY \`referrals_referrer_idx\` (\`referrerTenantId\`, \`status\`),
       KEY \`referrals_code_idx\` (\`code\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    // Help & Support FAQs — questions/answers shown in the topbar Help
+    // drawer. CMS-managed by platform admins via /admin/help. sortOrder
+    // controls list ordering; isPublished controls visibility.
+    `CREATE TABLE IF NOT EXISTS \`help_faqs\` (
+      \`id\` varchar(191) NOT NULL,
+      \`question\` varchar(255) NOT NULL,
+      \`answer\` longtext NOT NULL,
+      \`category\` varchar(64) DEFAULT NULL,
+      \`sortOrder\` int(11) NOT NULL DEFAULT 0,
+      \`isPublished\` tinyint(1) NOT NULL DEFAULT 1,
+      \`createdAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+      \`updatedAt\` datetime(3) NOT NULL DEFAULT current_timestamp(3) ON UPDATE current_timestamp(3),
+      PRIMARY KEY (\`id\`),
+      KEY \`help_faqs_published_idx\` (\`isPublished\`, \`sortOrder\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
     // Changelog entries — "What's new" releases shown in the topbar drawer.
     // CMS-managed by platform admins via /admin/changelog so we don't need a
     // code deploy for every release note. Tag controls the badge colour;

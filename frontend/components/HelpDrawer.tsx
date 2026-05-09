@@ -16,7 +16,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { HelpCircle, X, LifeBuoy, Send, Check, Keyboard, BookOpen, MessageSquare, ChevronDown, Mail } from 'lucide-react';
-import { ticketApi } from '@/lib/api';
+import { ticketApi, helpApi, type HelpFaq } from '@/lib/api';
 import { Select } from '@/components/ui/Select';
 
 interface FaqItem {
@@ -24,30 +24,16 @@ interface FaqItem {
   a: string;
 }
 
-const FAQ: FaqItem[] = [
+// Fallback shown only if the /help/faqs API fails — the live FAQ is now
+// CMS-managed by platform admins via /admin/help.
+const FAQ_FALLBACK: FaqItem[] = [
   {
     q: 'How do I add a new product?',
     a: 'Go to Products → click "New product" in the top-right. You can set the SKU, price, stock per warehouse, and channel mappings from the same form.',
   },
   {
-    q: 'How do I connect a sales channel?',
-    a: 'Open Channels from the sidebar, pick the platform (Amazon, Shopify, Flipkart, …), and follow the OAuth prompt. Credentials are stored encrypted.',
-  },
-  {
-    q: 'Why does an action say "plan limit reached"?',
-    a: 'Your current plan has a ceiling on SKUs / orders / users. Either upgrade the plan, or enable Pay-As-You-Go in Billing so overages draw from your wallet automatically.',
-  },
-  {
-    q: 'How do I invite a teammate?',
-    a: 'Settings → Team → Invite. They receive a magic link — no password needed up-front. Pending invites show a "Pending" pill with a Resend button until accepted.',
-  },
-  {
     q: 'Where do I see what changed in a release?',
     a: 'Click the megaphone icon in the topbar to open "What\'s new". A red dot appears whenever there is an unread entry.',
-  },
-  {
-    q: 'I forgot my password.',
-    a: 'On the login screen click "Forgot password" — we will email a reset link. The link is valid for 7 days. If your account is Google-only, just use "Sign in with Google".',
   },
 ];
 
@@ -63,6 +49,8 @@ const SHORTCUTS: { keys: string[]; label: string }[] = [
 export function HelpDrawer() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<'help' | 'contact'>('help');
+  const [faqs, setFaqs] = useState<FaqItem[] | null>(null);
+  const [loadingFaqs, setLoadingFaqs] = useState(false);
 
   useEffect(() => {
     const onOpen = () => { setOpen(true); setTab('help'); };
@@ -74,6 +62,22 @@ export function HelpDrawer() {
       window.removeEventListener('keydown', onKey);
     };
   }, [open]);
+
+  // Fetch FAQs the first time the drawer opens. Falls back to the static
+  // FAQ_FALLBACK array if the request fails so dev/offline still has
+  // something to show.
+  useEffect(() => {
+    if (!open || faqs) return;
+    setLoadingFaqs(true);
+    helpApi.faqs()
+      .then((r) => {
+        const list: HelpFaq[] = r.data || [];
+        const mapped: FaqItem[] = list.map((f) => ({ q: f.question, a: f.answer }));
+        setFaqs(mapped.length ? mapped : FAQ_FALLBACK);
+      })
+      .catch(() => setFaqs(FAQ_FALLBACK))
+      .finally(() => setLoadingFaqs(false));
+  }, [open, faqs]);
 
   if (!open || typeof document === 'undefined') return null;
 
@@ -139,7 +143,7 @@ export function HelpDrawer() {
           {tab === 'help' ? (
             <>
               <QuickLinks onClose={() => setOpen(false)} onContact={() => setTab('contact')} />
-              <Faq />
+              <Faq items={faqs} loading={loadingFaqs} />
               <Shortcuts />
             </>
           ) : (
@@ -219,35 +223,46 @@ function QuickLinks({ onClose, onContact }: { onClose: () => void; onContact: ()
   );
 }
 
-function Faq() {
+function Faq({ items, loading }: { items: FaqItem[] | null; loading: boolean }) {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const list = items || [];
   return (
     <section>
       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Frequently asked</h3>
-      <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 bg-white">
-        {FAQ.map((item, i) => {
-          const isOpen = openIdx === i;
-          return (
-            <div key={i}>
-              <button
-                type="button"
-                onClick={() => setOpenIdx(isOpen ? null : i)}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors"
-                aria-expanded={isOpen}
-              >
-                <span className="flex-1 text-sm font-medium text-slate-900">{item.q}</span>
-                <ChevronDown
-                  size={16}
-                  className={`text-slate-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
-                />
-              </button>
-              {isOpen && (
-                <div className="px-4 pb-4 text-xs text-slate-600 leading-relaxed">{item.a}</div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      {loading && !items ? (
+        <div className="border border-slate-200 rounded-2xl p-6 text-center text-xs text-slate-400 bg-white">
+          Loading…
+        </div>
+      ) : list.length === 0 ? (
+        <div className="border border-slate-200 rounded-2xl p-6 text-center text-xs text-slate-400 bg-white">
+          No FAQs yet.
+        </div>
+      ) : (
+        <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 bg-white">
+          {list.map((item, i) => {
+            const isOpen = openIdx === i;
+            return (
+              <div key={i}>
+                <button
+                  type="button"
+                  onClick={() => setOpenIdx(isOpen ? null : i)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors"
+                  aria-expanded={isOpen}
+                >
+                  <span className="flex-1 text-sm font-medium text-slate-900">{item.q}</span>
+                  <ChevronDown
+                    size={16}
+                    className={`text-slate-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="px-4 pb-4 text-xs text-slate-600 leading-relaxed whitespace-pre-wrap">{item.a}</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }

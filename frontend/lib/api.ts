@@ -282,6 +282,32 @@ export interface LeadInput {
   metadata?: Record<string, any>;
 }
 
+// ── Help & Support FAQs ────────────────────────────────────────────
+// Public GET is unauthenticated; admin endpoints are platform-admin-only.
+export interface HelpFaq {
+  id: string;
+  question: string;
+  answer: string;
+  category?: string | null;
+  sortOrder: number;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const helpApi = {
+  faqs: () => api.get('/help/faqs'),
+  adminFaqs: () => api.get('/help/admin/faqs'),
+  adminFaq: (id: string) => api.get(`/help/admin/faqs/${id}`),
+  adminCreateFaq: (data: { question: string; answer: string; category?: string | null; sortOrder?: number; isPublished?: boolean }) =>
+    api.post('/help/admin/faqs', data),
+  adminUpdateFaq: (id: string, data: Partial<{ question: string; answer: string; category: string | null; sortOrder: number; isPublished: boolean }>) =>
+    api.patch(`/help/admin/faqs/${id}`, data),
+  adminReorderFaqs: (items: { id: string; sortOrder: number }[]) =>
+    api.post('/help/admin/faqs/reorder', items),
+  adminDeleteFaq: (id: string) => api.delete(`/help/admin/faqs/${id}`),
+};
+
 // ── Changelog ("What's new") ───────────────────────────────────────
 // Public GET is unauthenticated; admin endpoints are platform-admin-only.
 export type ChangelogTag = 'feature' | 'fix' | 'security' | 'improve';

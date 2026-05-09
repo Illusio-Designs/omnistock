@@ -289,6 +289,7 @@ const TABLE_MAP = {
   tenantWallet: 'tenant_wallets', walletTransaction: 'wallet_transactions',
   lead: 'leads',
   changelogEntry: 'changelog_entries',
+  helpFaq: 'help_faqs',
 };
 
 // ── UPDATE data builder (handles { increment } etc.) ────────────────
