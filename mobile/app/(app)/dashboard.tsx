@@ -29,7 +29,7 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import { DashboardHeaderSkeleton, DashboardSkeleton } from '../../components/ui/Shimmer';
-import { channelApi, dashboardApi } from '../../lib/api';
+import { channelApi, dashboardApi, notificationApi } from '../../lib/api';
 import { formatCurrency, formatShortDate } from '../../lib/utils';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -103,6 +103,15 @@ export default function DashboardScreen() {
     queryFn: async () => (await channelApi.catalog()).data,
   });
 
+  // Polled unread count drives the bell-icon badge. Same 60s cadence
+  // the web frontend uses so the two stay in lockstep.
+  const { data: unreadCountData } = useQuery({
+    queryKey: ['notifications-unread'],
+    queryFn: async () => (await notificationApi.unreadCount()).data,
+    refetchInterval: 60_000,
+  });
+  const unreadCount = unreadCountData?.count ?? 0;
+
   const s = data?.summary || {};
   const connectedChannels: any[] = (channelCatalog?.catalog || [])
     .filter((c: any) => c.status === 'connected')
@@ -161,9 +170,22 @@ export default function DashboardScreen() {
                 </Text>
               </View>
             </View>
-            <View className="w-11 h-11 rounded-2xl bg-slate-800 items-center justify-center">
+            <Pressable
+              onPress={() => router.push('/inbox' as any)}
+              accessibilityLabel={
+                unreadCount > 0 ? `Inbox — ${unreadCount} unread` : 'Inbox'
+              }
+              className="w-11 h-11 rounded-2xl bg-slate-800 items-center justify-center"
+            >
               <Bell size={20} color="#94a3b8" />
-            </View>
+              {unreadCount > 0 ? (
+                <View className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 items-center justify-center border-2 border-slate-900">
+                  <Text className="text-[10px] font-bold text-white">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              ) : null}
+            </Pressable>
           </View>
 
           {/* Revenue hero */}

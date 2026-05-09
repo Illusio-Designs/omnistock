@@ -136,6 +136,9 @@ export default function AppLayout() {
       <Tabs.Screen name="billing" options={{ href: null, title: 'Billing' }} />
       <Tabs.Screen name="admin" options={{ href: null, title: 'Admin' }} />
       <Tabs.Screen name="ui-kit" options={{ href: null, title: 'UI Kit' }} />
+      {/* Hidden — reached from the dashboard bell icon and the More menu */}
+      <Tabs.Screen name="inbox" options={{ href: null, title: 'Inbox' }} />
+      <Tabs.Screen name="help"  options={{ href: null, title: 'Help & Support' }} />
     </Tabs>
   );
 }

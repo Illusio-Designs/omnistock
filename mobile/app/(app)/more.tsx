@@ -1,11 +1,13 @@
 import { Link, router } from 'expo-router';
 import Constants from 'expo-constants';
 import {
+  Bell,
   Boxes,
   ChevronRight,
   CreditCard,
   FileText,
   Info,
+  LifeBuoy,
   LogOut,
   Palette,
   Plug,
@@ -31,6 +33,8 @@ type Item = {
 };
 
 const ITEMS: Item[] = [
+  { href: '/inbox', label: 'Inbox', icon: <Bell size={18} color="#06D4B8" />, iconBg: 'bg-emerald-50' },
+  { href: '/help',  label: 'Help & Support', icon: <LifeBuoy size={18} color="#2563eb" />, iconBg: 'bg-sky-50' },
   { href: '/inventory', label: 'Inventory', icon: <Boxes size={18} color="#04AB94" />, iconBg: 'bg-emerald-50' },
   { href: '/purchases', label: 'Purchases', icon: <FileText size={18} color="#0ea5e9" />, iconBg: 'bg-sky-50' },
   { href: '/vendors', label: 'Vendors', icon: <Truck size={18} color="#8b5cf6" />, iconBg: 'bg-violet-50' },

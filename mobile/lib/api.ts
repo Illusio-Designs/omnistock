@@ -131,6 +131,71 @@ export const ticketApi = {
   close: (id: string) => api.post(`/tickets/${id}/close`, {}),
 };
 
+// ── In-app notifications inbox ─────────────────────────────────────
+// Mirrors the web frontend's notificationApi. Tenant feed only — the
+// platform inbox is desktop-only since founders don't operate the
+// platform from a phone today.
+export type NotificationCategory =
+  | 'orders' | 'inventory' | 'tickets' | 'leads' | 'payments'
+  | 'signup' | 'system' | 'plan' | 'channel' | 'team';
+export type NotificationSeverity = 'info' | 'success' | 'warning' | 'error';
+
+export interface InboxNotification {
+  id: string;
+  scope: 'tenant' | 'platform';
+  tenantId: string | null;
+  userId: string | null;
+  type: string;
+  category: NotificationCategory;
+  severity: NotificationSeverity;
+  title: string;
+  body: string | null;
+  link: string | null;
+  metadata: Record<string, any> | null;
+  isRead: boolean;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface InboxListResponse {
+  notifications: InboxNotification[];
+  total: number;
+  unread: number;
+  limit: number;
+  offset: number;
+}
+
+export const notificationApi = {
+  list: (params: { unreadOnly?: boolean; category?: NotificationCategory; limit?: number; offset?: number } = {}) =>
+    api.get<InboxListResponse>('/notifications', { params }),
+  unreadCount: () => api.get<{ count: number }>('/notifications/unread-count'),
+  markRead: (id: string) => api.post(`/notifications/${id}/read`, {}),
+  markAllRead: () => api.post('/notifications/read-all', {}),
+  remove: (id: string) => api.delete(`/notifications/${id}`),
+  clearRead: () => api.delete('/notifications'),
+};
+
+// ── Help & Support FAQs ────────────────────────────────────────────
+// Public GET; pass audience='tenant' so we never see founder-only rows.
+export type ContentAudience = 'all' | 'tenant' | 'founder';
+
+export interface HelpFaq {
+  id: string;
+  question: string;
+  answer: string;
+  category?: string | null;
+  sortOrder: number;
+  isPublished: boolean;
+  audience: ContentAudience;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const helpApi = {
+  faqs: (audience: ContentAudience = 'tenant') =>
+    api.get<HelpFaq[]>('/help/faqs', { params: { audience } }),
+};
+
 // ── Razorpay checkout / verification ──────────────────────────────
 // Plan flow:    checkout(planCode) → react-native-razorpay → verify(...)
 // Wallet flow:  walletCheckout(amount) → react-native-razorpay → walletVerify(...)
