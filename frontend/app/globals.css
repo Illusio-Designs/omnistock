@@ -125,9 +125,14 @@
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.6);
   }
+  .dark .glass {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+  }
 
   .card-premium {
-    @apply bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_20px_rgba(15,23,42,0.04)] hover:shadow-[0_8px_32px_rgba(6,212,184,0.08)] transition-all duration-300;
+    @apply bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_20px_rgba(15,23,42,0.04)] hover:shadow-[0_8px_32px_rgba(6,212,184,0.08)] transition-all duration-300
+      dark:bg-slate-800 dark:border-slate-700/80;
   }
 
   .btn-primary {
@@ -145,12 +150,15 @@
   .btn-secondary {
     @apply inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-700 rounded-xl
       bg-white border border-slate-200 shadow-sm hover:bg-slate-50 hover:border-slate-300
+      dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700/60 dark:hover:border-slate-600
       transition-all duration-200;
   }
 
   .btn-ghost {
     @apply inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 rounded-lg
-      hover:bg-slate-100 hover:text-slate-900 transition-colors;
+      hover:bg-slate-100 hover:text-slate-900
+      dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-slate-100
+      transition-colors;
   }
 
   .input-premium {

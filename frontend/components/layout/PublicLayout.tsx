@@ -190,20 +190,20 @@ function Dropdown({
 
       {active && (
         <div className="absolute top-full left-0 pt-3 w-[420px]">
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl shadow-slate-900/10 p-3 animate-fade-in">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl shadow-slate-900/10 p-3 animate-fade-in dark:bg-slate-800 dark:border-slate-700">
             {items.map((item) => {
               const Icon = getIcon(item.icon);
               return (
                 <Link
                   key={item.id}
                   href={item.href || '#'}
-                  className="flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-50 transition-colors group"
+                  className="flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-50 dark:hover:bg-slate-700/50 transition-colors group"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-emerald-50 group-hover:bg-white flex items-center justify-center flex-shrink-0 transition-colors">
-                    <Icon size={16} className="text-emerald-600" />
+                  <div className="w-10 h-10 rounded-lg bg-emerald-50 group-hover:bg-white flex items-center justify-center flex-shrink-0 transition-colors dark:bg-emerald-500/15 dark:group-hover:bg-emerald-500/25">
+                    <Icon size={16} className="text-emerald-600 dark:text-emerald-300" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                    <div className="text-sm font-bold text-slate-900 group-hover:text-emerald-700 transition-colors dark:text-slate-100 dark:group-hover:text-emerald-300">
                       {item.title}
                     </div>
                     {item.subtitle && (
@@ -362,7 +362,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <PublicLoadingContext.Provider value={ctxValue}>
-      <div className="min-h-screen flex flex-col bg-white">
+      <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950">
         <PublicNav />
         <main className="flex-1">{children}</main>
         <PublicFooter />
