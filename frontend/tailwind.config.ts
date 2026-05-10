@@ -12,7 +12,11 @@ const config: Config = {
     container: { center: true, padding: '2rem', screens: { '2xl': '1400px' } },
     extend: {
       fontFamily: {
-        sans: ['var(--font-jakarta)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        // Default sans now points at the local Agency font registered
+        // in app/layout.tsx via next/font/local. The system-ui fallbacks
+        // stay so anything that fails to load (rare with next/font) keeps
+        // a sensible UI.
+        sans: ['var(--font-agency)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       colors: {
         // Brand override: every existing `emerald-*` class now renders in the

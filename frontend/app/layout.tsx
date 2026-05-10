@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import { Providers } from '@/components/layout/Providers';
 import { PageLoader } from '@/components/PageLoader';
@@ -9,9 +9,13 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 import { WebVitalsReporter } from '@/components/WebVitalsReporter';
 import { loadSeo } from '@/lib/seo';
 
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-jakarta',
+// Brand display font — Agency, served from /public/font/agency.otf.
+// Wrapped in next/font/local so Next handles preloading + size-adjust to
+// minimise CLS, and exposes a CSS variable Tailwind's font-sans points
+// at. `display:'swap'` keeps text visible during font fetch.
+const agency = localFont({
+  src: '../public/font/agency.otf',
+  variable: '--font-agency',
   display: 'swap',
 });
 
@@ -98,7 +102,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={jakarta.variable}>
+    <html lang="en" className={agency.variable}>
       <head>
         {/* Structured data — Organization */}
         <script
