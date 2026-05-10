@@ -4,6 +4,14 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
+      // Brand display font — loaded at boot via expo-font in
+      // app/_layout.tsx. The string here must match the family key
+      // passed to useFonts (`Agency`). Both the `font-sans` default
+      // and any explicit `font-agency` Tailwind utility resolve here.
+      fontFamily: {
+        sans:   ['Agency'],
+        agency: ['Agency'],
+      },
       colors: {
         // Brand override — every existing `emerald-*` class in the mobile app
         // now renders in the Kartriq teal/cyan palette without touching

@@ -6,7 +6,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Slot, SplashScreen } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
+import { Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useFonts } from 'expo-font';
 import { hydrateTokenCache, tokenStorage } from '../lib/storage';
 import { useAuthStore } from '../store/auth.store';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -45,7 +47,25 @@ const queryPersister = createAsyncStoragePersister({
   throttleTime: 1000,
 });
 
+// Apply Agency to every <Text> by default. NativeWind doesn't intercept
+// the platform Text component for unstyled instances, so without this
+// any plain `<Text>foo</Text>` would still render in the system font.
+// Setting defaultProps once at module load is the standard RN trick.
+const TextAny = Text as any;
+const existingDefault = TextAny.defaultProps?.style || {};
+TextAny.defaultProps = TextAny.defaultProps || {};
+TextAny.defaultProps.style = [existingDefault, { fontFamily: 'Agency' }];
+
 export default function RootLayout() {
+  // Loads the brand font from /assets before the splash hides. Until
+  // it's ready (or fails) we keep the splash up so the user never sees
+  // a system-font flash. The fallback path on `error` is to proceed
+  // with defaultProps falling through to the platform font — better
+  // than showing nothing.
+  const [fontsLoaded, fontError] = useFonts({
+    Agency: require('../assets/fonts/agency.otf'),
+  });
+
   const [ready, setReady] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [showIntro, setShowIntro] = useState(false);
@@ -69,8 +89,13 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (ready && hydrated) SplashScreen.hideAsync().catch(() => {});
-  }, [ready, hydrated]);
+    // Wait for the font to resolve (or definitively fail) before
+    // dropping the splash so the first frame doesn't show a system-font
+    // flicker that re-renders to Agency moments later.
+    if (ready && hydrated && (fontsLoaded || fontError)) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [ready, hydrated, fontsLoaded, fontError]);
 
   // Push registration — fire only after the user is authenticated so the
   // OS permission prompt doesn't appear on a cold install before login.
@@ -100,7 +125,7 @@ export default function RootLayout() {
     setShowIntro(false);
   }, []);
 
-  if (!ready || !hydrated) return null;
+  if (!ready || !hydrated || (!fontsLoaded && !fontError)) return null;
 
   // Show custom animated splash
   if (showSplash) {
