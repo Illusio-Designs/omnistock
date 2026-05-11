@@ -15,6 +15,7 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import AnimatedSplash from '../components/SplashScreen';
 import IntroScreen from '../components/IntroScreen';
 import Toaster from '../components/ui/Toaster';
+import AppAlert from '../components/ui/AppAlert';
 import { BiometricLock } from '../components/BiometricLock';
 import { evaluateLockOnBoot, getLockNeeded } from '../lib/biometric';
 import { bootstrapPush } from '../lib/push';
@@ -188,6 +189,7 @@ export default function RootLayout() {
           <StatusBar style="auto" />
           <Slot />
           <Toaster />
+          <AppAlert />
         </SafeAreaProvider>
       </PersistQueryClientProvider>
     </ErrorBoundary>

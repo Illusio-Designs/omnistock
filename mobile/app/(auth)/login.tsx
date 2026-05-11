@@ -3,7 +3,6 @@ import { Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -17,6 +16,7 @@ import { GoogleIcon } from '../../components/GoogleIcon';
 import { authApi } from '../../lib/api';
 import { useAuthStore } from '../../store/auth.store';
 import { tokenStorage } from '../../lib/storage';
+import { appAlert } from '../../lib/alert';
 import {
   isAvailable as biometricAvailable,
   isEnabled as biometricIsEnabled,
@@ -48,7 +48,7 @@ export default function LoginScreen() {
         await maybeOfferBiometric();
         await fetchContextAndNavigate(data.user, data.token);
       } catch (err: any) {
-        Alert.alert(
+        appAlert.error(
           'Google sign-in failed',
           err?.response?.data?.error || err?.message || 'Could not sign you in'
         );
@@ -99,7 +99,7 @@ export default function LoginScreen() {
 
   const onSubmit = async () => {
     if (!email || !password) {
-      Alert.alert('Missing fields', 'Email and password are required.');
+      appAlert.warning('Missing fields', 'Email and password are required.');
       return;
     }
     setLoading(true);
@@ -109,7 +109,7 @@ export default function LoginScreen() {
       await maybeOfferBiometric();
       await fetchContextAndNavigate(data.user, data.token);
     } catch (err: any) {
-      Alert.alert(
+      appAlert.error(
         'Login failed',
         err?.response?.data?.error || err?.response?.data?.message || 'Invalid credentials'
       );
@@ -133,7 +133,7 @@ export default function LoginScreen() {
       const kind = await getBiometricKind();
       const label = biometricLabel(kind);
       await new Promise<void>((resolve) => {
-        Alert.alert(
+        appAlert.confirm(
           `Enable ${label}?`,
           `Use ${label} to unlock Kartriq next time. You can change this later in Settings.`,
           [
@@ -153,8 +153,7 @@ export default function LoginScreen() {
                 resolve();
               },
             },
-          ],
-          { cancelable: false }
+          ]
         );
       });
     } catch {
@@ -164,7 +163,7 @@ export default function LoginScreen() {
 
   const onGoogleLogin = async () => {
     if (!googleConfigured) {
-      Alert.alert(
+      appAlert.info(
         'Google sign-in not configured',
         'Ask the founder admin to add Google OAuth client IDs in mobile/app.json (extra.googleIosClientId / Android / Web).'
       );
@@ -173,7 +172,7 @@ export default function LoginScreen() {
     if (!request) {
       // The auth-session request prepares lazily on first render; this
       // window is short and the user can just tap again.
-      Alert.alert('Hold on', 'Google sign-in is still warming up — tap again in a moment.');
+      appAlert.info('Hold on', 'Google sign-in is still warming up — tap again in a moment.');
       return;
     }
     setGoogleLoading(true);
@@ -186,7 +185,7 @@ export default function LoginScreen() {
       // Success branch is finished by the useEffect above once the
       // id_token lands in state.
     } catch (err: any) {
-      Alert.alert('Google sign-in failed', err?.message || 'Try again');
+      appAlert.error('Google sign-in failed', err?.message || 'Try again');
       setGoogleLoading(false);
     }
   };

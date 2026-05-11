@@ -20,7 +20,8 @@ import {
   Users,
   Warehouse,
 } from 'lucide-react-native';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { appAlert } from '../../lib/alert';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Card from '../../components/ui/Card';
@@ -70,7 +71,7 @@ export default function MoreScreen() {
   const isPlatformAdmin = useAuthStore((s) => s.isPlatformAdmin());
 
   const onLogout = () => {
-    Alert.alert('Sign out?', 'You will need to sign in again.', [
+    appAlert.confirm('Sign out?', 'You will need to sign in again.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Sign out',
