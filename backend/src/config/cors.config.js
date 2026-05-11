@@ -43,13 +43,39 @@ const origins = isProd
 // Origin checker — accepts the static list AND a dynamic regex for Vercel
 // preview URLs (e.g. https://kartriq-git-feature-foo-illusio.vercel.app)
 // so feature branches don't need to be added one-by-one. Mobile (Expo)
-// requests have no Origin header — those are allowed too.
+// requests from a real device have no Origin header — those are allowed
+// via the leading `!origin` short-circuit.
 const VERCEL_PREVIEW_RE = /^https:\/\/kartriq(-[a-z0-9-]+)?\.vercel\.app$/i;
+
+// Expo developer surfaces — Metro bundler, Web preview, tunnel URLs,
+// and LAN-IP testing. Allowed against PROD as well so a dev can run
+// the mobile app pointed at api.kartriq.com without flipping env
+// vars. The risk surface is narrow: an attacker would have to be
+// running a malicious page on localhost / the same Wi-Fi LAN AND
+// the victim would need an active session cookie on api.kartriq.com,
+// which we don't issue cross-origin anyway (we use bearer JWTs in
+// the Authorization header, not cookies).
+const EXPO_DEV_RE = new RegExp(
+  '^(' + [
+    // Metro / Expo Web on localhost (any port)
+    'http://localhost(:\\d+)?',
+    'http://127\\.0\\.0\\.1(:\\d+)?',
+    // LAN-IP testing — 10.x, 172.16-31.x, 192.168.x
+    'http://10\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}(:\\d+)?',
+    'http://172\\.(1[6-9]|2\\d|3[01])\\.\\d{1,3}\\.\\d{1,3}(:\\d+)?',
+    'http://192\\.168\\.\\d{1,3}\\.\\d{1,3}(:\\d+)?',
+    // Expo tunnel domains (any subdomain)
+    'https://[a-z0-9-]+\\.exp\\.direct',
+    'https://[a-z0-9-]+\\.exp\\.host',
+  ].join('|') + ')$',
+  'i'
+);
 
 function originFn(origin, callback) {
   if (!origin) return callback(null, true);
   if (origins.includes(origin)) return callback(null, true);
   if (isProd && VERCEL_PREVIEW_RE.test(origin)) return callback(null, true);
+  if (EXPO_DEV_RE.test(origin)) return callback(null, true);
   return callback(new Error(`Origin not allowed by CORS: ${origin}`));
 }
 
