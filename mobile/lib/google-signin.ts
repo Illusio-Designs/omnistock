@@ -81,15 +81,29 @@ export function isGoogleConfigured(): boolean {
  * Hook that owns the auth-session request. Returns `promptAsync` to
  * trigger the OAuth flow, plus the resulting `idToken` once the user
  * completes it.
+ *
+ * Note on the dummy fallback: expo-auth-session's Google provider
+ * throws an `invariantClientId` error if the platform-appropriate ID
+ * is undefined — which crashes the login screen during placeholder
+ * builds. We pass a syntactically-valid dummy clientId so the hook
+ * initialises, then the UI guards `promptAsync()` behind the
+ * `configured` flag so the user gets a clear "not configured" alert
+ * instead of an opaque OAuth error.
  */
+const DUMMY_CLIENT_ID = '0.apps.googleusercontent.com';
+
 export function useGoogleSignIn() {
   const [idToken, setIdToken] = useState<string | null>(null);
   const extras = readExtras();
 
+  const ios = placeholderToUndefined(extras.googleIosClientId);
+  const android = placeholderToUndefined(extras.googleAndroidClientId);
+  const web = placeholderToUndefined(extras.googleWebClientId);
+
   const [request, response, promptAsync] = Google.useAuthRequest({
-    iosClientId:     placeholderToUndefined(extras.googleIosClientId),
-    androidClientId: placeholderToUndefined(extras.googleAndroidClientId),
-    webClientId:     placeholderToUndefined(extras.googleWebClientId),
+    iosClientId:     ios     ?? DUMMY_CLIENT_ID,
+    androidClientId: android ?? DUMMY_CLIENT_ID,
+    webClientId:     web     ?? DUMMY_CLIENT_ID,
   });
 
   useEffect(() => {
