@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "main": "expo-router/entry",
   "scripts": {
-    "start": "node --max-old-space-size=4096 node_modules/.bin/expo start",
+    "start": "node scripts/start-wifi.js",
+    "start:raw": "node --max-old-space-size=4096 node_modules/.bin/expo start",
     "android": "node --max-old-space-size=4096 node_modules/.bin/expo start --android",
     "ios": "node --max-old-space-size=4096 node_modules/.bin/expo start --ios",
     "web": "node --max-old-space-size=4096 node_modules/.bin/expo start --web"
