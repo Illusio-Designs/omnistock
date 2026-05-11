@@ -93,12 +93,7 @@ export default function UiKitScreen() {
 
           <Demo title="StatusFilter">
             <StatusFilter
-              options={[
-                { value: 'ALL',     label: 'All' },
-                { value: 'PENDING', label: 'Pending' },
-                { value: 'SHIPPED', label: 'Shipped' },
-                { value: 'DELIVERED', label: 'Delivered' },
-              ]}
+              options={['ALL', 'PENDING', 'SHIPPED', 'DELIVERED']}
               value={filter}
               onChange={setFilter}
             />
