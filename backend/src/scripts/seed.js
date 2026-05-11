@@ -42,11 +42,20 @@ function buildPermissionCodes() {
 // ───────────────────────────────────────────────
 // PLAN CATALOG (matches the public pricing page)
 // ───────────────────────────────────────────────
+// Plan codes (STANDARD / PROFESSIONAL / BUSINESS / ENTERPRISE) are the
+// stable keys referenced everywhere in the codebase (auth.controller,
+// billing routes, RBAC etc.). They never change. The `name` field is
+// the display label shown on the public pricing page and in-app — that
+// IS user-facing, so we use friendlier marketing names here:
+//   STANDARD     → Starter
+//   PROFESSIONAL → Growth
+//   BUSINESS     → Scale
+//   ENTERPRISE   → Enterprise
 const PLANS = [
   {
     code: 'STANDARD',
-    name: 'Standard',
-    tagline: 'Perfect for micro-businesses starting out on their commerce journey.',
+    name: 'Starter',
+    tagline: 'For micro-businesses launching their first online channels.',
     monthlyPrice: 1499, yearlyPrice: 14990, sortOrder: 1,
     maxFacilities: 1, maxSkus: 10000, maxUserRoles: 3, maxUsers: 2, maxOrdersPerMonth: 500,
     features: {
@@ -61,8 +70,8 @@ const PLANS = [
   },
   {
     code: 'PROFESSIONAL',
-    name: 'Professional',
-    tagline: 'For growing businesses strengthening their operational capabilities.',
+    name: 'Growth',
+    tagline: 'For growing brands strengthening their multi-channel operations.',
     monthlyPrice: 4999, yearlyPrice: 49990, sortOrder: 2,
     maxFacilities: 2, maxSkus: 50000, maxUserRoles: 5, maxUsers: 5, maxOrdersPerMonth: 2500,
     features: {
@@ -77,8 +86,8 @@ const PLANS = [
   },
   {
     code: 'BUSINESS',
-    name: 'Business',
-    tagline: 'For scaling brands that need full multi-channel coverage.',
+    name: 'Scale',
+    tagline: 'For scaling brands that need full omnichannel coverage and warehouse ops.',
     monthlyPrice: 14999, yearlyPrice: 149990, sortOrder: 3,
     maxFacilities: 5, maxSkus: 200000, maxUserRoles: 10, maxUsers: 15, maxOrdersPerMonth: 10000,
     features: {
@@ -94,7 +103,7 @@ const PLANS = [
   {
     code: 'ENTERPRISE',
     name: 'Enterprise',
-    tagline: 'Custom solution for large-scale businesses. Contact us for pricing.',
+    tagline: 'Custom build for large operations. Contact sales for pricing and onboarding.',
     monthlyPrice: 0, yearlyPrice: 0, sortOrder: 4,
     maxFacilities: null, maxSkus: null, maxUserRoles: null, maxUsers: null, maxOrdersPerMonth: null,
     features: {
@@ -381,4 +390,4 @@ if (require.main === module) {
   run().catch(e => { console.error(e); process.exit(1); }).finally(() => prisma.$disconnect());
 }
 
-module.exports = { run };
+module.exports = { run, seedPlans };

@@ -431,7 +431,19 @@ async function initDb() {
   const userCount = Number(userRows?.[0]?.cnt ?? userRows?.cnt ?? 0);
 
   if (planCount > 0 && contentCount > 0 && userCount > 0) {
-    console.log('[initDb] data exists -- skipping seed.');
+    console.log('[initDb] data exists -- skipping full seed.');
+    // Lightweight plan sync: even when the DB is already populated, we
+    // still want the public pricing page + in-app plan picker to
+    // reflect any name / price / feature changes that have shipped in
+    // seed.js since the last boot. seedPlans uses idempotent upserts
+    // keyed by plan.code, so this is safe to run every restart.
+    try {
+      const { seedPlans } = require('../scripts/seed');
+      await seedPlans();
+      console.log('[initDb] plan rows synced from seed.js.');
+    } catch (e) {
+      console.warn('[initDb] plan sync skipped:', e.message);
+    }
     return;
   }
 
