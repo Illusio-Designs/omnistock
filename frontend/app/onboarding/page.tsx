@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authApi, planApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
+import { track, upgradeSession } from '@/lib/analytics';
 import { ArrowRight, Sparkles, Building2, User, Lock, CheckCircle2 } from 'lucide-react';
 import { PhoneField, isPhoneEmpty } from '@/components/ui';
 import {
@@ -91,6 +92,14 @@ function OnboardingInner() {
       // Clear the cached referral so it doesn't stick on the next signup
       // from this device.
       try { localStorage.removeItem('kartriq.referralCode'); } catch {}
+      // Conversion: SaaS signup. Mapped to Meta CompleteRegistration +
+      // StartTrial (every signup gets a 14-day trial). Marked as a
+      // high-value Clarity session so the recording sticks.
+      track('signup_complete', {
+        plan: planCode || 'STANDARD',
+        referred: referralCode ? 'yes' : 'no',
+      });
+      upgradeSession('signup_complete');
       setAuth(data.user, data.token);
       router.push('/dashboard/billing');
     } catch (e: any) {

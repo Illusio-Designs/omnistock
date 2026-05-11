@@ -1,26 +1,25 @@
 /**
- * Tiny analytics dispatcher.
+ * Tiny analytics dispatcher — fires the same custom event into every
+ * loaded analytics tool at once (Clarity + GA4 + Facebook Pixel today).
+ * Each call is a NO-OP when the underlying SDK isn't loaded — either
+ * because the visitor declined cookies, the script hasn't initialised
+ * yet, or no ID is configured for that tool — so callers don't need
+ * to guard.
  *
- * Fires a custom event into every loaded analytics tool at once
- * (Clarity + Google Analytics today; Facebook Pixel can be added later
- * by extending one switch statement). Each call is a NO-OP when the
- * underlying tool isn't loaded — either because the visitor declined
- * cookies, the script hasn't initialised yet, or no ID is configured
- * for that tool — so callers don't need to guard.
- *
- * Use it like:
- *   import { track, tag } from '@/lib/analytics';
- *   track('demo_request_submit', { source: 'pricing' });
+ *   import { track, tag, upgradeSession } from '@/lib/analytics';
+ *   track('demo_request_submit', { source: 'pricing', value: 0, currency: 'INR' });
  *   tag('user_type', 'tenant');     // pins this on the Clarity session
  *
- * Microsoft Clarity API:
- *   window.clarity('event', name)             — fires a custom event
- *   window.clarity('set', key, value)         — adds a session-level tag
- *   window.clarity('upgrade', 'reason')       — flag a session as
- *     important so Clarity preserves the recording in its quota
+ * Meta's Pixel has a closed vocabulary of "standard events" (Lead,
+ * Contact, CompleteRegistration, Subscribe, Purchase, ...). Our app
+ * events use their own snake_case names; the FB_MAP below translates.
+ * Anything without a mapping skips FB entirely so we never spam
+ * Events Manager with no-op rows.
  *
- * Google Analytics 4 API:
- *   window.gtag('event', name, params)
+ * IMPORTANT: Meta auto-event detection ("autoConfig") is disabled in
+ * Analytics.tsx, so FB Pixel will ONLY record events fired through
+ * this dispatcher — no more Subscribe / Lead being attributed to
+ * stray button clicks just because Meta's heuristic guessed at them.
  */
 
 type ClarityCommand =
@@ -33,8 +32,29 @@ declare global {
   interface Window {
     clarity?: (...args: any[]) => void;
     gtag?: (...args: any[]) => void;
+    fbq?: (...args: any[]) => void;
   }
 }
+
+// App-event → Meta-standard-event mapping. Each entry can also emit a
+// secondary event when one user action maps to two meaningful Meta
+// events (e.g. signup is both CompleteRegistration AND StartTrial on
+// a SaaS that auto-enrols every signup into a free trial).
+const FB_MAP: Record<string, string | string[]> = {
+  // Top-of-funnel
+  demo_open:            'Lead',
+  demo_request_submit:  'Lead',
+  contact_form_submit:  'Contact',
+  // Acquisition
+  signup_complete:      ['CompleteRegistration', 'StartTrial'],
+  // Monetisation — plan upgrades. Pass {value, currency} in params so
+  // Meta can attribute ad spend ROI correctly.
+  checkout_started:     'InitiateCheckout',
+  plan_purchased:       ['Subscribe', 'Purchase'],
+  // Wallet top-ups (PAYG funding) — count as Purchase for ad-bidding
+  // signal even though they aren't a subscription.
+  wallet_topup:         'Purchase',
+};
 
 function safeClarity(...args: any[]) {
   try {
@@ -52,6 +72,14 @@ function safeGtag(...args: any[]) {
   } catch { /* swallow */ }
 }
 
+function safeFbq(...args: any[]) {
+  try {
+    if (typeof window !== 'undefined' && typeof window.fbq === 'function') {
+      window.fbq(...args);
+    }
+  } catch { /* swallow */ }
+}
+
 /**
  * Fire a custom event into every loaded analytics tool.
  *
@@ -64,6 +92,7 @@ function safeGtag(...args: any[]) {
  *                 filtering recordings.
  */
 export function track(name: string, params?: Record<string, string | number | boolean>) {
+  // Clarity — event + per-param session tags for filterable recordings.
   safeClarity('event', name);
   if (params) {
     for (const [k, v] of Object.entries(params)) {
@@ -71,7 +100,32 @@ export function track(name: string, params?: Record<string, string | number | bo
       safeClarity('set', k, String(v));
     }
   }
+
+  // GA4 — single event with the params attached as event parameters.
   safeGtag('event', name, params || {});
+
+  // Facebook Pixel — only if this app event maps to a Meta standard
+  // event. We also forward `value` / `currency` / `content_name` etc.
+  // when present; Meta uses those to attribute ad-spend ROI.
+  const mapped = FB_MAP[name];
+  if (mapped) {
+    const fbParams = sanitiseFbParams(name, params);
+    const list = Array.isArray(mapped) ? mapped : [mapped];
+    for (const evt of list) safeFbq('track', evt, fbParams);
+  }
+}
+
+// Strip params Meta doesn't recognise and ensure value/currency are
+// numbers/strings where Meta expects them. Adds `content_name` =
+// our internal event name so a single mapped FB event (e.g. Lead) is
+// still distinguishable in Events Manager.
+function sanitiseFbParams(eventName: string, params?: Record<string, any>) {
+  const out: Record<string, any> = { content_name: eventName };
+  if (!params) return out;
+  if ('value' in params)    out.value    = Number(params.value) || 0;
+  if ('currency' in params) out.currency = String(params.currency || 'INR');
+  if ('source' in params)   out.source   = String(params.source);
+  return out;
 }
 
 /**

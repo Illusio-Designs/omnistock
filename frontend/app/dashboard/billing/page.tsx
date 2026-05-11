@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { billingApi, planApi, paymentApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
+import { track, upgradeSession } from '@/lib/analytics';
 import { CheckCircle2, AlertCircle, Zap, Crown, Sparkles, X, Wallet, Plus, Settings2 } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -119,6 +120,18 @@ export default function BillingPage() {
         billingCycle: 'MONTHLY',
         savePaymentMethod: enableAutoRenew,
       });
+
+      // Meta InitiateCheckout — fired the moment the order is created
+      // server-side, regardless of whether the user completes payment.
+      // value comes from the Razorpay order in paise; divide by 100.
+      const checkoutValue = data.order?.amount ? Number(data.order.amount) / 100 : 0;
+      const checkoutCurrency = data.order?.currency || 'INR';
+      track('checkout_started', {
+        plan: planCode,
+        value: checkoutValue,
+        currency: checkoutCurrency,
+      });
+
       if (data.order?.stub) {
         // Stub mode — no real payment gateway configured
         await paymentApi.verify({
@@ -129,6 +142,13 @@ export default function BillingPage() {
           billingCycle: 'MONTHLY',
           autoRenew: enableAutoRenew,
         });
+        track('plan_purchased', {
+          plan: planCode,
+          value: checkoutValue,
+          currency: checkoutCurrency,
+          stub: true,
+        });
+        upgradeSession('plan_purchased');
         toast.success(`Switched to ${planCode} (stub)`);
         await load();
         return;
@@ -149,6 +169,15 @@ export default function BillingPage() {
           await paymentApi.verify({
             ...resp, planCode, billingCycle: 'MONTHLY', autoRenew: enableAutoRenew,
           });
+          // SaaS-grade conversion: fires Meta Subscribe + Purchase via
+          // the FB map. Same call also reports to GA4 + Clarity and
+          // upgrade()s the Clarity recording for ad-attribution review.
+          track('plan_purchased', {
+            plan: planCode,
+            value: checkoutValue,
+            currency: checkoutCurrency,
+          });
+          upgradeSession('plan_purchased');
           toast.success(`Switched to ${planCode}`);
           await load();
         },

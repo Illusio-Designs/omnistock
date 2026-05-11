@@ -80,7 +80,12 @@ export function Analytics() {
         </>
       )}
 
-      {/* ── Facebook Pixel ── */}
+      {/* ── Facebook Pixel ──
+          autoConfig=false is set BEFORE init so Meta stops sniffing
+          our DOM and auto-firing events like "Subscribe" on every
+          button it thinks looks like one. With autoConfig off only
+          the events we explicitly fbq('track', ...) — driven by
+          lib/analytics.ts — reach Events Manager. */}
       {ids.fbPixelId && (
         <Script id="fb-pixel" strategy="afterInteractive">
           {`
@@ -92,6 +97,7 @@ export function Analytics() {
             t.src=v;s=b.getElementsByTagName(e)[0];
             s.parentNode.insertBefore(t,s)}(window, document,'script',
             'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('set', 'autoConfig', false, '${ids.fbPixelId}');
             fbq('init', '${ids.fbPixelId}');
             fbq('track', 'PageView');
           `}
