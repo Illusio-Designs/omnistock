@@ -5,7 +5,7 @@ import { tokenCache, tokenStorage } from './storage';
 
 const baseURL =
   (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl ||
-  'https://api.finvera.solutions/api/v1';
+  'https://api.kartriq.com/api/v1';
 
 const api = axios.create({
   baseURL,

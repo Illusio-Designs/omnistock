@@ -15,7 +15,7 @@ import Constants from 'expo-constants';
 
 const API =
   (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl ||
-  'https://api.finvera.solutions/api/v1';
+  'https://api.kartriq.com/api/v1';
 
 export default function AppLayout() {
   const token = useAuthStore((s) => s.token);

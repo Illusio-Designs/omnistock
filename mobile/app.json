@@ -71,7 +71,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "http://localhost:5001/api/v1",
+      "apiUrl": "https://api.kartriq.com/api/v1",
       "googleIosClientId":     "TODO_GOOGLE_IOS_CLIENT_ID",
       "googleAndroidClientId": "TODO_GOOGLE_ANDROID_CLIENT_ID",
       "googleWebClientId":     "TODO_GOOGLE_WEB_CLIENT_ID"
