@@ -15,9 +15,17 @@
 
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
 import { devicesApi } from './api';
+
+// Expo Go on Android dropped push support in SDK 53. Calling
+// getExpoPushTokenAsync there throws a hard error and crashes the app.
+// Detect Expo Go ("storeClient" environment) and bail before touching
+// any push-token APIs. Development builds + production builds run as
+// "standalone" / "bare" and proceed normally.
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
 // Foreground display behaviour — without this, iOS swallows banners while
 // the app is open which is almost always wrong UX.
@@ -35,9 +43,11 @@ Notifications.setNotificationHandler({
 let registered = false;
 
 export async function registerForPushAsync(): Promise<string | null> {
-  // Push isn't supported on simulators or Expo Web. Bail quietly — the
-  // calling code shouldn't have to know.
+  // Push isn't supported on simulators, Expo Web, or Expo Go (Android
+  // dropped support in SDK 53). Bail quietly — the calling code
+  // shouldn't have to know.
   if (!Device.isDevice || Platform.OS === 'web') return null;
+  if (isExpoGo) return null;
   try {
     const existing = await Notifications.getPermissionsAsync();
     let status = existing.status;
@@ -116,6 +126,10 @@ export function detachNotificationTapHandler() {
 export async function bootstrapPush() {
   if (registered) return;
   registered = true;
+  // In Expo Go on Android the push module emits a hard error on import-
+  // path side-effects (see warnOfExpoGoPushUsage). Skip the tap handler
+  // wire-up too so we don't trigger lazy imports that crash.
+  if (isExpoGo) return;
   attachNotificationTapHandler();
   // Permissions prompt on first launch is rude — defer until the user
   // is signed in. We fire-and-forget; failure is silent.

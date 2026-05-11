@@ -1,4 +1,6 @@
 import {
+  KeyboardAvoidingView,
+  Platform,
   RefreshControl,
   ScrollView,
   Text,
@@ -34,9 +36,21 @@ export default function PageShell({
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={['top', 'bottom']}>
       <StatusBar style="dark" />
+      {/* KeyboardAvoidingView lifts the ScrollView above the on-screen
+          keyboard so any TextInput on a form screen (login, tickets
+          reply, help contact, settings) stays visible while typing.
+          iOS uses `padding`, Android uses `height` — that's the
+          canonical RN combination. `keyboardShouldPersistTaps` on the
+          ScrollView keeps Submit buttons tappable without first
+          dismissing the keyboard. */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           onRefresh ? (
             <RefreshControl
@@ -73,6 +87,7 @@ export default function PageShell({
 
         {loading ? (skeleton ?? <ListSkeleton rows={5} />) : children}
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
