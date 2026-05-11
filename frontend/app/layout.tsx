@@ -91,6 +91,12 @@ const FALLBACK: Metadata = {
     // Add your verification codes here when ready
     // google: 'your-google-verification-code',
     // yandex: 'your-yandex-verification-code',
+    other: {
+      // Meta Business Manager → Brand Safety → Domains → Verify domain.
+      // Required so the Pixel can run with full attribution under iOS
+      // 14.5+ aggregated event measurement.
+      'facebook-domain-verification': '6v9j078wu7fhfd6hpqucu8mvndweit',
+    },
   },
   category: 'technology',
 };
