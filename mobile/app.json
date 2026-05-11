@@ -39,18 +39,34 @@
         "USE_BIOMETRIC",
         "USE_FINGERPRINT",
         "POST_NOTIFICATIONS",
-        "INTERNET"
+        "INTERNET",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
       ],
       "intentFilters": [
         {
           "action": "VIEW",
           "autoVerify": true,
           "data": [
-            { "scheme": "https", "host": "kartriq.com", "pathPrefix": "/m" },
-            { "scheme": "https", "host": "www.kartriq.com", "pathPrefix": "/m" },
-            { "scheme": "https", "host": "app.kartriq.com" }
+            {
+              "scheme": "https",
+              "host": "kartriq.com",
+              "pathPrefix": "/m"
+            },
+            {
+              "scheme": "https",
+              "host": "www.kartriq.com",
+              "pathPrefix": "/m"
+            },
+            {
+              "scheme": "https",
+              "host": "app.kartriq.com"
+            }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -72,9 +88,9 @@
     ],
     "extra": {
       "apiUrl": "https://api.kartriq.com/api/v1",
-      "googleIosClientId":     "TODO_GOOGLE_IOS_CLIENT_ID",
+      "googleIosClientId": "TODO_GOOGLE_IOS_CLIENT_ID",
       "googleAndroidClientId": "TODO_GOOGLE_ANDROID_CLIENT_ID",
-      "googleWebClientId":     "TODO_GOOGLE_WEB_CLIENT_ID"
+      "googleWebClientId": "TODO_GOOGLE_WEB_CLIENT_ID"
     }
   }
 }
