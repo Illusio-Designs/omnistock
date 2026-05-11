@@ -30,15 +30,19 @@ export function Topbar() {
   const showAskAi  = !isPlatformAdmin;
   const showWallet = !isPlatformAdmin && hasPermission('billing.read', 'billing.manage');
 
-  // Render the platform-correct shortcut label after mount (Mac glyphs would
-  // render as a missing-character box on most Windows fonts). Rendering "⌘K"
-  // by default during SSR + swapping after hydration avoids hydration warnings.
+  // Platform-correct shortcut label, decided client-side after mount.
+  // Server renders nothing for the chip (mounted=false) so we never
+  // hydrate "Ctrl+K" only to swap it to "⌘K" a frame later on a Mac.
+  // After mount we know the user's platform and render the right glyph
+  // exactly once.
+  const [mounted, setMounted] = useState(false);
   const [shortcutLabel, setShortcutLabel] = useState('Ctrl+K');
   useEffect(() => {
     const isMac = /Mac|iPod|iPhone|iPad/i.test(
       navigator.platform || navigator.userAgent || ''
     );
     setShortcutLabel(isMac ? '⌘K' : 'Ctrl+K');
+    setMounted(true);
   }, []);
 
   return (
@@ -76,7 +80,7 @@ export function Topbar() {
           >
             <X size={14} />
           </button>
-        ) : (
+        ) : mounted ? (
           <button
             type="button"
             onClick={() => window.dispatchEvent(new Event('open-command-palette'))}
@@ -89,7 +93,7 @@ export function Topbar() {
           >
             {shortcutLabel}
           </button>
-        )}
+        ) : null}
       </div>
 
       <div className="flex items-center gap-1 ml-auto">

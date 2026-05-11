@@ -46,17 +46,25 @@ export function UserMenu() {
   // evaluate them for non-founders since founders skip the whole tenant
   // section anyway. hasPermission resolves the user's role-derived
   // permission set against the requested code(s); platform admins get a
-  // blanket *yes* but we never reach here for them.
-  // Billing & Usage — readable by anyone with a billing permission
-  // (ADMIN, ACCOUNTANT). STAFF technically gets every *.read in the
-  // default seed but the page itself is more useful to roles that can
-  // act on it, so we gate on read|manage and accept that a STAFF row
-  // who has had billing.read explicitly granted will see them.
+  // blanket *yes* but we never reach here for them (every gate below is
+  // wrapped in `!isFounder`).
+  //
+  // Expected matrix against the default seed in backend/src/scripts/seed.js:
+  //   ROLE        billing.* users.invite users.update
+  //   ADMIN       ✓         ✓            ✓
+  //   MANAGER     ✗         ✓            ✓
+  //   ACCOUNTANT  billing.read only — invite/update ✗
+  //   STAFF       *.read only (incl. billing.read) — write perms ✗
+  //
+  // Billing & Usage — billing.read OR billing.manage. Resolves to
+  //   { ADMIN, ACCOUNTANT, STAFF } per the matrix. STAFF inclusion is
+  //   intentional: they get read-only insight into the wallet/usage
+  //   page (no upgrade button server-side gates them out of writes).
   const canSeeBilling = !isFounder && hasPermission('billing.read', 'billing.manage');
   const canSeeUsage   = !isFounder && hasPermission('billing.read', 'billing.manage');
-  // Team management — gated on invite (write) rather than read so STAFF
-  // doesn't get a "Team" link that lands them on a manage UI they can't
-  // act on. ADMIN + MANAGER get this; ACCOUNTANT + STAFF do not.
+  // Team — gated on a WRITE permission so we don't surface a "manage
+  // teammates" link to roles that land on the page and find every
+  // action disabled. Resolves to { ADMIN, MANAGER } per the matrix.
   const canSeeTeam    = !isFounder && hasPermission('users.invite', 'users.update');
 
   // Close on outside click + Esc

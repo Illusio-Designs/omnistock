@@ -101,7 +101,12 @@ function OnboardingInner() {
       });
       upgradeSession('signup_complete');
       setAuth(data.user, data.token);
-      router.push('/dashboard/billing');
+      // Defer the redirect so the Zustand persist middleware has a tick
+      // to write the new token to localStorage. Otherwise on a hard
+      // refresh of /dashboard/billing the next render reads the *old*
+      // (empty) auth state, the layout's auth guard bounces to /login,
+      // and the user appears to have lost their signup.
+      queueMicrotask(() => router.push('/dashboard/billing'));
     } catch (e: any) {
       setErr(e?.response?.data?.error || 'Onboarding failed');
     } finally {
