@@ -119,12 +119,27 @@ export function track(name: string, params?: Record<string, string | number | bo
 // numbers/strings where Meta expects them. Adds `content_name` =
 // our internal event name so a single mapped FB event (e.g. Lead) is
 // still distinguishable in Events Manager.
+//
+// IMPORTANT: only forward `value` when the caller explicitly passed a
+// non-null one. Sending `value: 0` on a Lead / Contact / valueless
+// event makes Meta treat it as a free purchase, which silently skews
+// ad-spend ROI attribution. Same logic for currency — only sent when
+// value is sent.
 function sanitiseFbParams(eventName: string, params?: Record<string, any>) {
   const out: Record<string, any> = { content_name: eventName };
   if (!params) return out;
-  if ('value' in params)    out.value    = Number(params.value) || 0;
-  if ('currency' in params) out.currency = String(params.currency || 'INR');
-  if ('source' in params)   out.source   = String(params.source);
+  const rawValue = params.value;
+  if (rawValue !== undefined && rawValue !== null && !Number.isNaN(Number(rawValue))) {
+    out.value = Number(rawValue);
+    if (params.currency !== undefined && params.currency !== null) {
+      out.currency = String(params.currency);
+    } else {
+      out.currency = 'INR';
+    }
+  }
+  if (params.source !== undefined && params.source !== null) {
+    out.source = String(params.source);
+  }
   return out;
 }
 
