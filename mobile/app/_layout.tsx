@@ -1,4 +1,12 @@
 import '../global.css';
+// Side-effect import — installs the Alert.alert → appAlert intercept
+// and the Text/TextInput Agency-font render-patch BEFORE any component
+// renders. Must stay at the top of the imports, above any RN imports
+// that reference Text / TextInput so the override is in place when
+// those components first mount.
+import { installGlobalOverrides } from '../lib/global-overrides';
+installGlobalOverrides();
+
 import { QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
@@ -6,7 +14,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Slot, SplashScreen } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
-import { Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { hydrateTokenCache, tokenStorage } from '../lib/storage';
@@ -48,22 +55,10 @@ const queryPersister = createAsyncStoragePersister({
   throttleTime: 1000,
 });
 
-// Apply Agency to every <Text> by default. NativeWind doesn't intercept
-// the platform Text component for unstyled instances, so without this
-// any plain `<Text>foo</Text>` would still render in the system font.
-// Setting defaultProps once at module load is the standard RN trick,
-// but newer React Native ships Text as a function component where
-// defaultProps is a no-op (and on some builds, frozen). Wrapped in
-// try/catch so a failed mutation never blocks the app from booting
-// — worst case the font just isn't applied to bare <Text> nodes.
-try {
-  const TextAny = Text as any;
-  const existingDefault = TextAny.defaultProps?.style || {};
-  TextAny.defaultProps = TextAny.defaultProps || {};
-  TextAny.defaultProps.style = [existingDefault, { fontFamily: 'Agency' }];
-} catch (e) {
-  console.warn('[fonts] could not set Text default style:', (e as Error)?.message);
-}
+// Note: Agency font is now applied globally to every Text / TextInput
+// via the render-patch in lib/global-overrides.ts. The earlier
+// Text.defaultProps mutation only worked on class components and was
+// a no-op on RN 0.81's function-component Text.
 
 export default function RootLayout() {
   // Loads the brand font from /assets before the splash hides. Until
