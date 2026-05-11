@@ -50,11 +50,19 @@ const queryPersister = createAsyncStoragePersister({
 // Apply Agency to every <Text> by default. NativeWind doesn't intercept
 // the platform Text component for unstyled instances, so without this
 // any plain `<Text>foo</Text>` would still render in the system font.
-// Setting defaultProps once at module load is the standard RN trick.
-const TextAny = Text as any;
-const existingDefault = TextAny.defaultProps?.style || {};
-TextAny.defaultProps = TextAny.defaultProps || {};
-TextAny.defaultProps.style = [existingDefault, { fontFamily: 'Agency' }];
+// Setting defaultProps once at module load is the standard RN trick,
+// but newer React Native ships Text as a function component where
+// defaultProps is a no-op (and on some builds, frozen). Wrapped in
+// try/catch so a failed mutation never blocks the app from booting
+// — worst case the font just isn't applied to bare <Text> nodes.
+try {
+  const TextAny = Text as any;
+  const existingDefault = TextAny.defaultProps?.style || {};
+  TextAny.defaultProps = TextAny.defaultProps || {};
+  TextAny.defaultProps.style = [existingDefault, { fontFamily: 'Agency' }];
+} catch (e) {
+  console.warn('[fonts] could not set Text default style:', (e as Error)?.message);
+}
 
 export default function RootLayout() {
   // Loads the brand font from /assets before the splash hides. Until
