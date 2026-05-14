@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Sparkles, Menu, X, Github, Twitter, Linkedin, ChevronDown, ArrowRight,
+  Sparkles, Menu, X, Twitter, Linkedin, Instagram, Youtube, Heart, ChevronDown, ArrowRight,
   Mail, Phone,
 } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -266,89 +266,140 @@ export function PublicFooter() {
     });
   }, []);
 
-  return (
-    <footer className="border-t border-white/10 bg-[#0B1220] text-white">
-      <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-2 md:grid-cols-6 gap-8">
-        <div className="col-span-2">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 flex items-center justify-center shadow-md shadow-emerald-500/30">
-              <Sparkles size={16} className="text-white" />
-            </div>
-            <span className="font-bold text-base text-white">Kartriq</span>
-          </Link>
-          <p className="text-sm text-white/60 mt-4 max-w-sm leading-relaxed">
-            One platform for all your channels. Sell everywhere, ship anything, grow faster.
-          </p>
-          <div className="mt-5 space-y-2 text-sm">
-            <a
-              href="mailto:info@kartriq.com"
-              className="flex items-center gap-2 text-white/70 hover:text-emerald-300 transition-colors"
-            >
-              <Mail size={14} className="text-white/50 group-hover:text-emerald-300" />
-              <span>info@kartriq.com</span>
-            </a>
-            <a
-              href="tel:+918490009684"
-              className="flex items-center gap-2 text-white/70 hover:text-emerald-300 transition-colors"
-            >
-              <Phone size={14} className="text-white/50" />
-              <span>+91 84900 09684</span>
-            </a>
-          </div>
-          <div className="flex items-center gap-2 mt-5">
-            {[Twitter, Linkedin, Github].map((Icon, i) => (
-              <a key={i} href="#" className="w-9 h-9 flex items-center justify-center rounded-lg text-white/50 hover:text-emerald-300 hover:bg-emerald-500/15 transition-colors">
-                <Icon size={15} />
-              </a>
-            ))}
-          </div>
-        </div>
+  const forBrands = groups.solutions.length ? groups.solutions : [
+    { id: 'b1', title: 'Packages',     href: '/pricing',    subtitle: null, icon: null, category: null, sortOrder: 0 },
+    { id: 'b2', title: 'Creators',     href: '/features',   subtitle: null, icon: null, category: null, sortOrder: 1 },
+    { id: 'b3', title: 'How it works', href: '/solutions',  subtitle: null, icon: null, category: null, sortOrder: 2 },
+    { id: 'b4', title: 'Sign up',      href: '/onboarding', subtitle: null, icon: null, category: null, sortOrder: 3 },
+  ];
+  const forCreators = groups.product.length ? groups.product : [
+    { id: 'c1', title: 'Join',      href: '/onboarding', subtitle: null, icon: null, category: null, sortOrder: 0 },
+    { id: 'c2', title: 'Sign in',   href: '/login',      subtitle: null, icon: null, category: null, sortOrder: 1 },
+    { id: 'c3', title: 'Payouts',   href: '/pricing',    subtitle: null, icon: null, category: null, sortOrder: 2 },
+    { id: 'c4', title: 'Rate card', href: '/pricing',    subtitle: null, icon: null, category: null, sortOrder: 3 },
+  ];
+  const company = groups.company.length ? groups.company : [
+    { id: 'co1', title: 'About',   href: '/solutions', subtitle: null, icon: null, category: null, sortOrder: 0 },
+    { id: 'co2', title: 'Contact', href: '/contact',   subtitle: null, icon: null, category: null, sortOrder: 1 },
+    { id: 'co3', title: 'Privacy', href: '/privacy',   subtitle: null, icon: null, category: null, sortOrder: 2 },
+  ];
 
-        <FooterCol title="Solutions" items={groups.solutions} />
-        <FooterCol title="Product"   items={groups.product} />
-        <FooterCol title="Resources" items={groups.resources} />
-        <FooterCol title="Company"   items={groups.company} />
-      </div>
-      <div className="border-t border-white/10 py-6 px-6 flex flex-col md:flex-row items-center justify-center md:justify-between gap-3 text-xs text-white/50">
-        <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 text-center md:text-left">
-          <span>© {new Date().getFullYear()} Kartriq. All rights reserved.</span>
-          <span className="hidden md:inline text-white/30">·</span>
-          <span>
-            Managed by{' '}
-            <a
-              href="https://finvera.solutions"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white/70 hover:text-emerald-300 transition-colors"
-            >
-              Finvera Solutions LLP
-            </a>
-          </span>
+  return (
+    <footer className="bg-slate-50 text-slate-900 overflow-hidden dark:bg-slate-950 dark:text-slate-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-0">
+        <div className="bg-white rounded-3xl border border-slate-200/70 shadow-sm px-6 sm:px-12 py-12 dark:bg-slate-900 dark:border-slate-800">
+          <div className="grid grid-cols-2 md:grid-cols-12 gap-10">
+            <div className="col-span-2 md:col-span-5">
+              <Link href="/" className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#0B1220] flex items-center justify-center shadow-md">
+                  <Sparkles size={18} className="text-white" />
+                </div>
+                <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-slate-100">Kartriq</span>
+              </Link>
+              <p className="text-sm text-slate-500 mt-5 max-w-md leading-relaxed dark:text-slate-400">
+                One platform for all your channels — curated catalogs, automated payouts, and built-in workflows for omnichannel commerce.
+              </p>
+              <div className="mt-5 space-y-2 text-sm">
+                <a
+                  href="mailto:info@kartriq.com"
+                  className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-400 dark:hover:text-slate-100"
+                >
+                  <Mail size={14} className="text-slate-400" />
+                  <span>info@kartriq.com</span>
+                </a>
+                <a
+                  href="tel:+918490009684"
+                  className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-400 dark:hover:text-slate-100"
+                >
+                  <Phone size={14} className="text-slate-400" />
+                  <span>+91 84900 09684</span>
+                </a>
+              </div>
+              <div className="flex items-center gap-4 mt-6">
+                <SocialLink href="#" label="X (Twitter)"><Twitter size={18} /></SocialLink>
+                <SocialLink href="#" label="Instagram"><Instagram size={18} /></SocialLink>
+                <SocialLink href="#" label="LinkedIn"><Linkedin size={18} /></SocialLink>
+                <SocialLink href="#" label="YouTube"><Youtube size={18} /></SocialLink>
+              </div>
+            </div>
+
+            <FooterCol title="For Brands"   items={forBrands}   className="md:col-span-2" />
+            <FooterCol title="For Creators" items={forCreators} className="md:col-span-2" />
+            <FooterCol title="Company"      items={company}     className="md:col-span-3" />
+          </div>
+
+          <div className="mt-12 pt-6 border-t border-slate-200/80 grid grid-cols-1 md:grid-cols-3 gap-4 items-center dark:border-slate-800">
+            <div className="text-sm text-slate-500 leading-relaxed dark:text-slate-400">
+              <div>© {new Date().getFullYear()} Kartriq. All rights reserved.</div>
+              <div className="mt-1">
+                Managed by{' '}
+                <a
+                  href="https://finvera.solutions"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-slate-700 hover:text-slate-900 transition-colors dark:text-slate-200 dark:hover:text-white"
+                >
+                  Finvera Solutions LLP
+                </a>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center text-sm text-slate-500 gap-1.5 dark:text-slate-400">
+              <span>Crafted with</span>
+              <Heart size={14} className="text-blue-600 fill-blue-600" />
+              <span>in Rajkot, India</span>
+            </div>
+
+            <div className="flex items-center justify-start md:justify-end gap-6 text-sm text-slate-500 dark:text-slate-400">
+              <Link href="/privacy" className="hover:text-slate-900 transition-colors dark:hover:text-slate-100">Privacy Policy</Link>
+              <Link href="/terms"   className="hover:text-slate-900 transition-colors dark:hover:text-slate-100">Terms of Service</Link>
+              <button
+                type="button"
+                onClick={() => {
+                  import('@/components/CookieConsent').then((m) => m.resetConsent());
+                }}
+                className="hover:text-slate-900 transition-colors dark:hover:text-slate-100"
+              >
+                Cookies
+              </button>
+            </div>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            // Lazy import to keep CookieConsent off the SSR critical path.
-            import('@/components/CookieConsent').then((m) => m.resetConsent());
-          }}
-          className="hover:text-white transition-colors underline-offset-4 hover:underline"
+      </div>
+
+      <div className="relative select-none pointer-events-none mt-6 -mb-6 sm:-mb-10">
+        <div
+          className="text-center font-extrabold tracking-tight leading-none bg-gradient-to-b from-slate-200 to-transparent bg-clip-text text-transparent dark:from-slate-800"
+          style={{ fontSize: 'clamp(4rem, 22vw, 18rem)' }}
         >
-          Manage cookies
-        </button>
+          Kartriq
+        </div>
       </div>
     </footer>
   );
 }
 
-function FooterCol({ title, items }: { title: string; items: NavLink[] }) {
+function SocialLink({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      aria-label={label}
+      className="text-slate-400 hover:text-slate-900 transition-colors dark:hover:text-slate-100"
+    >
+      {children}
+    </a>
+  );
+}
+
+function FooterCol({ title, items, className }: { title: string; items: NavLink[]; className?: string }) {
   if (!items.length) return null;
   return (
-    <div>
-      <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">{title}</h4>
-      <ul className="space-y-2">
+    <div className={className}>
+      <h4 className="text-sm font-bold text-slate-900 mb-5 dark:text-slate-100">{title}</h4>
+      <ul className="space-y-3">
         {items.map((l) => (
           <li key={l.id}>
-            <Link href={l.href || '#'} className="text-sm text-white/60 hover:text-emerald-300 transition-colors">
+            <Link href={l.href || '#'} className="text-sm text-slate-500 hover:text-slate-900 transition-colors dark:text-slate-400 dark:hover:text-slate-100">
               {l.title}
             </Link>
           </li>
